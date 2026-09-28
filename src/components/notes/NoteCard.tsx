@@ -452,7 +452,11 @@ export function NoteCard({
                   size="icon" 
                   variant="outline" 
                   className="rounded-full h-8 w-8" 
-                  onClick={(e) => { e.stopPropagation(); onUnarchive ? onUnarchive(note.id) : onRestore?.(note.id); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onUnarchive) onUnarchive(note.id);
+                    else onRestore?.(note.id);
+                  }}
                 >
                   <RotateCcw size={14} />
                 </Button>
@@ -536,7 +540,11 @@ export function NoteCard({
                     size="icon" 
                     variant="outline" 
                     className="rounded-full h-8 w-8" 
-                    onClick={(e) => { e.stopPropagation(); onUnarchive ? onUnarchive(note.id) : onRestore?.(note.id); }}
+                    onClick={(e) => {
+                    e.stopPropagation();
+                    if (onUnarchive) onUnarchive(note.id);
+                    else onRestore?.(note.id);
+                  }}
                   >
                     <RotateCcw size={14} />
                   </Button>
@@ -605,7 +613,11 @@ export function NoteCard({
                     size="icon" 
                     variant="outline" 
                     className="rounded-full h-8 w-8" 
-                    onClick={(e) => { e.stopPropagation(); onUnarchive ? onUnarchive(note.id) : onRestore?.(note.id); }}
+                    onClick={(e) => {
+                    e.stopPropagation();
+                    if (onUnarchive) onUnarchive(note.id);
+                    else onRestore?.(note.id);
+                  }}
                   >
                     <RotateCcw size={14} />
                   </Button>

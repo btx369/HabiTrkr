@@ -27,6 +27,12 @@ import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { getTodayKey, toDateKey } from '@/lib/dateUtils';
 import { cn } from '@/lib/utils';
 
+// Tab order for swipe navigation. Module-level so its identity is stable across
+// renders: declared inside the component it was rebuilt every render, which made it
+// unsafe to list as a useCallback dependency (the callback would be recreated each
+// time) and left the callbacks reading a value the linter could not verify.
+const HABIT_TABS = ['habits', 'folders', 'archived'];
+
 export default function HabitTracker() {
   const { toast } = useToastSettings();
   const { weekStartsOn, weekStartDay } = useWeekStart();
@@ -100,20 +106,19 @@ export default function HabitTracker() {
     isFolderCreatorOpen || isFolderEditorOpen || isMoveToFolderOpen || folderRestoreDialogOpen;
 
   // Tab swipe navigation
-  const habitTabs = ['habits', 'folders', 'archived'];
   const handleSwipeLeft = useCallback(() => {
     if (isAnyDialogOpen) return;
-    const currentIndex = habitTabs.indexOf(activeTab);
-    if (currentIndex < habitTabs.length - 1) {
-      setActiveTab(habitTabs[currentIndex + 1]);
+    const currentIndex = HABIT_TABS.indexOf(activeTab);
+    if (currentIndex < HABIT_TABS.length - 1) {
+      setActiveTab(HABIT_TABS[currentIndex + 1]);
     }
   }, [activeTab, isAnyDialogOpen]);
 
   const handleSwipeRight = useCallback(() => {
     if (isAnyDialogOpen) return;
-    const currentIndex = habitTabs.indexOf(activeTab);
+    const currentIndex = HABIT_TABS.indexOf(activeTab);
     if (currentIndex > 0) {
-      setActiveTab(habitTabs[currentIndex - 1]);
+      setActiveTab(HABIT_TABS[currentIndex - 1]);
     }
   }, [activeTab, isAnyDialogOpen]);
 

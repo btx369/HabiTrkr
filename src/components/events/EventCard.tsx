@@ -270,7 +270,11 @@ export function EventCard({
                   size="icon" 
                   variant="outline" 
                   className="rounded-full h-8 w-8" 
-                  onClick={(e) => { e.stopPropagation(); onUnarchive ? onUnarchive(event.id) : onRestore?.(event.id); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onUnarchive) onUnarchive(event.id);
+                    else onRestore?.(event.id);
+                  }}
                 >
                   <RotateCcw size={14} />
                 </Button>

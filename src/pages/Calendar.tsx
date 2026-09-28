@@ -40,6 +40,11 @@ import {
 
 type ViewMode = 'daily' | 'weekly' | 'monthly';
 
+// Swipe order for the view modes. Module-level so its identity is stable across
+// renders; declared inside the component it was rebuilt every render, which made it
+// unsafe to list as a useCallback dependency.
+const VIEW_MODES: ViewMode[] = ['daily', 'weekly', 'monthly'];
+
 export default function Calendar() {
   const [events, setEvents] = useLocalStorage<Event[]>('events', []);
   const [eventFolders, setEventFolders] = useLocalStorage<EventFolder[]>('eventFolders', []);
@@ -58,18 +63,17 @@ export default function Calendar() {
   const orderedDayNames = getOrderedDayNames(weekStartDay);
 
   // View mode swipe navigation
-  const viewModes: ViewMode[] = ['daily', 'weekly', 'monthly'];
   const handleSwipeLeft = useCallback(() => {
-    const currentIndex = viewModes.indexOf(viewMode);
-    if (currentIndex < viewModes.length - 1) {
-      setViewMode(viewModes[currentIndex + 1]);
+    const currentIndex = VIEW_MODES.indexOf(viewMode);
+    if (currentIndex < VIEW_MODES.length - 1) {
+      setViewMode(VIEW_MODES[currentIndex + 1]);
     }
   }, [viewMode]);
 
   const handleSwipeRight = useCallback(() => {
-    const currentIndex = viewModes.indexOf(viewMode);
+    const currentIndex = VIEW_MODES.indexOf(viewMode);
     if (currentIndex > 0) {
-      setViewMode(viewModes[currentIndex - 1]);
+      setViewMode(VIEW_MODES[currentIndex - 1]);
     }
   }, [viewMode]);
 

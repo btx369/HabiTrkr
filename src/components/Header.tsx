@@ -23,13 +23,20 @@ export const Header = ({ showSearch = false, searchQuery = '', onSearchChange, p
     setIsSearchExpanded(false);
   };
 
+  // Keep the latest handler in a ref so the two document-level listeners below can
+  // call it without listing it as a dependency. Listing it directly would re-subscribe
+  // on every render (the function is recreated each time), and omitting it left the
+  // listeners calling whichever version existed when they were attached.
+  const closeSearchRef = useRef(handleCloseSearch);
+  closeSearchRef.current = handleCloseSearch;
+
   // Click outside detection
   useEffect(() => {
     if (!isSearchExpanded) return;
 
     const handleClickOutside = (event: MouseEvent) => {
       if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
-        handleCloseSearch();
+        closeSearchRef.current();
       }
     };
 
@@ -43,7 +50,7 @@ export const Header = ({ showSearch = false, searchQuery = '', onSearchChange, p
 
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        handleCloseSearch();
+        closeSearchRef.current();
       }
     };
 

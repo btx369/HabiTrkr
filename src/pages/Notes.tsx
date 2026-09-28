@@ -33,6 +33,11 @@ import { BulkActionBar, BulkActionType, BulkActionContext } from '@/components/s
 import { useScrollDirection } from '@/hooks/useScrollDirection';
 import { cn } from '@/lib/utils';
 
+// Tab order for swipe navigation. Module-level so its identity is stable across
+// renders; declared inside the component it was rebuilt every render, which made it
+// unsafe to list as a useCallback dependency.
+const NOTE_TABS = ['all-notes', 'folders', 'archived'];
+
 export default function Notes() {
   const { toast } = useToastSettings();
   console.log('Notes component rendering...');
@@ -136,20 +141,19 @@ export default function Notes() {
     bulkDeleteDialogOpen || bulkArchiveDialogOpen || folderRestoreDialogOpen;
 
   // Tab swipe navigation
-  const noteTabs = ['all-notes', 'folders', 'archived'];
   const handleSwipeLeft = useCallback(() => {
     if (isAnyDialogOpen) return;
-    const currentIndex = noteTabs.indexOf(activeTab);
-    if (currentIndex < noteTabs.length - 1) {
-      setActiveTab(noteTabs[currentIndex + 1]);
+    const currentIndex = NOTE_TABS.indexOf(activeTab);
+    if (currentIndex < NOTE_TABS.length - 1) {
+      setActiveTab(NOTE_TABS[currentIndex + 1]);
     }
   }, [activeTab, isAnyDialogOpen]);
 
   const handleSwipeRight = useCallback(() => {
     if (isAnyDialogOpen) return;
-    const currentIndex = noteTabs.indexOf(activeTab);
+    const currentIndex = NOTE_TABS.indexOf(activeTab);
     if (currentIndex > 0) {
-      setActiveTab(noteTabs[currentIndex - 1]);
+      setActiveTab(NOTE_TABS[currentIndex - 1]);
     }
   }, [activeTab, isAnyDialogOpen]);
 
@@ -1472,7 +1476,9 @@ export default function Notes() {
         handleDragStart(noteId, undefined, pos);
       }, 100);
       if ('vibrate' in navigator) {
-        try { (navigator as any).vibrate?.(50); } catch {}
+        // Haptic feedback is optional and unsupported in several browsers (and absent
+        // entirely on desktop). A failure here must never interrupt the long-press drag.
+        try { (navigator as any).vibrate?.(50); } catch { /* vibration unsupported */ }
       }
     };
 

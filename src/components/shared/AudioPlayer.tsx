@@ -200,9 +200,13 @@ export function MultiAudioPlayer({ audios, size = 'md' }: MultiAudioPlayerProps)
 
   // Cleanup all audios on unmount
   useEffect(() => {
+    // Capture the map itself in the effect body. Reading `audioRefs.current` inside the
+    // cleanup would re-read the ref at teardown time, which is exactly when it is least
+    // reliable; holding the reference makes the cleanup act on the map it started with.
+    const audios = audioRefs.current;
     return () => {
-      audioRefs.current.forEach(audio => audio.pause());
-      audioRefs.current.clear();
+      audios.forEach(audio => audio.pause());
+      audios.clear();
     };
   }, []);
 

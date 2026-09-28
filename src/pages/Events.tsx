@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, FolderOpen, Calendar, FileStack } from 'lucide-react';
 import { EventViewSettings, ViewType, EventSortType, EventSortDirection } from '@/components/events/EventViewSettings';
 import { EventFolderViewSettings, EventFolderSortType, EventFolderSortDirection } from '@/components/events/EventFolderViewSettings';
@@ -33,12 +33,22 @@ import {
   requestNotificationPermission 
 } from '@/lib/notificationService';
 
+// Tab order for swipe navigation. Module-level so its identity is stable across
+// renders; declared inside the component it was rebuilt every render, which made it
+// unsafe to list as a useCallback dependency.
+const EVENT_TABS = ['all-events', 'folders', 'archived'];
+
 export default function Events() {
   const { toast } = useToastSettings();
   const [events, setEvents] = useLocalStorage<Event[]>('events', []);
   const [archivedEvents, setArchivedEvents] = useLocalStorage<Event[]>('archivedEvents', []);
   const [eventFolders, setEventFolders] = useLocalStorage<EventFolder[]>('eventFolders', []);
   const [archivedEventFolders, setArchivedEventFolders] = useLocalStorage<EventFolder[]>('archivedEventFolders', []);
+
+  // Latest eventFolders for the auto-archive effect, which must read them without
+  // depending on them (it writes to the same state, so a dependency would loop).
+  const eventFoldersRef = useRef(eventFolders);
+  eventFoldersRef.current = eventFolders;
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [selectedEventFolder, setSelectedEventFolder] = useState<EventFolder | null>(null);
@@ -100,20 +110,19 @@ export default function Events() {
     bulkDeleteDialogOpen || bulkArchiveDialogOpen || folderRestoreDialogOpen;
 
   // Tab swipe navigation
-  const eventTabs = ['all-events', 'folders', 'archived'];
   const handleSwipeLeft = useCallback(() => {
     if (isAnyDialogOpen) return;
-    const currentIndex = eventTabs.indexOf(activeTab);
-    if (currentIndex < eventTabs.length - 1) {
-      setActiveTab(eventTabs[currentIndex + 1]);
+    const currentIndex = EVENT_TABS.indexOf(activeTab);
+    if (currentIndex < EVENT_TABS.length - 1) {
+      setActiveTab(EVENT_TABS[currentIndex + 1]);
     }
   }, [activeTab, isAnyDialogOpen]);
 
   const handleSwipeRight = useCallback(() => {
     if (isAnyDialogOpen) return;
-    const currentIndex = eventTabs.indexOf(activeTab);
+    const currentIndex = EVENT_TABS.indexOf(activeTab);
     if (currentIndex > 0) {
-      setActiveTab(eventTabs[currentIndex - 1]);
+      setActiveTab(EVENT_TABS[currentIndex - 1]);
     }
   }, [activeTab, isAnyDialogOpen]);
 
@@ -123,7 +132,11 @@ export default function Events() {
     threshold: 50,
   });
 
-  // Auto-archive past events on component mount and when events change
+  // Auto-archive past events on component mount and when events change.
+  // `eventFolders` is read through a ref: the effect also WRITES to eventFolders via
+  // setEventFolders, so listing it as a dependency would make the effect retrigger
+  // itself. The ref keeps the read current without creating that loop, and `toast` is
+  // memoised on toastsEnabled so it is safe to depend on.
   useEffect(() => {
     const autoArchivePastEvents = () => {
       const now = new Date();
@@ -140,8 +153,9 @@ export default function Events() {
 
       if (pastEvents.length > 0) {
         // Store originalFolderId for each auto-archived event
+        const currentFolders = eventFoldersRef.current;
         const eventsWithFolderIds = pastEvents.map(event => {
-          const originalFolder = eventFolders.find(folder => folder.eventIds.includes(event.id));
+          const originalFolder = currentFolders.find(folder => folder.eventIds.includes(event.id));
           return {
             ...event,
             originalFolderId: originalFolder?.id
@@ -168,9 +182,12 @@ export default function Events() {
     };
 
     autoArchivePastEvents();
-  }, [events, setEvents, setArchivedEvents, setEventFolders]);
+  }, [events, setEvents, setArchivedEvents, setEventFolders, toast]);
 
-  // Request notification permission and schedule notifications on mount
+  // Request notification permission and schedule notifications on mount.
+  // Intentionally mount-only: re-running whenever `events` changes would re-request
+  // permission and re-schedule every notification on each edit, which can duplicate
+  // pending notifications. New and edited events are scheduled by their own handlers.
   useEffect(() => {
     const initNotifications = async () => {
       await requestNotificationPermission();
@@ -181,6 +198,7 @@ export default function Events() {
       }
     };
     initNotifications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only by design, see note above
   }, []);
 
 

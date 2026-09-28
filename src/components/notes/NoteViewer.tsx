@@ -121,6 +121,27 @@ export function NoteViewer({
   const richTextEditorRef = useRef<RichTextEditorHandle>(null);
   const scrollAreaRootRef = useRef<HTMLDivElement>(null);
   const pendingScrollRestoreRef = useRef<number | null>(null);
+
+  // Mirrors of list-editing state, for the focus effect below to read without taking
+  // them as dependencies. That effect runs when editing starts and again when the note
+  // type changes; if it depended on displayItems/editedItems it would also re-run on
+  // every keystroke and steal focus from the input being typed into. Reading the refs
+  // keeps the timing identical while guaranteeing the latest values.
+  const displayItemsRef = useRef(displayItems);
+  displayItemsRef.current = displayItems;
+  const editedItemsRef = useRef(editedItems);
+  editedItemsRef.current = editedItems;
+  const clickedListItemIdRef = useRef(clickedListItemId);
+  clickedListItemIdRef.current = clickedListItemId;
+  const desiredListCursorIndexRef2 = useRef(desiredListCursorIndex);
+  desiredListCursorIndexRef2.current = desiredListCursorIndex;
+  const isAddingNewItemRef = useRef(isAddingNewItem);
+  isAddingNewItemRef.current = isAddingNewItem;
+
+  // Latest `note`, for the reset effect. Keyed on note?.id so the reset happens when the
+  // user switches notes, not on every parent re-render.
+  const noteRef = useRef(note);
+  noteRef.current = note;
   
   // Force re-render for formatting bar updates
   const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
@@ -321,20 +342,24 @@ export function NoteViewer({
     }
   }, [isNewNote, isOpen, note]);
 
-  // Reset all editing state when note changes to prevent content leakage
+  // Reset all editing state when note changes to prevent content leakage.
+  // Deliberately keyed on the note id, not the whole note: `note` is a fresh object on
+  // every parent render, so depending on it would re-run this reset continuously and
+  // wipe edits mid-typing. The body reads noteRef so it still sees the current note.
   useEffect(() => {
-    if (note) {
+    const currentNote = noteRef.current;
+    if (currentNote) {
       // Reset editing states
       setIsEditingContent(false);
       setIsEditingTitle(false);
       
       // Reset content to current note
-      setEditedDescription(note.description || '');
-      setEditedTitle(note.name || '');
+      setEditedDescription(currentNote.description || '');
+      setEditedTitle(currentNote.name || '');
       
-      if (note.type === 'list') {
-        setDisplayItems(note.items);
-        setEditedItems(note.items);
+      if (currentNote.type === 'list') {
+        setDisplayItems(currentNote.items);
+        setEditedItems(currentNote.items);
       }
       
       // Reset search state
@@ -420,12 +445,17 @@ export function NoteViewer({
   useEffect(() => {
     if (isEditingContent) {
       if (note?.type === 'list') {
-      // For list notes, focus the specific clicked item or the first input field
+      // For list notes, focus the specific clicked item or the first input field.
+      // Reads the *Ref mirrors so the values are current without those values having to
+      // be dependencies (which would re-run this and steal focus on every keystroke).
       setTimeout(() => {
+        const clickedListItemId = clickedListItemIdRef.current;
+        const desiredListCursorIndex = desiredListCursorIndexRef2.current;
+        const isAddingNewItem = isAddingNewItemRef.current;
         if (clickedListItemId) {
           // Focus the specific input for the clicked item
           const inputs = document.querySelectorAll('input[placeholder="List item..."]') as NodeListOf<HTMLInputElement>;
-          const items = isEditingContent ? editedItems : displayItems;
+          const items = isEditingContent ? editedItemsRef.current : displayItemsRef.current;
           const clickedIndex = items.findIndex(item => item.id === clickedListItemId);
           if (clickedIndex >= 0 && inputs[clickedIndex]) {
             inputs[clickedIndex].focus();
@@ -799,7 +829,10 @@ export function NoteViewer({
       if (lastInput) {
         lastInput.focus();
         const len = lastInput.value.length;
-        try { lastInput.setSelectionRange?.(len, len); } catch {}
+        // setSelectionRange throws on input types that do not support text selection
+        // (number, email, date...). Focusing is what matters here; the caret position
+        // is only a nicety, so a failure is deliberately ignored rather than logged.
+        try { lastInput.setSelectionRange?.(len, len); } catch { /* caret not settable on this input type */ }
         lastInput.scrollIntoView({ block: 'nearest' });
       }
       setIsAddingNewItem(false); // Reset flag after focusing
