@@ -1,0 +1,2379 @@
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Plus, X, FolderOpen, Notebook, FileStack } from 'lucide-react';
+import { ViewSettings, ViewType, SortType, SortDirection } from '@/components/notes/ViewSettings';
+import { NoteFolderViewSettings, NoteFolderSortType, NoteFolderSortDirection } from '@/components/noteFolders/NoteFolderViewSettings';
+import { Layout } from '@/components/Layout';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsContent, SlidingTabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { Note, NoteType, TextNote, ListNote, AudioNote, ImageNote } from '@/types/note';
+import { NoteFolder } from '@/types/noteFolder';
+import { useToastSettings } from '@/contexts/ToastContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { NoteTypePopup } from '@/components/notes/NoteTypePopup';
+import { ImageCapturePopup } from '@/components/notes/ImageCapturePopup';
+import { AudioRecorderPopup } from '@/components/notes/AudioRecorderPopup';
+import { NoteCard } from '@/components/notes/NoteCard';
+import { NoteViewer } from '@/components/notes/NoteViewer';
+import { NoteFolderCreator } from '@/components/noteFolders/NoteFolderCreator';
+import { NoteFolderCard } from '@/components/noteFolders/NoteFolderCard';
+import { NoteFolderEditor } from '@/components/noteFolders/NoteFolderEditor';
+import { MoveToNoteFolderDialog } from '@/components/noteFolders/MoveToNoteFolderDialog';
+import { PinPadDialog } from '@/components/notes/PinPadDialog';
+import { NoteEditor } from '@/components/notes/NoteEditor';
+import { highlightText } from '@/lib/textHighlight';
+import { updateTagUsage } from '@/lib/tagStorage';
+import { autoImportNoteToFolders } from '@/lib/folderAutoImport';
+import { parseSearchQuery } from '@/lib/tagParser';
+import { useSwipeGesture } from '@/hooks/useSwipeGesture';
+import { useBulkSelection } from '@/hooks/useBulkSelection';
+import { BulkActionBar, BulkActionType, BulkActionContext } from '@/components/shared/BulkActionBar';
+import { useScrollDirection } from '@/hooks/useScrollDirection';
+import { cn } from '@/lib/utils';
+
+export default function Notes() {
+  const { toast } = useToastSettings();
+  console.log('Notes component rendering...');
+  const [notes, setNotes] = useLocalStorage<Note[]>('notes', []);
+  const [archivedNotes, setArchivedNotes] = useLocalStorage<Note[]>('archivedNotes', []);
+  const [folders, setFolders] = useLocalStorage<NoteFolder[]>('folders', []);
+  const [archivedFolders, setArchivedFolders] = useLocalStorage<NoteFolder[]>('archivedFolders', []);
+  const [activeTab, setActiveTab] = useState('all-notes');
+  const [showArchivedItems, setShowArchivedItems] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showNoteTypePopup, setShowNoteTypePopup] = useState(false);
+  const [showImageCapturePopup, setShowImageCapturePopup] = useState(false);
+  const [showAudioRecorderPopup, setShowAudioRecorderPopup] = useState(false);
+  const [isFolderCreatorOpen, setIsFolderCreatorOpen] = useState(false);
+  const [isFolderEditorOpen, setIsFolderEditorOpen] = useState(false);
+  const [isMoveToFolderOpen, setIsMoveToFolderOpen] = useState(false);
+  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const [selectedFolder, setSelectedFolder] = useState<NoteFolder | null>(null);
+  const [selectedNoteForMove, setSelectedNoteForMove] = useState<string[] | null>(null);
+  const [isNoteViewerOpen, setIsNoteViewerOpen] = useState<boolean>(false);
+  const [noteToView, setNoteToView] = useState<Note | null>(null);
+  const [isNewNote, setIsNewNote] = useState<boolean>(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{type: 'note' | 'folder', id: string} | null>(null);
+  const [itemToArchive, setItemToArchive] = useState<{type: 'note' | 'folder', id: string} | null>(null);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [bulkArchiveDialogOpen, setBulkArchiveDialogOpen] = useState(false);
+  const [pendingBulkAction, setPendingBulkAction] = useState<{ ids: string[], action: 'archive' | 'delete' } | null>(null);
+  const [folderRestoreDialogOpen, setFolderRestoreDialogOpen] = useState(false);
+  const [folderToRestore, setFolderToRestore] = useState<string | null>(null);
+  const [isNoteColorEditorOpen, setIsNoteColorEditorOpen] = useState(false);
+  const [noteToEditColor, setNoteToEditColor] = useState<Note | null>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    color: '#FFFFFF'
+  });
+  const [allNotesViewType, setAllNotesViewType] = useLocalStorage<ViewType>('notesAllViewType', 'list');
+  const [archivedNotesViewType, setArchivedNotesViewType] = useLocalStorage<ViewType>('notesArchivedViewType', 'list');
+  
+  // Computed viewType based on active tab for backward compatibility
+  const viewType = activeTab === 'archived' ? archivedNotesViewType : allNotesViewType;
+  const setViewType = activeTab === 'archived' ? setArchivedNotesViewType : setAllNotesViewType;
+  const [allNotesSortType, setAllNotesSortType] = useLocalStorage<SortType>('notesAllSortType', 'dateCreated');
+  const [allNotesSortDirection, setAllNotesSortDirection] = useLocalStorage<SortDirection>('notesAllSortDirection', 'desc');
+  const [archivedNotesSortType, setArchivedNotesSortType] = useLocalStorage<SortType>('notesArchivedSortType', 'dateCreated');
+  const [archivedNotesSortDirection, setArchivedNotesSortDirection] = useLocalStorage<SortDirection>('notesArchivedSortDirection', 'desc');
+  
+  // Computed sort values based on active tab
+  const sortType = activeTab === 'archived' ? archivedNotesSortType : allNotesSortType;
+  const setSortType = activeTab === 'archived' ? setArchivedNotesSortType : setAllNotesSortType;
+  const sortDirection = activeTab === 'archived' ? archivedNotesSortDirection : allNotesSortDirection;
+  const setSortDirection = activeTab === 'archived' ? setArchivedNotesSortDirection : setAllNotesSortDirection;
+  const [folderSortType, setFolderSortType] = useLocalStorage<NoteFolderSortType>('foldersSortType', 'name');
+  const [folderSortDirection, setFolderSortDirection] = useLocalStorage<NoteFolderSortDirection>('foldersSortDirection', 'asc');
+  const [customOrder, setCustomOrder] = useLocalStorage<string[]>('notesCustomOrder', []);
+  const [draggedNote, setDraggedNote] = useState<string | null>(null);
+  const [draggedOverNote, setDraggedOverNote] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartPos, setDragStartPos] = useState<{ x: number; y: number } | null>(null);
+  const [currentDragPos, setCurrentDragPos] = useState<{ x: number; y: number } | null>(null);
+  const [autoScrollInterval, setAutoScrollInterval] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const [isNoteSelected, setIsNoteSelected] = useState<string | null>(null); // For visual feedback
+  const [dragPreviewOrder, setDragPreviewOrder] = useState<string[]>([]); // For live reordering preview
+  const [dragInsertIndex, setDragInsertIndex] = useState<number>(-1); // Index where note will be inserted
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pressStartPosRef = useRef<{ x: number; y: number } | null>(null);
+  const pendingNoteIdRef = useRef<string | null>(null);
+  const LONG_PRESS_DELAY = 1000; // ms
+  const LONG_PRESS_MOVE_THRESHOLD = 10; // px
+  const [showPinPad, setShowPinPad] = useState(false);
+  const [pinPadMode, setPinPadMode] = useState<'set' | 'unlock'>('set');
+  const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
+  // Notes unlocked during this session (avoid re-PIN while viewing)
+  const [unlockedNoteIds, setUnlockedNoteIds] = useState<string[]>([]);
+
+  // Bulk selection
+  const {
+    isBulkMode,
+    selectedItems,
+    toggleBulkMode,
+    toggleItem,
+    toggleAll,
+    clearSelection,
+    isAllSelected,
+    exitBulkMode,
+  } = useBulkSelection();
+
+  // Scroll direction for hiding Add button
+  const scrollDirection = useScrollDirection();
+
+  console.log('State variables initialized:', {
+    showNoteTypePopup
+  });
+
+  // Check if any dialog/editor is open - blocks swipe navigation
+  const isAnyDialogOpen = isNoteViewerOpen || isFolderCreatorOpen || isFolderEditorOpen || 
+    isMoveToFolderOpen || showNoteTypePopup || showImageCapturePopup || showAudioRecorderPopup ||
+    deleteDialogOpen || archiveDialogOpen || showPinPad || isNoteColorEditorOpen ||
+    bulkDeleteDialogOpen || bulkArchiveDialogOpen || folderRestoreDialogOpen;
+
+  // Tab swipe navigation
+  const noteTabs = ['all-notes', 'folders', 'archived'];
+  const handleSwipeLeft = useCallback(() => {
+    if (isAnyDialogOpen) return;
+    const currentIndex = noteTabs.indexOf(activeTab);
+    if (currentIndex < noteTabs.length - 1) {
+      setActiveTab(noteTabs[currentIndex + 1]);
+    }
+  }, [activeTab, isAnyDialogOpen]);
+
+  const handleSwipeRight = useCallback(() => {
+    if (isAnyDialogOpen) return;
+    const currentIndex = noteTabs.indexOf(activeTab);
+    if (currentIndex > 0) {
+      setActiveTab(noteTabs[currentIndex - 1]);
+    }
+  }, [activeTab, isAnyDialogOpen]);
+
+  const swipeHandlers = useSwipeGesture({
+    onSwipeLeft: handleSwipeLeft,
+    onSwipeRight: handleSwipeRight,
+    threshold: 50,
+  });
+
+  // Cleanup effect to ensure scroll is restored if component unmounts while dragging
+  useEffect(() => {
+    return () => {
+      // Restore scroll when component unmounts
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+      document.documentElement.style.overscrollBehavior = '';
+      // Clear any auto-scroll interval
+      if (autoScrollInterval) {
+        clearInterval(autoScrollInterval);
+      }
+    };
+  }, [autoScrollInterval]);
+
+  // Prevent pull-to-refresh globally when in custom sort mode
+  useEffect(() => {
+    if (sortType === 'custom') {
+      // Prevent pull-to-refresh on the whole document
+      document.body.style.overscrollBehavior = 'none';
+      document.documentElement.style.overscrollBehavior = 'none';
+      
+      const preventRefresh = (e: TouchEvent) => {
+        // Prevent pull-to-refresh when touching the page
+        if (e.touches.length > 0 && window.pageYOffset <= 0) {
+          const touch = e.touches[0];
+          if (touch.clientY > touch.screenY) {
+            e.preventDefault();
+          }
+        }
+      };
+      
+      document.addEventListener('touchstart', preventRefresh, { passive: false });
+      document.addEventListener('touchmove', preventRefresh, { passive: false });
+      
+      return () => {
+        document.body.style.overscrollBehavior = '';
+        document.documentElement.style.overscrollBehavior = '';
+        document.removeEventListener('touchstart', preventRefresh);
+        document.removeEventListener('touchmove', preventRefresh);
+      };
+    }
+  }, [sortType]);
+
+  const handleTypeSelect = (type: NoteType) => {
+    setShowNoteTypePopup(false);
+    switch (type) {
+      case 'text':
+        createEmptyTextNote();
+        break;
+      case 'list':
+        createEmptyListNote();
+        break;
+      case 'audio':
+        setShowAudioRecorderPopup(true);
+        break;
+      case 'image':
+        setShowImageCapturePopup(true);
+        break;
+    }
+  };
+
+  const createEmptyTextNote = () => {
+    const newNote: TextNote = {
+      id: Date.now().toString(),
+      name: 'Title',
+      type: 'text',
+      description: '',
+      color: '#FFFFFF',
+      createdAt: new Date().toISOString(),
+      pinned: false
+    };
+    
+    // Don't add to notes array yet - only add when user saves with content
+    setNoteToView(newNote);
+    setIsNewNote(true);
+    setIsNoteViewerOpen(true);
+  };
+
+  const createEmptyListNote = () => {
+    const newNote: ListNote = {
+      id: Date.now().toString(),
+      name: 'Title',
+      type: 'list',
+      items: [{ id: Date.now().toString(), text: '', completed: false }],
+      color: '#FFFFFF',
+      createdAt: new Date().toISOString(),
+      pinned: false
+    };
+    
+    // Don't add to notes array yet - only add when user saves with content
+    setNoteToView(newNote);
+    setIsNewNote(true);
+    setIsNoteViewerOpen(true);
+  };
+
+  const handleImageSelect = (imageUrl: string) => {
+    // Create and immediately save the image note (like audio notes)
+    const newNote: ImageNote = {
+      id: Date.now().toString(),
+      name: 'Title',
+      type: 'image',
+      imageUrl,
+      description: '',
+      color: '#FFFFFF',
+      createdAt: new Date().toISOString(),
+      pinned: false
+    };
+    
+    // Add to notes array immediately
+    setNotes((prev: Note[]) => [...prev, newNote]);
+    toast.success('Image note created!');
+    
+    // Open in viewer so user can add title/description/more media
+    setNoteToView(newNote);
+    setIsNewNote(false);  // Set to false since it's already saved
+    setIsNoteViewerOpen(true);
+  };
+
+  const handleAudioRecordingComplete = (audioUrl: string, duration: number) => {
+    const audioMarker = `[audio:${audioUrl}:${duration}]`;
+    const newNote: TextNote = {
+      id: Date.now().toString(),
+      name: 'Title',
+      type: 'text',
+      description: audioMarker,
+      color: '#FFFFFF',
+      createdAt: new Date().toISOString(),
+      pinned: false
+    };
+    
+    // Add to notes array immediately (like image notes)
+    setNotes((prev: Note[]) => [...prev, newNote]);
+    toast.success('Audio note created!');
+    
+    // Open in viewer so user can add title/description/more media
+    setNoteToView(newNote);
+    setIsNewNote(false);  // Set to false since it's already saved
+    setIsNoteViewerOpen(true);
+  };
+
+  const addTextNote = (noteData: Omit<TextNote, 'id' | 'createdAt'>) => {
+    const newNote: TextNote = {
+      ...noteData,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+      pinned: false
+    };
+    setNotes((prev: Note[]) => [...prev, newNote]);
+    toast.success('Text note created!');
+    
+    // Open the new note in viewer with auto-focus
+    setNoteToView(newNote);
+    setIsNewNote(true);
+    setIsNoteViewerOpen(true);
+  };
+
+  const addListNote = (noteData: Omit<ListNote, 'id' | 'createdAt'>) => {
+    const newNote: ListNote = {
+      ...noteData,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+      pinned: false
+    };
+    setNotes((prev: Note[]) => [...prev, newNote]);
+    toast.success('List note created!');
+    
+    // Open the new note in viewer with auto-focus
+    setNoteToView(newNote);
+    setIsNewNote(true);
+    setIsNoteViewerOpen(true);
+  };
+
+
+  const addImageNote = (noteData: Omit<ImageNote, 'id' | 'createdAt'>) => {
+    const newNote: ImageNote = {
+      ...noteData,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+      pinned: false
+    };
+    setNotes((prev: Note[]) => [...prev, newNote]);
+    toast.success('Image note created!');
+    
+    // Open the new note in viewer with auto-focus
+    setNoteToView(newNote);
+    setIsNewNote(true);
+    setIsNoteViewerOpen(true);
+  };
+
+  const updateTextNote = (noteData: Omit<TextNote, 'id' | 'createdAt'>) => {
+    if (!selectedNote || selectedNote.type !== 'text') return;
+    setNotes((prev: Note[]) => prev.map(note => note.id === selectedNote.id ? {
+      ...noteData,
+      id: selectedNote.id,
+      createdAt: selectedNote.createdAt
+    } : note));
+    setSelectedNote(null);
+    toast.success('Note updated successfully!');
+  };
+
+  const updateListNote = (noteData: Omit<ListNote, 'id' | 'createdAt'>) => {
+    if (!selectedNote || selectedNote.type !== 'list') return;
+    setNotes((prev: Note[]) => prev.map(note => note.id === selectedNote.id ? {
+      ...noteData,
+      id: selectedNote.id,
+      createdAt: selectedNote.createdAt
+    } : note));
+    setSelectedNote(null);
+    toast.success('List note updated successfully!');
+  };
+
+  const deleteNote = (noteId: string) => {
+    checkLockBeforeAction(noteId, () => {
+      setItemToDelete({ type: 'note', id: noteId });
+      setDeleteDialogOpen(true);
+    });
+  };
+
+  const confirmDeleteNote = (noteId: string) => {
+    // Decrement tag usage for the deleted note
+    const noteToDelete = notes.find(n => n.id === noteId) || archivedNotes.find(n => n.id === noteId);
+    if (noteToDelete?.tags) {
+      updateTagUsage(noteToDelete.tags, []);
+    }
+    
+    setNotes((prev: Note[]) => prev.filter(note => note.id !== noteId));
+    setArchivedNotes((prev: Note[]) => prev.filter(note => note.id !== noteId));
+    // Update folders to remove the deleted note ID
+    setFolders((prev: NoteFolder[]) => prev.map(folder => ({
+      ...folder,
+      noteIds: folder.noteIds.filter(id => id !== noteId)
+    })));
+    setArchivedFolders((prev: NoteFolder[]) => prev.map(folder => ({
+      ...folder,
+      noteIds: folder.noteIds.filter(id => id !== noteId)
+    })));
+    setSelectedNote(null);
+    
+    // Auto-close note viewer if the deleted note is currently being viewed
+    if (isNoteViewerOpen && noteToView?.id === noteId) {
+      setIsNoteViewerOpen(false);
+      setNoteToView(null);
+      setIsNewNote(false);
+      setUnlockedNoteIds(prev => prev.filter(id => id !== noteId));
+    }
+    
+    toast.success('Note deleted permanently!');
+  };
+  
+   const confirmArchiveNote = (noteId: string) => {
+     const note = notes.find(n => n.id === noteId);
+     // Don't ask for PIN if note is currently being viewed or already unlocked in session
+     if (note?.locked && !unlockedNoteIds.includes(noteId) && noteToView?.id !== noteId) {
+       setActiveNoteId(noteId);
+       setPinPadMode('unlock');
+       setShowPinPad(true);
+       (window as any).pendingAction = () => {
+         setItemToArchive({ type: 'note', id: noteId });
+         setArchiveDialogOpen(true);
+       };
+       return;
+     }
+     setItemToArchive({ type: 'note', id: noteId });
+     setArchiveDialogOpen(true);
+   };
+
+   const performArchiveNote = (noteId: string) => {
+     const noteToArchive = notes.find(note => note.id === noteId);
+     if (noteToArchive) {
+       // Find which folder this note belongs to (if any)
+       const originalFolder = folders.find(folder => folder.noteIds.includes(noteId));
+       const originalFolderId = originalFolder?.id;
+       
+       // Archive the note with original folder ID stored
+       const archivedNote = {
+         ...noteToArchive,
+         originalFolderId: originalFolderId
+       };
+       
+       setArchivedNotes((prev: Note[]) => [...prev, archivedNote]);
+       setNotes((prev: Note[]) => prev.filter(note => note.id !== noteId));
+       // Update folders to remove the archived note ID
+       setFolders((prev: NoteFolder[]) => prev.map(folder => ({
+         ...folder,
+         noteIds: folder.noteIds.filter(id => id !== noteId)
+       })));
+     }
+     // Re-lock in current session to enforce PIN on archived tab
+     setUnlockedNoteIds(prev => prev.filter(id => id !== noteId));
+     setSelectedNote(null);
+     toast.success('Note archived successfully!');
+   };
+  
+   const unarchiveNote = (noteId: string) => {
+     const noteToUnarchive = archivedNotes.find(note => note.id === noteId);
+     if (noteToUnarchive) {
+       // Remove originalFolderId before restoring to notes
+       const { originalFolderId, ...restoredNote } = noteToUnarchive;
+       
+       setNotes((prev: Note[]) => [...prev, restoredNote]);
+       setArchivedNotes((prev: Note[]) => prev.filter(note => note.id !== noteId));
+       
+       // If the note had an original folder, restore association
+       if (originalFolderId) {
+         const originalFolderInActive = folders.some(folder => folder.id === originalFolderId);
+         const originalFolderInArchived = archivedFolders.some(folder => folder.id === originalFolderId);
+         
+         if (originalFolderInActive) {
+           // Folder is active - add note to it
+           setFolders((prev: NoteFolder[]) => prev.map(folder =>
+             folder.id === originalFolderId 
+               ? { ...folder, noteIds: [...folder.noteIds, noteId] }
+               : folder
+           ));
+         } else if (originalFolderInArchived) {
+           // Folder is archived - update archived folder's noteIds
+           // so connection is preserved when folder is later restored
+           setArchivedFolders((prev: NoteFolder[]) => prev.map(folder =>
+             folder.id === originalFolderId 
+               ? { ...folder, noteIds: [...folder.noteIds, noteId] }
+               : folder
+           ));
+         }
+       }
+     }
+     // Re-lock in current session
+     setUnlockedNoteIds(prev => prev.filter(id => id !== noteId));
+     setSelectedNote(null);
+     toast.success('Note restored successfully!');
+   };
+
+  const unarchiveFolder = (folderId: string) => {
+    const folderToUnarchive = archivedFolders.find(folder => folder.id === folderId);
+    if (folderToUnarchive) {
+      // Check how many archived notes are in this folder
+      const noteIdsAssignedElsewhere = new Set<string>(folders.flatMap(f => f.noteIds));
+      const sanitizedNoteIds = folderToUnarchive.noteIds.filter(id => !noteIdsAssignedElsewhere.has(id));
+      const archivedNotesInFolder = archivedNotes.filter(note => sanitizedNoteIds.includes(note.id));
+      
+      if (archivedNotesInFolder.length === 0) {
+        // No archived notes inside — restore folder immediately
+        restoreFolderOnly(folderId);
+      } else {
+        // Has archived notes — ask user
+        setFolderToRestore(folderId);
+        setFolderRestoreDialogOpen(true);
+      }
+    }
+  };
+
+  const restoreFolderOnly = (folderId: string) => {
+    const folderToUnarchive = archivedFolders.find(folder => folder.id === folderId);
+    if (folderToUnarchive) {
+      const noteIdsAssignedElsewhere = new Set<string>(folders.flatMap(f => f.noteIds));
+      const sanitizedNoteIds = folderToUnarchive.noteIds.filter(id => !noteIdsAssignedElsewhere.has(id));
+
+      setFolders((prev: NoteFolder[]) => [
+        ...prev,
+        { ...folderToUnarchive, archived: false, noteIds: sanitizedNoteIds }
+      ]);
+      setArchivedFolders((prev: NoteFolder[]) => prev.filter(folder => folder.id !== folderId));
+      
+      toast.success('Folder restored successfully!');
+    }
+  };
+
+  const restoreFolderWithNotes = (folderId: string) => {
+    const folderToUnarchive = archivedFolders.find(folder => folder.id === folderId);
+    if (folderToUnarchive) {
+      const noteIdsAssignedElsewhere = new Set<string>(folders.flatMap(f => f.noteIds));
+      const sanitizedNoteIds = folderToUnarchive.noteIds.filter(id => !noteIdsAssignedElsewhere.has(id));
+
+      setFolders((prev: NoteFolder[]) => [
+        ...prev,
+        { ...folderToUnarchive, archived: false, noteIds: sanitizedNoteIds }
+      ]);
+      setArchivedFolders((prev: NoteFolder[]) => prev.filter(folder => folder.id !== folderId));
+      
+      const notesToUnarchive = archivedNotes.filter(note => sanitizedNoteIds.includes(note.id));
+      if (notesToUnarchive.length > 0) {
+        setNotes((prev: Note[]) => [...prev, ...notesToUnarchive]);
+        setArchivedNotes((prev: Note[]) => prev.filter(note => !sanitizedNoteIds.includes(note.id)));
+      }
+      
+      toast.success('Folder and its notes restored successfully!');
+    }
+  };
+
+  const toggleListItem = (noteId: string, itemId: string) => {
+    setNotes((prev: Note[]) => prev.map(note => {
+      if (note.id === noteId && note.type === 'list') {
+        return {
+          ...note,
+          items: note.items.map(item => item.id === itemId ? {
+            ...item,
+            completed: !item.completed
+          } : item)
+        };
+      }
+      return note;
+    }));
+  };
+
+  // Helper function to determine if a note is completely empty
+  const isNoteEmpty = (note: Note): boolean => {
+    switch (note.type) {
+      case 'text':
+        // Text note is empty if description has no content
+        const textContent = note.description || '';
+        // Check if there's any media (images or audio)
+        const hasMedia = /\[image:.+?\]|\[audio:.+?:[\d.]+\]/.test(textContent);
+        // Remove all markers and check if there's actual text
+        const withoutMarkers = textContent
+          .replace(/\[image:.+?\]/g, '')
+          .replace(/\[audio:.+?:[\d.]+\]/g, '')
+          .replace(/\[audionote:.+?\]/g, '')
+          .trim();
+        // Note is NOT empty if it has media, even without text
+        return !hasMedia && withoutMarkers === '';
+      
+      case 'list':
+        // List note is empty if it has no items or all items are empty
+        return !note.items || note.items.length === 0 || 
+               note.items.every(item => !item.text || item.text.trim() === '');
+      
+      case 'audio':
+        // Audio note is empty if it has no primary audioUrl
+        return !note.audioUrl;
+      
+      case 'image':
+        // Image note is empty if it has no primary imageUrl
+        return !note.imageUrl;
+      
+      default:
+        return false;
+    }
+  };
+
+  const saveNoteFromViewer = (noteId: string, updates: Partial<Note>) => {
+    console.log('saveNoteFromViewer called:', {
+      noteId,
+      updates,
+      noteToView: noteToView,
+      existingNote: notes.find(note => note.id === noteId)
+    });
+    
+    // Track tag usage if tags are being updated
+    if (updates.tags !== undefined) {
+      const existingNote = notes.find(note => note.id === noteId);
+      const oldTags = existingNote?.tags || noteToView?.tags || [];
+      const newTags = updates.tags || [];
+      
+      // Update tag usage tracking
+      updateTagUsage(oldTags, newTags);
+    }
+    
+    // Check if this is a new note that hasn't been saved yet
+    const existingNote = notes.find(note => note.id === noteId);
+    
+    if (!existingNote && noteToView) {
+      // This is a new note - add it to the notes array
+      const newNote = { ...noteToView, ...updates } as Note;
+      console.log('Creating new note:', newNote);
+      
+      // Check if the new note is empty
+      if (isNoteEmpty(newNote)) {
+        console.log('New note is empty, not saving');
+        setIsNoteViewerOpen(false);
+        setNoteToView(null);
+        return;
+      }
+      
+      setNotes((prev: Note[]) => [...prev, newNote]);
+      setNoteToView(newNote);
+      setIsNewNote(false);
+      
+      // Auto-import to folders based on tags
+      setFolders(prev => autoImportNoteToFolders(newNote, prev));
+    } else {
+      // This is an existing note - update it
+      console.log('Updating existing note');
+      const updatesWithModifiedAt = { ...updates, modifiedAt: new Date().toISOString() };
+      
+      // Create the updated note to check if it's empty
+      let updatedNote: Note | null = null;
+      
+      setNotes((prev: Note[]) => prev.map(note => {
+        if (note.id === noteId) {
+          updatedNote = { ...note, ...updatesWithModifiedAt } as Note;
+          return updatedNote;
+        }
+        return note;
+      }));
+      
+      setArchivedNotes((prev: Note[]) => prev.map(note => {
+        if (note.id === noteId) {
+          updatedNote = { ...note, ...updatesWithModifiedAt } as Note;
+          return updatedNote;
+        }
+        return note;
+      }));
+      
+      // Auto-import to folders based on tags if note was updated
+      if (updatedNote && updates.tags !== undefined) {
+        setFolders(prev => autoImportNoteToFolders(updatedNote, prev));
+      }
+      
+      // Update noteToView to keep UI in sync
+      if (noteToView && noteToView.id === noteId && updatedNote) {
+        setNoteToView(updatedNote);
+      }
+      
+      // Check if the note is now empty and auto-delete it
+      if (updatedNote && isNoteEmpty(updatedNote)) {
+        console.log('Note is empty after update, auto-deleting');
+        // Remove from notes array
+        setNotes((prev: Note[]) => prev.filter(n => n.id !== noteId));
+        setArchivedNotes((prev: Note[]) => prev.filter(n => n.id !== noteId));
+        // Close the viewer
+        setIsNoteViewerOpen(false);
+        setNoteToView(null);
+        toast.success("Empty note deleted");
+      }
+    }
+  };
+
+  const openNoteViewer = (note: Note) => {
+    // Check if this note is from the archived notes array
+    const isArchivedNote = archivedNotes.some(archivedNote => archivedNote.id === note.id);
+    const noteWithArchivedStatus = isArchivedNote ? { ...note, archived: true } : note;
+    
+    // Always require PIN for locked notes, regardless of previous unlock status
+    if (note.locked) {
+      setActiveNoteId(note.id);
+      setPinPadMode('unlock');
+      setShowPinPad(true);
+      // Store the note to view after unlock (with proper archived status)
+      (window as any).pendingNoteToView = noteWithArchivedStatus;
+    } else {
+      // If switching to a different note, ensure previous note is re-locked
+      if (noteToView?.locked && noteToView.id !== note.id) {
+        setUnlockedNoteIds(prev => prev.filter(id => id !== noteToView.id));
+      }
+      setNoteToView(noteWithArchivedStatus);
+      setIsNewNote(false);
+      setIsNoteViewerOpen(true);
+    }
+  };
+
+  const openNoteEditor = (note: Note) => {
+    // Open the color editor instead of the note viewer
+    setNoteToEditColor(note);
+    setIsNoteColorEditorOpen(true);
+  };
+
+  const handleEditFromViewer = () => {
+    if (!noteToView) return;
+    setIsNoteViewerOpen(false);
+    openNoteEditor(noteToView);
+  };
+
+  const pinNote = (noteId: string) => {
+    setNotes((prev: Note[]) => prev.map(note => 
+      note.id === noteId ? { ...note, pinned: true } : note
+    ));
+    // Update noteToView if this is the currently viewed note
+    if (noteToView?.id === noteId) {
+      setNoteToView(prev => prev ? { ...prev, pinned: true } : null);
+    }
+    toast.success('Note pinned!');
+  };
+
+  const unpinNote = (noteId: string) => {
+    setNotes((prev: Note[]) => prev.map(note => 
+      note.id === noteId ? { ...note, pinned: false } : note
+    ));
+    // Update noteToView if this is the currently viewed note
+    if (noteToView?.id === noteId) {
+      setNoteToView(prev => prev ? { ...prev, pinned: false } : null);
+    }
+    toast.success('Note unpinned!');
+  };
+
+  const copyNote = (noteId: string) => {
+    const noteToCopy = notes.find(note => note.id === noteId) || archivedNotes.find(note => note.id === noteId);
+    if (noteToCopy) {
+      const copiedNote: Note = {
+        ...noteToCopy,
+        id: Date.now().toString(),
+        name: `${noteToCopy.name} (Copy)`,
+        createdAt: new Date().toISOString(),
+        pinned: false
+      };
+      setNotes((prev: Note[]) => [...prev, copiedNote]);
+      toast.success('Note copied successfully!');
+    }
+  };
+
+  const shareNote = (noteId: string) => {
+    // Simple share functionality - copy note content to clipboard
+    const noteToShare = notes.find(note => note.id === noteId) || archivedNotes.find(note => note.id === noteId);
+    if (noteToShare) {
+      let shareText = noteToShare.name;
+      
+      switch (noteToShare.type) {
+        case 'text':
+          shareText += noteToShare.description ? `\n\n${noteToShare.description}` : '';
+          break;
+        case 'list':
+          const listItems = noteToShare.items.map(item => 
+            `${item.completed ? '✓' : '○'} ${item.text}`
+          ).join('\n');
+          if (listItems) shareText += `\n\n${listItems}`;
+          break;
+        case 'audio':
+        case 'image':
+          shareText += noteToShare.description ? `\n\n${noteToShare.description}` : '';
+          break;
+      }
+      
+      navigator.clipboard.writeText(shareText).then(() => {
+        toast.success('Note content copied to clipboard!');
+      }).catch(() => {
+        toast.error('Failed to copy note content');
+      });
+    }
+  };
+
+  const addFolder = (folderData: Omit<NoteFolder, 'id' | 'createdAt' | 'noteIds'>, noteIdsToMove?: string[]) => {
+    const newFolder: NoteFolder = {
+      ...folderData,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+      lastNoteAddedAt: noteIdsToMove?.length ? new Date().toISOString() : undefined,
+      noteIds: noteIdsToMove || [],
+      pinned: false,
+      archived: false
+    };
+    const idsSet = new Set(noteIdsToMove || []);
+    setFolders((prev: NoteFolder[]) => {
+      const cleaned = noteIdsToMove?.length
+        ? prev.map(f => ({ ...f, noteIds: f.noteIds.filter(id => !idsSet.has(id)) }))
+        : prev;
+      return [...cleaned, newFolder];
+    });
+    toast.success(noteIdsToMove?.length ? `Folder created and ${noteIdsToMove.length} note(s) moved successfully!` : 'Folder created successfully!');
+  };
+
+  const updateFolder = (folderData: Omit<NoteFolder, 'id' | 'createdAt' | 'noteIds' | 'modifiedAt'>) => {
+    if (!selectedFolder) return;
+    setFolders((prev: NoteFolder[]) => prev.map(folder =>
+      folder.id === selectedFolder.id 
+        ? { 
+            ...folder, 
+            name: folderData.name,
+            description: folderData.description,
+            color: folderData.color,
+            pinned: folderData.pinned,
+            archived: folderData.archived,
+            modifiedAt: new Date().toISOString()
+          }
+        : folder
+    ));
+    setSelectedFolder(null);
+    setIsFolderEditorOpen(false);
+    toast.success('Folder updated successfully!');
+  };
+
+  const pinFolder = (folderId: string) => {
+    setFolders((prev: NoteFolder[]) => prev.map(folder =>
+      folder.id === folderId ? { ...folder, pinned: true } : folder
+    ));
+    toast.success('Folder pinned!');
+  };
+
+  const unpinFolder = (folderId: string) => {
+    setFolders((prev: NoteFolder[]) => prev.map(folder => 
+      folder.id === folderId ? { ...folder, pinned: false } : folder
+    ));
+    toast.success('Folder unpinned!');
+  };
+
+  const editFolder = (folderId: string) => {
+    const folder = folders.find(f => f.id === folderId);
+    if (folder) {
+      setSelectedFolder(folder);
+      setIsFolderEditorOpen(true);
+    }
+  };
+
+  const confirmArchiveFolder = (folderId: string) => {
+    setItemToArchive({ type: 'folder', id: folderId });
+    setArchiveDialogOpen(true);
+  };
+
+  const archiveFolder = (folderId: string) => {
+    const folderToArchive = folders.find(folder => folder.id === folderId);
+    if (folderToArchive) {
+      // Archive the folder
+      setArchivedFolders((prev: NoteFolder[]) => [...prev, { ...folderToArchive, archived: true }]);
+      setFolders((prev: NoteFolder[]) => prev.filter(folder => folder.id !== folderId));
+      
+      // Archive all notes in this folder
+      const notesToArchive = notes.filter(note => folderToArchive.noteIds.includes(note.id));
+      if (notesToArchive.length > 0) {
+        setArchivedNotes((prev: Note[]) => [...prev, ...notesToArchive]);
+        setNotes((prev: Note[]) => prev.filter(note => !folderToArchive.noteIds.includes(note.id)));
+      }
+      
+      toast.success('Folder and its notes archived successfully!');
+    }
+  };
+
+  const deleteFolder = (folderId: string) => {
+    setItemToDelete({ type: 'folder', id: folderId });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteFolder = (folderId: string) => {
+    const folderToDelete = folders.find(folder => folder.id === folderId) || 
+                          archivedFolders.find(folder => folder.id === folderId);
+    if (folderToDelete) {
+      // Get all notes from this folder
+      const notesInFolder = [...notes, ...archivedNotes].filter(note => folderToDelete.noteIds.includes(note.id));
+      
+      // Remove folder and its notes from all lists
+      setFolders((prev: NoteFolder[]) => prev.filter(folder => folder.id !== folderId));
+      setArchivedFolders((prev: NoteFolder[]) => prev.filter(folder => folder.id !== folderId));
+      setNotes((prev: Note[]) => prev.filter(note => !folderToDelete.noteIds.includes(note.id)));
+      setArchivedNotes((prev: Note[]) => prev.filter(note => !folderToDelete.noteIds.includes(note.id)));
+      
+      const noteCount = notesInFolder.length;
+      if (noteCount > 0) {
+        toast.success(`Folder and ${noteCount} note${noteCount === 1 ? '' : 's'} deleted permanently!`);
+      } else {
+        toast.success('Folder deleted permanently!');
+      }
+    }
+  };
+
+  const moveNoteToFolder = (noteId: string, folderId: string) => {
+    // Remove note from all folders and add to selected folder in a single update
+    setFolders((prev: NoteFolder[]) => 
+      prev.map(folder => {
+        if (folder.id === folderId) {
+          // Add note to target folder (avoid duplicates) and update lastNoteAddedAt
+          return {
+            ...folder,
+            lastNoteAddedAt: new Date().toISOString(),
+            noteIds: folder.noteIds.includes(noteId) ? folder.noteIds : [...folder.noteIds, noteId]
+          };
+        } else {
+          // Remove note from all other folders
+          return {
+            ...folder,
+            noteIds: folder.noteIds.filter(id => id !== noteId)
+          };
+        }
+      })
+    );
+
+    toast.success('Note moved to folder successfully!');
+  };
+
+  const handleMoveToFolder = (noteId: string) => {
+    setSelectedNoteForMove([noteId]);
+    setIsMoveToFolderOpen(true);
+  };
+
+  const handleFolderSelect = (folderId: string) => {
+    if (selectedNoteForMove && selectedNoteForMove.length > 0) {
+      // Batch move all selected notes to the folder
+      const idsSet = new Set(selectedNoteForMove);
+      setFolders((prev: NoteFolder[]) => 
+        prev.map(folder => {
+          if (folder.id === folderId) {
+            // Add notes to target folder (avoid duplicates) and update lastNoteAddedAt
+            const existingIds = new Set(folder.noteIds);
+            const newNoteIds = [...folder.noteIds, ...selectedNoteForMove.filter(id => !existingIds.has(id))];
+            return {
+              ...folder,
+              lastNoteAddedAt: new Date().toISOString(),
+              noteIds: newNoteIds
+            };
+          } else {
+            // Remove notes from all other folders
+            return {
+              ...folder,
+              noteIds: folder.noteIds.filter(id => !idsSet.has(id))
+            };
+          }
+        })
+      );
+      toast.success(`${selectedNoteForMove.length} note(s) moved to folder successfully!`);
+      setSelectedNoteForMove(null);
+      setIsMoveToFolderOpen(false);
+      clearSelection();
+      exitBulkMode();
+    }
+  };
+
+  const handleCreateFolderFromDialog = () => {
+    setIsMoveToFolderOpen(false);
+    setIsFolderCreatorOpen(true);
+    // Note: selectedNoteForMove will be used when folder is created
+  };
+
+  // Lock/Unlock functionality
+  const handleLockNote = (noteId: string) => {
+    setActiveNoteId(noteId);
+    setPinPadMode('set');
+    setShowPinPad(true);
+  };
+
+  const handleUnlockNote = (noteId: string) => {
+    const note = notes.find(n => n.id === noteId) || archivedNotes.find(n => n.id === noteId);
+    // Don't ask for PIN if note is currently being viewed or already unlocked in session
+    if (note?.locked && (unlockedNoteIds.includes(noteId) || noteToView?.id === noteId)) {
+      // Note is already unlocked in this session or being viewed, perform unlock directly
+      setNotes((prev: Note[]) => prev.map(note => 
+        note.id === noteId ? { ...note, locked: false, pin: undefined } : note
+      ));
+      setArchivedNotes((prev: Note[]) => prev.map(note => 
+        note.id === noteId ? { ...note, locked: false, pin: undefined } : note
+      ));
+      // Update noteToView if this is the currently viewed note
+      if (noteToView?.id === noteId) {
+        setNoteToView(prev => prev ? { ...prev, locked: false, pin: undefined } : null);
+      }
+      setUnlockedNoteIds(prev => prev.filter(id => id !== noteId));
+      toast.success('Note unlocked successfully!');
+      return;
+    }
+    
+    setActiveNoteId(noteId);
+    setPinPadMode('unlock');
+    setShowPinPad(true);
+    // Store the action to remove the lock after PIN verification
+    (window as any).pendingAction = () => {
+      setNotes((prev: Note[]) => prev.map(note => 
+        note.id === noteId ? { ...note, locked: false, pin: undefined } : note
+      ));
+      setArchivedNotes((prev: Note[]) => prev.map(note => 
+        note.id === noteId ? { ...note, locked: false, pin: undefined } : note
+      ));
+      setUnlockedNoteIds(prev => prev.filter(id => id !== noteId));
+      toast.success('Note unlocked successfully!');
+    };
+  };
+
+   const handleSetPin = (pin: string) => {
+     if (activeNoteId) {
+       const updatedNotes = notes.map(note =>
+         note.id === activeNoteId ? { ...note, locked: true, pin } : note
+       );
+       const updatedArchived = archivedNotes.map(note =>
+         note.id === activeNoteId ? { ...note, locked: true, pin } : note
+       );
+       setNotes(updatedNotes);
+       setArchivedNotes(updatedArchived);
+       // Update noteToView if this is the currently viewed note
+       if (noteToView?.id === activeNoteId) {
+         setNoteToView(prev => prev ? { ...prev, locked: true, pin } : null);
+       }
+       // Ensure the note is not considered unlocked in this session
+       setUnlockedNoteIds(prev => prev.filter(id => id !== activeNoteId));
+       toast.success('Note locked with PIN code');
+     }
+     setActiveNoteId(null);
+   };
+
+  const handleUnlockAttempt = (pin: string): boolean => {
+    if (activeNoteId) {
+      const note = notes.find(n => n.id === activeNoteId) || archivedNotes.find(n => n.id === activeNoteId);
+      if (note && note.pin === pin) {
+        // Unlock and allow access
+        toast.success('Note unlocked');
+        // Mark as unlocked for this session to prevent re-prompt within this view
+        setUnlockedNoteIds(prev => prev.includes(activeNoteId) ? prev : [...prev, activeNoteId]);
+
+        setActiveNoteId(null);
+        
+        // If there's a pending note to view, open it
+        if ((window as any).pendingNoteToView) {
+          setNoteToView((window as any).pendingNoteToView);
+          setIsNoteViewerOpen(true);
+          (window as any).pendingNoteToView = null;
+        }
+        
+        // Execute any other pending action after unlock
+        if ((window as any).pendingAction) {
+          (window as any).pendingAction();
+          (window as any).pendingAction = null;
+        }
+        return true;
+      } else {
+        // Return false to trigger shake animation in PinPadDialog
+        return false;
+      }
+    }
+    return false;
+  };
+
+  const checkLockBeforeAction = (noteId: string, action: () => void) => {
+    const note = notes.find(n => n.id === noteId) || archivedNotes.find(n => n.id === noteId);
+    // Don't ask for PIN if note is currently being viewed or already unlocked in session
+    const needsPin = note?.locked && !unlockedNoteIds.includes(noteId) && noteToView?.id !== noteId;
+    if (needsPin) {
+      setActiveNoteId(noteId);
+      setPinPadMode('unlock');
+      setShowPinPad(true);
+      // Store the action to execute after unlock
+      (window as any).pendingAction = action;
+    } else {
+      action();
+    }
+  };
+
+  const handleAddButtonClick = () => {
+    if (activeTab === 'folders') {
+      setIsFolderCreatorOpen(true);
+    } else {
+      // Close any open image capture or audio recorder popups
+      setShowImageCapturePopup(false);
+      setShowAudioRecorderPopup(false);
+      setShowNoteTypePopup(!showNoteTypePopup);
+    }
+  };
+
+  // Search functionality
+  const searchInNote = (note: Note, query: string): boolean => {
+    const searchQuery = parseSearchQuery(query);
+    
+    // 1. Check tag matches (if tags in query)
+    if (searchQuery.tags.length > 0) {
+      const noteTags = note.tags || [];
+      const tagMatch = searchQuery.operator === 'and'
+        ? searchQuery.tags.every(tag => noteTags.includes(tag))
+        : searchQuery.tags.some(tag => noteTags.includes(tag));
+      
+      if (!tagMatch) return false;
+    }
+    
+    // 2. Check text filters (if + filters exist)
+    if (searchQuery.textFilters.length > 0) {
+      const textMatch = searchQuery.textFilters.every(filter => {
+        const searchTerm = filter.toLowerCase();
+        if (note.name.toLowerCase().includes(searchTerm)) return true;
+        
+        switch (note.type) {
+          case 'text':
+            return note.description.toLowerCase().includes(searchTerm);
+          case 'list':
+            return note.items.some(item => item.text.toLowerCase().includes(searchTerm));
+          case 'audio':
+          case 'image':
+            return note.description?.toLowerCase().includes(searchTerm) || false;
+          default:
+            return false;
+        }
+      });
+      
+      if (!textMatch) return false;
+    }
+    
+    // 3. If no tags/filters, use existing search logic
+    if (searchQuery.tags.length === 0 && searchQuery.textFilters.length === 0) {
+      const searchTerm = query.toLowerCase();
+      if (note.name.toLowerCase().includes(searchTerm)) return true;
+      
+      switch (note.type) {
+        case 'text':
+          return note.description.toLowerCase().includes(searchTerm);
+        case 'list':
+          return note.items.some(item => item.text.toLowerCase().includes(searchTerm));
+        case 'audio':
+        case 'image':
+          return note.description?.toLowerCase().includes(searchTerm) || false;
+        default:
+          return false;
+      }
+    }
+    
+    return true;
+  };
+
+  const searchInFolder = (folder: NoteFolder, query: string): boolean => {
+    const searchTerm = query.toLowerCase();
+    if (folder.name.toLowerCase().includes(searchTerm) || 
+        (folder.description?.toLowerCase().includes(searchTerm) || false)) {
+      return true;
+    }
+    
+    // Check if any notes in folder match the search
+    const folderNotes = notes.filter(note => folder.noteIds.includes(note.id));
+    return folderNotes.some(note => searchInNote(note, query));
+  };
+
+  const filterNotes = (notesList: Note[]): Note[] => {
+    if (!searchQuery.trim()) return notesList;
+    return notesList.filter(note => searchInNote(note, searchQuery));
+  };
+
+  const filterFolders = (foldersList: NoteFolder[]): NoteFolder[] => {
+    if (!searchQuery.trim()) return foldersList;
+    return foldersList.filter(folder => searchInFolder(folder, searchQuery));
+  };
+
+  const sortNotes = (notesList: Note[]): Note[] => {
+    const sorted = [...notesList];
+    switch (sortType) {
+      case 'custom': {
+        // Sort by custom order, then by creation date for new notes
+        return sorted.sort((a, b) => {
+          const aIndex = customOrder.indexOf(a.id);
+          const bIndex = customOrder.indexOf(b.id);
+          
+          // If both notes are in manual order, sort by their positions
+          if (aIndex !== -1 && bIndex !== -1) {
+            return aIndex - bIndex;
+          }
+          
+          // If only one note is in manual order, it comes first
+          if (aIndex !== -1) return -1;
+          if (bIndex !== -1) return 1;
+          
+          // If neither is in manual order, sort by creation date (newest first)
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+      }
+      case 'title': {
+        const normalize = (s: string) =>
+          (s || '')
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '') // strip accents
+            .trim();
+
+        const hasTitle = (n: Note) => normalize(n.name).length > 0;
+
+        // 1) Titled notes: sorted by title respecting direction
+        const titled = sorted
+          .filter(hasTitle)
+          .sort((a, b) => {
+            const aTitle = normalize(a.name);
+            const bTitle = normalize(b.name);
+            const cmp = aTitle.localeCompare(bTitle, undefined, { sensitivity: 'base', numeric: true });
+            if (cmp !== 0) return sortDirection === 'asc' ? cmp : -cmp;
+            return sortDirection === 'asc' ? a.id.localeCompare(b.id) : b.id.localeCompare(a.id);
+          });
+
+        // 2) Titleless notes: sorted by creation date respecting direction
+        const titleless = sorted
+          .filter(n => !hasTitle(n))
+          .sort((a, b) => {
+            const aTime = new Date(a.createdAt).getTime();
+            const bTime = new Date(b.createdAt).getTime();
+            return sortDirection === 'asc' ? aTime - bTime : bTime - aTime;
+          });
+
+        return [...titled, ...titleless];
+      }
+      case 'dateCreated':
+        return sorted.sort((a, b) => {
+          const aTime = new Date(a.createdAt).getTime();
+          const bTime = new Date(b.createdAt).getTime();
+          return sortDirection === 'asc' ? aTime - bTime : bTime - aTime;
+        });
+      case 'dateModified':
+        return sorted.sort((a, b) => {
+          const aModified = new Date(a.modifiedAt || a.createdAt).getTime();
+          const bModified = new Date(b.modifiedAt || b.createdAt).getTime();
+          return sortDirection === 'asc' ? aModified - bModified : bModified - aModified;
+        });
+      default:
+        return sorted;
+    }
+  };
+
+  // Auto-scroll functionality
+  const checkAutoScroll = (clientY: number) => {
+    const scrollThreshold = 100; // pixels from edge to trigger scroll
+    const scrollSpeed = 5; // pixels per scroll step
+    const windowHeight = window.innerHeight;
+    
+    // Clear existing auto-scroll
+    if (autoScrollInterval) {
+      clearInterval(autoScrollInterval);
+      setAutoScrollInterval(null);
+    }
+    
+    // Check if near top edge
+    if (clientY < scrollThreshold) {
+      const interval = setInterval(() => {
+        const currentScroll = window.pageYOffset;
+        if (currentScroll > 0) {
+          window.scrollBy(0, -scrollSpeed);
+        } else {
+          clearInterval(interval);
+          setAutoScrollInterval(null);
+        }
+      }, 16); // ~60fps
+      setAutoScrollInterval(interval);
+    }
+    // Check if near bottom edge
+    else if (clientY > windowHeight - scrollThreshold) {
+      const interval = setInterval(() => {
+        const currentScroll = window.pageYOffset;
+        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        if (currentScroll < maxScroll) {
+          window.scrollBy(0, scrollSpeed);
+        } else {
+          clearInterval(interval);
+          setAutoScrollInterval(null);
+        }
+      }, 16); // ~60fps
+      setAutoScrollInterval(interval);
+    }
+  };
+
+  // Drag and drop handlers - supporting both mouse and touch with real-time reordering
+  const handleDragStart = (
+    noteId: string,
+    e?: React.MouseEvent | React.TouchEvent,
+    startPos?: { x: number; y: number }
+  ) => {
+    if (e) {
+      e.preventDefault();
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+      setDragStartPos({ x: clientX, y: clientY });
+      setCurrentDragPos({ x: clientX, y: clientY });
+    } else if (startPos) {
+      setDragStartPos(startPos);
+      setCurrentDragPos(startPos);
+    }
+    
+    // Lock page scrolling and prevent pull-to-refresh
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+    document.body.style.overscrollBehavior = 'none';
+    document.documentElement.style.overscrollBehavior = 'none';
+    
+    setDraggedNote(noteId);
+    setIsDragging(true);
+    setIsNoteSelected(null); // Clear selection visual when dragging starts
+    setDragInsertIndex(-1); // Reset insert index
+
+    // Add global mouse/touch move listeners for real-time tracking
+     const handleMove = (e: MouseEvent | TouchEvent) => {
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+      
+      setCurrentDragPos({ x: clientX, y: clientY });
+      checkAutoScroll(clientY);
+      
+      // Calculate insertion index based on cursor position
+      const currentNotes = sortType === 'custom' ? sortNotes(notes) : notes;
+      const noteElements = document.querySelectorAll('[data-note-id]');
+      let insertIndex = -1;
+      
+      // Find where to insert based on Y position for list view or both X,Y for grid views
+      if (viewType === 'list') {
+        // For list view, use vertical positioning
+        for (let i = 0; i < noteElements.length; i++) {
+          const element = noteElements[i] as HTMLElement;
+          const rect = element.getBoundingClientRect();
+          const noteId = element.getAttribute('data-note-id');
+          
+          if (noteId === noteId) continue; // Skip the dragged note
+          
+          if (clientY < rect.top + rect.height / 2) {
+            insertIndex = currentNotes.findIndex(n => n.id === noteId);
+            break;
+          }
+        }
+      } else {
+        // For grid views, find closest position
+        let minDistance = Infinity;
+        for (let i = 0; i < noteElements.length; i++) {
+          const element = noteElements[i] as HTMLElement;
+          const rect = element.getBoundingClientRect();
+          const noteElementId = element.getAttribute('data-note-id');
+          
+          if (noteElementId === noteId) continue; // Skip the dragged note
+          
+          const centerX = rect.left + rect.width / 2;
+          const centerY = rect.top + rect.height / 2;
+          const distance = Math.sqrt(Math.pow(clientX - centerX, 2) + Math.pow(clientY - centerY, 2));
+          
+          if (distance < minDistance) {
+            minDistance = distance;
+            const noteIndex = currentNotes.findIndex(n => n.id === noteElementId);
+            // Determine if we should insert before or after based on position
+            insertIndex = clientY > centerY ? noteIndex + 1 : noteIndex;
+          }
+        }
+      }
+      
+      // If no specific insertion point found, insert at the end
+      if (insertIndex === -1) {
+        insertIndex = currentNotes.length;
+      }
+      
+      setDragInsertIndex(insertIndex);
+    };
+
+    const handleEnd = () => {
+      document.removeEventListener('mousemove', handleMove);
+      document.removeEventListener('touchmove', handleMove);
+      document.removeEventListener('mouseup', handleEnd);
+      document.removeEventListener('touchend', handleEnd);
+      commitDragOperation();
+    };
+
+    document.addEventListener('mousemove', handleMove, { passive: false });
+    document.addEventListener('touchmove', handleMove, { passive: false });
+    document.addEventListener('mouseup', handleEnd, { once: true });
+    document.addEventListener('touchend', handleEnd, { once: true });
+  };
+
+
+  const commitDragOperation = () => {
+    if (draggedNote && dragInsertIndex >= 0) {
+      const currentNotes = sortType === 'custom' ? sortNotes(notes) : notes;
+      const draggedIndex = currentNotes.findIndex(n => n.id === draggedNote);
+      
+      if (draggedIndex !== -1 && draggedIndex !== dragInsertIndex) {
+        const newOrder = [...currentNotes.map(n => n.id)];
+        // Remove dragged item
+        newOrder.splice(draggedIndex, 1);
+        // Insert at new position (adjust index if we removed an item before the insertion point)
+        const adjustedInsertIndex = dragInsertIndex > draggedIndex ? dragInsertIndex - 1 : dragInsertIndex;
+        newOrder.splice(adjustedInsertIndex, 0, draggedNote);
+        
+        setCustomOrder(newOrder);
+        
+        // Switch to custom sort if not already selected
+        if (sortType !== 'custom') {
+          setSortType('custom');
+          toast.success('Switched to custom ordering');
+        }
+      }
+    }
+    
+    handleDragEnd();
+  };
+
+  const handleDragEnd = () => {
+    // Clear auto-scroll
+    if (autoScrollInterval) {
+      clearInterval(autoScrollInterval);
+      setAutoScrollInterval(null);
+    }
+    
+    // Restore page scrolling
+    document.body.style.overflow = '';
+    document.body.style.touchAction = '';
+    document.body.style.overscrollBehavior = '';
+    document.documentElement.style.overscrollBehavior = '';
+    
+    setDraggedNote(null);
+    setDraggedOverNote(null);
+    setIsDragging(false);
+    setDragStartPos(null);
+    setCurrentDragPos(null);
+    setIsNoteSelected(null);
+    setDragPreviewOrder([]);
+    setDragInsertIndex(-1);
+  };
+  
+  // Long-press helpers
+  const clearLongPressTimer = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    pendingNoteIdRef.current = null;
+    setIsNoteSelected(null); // Clear selection visual
+  };
+
+  const startLongPress = (
+    noteId: string,
+    startX: number,
+    startY: number,
+    source: 'mouse' | 'touch'
+  ) => {
+    // Reset and store starting state
+    clearLongPressTimer();
+    pendingNoteIdRef.current = noteId;
+    pressStartPosRef.current = { x: startX, y: startY };
+
+    // Cleanup listeners helper
+    const cleanup = () => {
+      clearLongPressTimer();
+      document.removeEventListener('mousemove', onMouseMove as any);
+      document.removeEventListener('mouseup', onMouseUp as any);
+      document.removeEventListener('mouseleave', onMouseUp as any);
+      document.removeEventListener('touchmove', onTouchMove as any);
+      document.removeEventListener('touchend', onTouchEnd as any);
+      document.removeEventListener('touchcancel', onTouchEnd as any);
+    };
+
+    const trigger = () => {
+      cleanup();
+      const pos = pressStartPosRef.current ?? { x: startX, y: startY };
+      // Show selection visual feedback first
+      setIsNoteSelected(noteId);
+      // Small delay before starting drag for visual feedback
+      setTimeout(() => {
+        handleDragStart(noteId, undefined, pos);
+      }, 100);
+      if ('vibrate' in navigator) {
+        try { (navigator as any).vibrate?.(50); } catch {}
+      }
+    };
+
+    longPressTimerRef.current = setTimeout(trigger, LONG_PRESS_DELAY);
+
+    function onMouseMove(ev: MouseEvent) {
+      if (!pressStartPosRef.current) return;
+      const dx = Math.abs(ev.clientX - pressStartPosRef.current.x);
+      const dy = Math.abs(ev.clientY - pressStartPosRef.current.y);
+      if (dx > LONG_PRESS_MOVE_THRESHOLD || dy > LONG_PRESS_MOVE_THRESHOLD) {
+        cleanup();
+      }
+    }
+    function onMouseUp() { cleanup(); }
+    function onTouchMove(ev: TouchEvent) {
+      if (!pressStartPosRef.current) return;
+      const t = ev.touches[0];
+      if (!t) return;
+      const dx = Math.abs(t.clientX - pressStartPosRef.current.x);
+      const dy = Math.abs(t.clientY - pressStartPosRef.current.y);
+      if (dx > LONG_PRESS_MOVE_THRESHOLD || dy > LONG_PRESS_MOVE_THRESHOLD) {
+        cleanup();
+      }
+    }
+    function onTouchEnd() { cleanup(); }
+
+    if (source === 'mouse') {
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp, { once: true });
+      document.addEventListener('mouseleave', onMouseUp, { once: true });
+    } else {
+      document.addEventListener('touchmove', onTouchMove, { passive: true });
+      document.addEventListener('touchend', onTouchEnd, { once: true });
+      document.addEventListener('touchcancel', onTouchEnd, { once: true });
+    }
+  };
+
+  // Mouse event handlers
+  const handleMouseDown = (noteId: string, e: React.MouseEvent) => {
+    if (sortType !== 'custom') return;
+    startLongPress(noteId, e.clientX, e.clientY, 'mouse');
+  };
+
+  // Touch event handlers
+  const handleTouchStart = (noteId: string, e: React.TouchEvent) => {
+    if (sortType !== 'custom') return;
+    const touch = e.touches[0];
+    if (!touch) return;
+    startLongPress(noteId, touch.clientX, touch.clientY, 'touch');
+  };
+
+  const getGridClassName = () => {
+    switch (viewType) {
+      case 'medium':
+        return 'grid grid-cols-3 gap-2';
+      case 'large':
+        return 'grid grid-cols-2 gap-2';
+      case 'list':
+      default:
+        return 'grid grid-cols-1 gap-2';
+    }
+  };
+
+  const sortFolders = (foldersList: NoteFolder[]): NoteFolder[] => {
+    const sorted = [...foldersList];
+    switch (folderSortType) {
+      case 'name':
+        return sorted.sort((a, b) => a.name.localeCompare(b.name));
+      case 'dateCreated':
+        return sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      case 'dateModified':
+        return sorted.sort((a, b) => new Date(b.modifiedAt || b.createdAt).getTime() - new Date(a.modifiedAt || a.createdAt).getTime());
+      case 'recentlyAdded':
+        return sorted.sort((a, b) => new Date(b.lastNoteAddedAt || b.createdAt).getTime() - new Date(a.lastNoteAddedAt || a.createdAt).getTime());
+      case 'noteCount':
+        return sorted.sort((a, b) => b.noteIds.length - a.noteIds.length);
+      default:
+        return sorted;
+    }
+  };
+
+  const renderFolderList = (folderList: NoteFolder[], isArchived: boolean) => {
+    const filteredFolders = filterFolders(folderList);
+    const sortedFolders = sortFolders(filteredFolders);
+    // Sort: pinned folders first, then by selected sort type
+    const finalSortedFolders = sortedFolders.sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      return 0;
+    });
+
+    if (finalSortedFolders.length === 0) {
+      return (
+        <Card>
+          <CardContent className="text-center py-8">
+            <Button 
+              onClick={handleAddButtonClick}
+              className="h-12 px-8 text-base font-medium rounded-full bg-black text-white hover:bg-black/90"
+            >
+              Create Folder
+              <FolderOpen className="ml-2" size={20} />
+            </Button>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+        {finalSortedFolders.map((folder: NoteFolder) => (
+          <NoteFolderCard
+            key={folder.id}
+            folder={folder}
+            notes={isArchived ? archivedNotes : notes}
+            searchQuery={searchQuery}
+            onToggleListItem={toggleListItem}
+            onArchiveNote={confirmArchiveNote}
+            onDeleteNote={deleteNote}
+            onPinNote={pinNote}
+            onUnpinNote={unpinNote}
+            onCopyNote={copyNote}
+            onMoveToFolder={handleMoveToFolder}
+            onOpenNote={openNoteViewer}
+            onLockNote={handleLockNote}
+            onUnlockNote={handleUnlockNote}
+            onPinFolder={() => pinFolder(folder.id)}
+            onUnpinFolder={() => unpinFolder(folder.id)}
+            onEditFolder={() => editFolder(folder.id)}
+            onArchiveFolder={!isArchived ? () => confirmArchiveFolder(folder.id) : undefined}
+            onDeleteFolder={() => deleteFolder(folder.id)}
+            onRestoreFolder={isArchived ? () => unarchiveFolder(folder.id) : undefined}
+            showBulkCheckbox={isBulkMode}
+            isBulkSelected={selectedItems.has(folder.id)}
+            onBulkSelect={toggleItem}
+          />
+        ))}
+      </div>
+    );
+  };
+
+  const renderArchivedContent = () => {
+    return (
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <h3 className="text-lg font-medium">Archived Notes</h3>
+          {archivedNotes.length > 0 ? renderNoteList(archivedNotes, {
+            onEdit: openNoteEditor,
+            onUnarchive: unarchiveNote,
+            onDelete: deleteNote,
+            onPin: pinNote,
+            onUnpin: unpinNote,
+            onCopy: copyNote,
+            onMove: handleMoveToFolder,
+            onView: openNoteViewer,
+            isArchived: true,
+            onToggleListItem: toggleListItem,
+            onLock: handleLockNote,
+            onUnlock: handleUnlockNote
+          }) : (
+            <Card>
+              <CardContent className="text-center py-8">
+                <p className="text-muted-foreground">No archived notes</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+        
+        <div className="space-y-2">
+          <h3 className="text-lg font-medium">Archived Folders</h3>
+          {archivedFolders.length > 0 ? renderFolderList(archivedFolders, true) : (
+            <Card>
+              <CardContent className="text-center py-8">
+                <p className="text-muted-foreground">No archived folders</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderNoteList = (notesList: Note[], options: any) => {
+    const filteredNotes = filterNotes(notesList);
+    const sortedNotes = sortNotes(filteredNotes);
+    const pinnedNotes = sortedNotes.filter(note => note.pinned);
+    const unpinnedNotes = sortedNotes.filter(note => !note.pinned);
+
+    if (filteredNotes.length === 0) {
+      return (
+        <Card>
+          <CardContent className="text-center py-8">
+            {searchQuery.trim() ? (
+              <p className="text-muted-foreground">No matching notes found.</p>
+            ) : (
+              <Button 
+                onClick={handleAddButtonClick}
+                className="h-12 px-8 text-base font-medium rounded-full bg-black text-white hover:bg-black/90"
+              >
+                Create Note
+                <Notebook className="ml-2" size={20} />
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <div className={getGridClassName()}>
+        {[...pinnedNotes, ...unpinnedNotes].map((note: Note, index: number) => {
+          const draggedIndex = draggedNote ? [...pinnedNotes, ...unpinnedNotes].findIndex(n => n.id === draggedNote) : -1;
+          
+          // Calculate transform for gap effect
+          let gapTransform = '';
+          if (isDragging && draggedNote && dragInsertIndex >= 0) {
+            // Don't apply gap transform to the dragged note itself
+            if (note.id !== draggedNote) {
+              if (viewType === 'list') {
+                // For list view, create vertical gap
+                if (index >= dragInsertIndex && (draggedIndex === -1 || index < draggedIndex)) {
+                  gapTransform = 'translateY(80px)'; // Height of a typical note card
+                } else if (index > dragInsertIndex && draggedIndex !== -1 && index > draggedIndex) {
+                  gapTransform = 'translateY(80px)';
+                }
+              } else {
+                // For grid views, the gap effect is more complex based on grid layout
+                const itemsPerRow = viewType === 'medium' ? 3 : 2;
+                const draggedRow = Math.floor(draggedIndex / itemsPerRow);
+                const insertRow = Math.floor(dragInsertIndex / itemsPerRow);
+                const currentRow = Math.floor(index / itemsPerRow);
+                
+                if (currentRow >= insertRow && (draggedIndex === -1 || currentRow < draggedRow)) {
+                  const noteHeight = viewType === 'medium' ? 200 : 240;
+                  gapTransform = `translateY(${noteHeight + 16}px)`; // Add gap margin
+                } else if (currentRow > insertRow && draggedIndex !== -1 && currentRow > draggedRow) {
+                  const noteHeight = viewType === 'medium' ? 200 : 240;
+                  gapTransform = `translateY(${noteHeight + 16}px)`;
+                }
+              }
+            }
+          }
+          
+          return (
+            <div
+              key={note.id}
+              style={{
+                transform: draggedNote === note.id && currentDragPos && dragStartPos ? 
+                  `translate(${currentDragPos.x - dragStartPos.x}px, ${currentDragPos.y - dragStartPos.y}px)` : 
+                  gapTransform,
+                transition: draggedNote === note.id ? 'none' : 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                zIndex: draggedNote === note.id ? 1000 : 1
+              }}
+            >
+              <NoteCard
+                note={note}
+                onClick={() => isBulkMode ? toggleItem(note.id) : openNoteViewer(note)}
+                onEdit={() => openNoteEditor(note)}
+                onToggleListItem={toggleListItem}
+                onArchive={options.onArchive}
+                onUnarchive={options.onUnarchive}
+                onDelete={deleteNote}
+                onPin={options.onPin}
+                onUnpin={options.onUnpin}
+                onCopy={options.onCopy}
+                onShare={() => {}}
+                onMoveToFolder={options.onMove}
+                onLock={options.onLock}
+                onUnlock={options.onUnlock}
+                isArchived={options.isArchived}
+                searchQuery={searchQuery}
+                viewType={viewType}
+                draggable={sortType === 'custom' && !isBulkMode}
+                isDragged={draggedNote === note.id}
+                isDraggedOver={draggedOverNote === note.id}
+                isSelected={isNoteSelected === note.id}
+                onMouseDown={(e) => handleMouseDown(note.id, e)}
+                onTouchStart={(e) => handleTouchStart(note.id, e)}
+                showBulkCheckbox={isBulkMode}
+                isBulkSelected={selectedItems.has(note.id)}
+                onBulkSelect={toggleItem}
+              />
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // Get current bulk context based on active tab
+  const getBulkContext = (): BulkActionContext => {
+    if (activeTab === 'archived') return 'archivedNotes';
+    if (activeTab === 'folders') return 'noteFolders';
+    return 'notes';
+  };
+
+  // Get all item IDs for current view
+  // Helper functions for archived selection
+  const getArchivedNoteIds = (): string[] => archivedNotes.map(n => n.id);
+  const getArchivedFolderIds = (): string[] => archivedFolders.map(f => f.id);
+
+  // Computed selection states for archived tab
+  const isAllArchivedNotesSelected = archivedNotes.length > 0 && 
+    archivedNotes.every(n => selectedItems.has(n.id));
+  const isAllArchivedFoldersSelected = archivedFolders.length > 0 && 
+    archivedFolders.every(f => selectedItems.has(f.id));
+
+  const getAllItemIds = (): string[] => {
+    if (activeTab === 'archived') {
+      return [...archivedNotes.map(n => n.id), ...archivedFolders.map(f => f.id)];
+    }
+    if (activeTab === 'folders') {
+      return folders.map(f => f.id);
+    }
+    return filterNotes(notes).map(n => n.id);
+  };
+
+  // Handle bulk actions
+  const handleBulkAction = (action: BulkActionType, color?: string) => {
+    const ids = Array.from(selectedItems);
+    const idSet = new Set(ids);
+    
+    switch (action) {
+      case 'all':
+        toggleAll(getAllItemIds());
+        break;
+      case 'allItems': {
+        // Toggle selection of archived notes only
+        const noteIds = getArchivedNoteIds();
+        const allNotesSelected = noteIds.every(id => selectedItems.has(id));
+        if (allNotesSelected) {
+          // Deselect all notes (keep folders selected)
+          const folderIds = getArchivedFolderIds();
+          const currentFolderSelections = Array.from(selectedItems).filter(id => folderIds.includes(id));
+          if (currentFolderSelections.length > 0) {
+            toggleAll(currentFolderSelections);
+          } else {
+            clearSelection();
+          }
+        } else {
+          // Select all notes (keep existing folder selections)
+          const currentFolderSelections = Array.from(selectedItems).filter(id => 
+            archivedFolders.some(f => f.id === id));
+          toggleAll([...currentFolderSelections, ...noteIds]);
+        }
+        break;
+      }
+      case 'allFolders': {
+        // Toggle selection of archived folders only
+        const folderIds = getArchivedFolderIds();
+        const allFoldersSelected = folderIds.every(id => selectedItems.has(id));
+        if (allFoldersSelected) {
+          // Deselect all folders (keep notes selected)
+          const noteIds = getArchivedNoteIds();
+          const currentNoteSelections = Array.from(selectedItems).filter(id => noteIds.includes(id));
+          if (currentNoteSelections.length > 0) {
+            toggleAll(currentNoteSelections);
+          } else {
+            clearSelection();
+          }
+        } else {
+          // Select all folders (keep existing note selections)
+          const currentNoteSelections = Array.from(selectedItems).filter(id => 
+            archivedNotes.some(n => n.id === id));
+          toggleAll([...currentNoteSelections, ...folderIds]);
+        }
+        break;
+      }
+      case 'pin':
+        // Batch update notes - toggle pin state
+        setNotes(prev => prev.map(note => 
+          idSet.has(note.id) ? { ...note, pinned: !note.pinned } : note
+        ));
+        // Batch update folders
+        setFolders(prev => prev.map(folder => 
+          idSet.has(folder.id) ? { ...folder, pinned: !folder.pinned } : folder
+        ));
+        clearSelection();
+        exitBulkMode();
+        toast.success(`${ids.length} items updated`);
+        break;
+        break;
+      case 'lock':
+        // For bulk lock, we'll lock all selected notes
+        ids.forEach(id => {
+          const note = notes.find(n => n.id === id);
+          if (note && !note.locked) {
+            setActiveNoteId(id);
+            setPinPadMode('set');
+            setShowPinPad(true);
+          }
+        });
+        break;
+      case 'archive':
+        // Show confirmation dialog for bulk archive
+        setPendingBulkAction({ ids, action: 'archive' });
+        setBulkArchiveDialogOpen(true);
+        break;
+      case 'delete':
+        // Show confirmation dialog for bulk delete
+        setPendingBulkAction({ ids, action: 'delete' });
+        setBulkDeleteDialogOpen(true);
+        break;
+      case 'restore': {
+        const appendUniqueById = <T extends { id: string }>(prev: T[], items: T[]) => {
+          const existing = new Set(prev.map(i => i.id));
+          const next = [...prev];
+          for (const item of items) {
+            if (!existing.has(item.id)) {
+              existing.add(item.id);
+              next.push(item);
+            }
+          }
+          return next;
+        };
+
+        const foldersToRestore = archivedFolders.filter(f => idSet.has(f.id));
+        const notesToRestoreAll = archivedNotes.filter(n => idSet.has(n.id));
+        const noteIdsRestoredViaFolders = new Set<string>();
+
+        // --- Restore folders (and their still-archived notes) ---
+        if (foldersToRestore.length > 0) {
+          const noteIdsAssignedElsewhere = new Set<string>(folders.flatMap(f => f.noteIds));
+
+          // sanitize noteIds to avoid duplicating notes across folders
+          const sanitizedFolders = foldersToRestore.map(f => ({
+            ...f,
+            archived: false,
+            noteIds: f.noteIds.filter(id => !noteIdsAssignedElsewhere.has(id)),
+          }));
+
+          sanitizedFolders.forEach(f => f.noteIds.forEach(id => noteIdsRestoredViaFolders.add(id)));
+
+          const notesFromFoldersToRestore = archivedNotes
+            .filter(n => noteIdsRestoredViaFolders.has(n.id))
+            // Strip originalFolderId when restoring to active notes list
+            .map(n => {
+              const { originalFolderId, ...restored } = n;
+              return restored;
+            });
+
+          setFolders(prev => [...prev, ...sanitizedFolders]);
+          setArchivedFolders(prev => prev.filter(f => !idSet.has(f.id)));
+
+          if (notesFromFoldersToRestore.length > 0) {
+            setNotes(prev => appendUniqueById(prev, notesFromFoldersToRestore));
+            setArchivedNotes(prev => prev.filter(n => !noteIdsRestoredViaFolders.has(n.id)));
+          }
+        }
+
+        // --- Restore individually-selected notes (preserving original folder association) ---
+        const notesToRestore = notesToRestoreAll.filter(n => !noteIdsRestoredViaFolders.has(n.id));
+        if (notesToRestore.length > 0) {
+          const restoredNotes = notesToRestore.map(note => {
+            const { originalFolderId, ...restoredNote } = note;
+            return restoredNote;
+          });
+
+          setNotes(prev => appendUniqueById(prev, restoredNotes));
+          setArchivedNotes(prev => prev.filter(n => !(idSet.has(n.id) && !noteIdsRestoredViaFolders.has(n.id))));
+
+          const folderUpdates: Record<string, string[]> = {};
+          notesToRestore.forEach(note => {
+            if (note.originalFolderId) {
+              if (!folderUpdates[note.originalFolderId]) folderUpdates[note.originalFolderId] = [];
+              folderUpdates[note.originalFolderId].push(note.id);
+            }
+          });
+
+          if (Object.keys(folderUpdates).length > 0) {
+            setFolders(prev => prev.map(folder => {
+              const noteIdsToAdd = folderUpdates[folder.id];
+              if (noteIdsToAdd) {
+                return { ...folder, noteIds: Array.from(new Set([...folder.noteIds, ...noteIdsToAdd])) };
+              }
+              return folder;
+            }));
+          }
+        }
+
+        clearSelection();
+        exitBulkMode();
+        toast.success(`${ids.length} items restored`);
+        break;
+      }
+      case 'copy':
+        // Batch copy notes
+        const copiedNotes = notes.filter(n => idSet.has(n.id)).map(note => ({
+          ...note,
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          name: `${note.name} (Copy)`,
+          createdAt: new Date().toISOString(),
+          pinned: false
+        }));
+        setNotes(prev => [...prev, ...copiedNotes]);
+        clearSelection();
+        exitBulkMode();
+        toast.success(`${ids.length} items copied`);
+        break;
+      case 'move':
+        if (ids.length > 0) {
+          setSelectedNoteForMove(ids);
+          setIsMoveToFolderOpen(true);
+        }
+        break;
+      case 'color':
+        if (color) {
+          // Batch update colors
+          setNotes(prev => prev.map(n => idSet.has(n.id) ? { ...n, color } : n));
+          setFolders(prev => prev.map(f => idSet.has(f.id) ? { ...f, color } : f));
+          clearSelection();
+          exitBulkMode();
+          toast.success(`Color applied to ${ids.length} items`);
+        }
+        break;
+    }
+  };
+
+  const { t } = useLanguage();
+
+  return (
+    <Layout 
+      showSearch={true}
+      searchQuery={searchQuery}
+      onSearchChange={setSearchQuery}
+      isBulkMode={isBulkMode}
+      pageTitle={t('notes')}
+    >
+      <div {...swipeHandlers}>
+        {!isBulkMode && activeTab !== 'archived' && (
+          <Button 
+            variant="ghost"
+            size="icon" 
+            onClick={handleAddButtonClick} 
+            className={cn(
+              "fixed bottom-20 right-2 h-14 w-14 rounded-full z-30 bg-black text-white hover:bg-black hover:text-white",
+              "transition-all duration-300 ease-out",
+              scrollDirection === 'down' 
+                ? "opacity-0 translate-y-4 pointer-events-none" 
+                : "opacity-100 translate-y-0"
+            )}
+          >
+            {showNoteTypePopup ? <X size={24} /> : <Plus size={24} />}
+          </Button>
+        )}
+
+        <Tabs value={activeTab} onValueChange={(tab) => { setActiveTab(tab); exitBulkMode(); }} className="flex-1">
+        <div className="fixed top-16 left-0 right-0 z-40 px-2">
+          <div className="flex items-center justify-between py-2">
+          <SlidingTabsList 
+            activeValue={activeTab} 
+            values={['all-notes', 'folders', 'archived']}
+          >
+            <TabsTrigger value="all-notes">Notes</TabsTrigger>
+            <TabsTrigger value="folders">Folders</TabsTrigger>
+            <TabsTrigger value="archived">Archived</TabsTrigger>
+          </SlidingTabsList>
+          <div className="flex items-center gap-1">
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className="rounded-full hover:bg-black hover:text-white focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:!size-6 data-[state=open]:bg-black data-[state=open]:text-white"
+              data-state={isBulkMode ? "open" : "closed"}
+              onClick={(e) => { toggleBulkMode(); e.currentTarget.blur(); }}
+              onMouseDown={(e) => e.preventDefault()}
+            >
+              <FileStack className="h-6 w-6" />
+            </Button>
+            {activeTab === 'folders' ? (
+              <NoteFolderViewSettings
+                sortType={folderSortType}
+                sortDirection={folderSortDirection}
+                onSortTypeChange={setFolderSortType}
+                onSortDirectionChange={setFolderSortDirection}
+              />
+            ) : (
+              <ViewSettings
+                viewType={viewType}
+                sortType={sortType}
+                sortDirection={sortDirection}
+                onViewTypeChange={setViewType}
+                onSortTypeChange={setSortType}
+                onSortDirectionChange={setSortDirection}
+              />
+            )}
+          </div>
+          </div>
+        </div>
+
+        <TabsContent value="all-notes" className="mt-14 flex-1 overflow-y-auto">
+          {renderNoteList(filterNotes(notes), { 
+            onEdit: openNoteEditor,
+            onArchive: confirmArchiveNote,
+            onDelete: deleteNote,
+            onPin: pinNote,
+            onUnpin: unpinNote,
+            onCopy: copyNote,
+            onMove: handleMoveToFolder,
+            onView: openNoteViewer,
+            onToggleListItem: toggleListItem,
+            onLock: handleLockNote,
+            onUnlock: handleUnlockNote
+          })}
+        </TabsContent>
+        
+        <TabsContent value="folders" className="mt-14 flex-1 overflow-y-auto">
+          {renderFolderList(folders, false)}
+        </TabsContent>
+
+        <TabsContent value="archived" className="mt-14 flex-1 overflow-y-auto">
+          <div className="space-y-2">
+            {renderArchivedContent()}
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      <NoteTypePopup
+        isOpen={showNoteTypePopup}
+        onTypeSelect={handleTypeSelect}
+        onClose={() => setShowNoteTypePopup(false)}
+      />
+
+      <ImageCapturePopup
+        isOpen={showImageCapturePopup}
+        onImageSelect={handleImageSelect}
+        onClose={() => setShowImageCapturePopup(false)}
+      />
+
+      <AudioRecorderPopup
+        isOpen={showAudioRecorderPopup}
+        onRecordingComplete={handleAudioRecordingComplete}
+        onClose={() => setShowAudioRecorderPopup(false)}
+      />
+
+      <NoteFolderCreator
+        isOpen={isFolderCreatorOpen}
+        onClose={() => {
+          setIsFolderCreatorOpen(false);
+          setSelectedNoteForMove(null);
+        }}
+        onSave={(folderData) => {
+          addFolder(folderData, selectedNoteForMove || undefined);
+          setSelectedNoteForMove(null);
+          setIsFolderCreatorOpen(false);
+        }}
+      />
+
+      <NoteFolderEditor
+        isOpen={isFolderEditorOpen}
+        onClose={() => {
+          setIsFolderEditorOpen(false);
+          setSelectedFolder(null);
+        }}
+        onSave={updateFolder}
+        initialFolder={selectedFolder || undefined}
+      />
+
+       <NoteViewer
+         key={noteToView?.id || (isNewNote ? 'new' : 'viewer')}
+
+         note={noteToView}
+         isOpen={isNoteViewerOpen}
+         isNewNote={isNewNote}
+         onClose={() => {
+           setIsNoteViewerOpen(false);
+           if (noteToView?.locked) {
+             // Always re-lock in session on close
+             setUnlockedNoteIds(prev => prev.filter(id => id !== noteToView.id));
+           }
+           setNoteToView(null);
+           setIsNewNote(false);
+         }}
+         onToggleListItem={toggleListItem}
+         onSave={saveNoteFromViewer}
+         onPin={(noteId) => pinNote(noteId)}
+         onUnpin={(noteId) => unpinNote(noteId)}
+         onCopy={(noteId) => copyNote(noteId)}
+         onShare={(noteId) => shareNote(noteId)}
+         onMoveToFolder={(noteId) => handleMoveToFolder(noteId)}
+         onArchive={(noteId) => confirmArchiveNote(noteId)}
+         onUnarchive={(noteId) => unarchiveNote(noteId)}
+         onDelete={(noteId) => deleteNote(noteId)}
+         onLock={handleLockNote}
+         onUnlock={handleUnlockNote}
+       />
+
+      <PinPadDialog
+        isOpen={showPinPad}
+        onClose={() => setShowPinPad(false)}
+        onSubmit={pinPadMode === 'set' ? handleSetPin : handleUnlockAttempt}
+        mode={pinPadMode}
+      />
+
+      <MoveToNoteFolderDialog
+        isOpen={isMoveToFolderOpen}
+        onClose={() => {
+          setIsMoveToFolderOpen(false);
+          setSelectedNoteForMove(null);
+        }}
+        folders={folders}
+        onSelectFolder={handleFolderSelect}
+        onCreateNewFolder={handleCreateFolderFromDialog}
+        currentFolderId={selectedNoteForMove?.length === 1 ? folders.find(f => f.noteIds.includes(selectedNoteForMove[0]))?.id : undefined}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title={`Delete ${itemToDelete?.type === 'note' ? 'Note' : 'Folder'}`}
+        description={`Are you sure you want to permanently delete this ${itemToDelete?.type}?${itemToDelete?.type === 'folder' ? ' All notes in this folder will also be deleted.' : ''} This action cannot be undone.`}
+        action="delete"
+        onCancel={() => {
+          // If cancelling deletion of a locked note, re-lock it by removing from unlocked list
+          if (itemToDelete?.type === 'note') {
+            const note = notes.find(n => n.id === itemToDelete.id) || archivedNotes.find(n => n.id === itemToDelete.id);
+            if (note?.locked) {
+              setUnlockedNoteIds(prev => prev.filter(id => id !== itemToDelete.id));
+            }
+          }
+          setItemToDelete(null);
+        }}
+        onConfirm={() => {
+          if (itemToDelete) {
+            if (itemToDelete.type === 'note') {
+              confirmDeleteNote(itemToDelete.id);
+            } else {
+              confirmDeleteFolder(itemToDelete.id);
+            }
+          }
+          setItemToDelete(null);
+        }}
+      />
+
+      {/* Archive Confirmation Dialog */}
+      <ConfirmationDialog
+        open={archiveDialogOpen}
+        onOpenChange={setArchiveDialogOpen}
+        title={`Archive ${itemToArchive?.type === 'note' ? 'Note' : 'Folder'}`}
+        description={`Are you sure you want to archive this ${itemToArchive?.type}?${itemToArchive?.type === 'folder' ? ' All notes in this folder will also be archived.' : ''} You can restore it later from the archived section.`}
+        action="archive"
+        onConfirm={() => {
+          if (itemToArchive) {
+            if (itemToArchive.type === 'note') {
+              performArchiveNote(itemToArchive.id);
+            } else {
+              archiveFolder(itemToArchive.id);
+            }
+          }
+          setItemToArchive(null);
+        }}
+      />
+
+      {/* Bulk Archive Confirmation Dialog */}
+      <ConfirmationDialog
+        open={bulkArchiveDialogOpen}
+        onOpenChange={setBulkArchiveDialogOpen}
+        title="Archive Selected Items"
+        description={`Are you sure you want to archive ${pendingBulkAction?.ids.length || 0} item(s)? You can restore them later from the archived section.`}
+        action="archive"
+        onConfirm={() => {
+          if (pendingBulkAction) {
+            const { ids } = pendingBulkAction;
+            const idSet = new Set(ids);
+            
+            if (activeTab === 'folders') {
+              // Batch archive folders (ensure archived flag is set so archived menu shows Restore/Delete)
+              const foldersToArchive = folders.filter(f => idSet.has(f.id)).map(f => ({ ...f, archived: true }));
+
+              // Archive all notes inside those folders
+              const noteIdsToArchive = new Set<string>(foldersToArchive.flatMap(f => f.noteIds));
+              const notesToArchive = notes
+                .filter(n => noteIdsToArchive.has(n.id))
+                .map(n => ({ ...n, originalFolderId: foldersToArchive.find(f => f.noteIds.includes(n.id))?.id }));
+
+              setArchivedFolders(prev => [...prev, ...foldersToArchive]);
+              setArchivedNotes(prev => [...prev, ...notesToArchive]);
+
+              // Remove folders and their notes from active lists
+              setFolders(prev => prev
+                .filter(f => !idSet.has(f.id))
+                .map(f => ({ ...f, noteIds: f.noteIds.filter(id => !noteIdsToArchive.has(id)) }))
+              );
+              setNotes(prev => prev.filter(n => !noteIdsToArchive.has(n.id)));
+            } else {
+              // Batch archive notes
+              const notesToArchive = notes.filter(n => idSet.has(n.id)).map(note => {
+                const originalFolder = folders.find(folder => folder.noteIds.includes(note.id));
+                return { ...note, originalFolderId: originalFolder?.id };
+              });
+              setArchivedNotes(prev => [...prev, ...notesToArchive]);
+              setNotes(prev => prev.filter(n => !idSet.has(n.id)));
+              // Remove from folders
+              setFolders(prev => prev.map(folder => ({
+                ...folder,
+                noteIds: folder.noteIds.filter(id => !idSet.has(id))
+              })));
+            }
+            clearSelection();
+            exitBulkMode();
+            toast.success(`${ids.length} items archived`);
+          }
+          setPendingBulkAction(null);
+        }}
+        onCancel={() => setPendingBulkAction(null)}
+      />
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        open={bulkDeleteDialogOpen}
+        onOpenChange={setBulkDeleteDialogOpen}
+        title="Delete Selected Items"
+        description={`Are you sure you want to permanently delete ${pendingBulkAction?.ids.length || 0} item(s)? This action cannot be undone.`}
+        action="delete"
+        onConfirm={() => {
+          if (pendingBulkAction) {
+            const { ids } = pendingBulkAction;
+            const idSet = new Set(ids);
+            
+            if (activeTab === 'archived') {
+              // Batch delete both notes AND folders in archived tab
+              setArchivedNotes(prev => prev.filter(n => !idSet.has(n.id)));
+              setArchivedFolders(prev => prev.filter(f => !idSet.has(f.id)));
+            } else if (activeTab === 'folders') {
+              // Batch delete folders
+              setFolders(prev => prev.filter(f => !idSet.has(f.id)));
+              setArchivedFolders(prev => prev.filter(f => !idSet.has(f.id)));
+            } else {
+              // Batch delete notes
+              setNotes(prev => prev.filter(n => !idSet.has(n.id)));
+              setArchivedNotes(prev => prev.filter(n => !idSet.has(n.id)));
+              // Remove from folders
+              setFolders(prev => prev.map(folder => ({
+                ...folder,
+                noteIds: folder.noteIds.filter(id => !idSet.has(id))
+              })));
+              setArchivedFolders(prev => prev.map(folder => ({
+                ...folder,
+                noteIds: folder.noteIds.filter(id => !idSet.has(id))
+              })));
+            }
+            clearSelection();
+            exitBulkMode();
+            toast.success(`${ids.length} items deleted`);
+          }
+          setPendingBulkAction(null);
+        }}
+        onCancel={() => setPendingBulkAction(null)}
+      />
+
+      {/* Folder Restore Confirmation Dialog */}
+      <ConfirmationDialog
+        open={folderRestoreDialogOpen}
+        onOpenChange={(open) => {
+          setFolderRestoreDialogOpen(open);
+          if (!open) setFolderToRestore(null);
+        }}
+        title="Restore Folder"
+        description={(() => {
+          if (!folderToRestore) return '';
+          const folder = archivedFolders.find(f => f.id === folderToRestore);
+          if (!folder) return '';
+          const noteIdsAssignedElsewhere = new Set<string>(folders.flatMap(f => f.noteIds));
+          const sanitizedNoteIds = folder.noteIds.filter(id => !noteIdsAssignedElsewhere.has(id));
+          const count = archivedNotes.filter(n => sanitizedNoteIds.includes(n.id)).length;
+          return `Do you also want to restore the ${count} note${count !== 1 ? 's' : ''} inside this folder?`;
+        })()}
+        action="restore"
+        confirmLabel="Restore All"
+        onConfirm={() => {
+          if (folderToRestore) restoreFolderWithNotes(folderToRestore);
+          setFolderToRestore(null);
+        }}
+        secondaryAction={{
+          label: 'Folder Only',
+          onClick: () => {
+            if (folderToRestore) restoreFolderOnly(folderToRestore);
+            setFolderToRestore(null);
+          }
+        }}
+      />
+
+      <NoteEditor
+        note={noteToEditColor}
+        isOpen={isNoteColorEditorOpen}
+        onClose={() => {
+          setIsNoteColorEditorOpen(false);
+          setNoteToEditColor(null);
+        }}
+        onSave={saveNoteFromViewer}
+      />
+
+      <BulkActionBar
+        context={getBulkContext()}
+        isVisible={isBulkMode}
+        isAllSelected={isAllSelected(getAllItemIds())}
+        isAllItemsSelected={isAllArchivedNotesSelected}
+        isAllFoldersSelected={isAllArchivedFoldersSelected}
+        selectedCount={selectedItems.size}
+        onAction={handleBulkAction}
+      />
+      </div>
+    </Layout>
+  );
+}

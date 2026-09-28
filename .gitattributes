@@ -1,0 +1,24 @@
+# Normalize line endings to LF in the repository, so a Windows checkout and a
+# Linux/macOS checkout produce identical diffs. Git converts to CRLF on checkout
+# for text files when core.autocrlf is enabled, and back to LF on commit.
+* text=auto
+
+# Shell scripts must stay LF: a CRLF shebang breaks execution on Linux/macOS.
+*.sh text eol=lf
+gradlew text eol=lf
+android/gradlew text eol=lf
+
+# Batch files must stay CRLF on Windows.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets — never touch.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.ico binary
+*.keystore binary
+*.aab binary
+*.apk binary

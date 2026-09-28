@@ -1,0 +1,499 @@
+import { useState, useMemo, useCallback } from 'react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
+import { Layout } from '@/components/Layout';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, SlidingTabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CalendarEventItem } from '@/components/calendar/CalendarEventItem';
+import { CalendarDayView } from '@/components/calendar/CalendarDayView';
+import { EventViewer } from '@/components/events/EventViewer';
+import { EventEditor } from '@/components/events/EventEditor';
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
+import { Badge } from '@/components/ui/badge';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { Event } from '@/types/event';
+import { EventFolder } from '@/types/eventFolder';
+import { cn } from '@/lib/utils';
+import { highlightText } from '@/lib/textHighlight';
+import { useSwipeGesture } from '@/hooks/useSwipeGesture';
+import { useToastSettings } from '@/contexts/ToastContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useWeekStart, getOrderedDayNames } from '@/contexts/WeekStartContext';
+import { 
+  startOfWeek, 
+  endOfWeek, 
+  startOfMonth, 
+  endOfMonth, 
+  eachDayOfInterval, 
+  format, 
+  isSameDay, 
+  addDays, 
+  addWeeks, 
+  addMonths,
+  subDays,
+  subWeeks,
+  subMonths,
+  isToday,
+  isSameMonth,
+  isSameWeek
+} from 'date-fns';
+
+type ViewMode = 'daily' | 'weekly' | 'monthly';
+
+export default function Calendar() {
+  const [events, setEvents] = useLocalStorage<Event[]>('events', []);
+  const [eventFolders, setEventFolders] = useLocalStorage<EventFolder[]>('eventFolders', []);
+  const [viewMode, setViewMode] = useState<ViewMode>('weekly');
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  // Event viewer/editor state
+  const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [deletingEvent, setDeletingEvent] = useState<Event | null>(null);
+  
+  const { toast } = useToastSettings();
+  const { weekStartsOn, weekStartDay } = useWeekStart();
+  const orderedDayNames = getOrderedDayNames(weekStartDay);
+
+  // View mode swipe navigation
+  const viewModes: ViewMode[] = ['daily', 'weekly', 'monthly'];
+  const handleSwipeLeft = useCallback(() => {
+    const currentIndex = viewModes.indexOf(viewMode);
+    if (currentIndex < viewModes.length - 1) {
+      setViewMode(viewModes[currentIndex + 1]);
+    }
+  }, [viewMode]);
+
+  const handleSwipeRight = useCallback(() => {
+    const currentIndex = viewModes.indexOf(viewMode);
+    if (currentIndex > 0) {
+      setViewMode(viewModes[currentIndex - 1]);
+    }
+  }, [viewMode]);
+
+  const swipeHandlers = useSwipeGesture({
+    onSwipeLeft: handleSwipeLeft,
+    onSwipeRight: handleSwipeRight,
+    threshold: 50,
+  });
+
+  // Helper function to get events for a specific date
+  const getEventsForDate = (date: Date) => {
+    return events.filter(event => {
+      // Support both new startDate and legacy date field
+      const eventDateStr = event.startDate || event.date;
+      if (!eventDateStr) return false;
+      
+      const eventDate = new Date(eventDateStr);
+      
+      if (event.isRecurrent) {
+        // For recurring events, check if the date matches the recurrence pattern
+        if (event.recurrenceType === 'daily') {
+          return true; // Show on all days for daily events
+        } else if (event.recurrenceType === 'weekly') {
+          if (event.recurrenceDays && event.recurrenceDays.length > 0) {
+            return event.recurrenceDays.includes(date.getDay());
+          }
+        } else if (event.recurrenceType === 'monthly') {
+          return eventDate.getDate() === date.getDate();
+        } else if (event.recurrenceType === 'yearly') {
+          return eventDate.getMonth() === date.getMonth() && eventDate.getDate() === date.getDate();
+        }
+      }
+      
+      return isSameDay(eventDate, date);
+    });
+  };
+
+  // Filter events based on search query
+  const filterEvents = (eventList: Event[]) => {
+    if (!searchQuery.trim()) return eventList;
+    return eventList.filter(event => 
+      event.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (event.description && event.description.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+  };
+
+  // Navigation functions
+  const goToPrevious = () => {
+    if (viewMode === 'daily') {
+      setCurrentDate(subDays(currentDate, 1));
+    } else if (viewMode === 'weekly') {
+      setCurrentDate(subWeeks(currentDate, 1));
+    } else {
+      setCurrentDate(subMonths(currentDate, 1));
+    }
+  };
+
+  const goToNext = () => {
+    if (viewMode === 'daily') {
+      setCurrentDate(addDays(currentDate, 1));
+    } else if (viewMode === 'weekly') {
+      setCurrentDate(addWeeks(currentDate, 1));
+    } else {
+      setCurrentDate(addMonths(currentDate, 1));
+    }
+  };
+
+  const goToToday = () => {
+    setCurrentDate(new Date());
+    setSelectedDate(new Date());
+  };
+
+  // Event action handlers
+  const handleViewEvent = (event: Event) => {
+    setViewingEvent(event);
+  };
+
+  const handleEditEvent = (event: Event) => {
+    setViewingEvent(null);
+    setEditingEvent(event);
+  };
+
+  const handleDeleteEvent = (event: Event) => {
+    setViewingEvent(null);
+    setDeletingEvent(event);
+  };
+
+  const confirmDeleteEvent = () => {
+    if (!deletingEvent) return;
+
+    // Remove from events
+    setEvents(prev => prev.filter(e => e.id !== deletingEvent.id));
+    
+    // Remove from any folders
+    setEventFolders(prev => 
+      prev.map(folder => ({
+        ...folder,
+        eventIds: folder.eventIds.filter(id => id !== deletingEvent.id)
+      }))
+    );
+
+    toast.success(`"${deletingEvent.name}" has been deleted.`);
+
+    setDeletingEvent(null);
+  };
+
+  const handleSaveEvent = (eventData: Omit<Event, 'id' | 'createdAt'>) => {
+    if (!editingEvent) return;
+    
+    setEvents(prev => 
+      prev.map(e => e.id === editingEvent.id 
+        ? { ...e, ...eventData }
+        : e
+      )
+    );
+    
+    toast.success(`"${eventData.name}" has been updated.`);
+    
+    setEditingEvent(null);
+  };
+
+  // Get current period based on view mode
+  const currentPeriod = useMemo(() => {
+    if (viewMode === 'daily') {
+      return format(currentDate, 'EEEE, MMM d, yyyy');
+    } else if (viewMode === 'weekly') {
+      const start = startOfWeek(currentDate, { weekStartsOn });
+      const end = endOfWeek(currentDate, { weekStartsOn });
+      return `${format(start, 'MMM d')} - ${format(end, 'MMM d, yyyy')}`;
+    } else {
+      return format(currentDate, 'MMMM yyyy');
+    }
+  }, [currentDate, viewMode, weekStartsOn]);
+
+  // Weekly view data
+  const weekStart = startOfWeek(currentDate, { weekStartsOn });
+  const weekDays = eachDayOfInterval({ start: weekStart, end: addDays(weekStart, 6) });
+  const filteredWeekDays = weekDays.filter(day => {
+    if (!searchQuery.trim()) return true;
+    const dayEvents = filterEvents(getEventsForDate(day));
+    return dayEvents.length > 0;
+  });
+
+  // Monthly view data
+  const monthStart = startOfMonth(currentDate);
+  const monthEnd = endOfMonth(currentDate);
+  const calendarStart = startOfWeek(monthStart, { weekStartsOn });
+  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn });
+  const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+  const selectedDayEvents = selectedDate ? filterEvents(getEventsForDate(selectedDate)) : [];
+
+  // Determine if we need to show the Today button
+  const showTodayButton = useMemo(() => {
+    const today = new Date();
+    if (viewMode === 'daily') {
+      return !isSameDay(currentDate, today);
+    } else if (viewMode === 'weekly') {
+      return !isSameWeek(currentDate, today, { weekStartsOn });
+    } else {
+      return !isSameMonth(currentDate, today);
+    }
+  }, [currentDate, viewMode, weekStartsOn]);
+
+  const { t } = useLanguage();
+
+  return (
+    <Layout 
+      showSearch={true}
+      searchQuery={searchQuery}
+      onSearchChange={setSearchQuery}
+      pageTitle={t('calendar')}
+      shieldHeight="11.5rem"
+    >
+      <div {...swipeHandlers}>
+        {/* Tab navigation - matches Notes/Events layout */}
+        <div className="fixed top-16 left-0 right-0 z-40 px-2">
+          <div className="flex items-center justify-between py-2">
+          <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as ViewMode)}>
+            <SlidingTabsList 
+              activeValue={viewMode} 
+              values={['daily', 'weekly', 'monthly']}
+            >
+              <TabsTrigger value="daily">Day</TabsTrigger>
+              <TabsTrigger value="weekly">Week</TabsTrigger>
+              <TabsTrigger value="monthly">Month</TabsTrigger>
+            </SlidingTabsList>
+          </Tabs>
+          
+          {showTodayButton && (
+            <span 
+              className="text-sm font-bold text-foreground cursor-pointer" 
+              onClick={goToToday}
+            >
+              Today
+            </span>
+          )}
+          </div>
+
+          {/* Navigation Card - fixed as part of static section */}
+          <Card>
+            <CardContent className="px-2 py-2">
+              <div className="flex items-center justify-between">
+                <Button variant="ghost" size="icon" className="text-foreground hover:bg-black hover:text-white rounded-full [&_svg]:!size-6" onClick={goToPrevious} onMouseDown={(e) => e.currentTarget.blur()}>
+                  <ChevronLeft size={24} />
+                </Button>
+                
+                <div className="text-center">
+                  <h2 className="text-lg font-semibold">{currentPeriod}</h2>
+                </div>
+                
+                <Button variant="ghost" size="icon" className="text-foreground hover:bg-black hover:text-white rounded-full [&_svg]:!size-6" onClick={goToNext} onMouseDown={(e) => e.currentTarget.blur()}>
+                  <ChevronRight size={24} />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="h-[7.5rem]"></div>
+
+        {/* Calendar content - Daily view */}
+        {viewMode === 'daily' && (
+          <div className="mt-2">
+          <CalendarDayView
+            currentDate={currentDate}
+            events={filterEvents(getEventsForDate(currentDate))}
+            searchQuery={searchQuery}
+            onViewEvent={handleViewEvent}
+          />
+          </div>
+        )}
+
+        {/* Calendar content - Weekly view */}
+        {viewMode === 'weekly' && (
+          <div className="space-y-2 mt-2">
+            {filteredWeekDays.map(day => {
+              const dayEvents = filterEvents(getEventsForDate(day));
+              const dayOfWeek = format(day, 'EEEE');
+              const dayOfMonth = format(day, 'd');
+              
+              return (
+                <Card key={day.toISOString()} className={cn(
+                  "transition-all",
+                  isToday(day) && "ring-2 ring-primary"
+                )}>
+                  <CardHeader className="px-2 py-2">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-lg">{dayOfWeek}</h3>
+                      <span className={cn(
+                        "text-2xl font-bold",
+                        isToday(day) ? "text-primary" : "text-muted-foreground"
+                      )}>
+                        {dayOfMonth}
+                      </span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="px-2 pb-2 pt-0">
+                    {dayEvents.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No events</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {[...dayEvents].sort((a, b) => {
+                          // All-day events first
+                          if (a.isAllDay && !b.isAllDay) return -1;
+                          if (!a.isAllDay && b.isAllDay) return 1;
+                          // Events without time second
+                          const aHasTime = a.startTime && !a.isAllDay;
+                          const bHasTime = b.startTime && !b.isAllDay;
+                          if (!aHasTime && bHasTime) return -1;
+                          if (aHasTime && !bHasTime) return 1;
+                          // If both have time, sort by time
+                          if (aHasTime && bHasTime) {
+                            return (a.startTime || '').localeCompare(b.startTime || '');
+                          }
+                          return 0;
+                        }).map(event => (
+                          <CalendarEventItem 
+                            key={event.id} 
+                            event={event} 
+                            searchQuery={searchQuery}
+                            compact
+                            onClick={() => handleViewEvent(event)}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Calendar content - Monthly view */}
+        {viewMode === 'monthly' && (
+          <div className="space-y-2 mt-2">
+            {/* Calendar Grid */}
+            <Card>
+              <CardContent className="px-2 py-2">
+                {/* Week day headers */}
+                <div className="grid grid-cols-7 gap-1 mb-2">
+                  {orderedDayNames.map(day => (
+                    <div key={day} className="text-center text-sm font-medium text-muted-foreground p-2">
+                      {day}
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Calendar days */}
+                <div className="grid grid-cols-7 gap-1">
+                  {calendarDays.map(day => {
+                    const dayEvents = filterEvents(getEventsForDate(day));
+                    const hasEvents = dayEvents.length > 0;
+                    const isCurrentMonth = isSameMonth(day, currentDate);
+                    const isSelected = selectedDate && isSameDay(day, selectedDate);
+                    
+                    return (
+                      <button
+                        key={day.toISOString()}
+                        onClick={() => setSelectedDate(day)}
+                        onMouseDown={(e) => e.currentTarget.blur()}
+                        className={cn(
+                          "aspect-square p-2 text-sm rounded-full transition-all relative",
+                          "focus:outline-none focus:ring-2 focus:ring-primary",
+                          isCurrentMonth ? "text-foreground" : "text-muted-foreground",
+                          isToday(day) && "bg-black text-white font-bold",
+                          isSelected && !isToday(day) && "bg-muted ring-2 ring-primary",
+                          
+                        )}
+                      >
+                        <span>{format(day, 'd')}</span>
+                        {hasEvents && (
+                          <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 flex gap-0.5">
+                            {dayEvents.slice(0, 3).map((event, idx) => {
+                              const hasColor = event.color && event.color !== '#FFFFFF';
+                              return (
+                                <div 
+                                  key={idx}
+                                  className={cn("w-1.5 h-1.5 rounded-full", !hasColor && "bg-primary")}
+                                  style={hasColor ? { backgroundColor: event.color } : undefined}
+                                />
+                              );
+                            })}
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Selected day events */}
+            {selectedDate && (
+              <Card>
+                <CardHeader className="px-2 py-2">
+                  <CardTitle className="text-lg">
+                    {format(selectedDate, 'EEEE, MMMM d, yyyy')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-2 pb-2 pt-0">
+                  {selectedDayEvents.length === 0 ? (
+                    <p className="text-muted-foreground">No events for this day</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {[...selectedDayEvents].sort((a, b) => {
+                        // All-day events first
+                        if (a.isAllDay && !b.isAllDay) return -1;
+                        if (!a.isAllDay && b.isAllDay) return 1;
+                        // Events without time second
+                        const aHasTime = a.startTime && !a.isAllDay;
+                        const bHasTime = b.startTime && !b.isAllDay;
+                        if (!aHasTime && bHasTime) return -1;
+                        if (aHasTime && !bHasTime) return 1;
+                        // If both have time, sort by time
+                        if (aHasTime && bHasTime) {
+                          return (a.startTime || '').localeCompare(b.startTime || '');
+                        }
+                        return 0;
+                      }).map(event => (
+                        <CalendarEventItem 
+                          key={event.id} 
+                          event={event} 
+                          searchQuery={searchQuery}
+                          onClick={() => handleViewEvent(event)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Event Viewer Popup */}
+      <EventViewer
+        event={viewingEvent}
+        isOpen={!!viewingEvent}
+        onClose={() => setViewingEvent(null)}
+        onEdit={handleEditEvent}
+        onDelete={handleDeleteEvent}
+      />
+
+      {/* Event Editor Dialog */}
+      <EventEditor
+        isOpen={!!editingEvent}
+        onClose={() => setEditingEvent(null)}
+        onSave={handleSaveEvent}
+        initialEvent={editingEvent}
+        mode="edit"
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        open={!!deletingEvent}
+        onOpenChange={(open) => !open && setDeletingEvent(null)}
+        title="Delete Event"
+        description={`Are you sure you want to delete "${deletingEvent?.name}"? This action cannot be undone.`}
+        onConfirm={confirmDeleteEvent}
+        onCancel={() => setDeletingEvent(null)}
+        action="delete"
+      />
+    </Layout>
+  );
+}

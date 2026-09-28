@@ -1,0 +1,1795 @@
+import { useState, useEffect, useCallback } from 'react';
+import { Plus, FolderOpen, Calendar, FileStack } from 'lucide-react';
+import { EventViewSettings, ViewType, EventSortType, EventSortDirection } from '@/components/events/EventViewSettings';
+import { EventFolderViewSettings, EventFolderSortType, EventFolderSortDirection } from '@/components/events/EventFolderViewSettings';
+import { Layout } from '@/components/Layout';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Tabs, TabsContent, SlidingTabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
+import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { Event } from '@/types/event';
+import { EventFolder } from '@/types/eventFolder';
+import { useToastSettings } from '@/contexts/ToastContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { EventCard } from '@/components/events/EventCard';
+import { EventFolderCard } from '@/components/events/EventFolderCard';
+import { EventFolderCreator } from '@/components/events/EventFolderCreator';
+import { EventFolderEditor } from '@/components/events/EventFolderEditor';
+import { EventEditor } from '@/components/events/EventEditor';
+import { MoveToEventFolderDialog } from '@/components/events/MoveToEventFolderDialog';
+import { parseSearchQuery } from '@/lib/tagParser';
+import { updateTagUsage } from '@/lib/tagStorage';
+import { autoImportEventToFolders } from '@/lib/folderAutoImport';
+import { useSwipeGesture } from '@/hooks/useSwipeGesture';
+import { useBulkSelection } from '@/hooks/useBulkSelection';
+import { BulkActionBar, BulkActionType, BulkActionContext } from '@/components/shared/BulkActionBar';
+import { useScrollDirection } from '@/hooks/useScrollDirection';
+import { cn } from '@/lib/utils';
+import { 
+  scheduleEventNotification, 
+  cancelEventNotification, 
+  scheduleAllEventNotifications,
+  requestNotificationPermission 
+} from '@/lib/notificationService';
+
+export default function Events() {
+  const { toast } = useToastSettings();
+  const [events, setEvents] = useLocalStorage<Event[]>('events', []);
+  const [archivedEvents, setArchivedEvents] = useLocalStorage<Event[]>('archivedEvents', []);
+  const [eventFolders, setEventFolders] = useLocalStorage<EventFolder[]>('eventFolders', []);
+  const [archivedEventFolders, setArchivedEventFolders] = useLocalStorage<EventFolder[]>('archivedEventFolders', []);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [selectedEventFolder, setSelectedEventFolder] = useState<EventFolder | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('all-events');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{type: 'event' | 'eventFolder', id: string} | null>(null);
+  const [itemToArchive, setItemToArchive] = useState<{type: 'event' | 'eventFolder', id: string} | null>(null);
+  const [isEventFolderCreatorOpen, setIsEventFolderCreatorOpen] = useState(false);
+  const [isEventFolderEditorOpen, setIsEventFolderEditorOpen] = useState(false);
+  const [isMoveToEventFolderOpen, setIsMoveToEventFolderOpen] = useState(false);
+  const [selectedEventForMove, setSelectedEventForMove] = useState<string | null>(null);
+  const [selectedEventsForMove, setSelectedEventsForMove] = useState<string[] | null>(null);
+  const [allEventsViewType, setAllEventsViewType] = useLocalStorage<ViewType>('eventsAllViewType', 'list');
+  const [archivedEventsViewType, setArchivedEventsViewType] = useLocalStorage<ViewType>('eventsArchivedViewType', 'list');
+  
+  // Computed viewType based on active tab for backward compatibility
+  const viewType = activeTab === 'archived' ? archivedEventsViewType : allEventsViewType;
+  const setViewType = activeTab === 'archived' ? setArchivedEventsViewType : setAllEventsViewType;
+  const [allEventsSortType, setAllEventsSortType] = useLocalStorage<EventSortType>('eventsAllSortType', 'daysRemaining');
+  const [allEventsSortDirection, setAllEventsSortDirection] = useLocalStorage<EventSortDirection>('eventsAllSortDirection', 'asc');
+  const [archivedEventsSortType, setArchivedEventsSortType] = useLocalStorage<EventSortType>('eventsArchivedSortType', 'daysRemaining');
+  const [archivedEventsSortDirection, setArchivedEventsSortDirection] = useLocalStorage<EventSortDirection>('eventsArchivedSortDirection', 'asc');
+  
+  // Computed sort values based on active tab
+  const sortType = activeTab === 'archived' ? archivedEventsSortType : allEventsSortType;
+  const setSortType = activeTab === 'archived' ? setArchivedEventsSortType : setAllEventsSortType;
+  const sortDirection = activeTab === 'archived' ? archivedEventsSortDirection : allEventsSortDirection;
+  const setSortDirection = activeTab === 'archived' ? setArchivedEventsSortDirection : setAllEventsSortDirection;
+  const [folderSortType, setFolderSortType] = useLocalStorage<EventFolderSortType>('eventFoldersSortType', 'title');
+  const [folderSortDirection, setFolderSortDirection] = useLocalStorage<EventFolderSortDirection>('eventFoldersSortDirection', 'asc');
+  
+  // Bulk selection state
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [bulkArchiveDialogOpen, setBulkArchiveDialogOpen] = useState(false);
+  const [pendingBulkAction, setPendingBulkAction] = useState<{ ids: string[], action: 'archive' | 'delete' } | null>(null);
+  const [folderRestoreDialogOpen, setFolderRestoreDialogOpen] = useState(false);
+  const [folderToRestore, setFolderToRestore] = useState<string | null>(null);
+
+  // Bulk selection hook
+  const {
+    isBulkMode,
+    selectedItems,
+    toggleBulkMode,
+    toggleItem,
+    toggleAll,
+    clearSelection,
+    isAllSelected,
+    exitBulkMode,
+  } = useBulkSelection();
+
+  // Scroll direction for hiding Add button
+  const scrollDirection = useScrollDirection();
+
+  // Check if any dialog/editor is open - blocks swipe navigation
+  const isAnyDialogOpen = isAddDialogOpen || !!selectedEvent || isEventFolderCreatorOpen || 
+    isEventFolderEditorOpen || isMoveToEventFolderOpen || deleteDialogOpen || archiveDialogOpen ||
+    bulkDeleteDialogOpen || bulkArchiveDialogOpen || folderRestoreDialogOpen;
+
+  // Tab swipe navigation
+  const eventTabs = ['all-events', 'folders', 'archived'];
+  const handleSwipeLeft = useCallback(() => {
+    if (isAnyDialogOpen) return;
+    const currentIndex = eventTabs.indexOf(activeTab);
+    if (currentIndex < eventTabs.length - 1) {
+      setActiveTab(eventTabs[currentIndex + 1]);
+    }
+  }, [activeTab, isAnyDialogOpen]);
+
+  const handleSwipeRight = useCallback(() => {
+    if (isAnyDialogOpen) return;
+    const currentIndex = eventTabs.indexOf(activeTab);
+    if (currentIndex > 0) {
+      setActiveTab(eventTabs[currentIndex - 1]);
+    }
+  }, [activeTab, isAnyDialogOpen]);
+
+  const swipeHandlers = useSwipeGesture({
+    onSwipeLeft: handleSwipeLeft,
+    onSwipeRight: handleSwipeRight,
+    threshold: 50,
+  });
+
+  // Auto-archive past events on component mount and when events change
+  useEffect(() => {
+    const autoArchivePastEvents = () => {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      const pastEvents = events.filter(event => {
+        if (event.isRecurrent) return false; // Don't auto-archive recurring events
+        const eventDateStr = event.startDate || event.date;
+        if (!eventDateStr) return false;
+        const eventDate = new Date(eventDateStr);
+        const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+        return eventDateOnly < today; // Events before today
+      });
+
+      if (pastEvents.length > 0) {
+        // Store originalFolderId for each auto-archived event
+        const eventsWithFolderIds = pastEvents.map(event => {
+          const originalFolder = eventFolders.find(folder => folder.eventIds.includes(event.id));
+          return {
+            ...event,
+            originalFolderId: originalFolder?.id
+          };
+        });
+        // Move past events to archived with folder associations preserved
+        setArchivedEvents((prev: Event[]) => [...prev, ...eventsWithFolderIds]);
+        setEvents((prev: Event[]) => prev.filter(event => !pastEvents.some(pastEvent => pastEvent.id === event.id)));
+        
+        // Remove from all folders
+        setEventFolders((prev: EventFolder[]) => 
+          prev.map(folder => ({
+            ...folder,
+            eventIds: folder.eventIds.filter(id => !pastEvents.some(pastEvent => pastEvent.id === id))
+          }))
+        );
+
+        if (pastEvents.length === 1) {
+          toast.success(`1 past event automatically archived`);
+        } else {
+          toast.success(`${pastEvents.length} past events automatically archived`);
+        }
+      }
+    };
+
+    autoArchivePastEvents();
+  }, [events, setEvents, setArchivedEvents, setEventFolders]);
+
+  // Request notification permission and schedule notifications on mount
+  useEffect(() => {
+    const initNotifications = async () => {
+      await requestNotificationPermission();
+      // Schedule notifications for all events with alerts
+      const eventsWithAlerts = events.filter(e => e.alertType && e.alertType !== 'none');
+      if (eventsWithAlerts.length > 0) {
+        await scheduleAllEventNotifications(eventsWithAlerts);
+      }
+    };
+    initNotifications();
+  }, []);
+
+
+  const calculateTimeRemaining = (event: Event) => {
+    const eventDateStr = event.startDate || event.date;
+    if (!eventDateStr) return 999999;
+    
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const eventDate = new Date(eventDateStr);
+    const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+    
+    if (event.isRecurrent) {
+      let nextOccurrence = new Date(eventDateOnly);
+      const interval = event.recurrenceInterval || 1;
+      
+      if (nextOccurrence.getTime() === today.getTime()) return 0;
+      
+      switch (event.recurrenceType) {
+        case 'daily':
+          while (nextOccurrence <= today) {
+            nextOccurrence.setDate(nextOccurrence.getDate() + interval);
+          }
+          break;
+        case 'weekly':
+          while (nextOccurrence <= today) {
+            nextOccurrence.setDate(nextOccurrence.getDate() + (7 * interval));
+          }
+          break;
+        case 'monthly':
+          while (nextOccurrence <= today) {
+            nextOccurrence.setMonth(nextOccurrence.getMonth() + interval);
+          }
+          break;
+        case 'yearly':
+        default:
+          while (nextOccurrence <= today) {
+            nextOccurrence.setFullYear(nextOccurrence.getFullYear() + interval);
+          }
+          break;
+      }
+      return Math.round((nextOccurrence.getTime() - today.getTime()) / (1000 * 3600 * 24));
+    } else {
+      return Math.round((eventDateOnly.getTime() - today.getTime()) / (1000 * 3600 * 24));
+    }
+  };
+
+  const handleCreateEvent = (eventData: Omit<Event, 'id' | 'createdAt'>) => {
+    const tags = eventData.tags || [];
+    
+    const newEvent: Event = {
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+      ...eventData
+    };
+
+    // Check if the event is for a past date (and not recurring)
+    const eventDateStr = eventData.startDate || eventData.date;
+    if (!eventData.isRecurrent && eventDateStr) {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const eventDate = new Date(eventDateStr);
+      const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+      
+      if (eventDateOnly < today) {
+        setArchivedEvents((prev: Event[]) => [...prev, newEvent]);
+        setIsAddDialogOpen(false);
+        toast.success('Event added to Archived!');
+        return;
+      }
+    }
+
+    // Add to active events for current/future dates or recurring events
+    setEvents((prev: Event[]) => {
+      const newEvents = [...prev, newEvent];
+      return newEvents.sort((a, b) => calculateTimeRemaining(a) - calculateTimeRemaining(b));
+    });
+
+    // Update tag usage tracking
+    if (tags.length > 0) {
+      updateTagUsage([], tags);
+    }
+
+    // Auto-import into matching folders
+    setEventFolders((prev: EventFolder[]) => autoImportEventToFolders(newEvent, prev));
+
+    // Schedule notification if alert is set
+    if (newEvent.alertType && newEvent.alertType !== 'none') {
+      scheduleEventNotification(newEvent);
+    }
+
+    setIsAddDialogOpen(false);
+    toast.success('Event added successfully!');
+  };
+
+  const handleUpdateEvent = (eventData: Omit<Event, 'id' | 'createdAt'>) => {
+    if (!selectedEvent) return;
+    
+    const tags = eventData.tags || [];
+    const oldTags = selectedEvent.tags || [];
+    
+    const updatedEvent: Event = {
+      ...selectedEvent,
+      ...eventData
+    };
+
+    // Update tag usage tracking
+    updateTagUsage(oldTags, tags);
+
+    // Auto-import into matching folders if tags changed
+    if (JSON.stringify(oldTags.sort()) !== JSON.stringify(tags.sort())) {
+      setEventFolders((prev: EventFolder[]) => autoImportEventToFolders(updatedEvent, prev));
+    }
+
+    // Check if event exists in active events
+    const eventInActive = events.find(event => event.id === selectedEvent.id);
+    
+    if (eventInActive) {
+      setEvents((prev: Event[]) => prev.map(event => 
+        event.id === selectedEvent.id ? updatedEvent : event
+      ));
+    } else {
+      const eventInArchived = archivedEvents.find(event => event.id === selectedEvent.id);
+      
+      if (eventInArchived) {
+        if (eventData.isRecurrent) {
+          setArchivedEvents((prev: Event[]) => prev.filter(event => event.id !== selectedEvent.id));
+          setEvents((prev: Event[]) => {
+            const newEvents = [...prev, updatedEvent];
+            return newEvents.sort((a, b) => calculateTimeRemaining(a) - calculateTimeRemaining(b));
+          });
+        } else {
+          setArchivedEvents((prev: Event[]) => prev.map(event => 
+            event.id === selectedEvent.id ? updatedEvent : event
+          ));
+        }
+      }
+    }
+
+    // Update notification scheduling
+    // Cancel existing notification and reschedule if alert settings changed
+    cancelEventNotification(selectedEvent.id);
+    if (updatedEvent.alertType && updatedEvent.alertType !== 'none') {
+      scheduleEventNotification(updatedEvent);
+    }
+
+    setSelectedEvent(null);
+    toast.success('Event updated successfully!');
+  };
+
+
+  const deleteEvent = (eventId: string) => {
+    setItemToDelete({ type: 'event', id: eventId });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteEvent = (eventId: string) => {
+    // Get event tags for cleanup
+    const eventToDelete = [...events, ...archivedEvents].find(e => e.id === eventId);
+    if (eventToDelete?.tags) {
+      updateTagUsage(eventToDelete.tags, []);
+    }
+
+    // Remove event from all folders when deleted
+    setEventFolders((prev: EventFolder[]) => 
+      prev.map(folder => ({
+        ...folder,
+        eventIds: folder.eventIds.filter(id => id !== eventId)
+      }))
+    );
+    setArchivedEventFolders((prev: EventFolder[]) => 
+      prev.map(folder => ({
+        ...folder,
+        eventIds: folder.eventIds.filter(id => id !== eventId)
+      }))
+    );
+    // Cancel any scheduled notification
+    cancelEventNotification(eventId);
+    
+    // Permanently delete from all lists
+    setEvents((prev: Event[]) => prev.filter(event => event.id !== eventId));
+    setArchivedEvents((prev: Event[]) => prev.filter(event => event.id !== eventId));
+    setSelectedEvent(null);
+    toast.success('Event deleted permanently!');
+  };
+
+  const confirmDeleteEventFolder = (folderId: string) => {
+    // Permanently delete from all lists
+    setEventFolders((prev: EventFolder[]) => prev.filter(folder => folder.id !== folderId));
+    setArchivedEventFolders((prev: EventFolder[]) => prev.filter(folder => folder.id !== folderId));
+    setSelectedEventFolder(null);
+    toast.success('Event folder deleted permanently!');
+  };
+
+
+  const unarchiveEvent = (eventId: string) => {
+    const eventToUnarchive = archivedEvents.find(event => event.id === eventId);
+    if (eventToUnarchive) {
+      // Remove originalFolderId before restoring to events
+      const { originalFolderId, ...restoredEvent } = eventToUnarchive;
+      
+      setEvents((prev: Event[]) => {
+        const newEvents = [...prev, restoredEvent];
+        // Sort by time remaining (closest events first)
+        return newEvents.sort((a, b) => {
+          const calculateTimeRemaining = (event: Event) => {
+            const eventDateStr = event.startDate || event.date;
+            if (!eventDateStr) return 999999;
+            
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const eventDate = new Date(eventDateStr);
+            const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+            
+            if (event.isRecurrent) {
+              // For recurring events, find the next occurrence based on recurrence type
+              let nextOccurrence = new Date(eventDateOnly);
+              const interval = event.recurrenceInterval || 1;
+              
+              // If today is the event date, return 0
+              if (nextOccurrence.getTime() === today.getTime()) {
+                return 0;
+              }
+              
+              // Calculate next occurrence based on recurrence type
+              switch (event.recurrenceType) {
+                case 'daily':
+                  while (nextOccurrence <= today) {
+                    nextOccurrence.setDate(nextOccurrence.getDate() + interval);
+                  }
+                  break;
+                  
+                case 'weekly':
+                  while (nextOccurrence <= today) {
+                    nextOccurrence.setDate(nextOccurrence.getDate() + (7 * interval));
+                  }
+                  break;
+                  
+                case 'monthly':
+                  while (nextOccurrence <= today) {
+                    nextOccurrence.setMonth(nextOccurrence.getMonth() + interval);
+                  }
+                  break;
+                  
+                case 'yearly':
+                default:
+                  while (nextOccurrence <= today) {
+                    nextOccurrence.setFullYear(nextOccurrence.getFullYear() + interval);
+                  }
+                  break;
+              }
+              
+              const timeDiff = nextOccurrence.getTime() - today.getTime();
+              return Math.round(timeDiff / (1000 * 3600 * 24));
+            } else {
+              const timeDiff = eventDateOnly.getTime() - today.getTime();
+              return Math.round(timeDiff / (1000 * 3600 * 24));
+            }
+          };
+          
+          const timeRemainingA = calculateTimeRemaining(a);
+          const timeRemainingB = calculateTimeRemaining(b);
+          
+          return timeRemainingA - timeRemainingB;
+        });
+      });
+      setArchivedEvents((prev: Event[]) => prev.filter(event => event.id !== eventId));
+      
+      // If the event had an original folder, restore association
+      if (originalFolderId) {
+        const originalFolderInActive = eventFolders.some(folder => folder.id === originalFolderId);
+        const originalFolderInArchived = archivedEventFolders.some(folder => folder.id === originalFolderId);
+        
+        if (originalFolderInActive) {
+          // Folder is active - add event to it
+          setEventFolders((prev: EventFolder[]) => prev.map(folder =>
+            folder.id === originalFolderId 
+              ? { ...folder, eventIds: [...folder.eventIds, eventId] }
+              : folder
+          ));
+        } else if (originalFolderInArchived) {
+          // Folder is archived - update archived folder's eventIds
+          // so connection is preserved when folder is later restored
+          setArchivedEventFolders((prev: EventFolder[]) => prev.map(folder =>
+            folder.id === originalFolderId 
+              ? { ...folder, eventIds: [...folder.eventIds, eventId] }
+              : folder
+          ));
+        }
+      }
+    }
+    setSelectedEvent(null);
+    toast.success('Event restored successfully!');
+  };
+
+
+  const copyEvent = (eventId: string) => {
+    const eventToCopy = events.find(event => event.id === eventId) || archivedEvents.find(event => event.id === eventId);
+    if (eventToCopy) {
+      const copiedEvent: Event = {
+        ...eventToCopy,
+        id: Date.now().toString(),
+        name: `${eventToCopy.name} (Copy)`,
+        createdAt: new Date().toISOString()
+      };
+      setEvents((prev: Event[]) => {
+        const newEvents = [...prev, copiedEvent];
+        // Sort by time remaining (closest events first)
+        return newEvents.sort((a, b) => {
+          const calculateTimeRemaining = (event: Event) => {
+            const eventDateStr = event.startDate || event.date;
+            if (!eventDateStr) return 999999;
+            
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const eventDate = new Date(eventDateStr);
+            const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+            
+            if (event.isRecurrent) {
+              // For recurring events, find the next occurrence based on recurrence type
+              let nextOccurrence = new Date(eventDateOnly);
+              const interval = event.recurrenceInterval || 1;
+              
+              // If today is the event date, return 0
+              if (nextOccurrence.getTime() === today.getTime()) {
+                return 0;
+              }
+              
+              // Calculate next occurrence based on recurrence type
+              switch (event.recurrenceType) {
+                case 'daily':
+                  while (nextOccurrence <= today) {
+                    nextOccurrence.setDate(nextOccurrence.getDate() + interval);
+                  }
+                  break;
+                  
+                case 'weekly':
+                  while (nextOccurrence <= today) {
+                    nextOccurrence.setDate(nextOccurrence.getDate() + (7 * interval));
+                  }
+                  break;
+                  
+                case 'monthly':
+                  while (nextOccurrence <= today) {
+                    nextOccurrence.setMonth(nextOccurrence.getMonth() + interval);
+                  }
+                  break;
+                  
+                case 'yearly':
+                default:
+                  while (nextOccurrence <= today) {
+                    nextOccurrence.setFullYear(nextOccurrence.getFullYear() + interval);
+                  }
+                  break;
+              }
+              
+              const timeDiff = nextOccurrence.getTime() - today.getTime();
+              return Math.round(timeDiff / (1000 * 3600 * 24));
+            } else {
+              const timeDiff = eventDateOnly.getTime() - today.getTime();
+              return Math.round(timeDiff / (1000 * 3600 * 24));
+            }
+          };
+          
+          const timeRemainingA = calculateTimeRemaining(a);
+          const timeRemainingB = calculateTimeRemaining(b);
+          
+          return timeRemainingA - timeRemainingB;
+        });
+      });
+      toast.success('Event copied successfully!');
+    }
+  };
+
+  // Event folder management functions
+  const addEventFolder = (folderData: Omit<EventFolder, 'id' | 'createdAt' | 'eventIds'>, eventIdToMove?: string) => {
+    const newFolder: EventFolder = {
+      ...folderData,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+      eventIds: eventIdToMove ? [eventIdToMove] : []
+    };
+    setEventFolders((prev: EventFolder[]) => {
+      const cleaned = eventIdToMove
+        ? prev.map(f => ({ ...f, eventIds: f.eventIds.filter(id => id !== eventIdToMove) }))
+        : prev;
+      return [...cleaned, newFolder];
+    });
+    toast.success(eventIdToMove ? 'Folder created and event moved successfully!' : 'Folder created successfully!');
+  };
+
+  const updateEventFolder = (folderData: Omit<EventFolder, 'id' | 'createdAt' | 'eventIds'>) => {
+    if (!selectedEventFolder) return;
+    setEventFolders((prev: EventFolder[]) => prev.map(folder => 
+      folder.id === selectedEventFolder.id 
+        ? { 
+            ...folder, 
+            name: folderData.name,
+            description: folderData.description,
+            color: folderData.color,
+            pinned: folderData.pinned,
+            archived: folderData.archived
+          }
+        : folder
+    ));
+    setSelectedEventFolder(null);
+    setIsEventFolderEditorOpen(false);
+    toast.success('Folder updated successfully!');
+  };
+
+  const pinEventFolder = (folderId: string) => {
+    setEventFolders((prev: EventFolder[]) => prev.map(folder => 
+      folder.id === folderId ? { ...folder, pinned: true } : folder
+    ));
+    toast.success('Folder pinned!');
+  };
+
+  const unpinEventFolder = (folderId: string) => {
+    setEventFolders((prev: EventFolder[]) => prev.map(folder => 
+      folder.id === folderId ? { ...folder, pinned: false } : folder
+    ));
+    toast.success('Folder unpinned!');
+  };
+
+  const editEventFolder = (folderId: string) => {
+    const folder = eventFolders.find(f => f.id === folderId);
+    if (folder) {
+      setSelectedEventFolder(folder);
+      setIsEventFolderEditorOpen(true);
+    }
+  };
+
+  const confirmArchiveEventFolder = (folderId: string) => {
+    setItemToArchive({ type: 'eventFolder', id: folderId });
+    setArchiveDialogOpen(true);
+  };
+
+  const performArchiveEventFolder = (folderId: string) => {
+    const folderToArchive = eventFolders.find(folder => folder.id === folderId);
+    if (folderToArchive) {
+      // Archive the folder
+      setArchivedEventFolders((prev: EventFolder[]) => [...prev, { ...folderToArchive, archived: true }]);
+      setEventFolders((prev: EventFolder[]) => prev.filter(folder => folder.id !== folderId));
+      
+      // Archive all events in this folder
+      const eventsToArchive = events.filter(event => folderToArchive.eventIds.includes(event.id));
+      if (eventsToArchive.length > 0) {
+        setArchivedEvents((prev: Event[]) => [...prev, ...eventsToArchive]);
+        setEvents((prev: Event[]) => prev.filter(event => !folderToArchive.eventIds.includes(event.id)));
+      }
+      
+      toast.success('Folder and its events archived successfully!');
+    }
+  };
+
+  const deleteEventFolder = (folderId: string) => {
+    setItemToDelete({ type: 'eventFolder', id: folderId });
+    setDeleteDialogOpen(true);
+  };
+
+  const unarchiveEventFolder = (folderId: string) => {
+    const folderToUnarchive = archivedEventFolders.find(folder => folder.id === folderId);
+    if (folderToUnarchive) {
+      const eventIdsAssignedElsewhere = new Set<string>(eventFolders.flatMap(f => f.eventIds));
+      const sanitizedEventIds = folderToUnarchive.eventIds.filter(id => !eventIdsAssignedElsewhere.has(id));
+      const archivedEventsInFolder = archivedEvents.filter(event => sanitizedEventIds.includes(event.id));
+      
+      if (archivedEventsInFolder.length === 0) {
+        restoreEventFolderOnly(folderId);
+      } else {
+        setFolderToRestore(folderId);
+        setFolderRestoreDialogOpen(true);
+      }
+    }
+  };
+
+  const restoreEventFolderOnly = (folderId: string) => {
+    const folderToUnarchive = archivedEventFolders.find(folder => folder.id === folderId);
+    if (folderToUnarchive) {
+      const eventIdsAssignedElsewhere = new Set<string>(eventFolders.flatMap(f => f.eventIds));
+      const sanitizedEventIds = folderToUnarchive.eventIds.filter(id => !eventIdsAssignedElsewhere.has(id));
+
+      setEventFolders((prev: EventFolder[]) => [
+        ...prev,
+        { ...folderToUnarchive, archived: false, eventIds: sanitizedEventIds }
+      ]);
+      setArchivedEventFolders((prev: EventFolder[]) => prev.filter(folder => folder.id !== folderId));
+      
+      toast.success('Folder restored successfully!');
+    }
+  };
+
+  const restoreEventFolderWithEvents = (folderId: string) => {
+    const folderToUnarchive = archivedEventFolders.find(folder => folder.id === folderId);
+    if (folderToUnarchive) {
+      const eventIdsAssignedElsewhere = new Set<string>(eventFolders.flatMap(f => f.eventIds));
+      const sanitizedEventIds = folderToUnarchive.eventIds.filter(id => !eventIdsAssignedElsewhere.has(id));
+
+      setEventFolders((prev: EventFolder[]) => [
+        ...prev,
+        { ...folderToUnarchive, archived: false, eventIds: sanitizedEventIds }
+      ]);
+      setArchivedEventFolders((prev: EventFolder[]) => prev.filter(folder => folder.id !== folderId));
+      
+      const eventsToUnarchive = archivedEvents.filter(event => sanitizedEventIds.includes(event.id));
+      if (eventsToUnarchive.length > 0) {
+        const restoredEvents = eventsToUnarchive.map(e => {
+          const { originalFolderId, ...restored } = e;
+          return restored;
+        });
+        
+        setEvents((prev: Event[]) => {
+          const newEvents = [...prev, ...restoredEvents];
+          return newEvents.sort((a, b) => calculateTimeRemaining(a) - calculateTimeRemaining(b));
+        });
+        setArchivedEvents((prev: Event[]) => prev.filter(event => !sanitizedEventIds.includes(event.id)));
+      }
+      
+      toast.success('Folder and its events restored successfully!');
+    }
+  };
+
+
+  const copyEventFolder = (folderId: string) => {
+    const folderToCopy = eventFolders.find(folder => folder.id === folderId);
+    if (folderToCopy) {
+      const copiedFolder: EventFolder = {
+        ...folderToCopy,
+        id: Date.now().toString(),
+        name: `${folderToCopy.name} (Copy)`,
+        createdAt: new Date().toISOString(),
+        eventIds: [], // Don't copy the events
+        pinned: false
+      };
+      setEventFolders((prev: EventFolder[]) => [...prev, copiedFolder]);
+      toast.success('Folder copied successfully!');
+    }
+  };
+
+  const moveEventToFolder = (eventId: string, folderId: string) => {
+    // Remove event from all folders and add to selected folder in a single update
+    setEventFolders((prev: EventFolder[]) => 
+      prev.map(folder => {
+        if (folder.id === folderId) {
+          // Add event to target folder (avoid duplicates)
+          return {
+            ...folder,
+            eventIds: folder.eventIds.includes(eventId) ? folder.eventIds : [...folder.eventIds, eventId]
+          };
+        } else {
+          // Remove event from all other folders
+          return {
+            ...folder,
+            eventIds: folder.eventIds.filter(id => id !== eventId)
+          };
+        }
+      })
+    );
+
+    toast.success('Event moved to folder successfully!');
+  };
+
+  const handleMoveToEventFolder = (eventId: string) => {
+    setSelectedEventForMove(eventId);
+    setIsMoveToEventFolderOpen(true);
+  };
+
+  const handleEventFolderSelect = (folderId: string) => {
+    // Handle bulk move
+    if (selectedEventsForMove && selectedEventsForMove.length > 0) {
+      const idsSet = new Set(selectedEventsForMove);
+      setEventFolders((prev: EventFolder[]) => 
+        prev.map(folder => {
+          if (folder.id === folderId) {
+            const existingIds = new Set(folder.eventIds);
+            const newEventIds = [...folder.eventIds, ...selectedEventsForMove.filter(id => !existingIds.has(id))];
+            return { ...folder, eventIds: newEventIds };
+          } else {
+            return { ...folder, eventIds: folder.eventIds.filter(id => !idsSet.has(id)) };
+          }
+        })
+      );
+      toast.success(`${selectedEventsForMove.length} event(s) moved to folder successfully!`);
+      setSelectedEventsForMove(null);
+      setIsMoveToEventFolderOpen(false);
+      clearSelection();
+      exitBulkMode();
+      return;
+    }
+    
+    // Handle single move
+    if (selectedEventForMove) {
+      moveEventToFolder(selectedEventForMove, folderId);
+      setSelectedEventForMove(null);
+      setIsMoveToEventFolderOpen(false);
+    }
+  };
+
+  const handleCreateEventFolderFromDialog = () => {
+    setIsMoveToEventFolderOpen(false);
+    setIsEventFolderCreatorOpen(true);
+    // Note: selectedEventForMove will be used when folder is created
+  };
+
+
+  const confirmArchiveEvent = (eventId: string) => {
+    setItemToArchive({ type: 'event', id: eventId });
+    setArchiveDialogOpen(true);
+  };
+
+  const performArchiveEvent = (eventId: string) => {
+    const eventToArchive = events.find(event => event.id === eventId);
+    if (eventToArchive) {
+      // Find which folder this event belongs to (if any)
+      const originalFolder = eventFolders.find(folder => folder.eventIds.includes(eventId));
+      const originalFolderId = originalFolder?.id;
+      
+      // Archive the event with original folder ID stored
+      const archivedEvent = {
+        ...eventToArchive,
+        originalFolderId: originalFolderId
+      };
+      
+      // Remove event from all folders when archived
+      setEventFolders((prev: EventFolder[]) => 
+        prev.map(folder => ({
+          ...folder,
+          eventIds: folder.eventIds.filter(id => id !== eventId)
+        }))
+      );
+      setArchivedEvents((prev: Event[]) => [...prev, archivedEvent]);
+      setEvents((prev: Event[]) => prev.filter(event => event.id !== eventId));
+    }
+    setSelectedEvent(null);
+    toast.success('Event archived successfully!');
+  };
+
+  const openEventDetails = (event: Event) => {
+    setSelectedEvent(event);
+  };
+
+  // Search functionality
+  const searchInEvent = (event: Event, query: string): boolean => {
+    const searchQuery = parseSearchQuery(query);
+    
+    // 1. Check tag matches (if tags in query)
+    if (searchQuery.tags.length > 0) {
+      const eventTags = event.tags || [];
+      const tagMatch = searchQuery.operator === 'and'
+        ? searchQuery.tags.every(tag => eventTags.includes(tag))
+        : searchQuery.tags.some(tag => eventTags.includes(tag));
+      
+      if (!tagMatch) return false;
+    }
+    
+    // 2. Check text filters (if + filters exist)
+    if (searchQuery.textFilters.length > 0) {
+      const textMatch = searchQuery.textFilters.every(filter => {
+        const searchTerm = filter.toLowerCase();
+        return event.name.toLowerCase().includes(searchTerm) || 
+               (event.description?.toLowerCase().includes(searchTerm) || false);
+      });
+      
+      if (!textMatch) return false;
+    }
+    
+    // 3. If no tags/filters, use existing search logic
+    if (searchQuery.tags.length === 0 && searchQuery.textFilters.length === 0) {
+      const searchTerm = query.toLowerCase();
+      return event.name.toLowerCase().includes(searchTerm) || 
+             (event.description?.toLowerCase().includes(searchTerm) || false);
+    }
+    
+    return true;
+  };
+
+  const filterEvents = (eventList: Event[]): Event[] => {
+    if (!searchQuery.trim()) return eventList;
+    return eventList.filter(event => searchInEvent(event, searchQuery));
+  };
+
+  // Pin/unpin events
+  const pinEvent = (eventId: string) => {
+    setEvents((prev: Event[]) => prev.map(event => 
+      event.id === eventId ? { ...event, pinned: true } : event
+    ));
+    toast.success('Event pinned!');
+  };
+
+  const unpinEvent = (eventId: string) => {
+    setEvents((prev: Event[]) => prev.map(event => 
+      event.id === eventId ? { ...event, pinned: false } : event
+    ));
+    toast.success('Event unpinned!');
+  };
+
+  // Filter events by category
+  const getAllEvents = () => {
+    // Show all events regardless of folder membership
+    const filteredEvents = filterEvents(events);
+    
+    // Sort events based on sortType
+    const sortedEvents = [...filteredEvents].sort((a, b) => {
+      // Pinned events always come first
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      
+      switch (sortType) {
+        case 'title': {
+          const result = a.name.localeCompare(b.name);
+          return sortDirection === 'asc' ? result : -result;
+        }
+        case 'dateCreated': {
+          const result = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          return sortDirection === 'asc' ? result : -result;
+        }
+        case 'dateModified': {
+          // For now, use createdAt since we don't have modifiedAt field
+          const result = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          return sortDirection === 'asc' ? result : -result;
+        }
+        case 'daysRemaining':
+        default:
+          const calculateTimeRemaining = (event: Event) => {
+            const eventDateStr = event.startDate || event.date;
+            if (!eventDateStr) return 999999;
+            
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const eventDate = new Date(eventDateStr);
+            const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+            
+            if (event.isRecurrent) {
+              // For recurring events, find the next occurrence based on recurrence type
+              let nextOccurrence = new Date(eventDateOnly);
+              const interval = event.recurrenceInterval || 1;
+              
+              // If today is the event date, return 0
+              if (nextOccurrence.getTime() === today.getTime()) {
+                return 0;
+              }
+              
+              // Calculate next occurrence based on recurrence type
+              switch (event.recurrenceType) {
+                case 'daily':
+                  while (nextOccurrence <= today) {
+                    nextOccurrence.setDate(nextOccurrence.getDate() + interval);
+                  }
+                  break;
+                  
+                case 'weekly':
+                  while (nextOccurrence <= today) {
+                    nextOccurrence.setDate(nextOccurrence.getDate() + (7 * interval));
+                  }
+                  break;
+                  
+                case 'monthly':
+                  while (nextOccurrence <= today) {
+                    nextOccurrence.setMonth(nextOccurrence.getMonth() + interval);
+                  }
+                  break;
+                  
+                case 'yearly':
+                default:
+                  while (nextOccurrence <= today) {
+                    nextOccurrence.setFullYear(nextOccurrence.getFullYear() + interval);
+                  }
+                  break;
+              }
+              
+              const timeDiff = nextOccurrence.getTime() - today.getTime();
+              return Math.round(timeDiff / (1000 * 3600 * 24));
+            } else {
+              const timeDiff = eventDateOnly.getTime() - today.getTime();
+              return Math.round(timeDiff / (1000 * 3600 * 24));
+            }
+          };
+          
+          const timeRemainingA = calculateTimeRemaining(a);
+          const timeRemainingB = calculateTimeRemaining(b);
+          
+          const result = timeRemainingA - timeRemainingB;
+          return sortDirection === 'asc' ? result : -result;
+      }
+    });
+    
+    return sortedEvents;
+  };
+
+  const getEventFolders = () => {
+    return eventFolders
+      .filter(folder => !folder.archived)
+      .sort((a, b) => {
+        // Pinned folders first
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        
+        // Then sort by selected sort type
+        switch (folderSortType) {
+          case 'title': {
+            const result = a.name.localeCompare(b.name);
+            return folderSortDirection === 'asc' ? result : -result;
+          }
+          case 'dateCreated': {
+            const result = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+            return folderSortDirection === 'asc' ? result : -result;
+          }
+          case 'dateModified': {
+            // For now, use createdAt since we don't have modifiedAt field
+            const result = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+            return folderSortDirection === 'asc' ? result : -result;
+          }
+          case 'daysRemaining': {
+            // Sort by closest event in folder
+            const aEvents = events.filter(event => a.eventIds.includes(event.id));
+            const bEvents = events.filter(event => b.eventIds.includes(event.id));
+            
+            const getClosestEventTime = (folderEvents: Event[]) => {
+              if (folderEvents.length === 0) return 999999;
+              return Math.min(...folderEvents.map(event => {
+                const eventDateStr = event.startDate || event.date;
+                if (!eventDateStr) return 999999;
+                const now = new Date();
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const eventDate = new Date(eventDateStr);
+                const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+                const timeDiff = eventDateOnly.getTime() - today.getTime();
+                return Math.round(timeDiff / (1000 * 3600 * 24));
+              }));
+            };
+            
+            const aTime = getClosestEventTime(aEvents);
+            const bTime = getClosestEventTime(bEvents);
+            const result = aTime - bTime;
+            return folderSortDirection === 'asc' ? result : -result;
+          }
+          default:
+            return a.name.localeCompare(b.name);
+        }
+      });
+  };
+
+  const handleAddButtonClick = () => {
+    if (activeTab === 'folders') {
+      setIsEventFolderCreatorOpen(true);
+    } else {
+      setSelectedEvent(null);
+      setIsAddDialogOpen(true);
+    }
+  };
+
+  const getEventsInFolder = (folderId: string) => {
+    const folder = eventFolders.find(f => f.id === folderId);
+    if (!folder) return [];
+    
+    const folderEvents = events.filter(event => folder.eventIds.includes(event.id));
+    
+    // Sort by time remaining (closest events first)
+    const sortedEvents = folderEvents.sort((a, b) => {
+      const calculateTimeRemaining = (event: Event) => {
+        const eventDateStr = event.startDate || event.date;
+        if (!eventDateStr) return 999999;
+        
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const eventDate = new Date(eventDateStr);
+        const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+        
+        if (event.isRecurrent) {
+          // For recurring events, find the next occurrence based on recurrence type
+          let nextOccurrence = new Date(eventDateOnly);
+          const interval = event.recurrenceInterval || 1;
+          
+          // If today is the event date, return 0
+          if (nextOccurrence.getTime() === today.getTime()) {
+            return 0;
+          }
+          
+          // Calculate next occurrence based on recurrence type
+          switch (event.recurrenceType) {
+            case 'daily':
+              while (nextOccurrence <= today) {
+                nextOccurrence.setDate(nextOccurrence.getDate() + interval);
+              }
+              break;
+              
+            case 'weekly':
+              while (nextOccurrence <= today) {
+                nextOccurrence.setDate(nextOccurrence.getDate() + (7 * interval));
+              }
+              break;
+              
+            case 'monthly':
+              while (nextOccurrence <= today) {
+                nextOccurrence.setMonth(nextOccurrence.getMonth() + interval);
+              }
+              break;
+              
+            case 'yearly':
+            default:
+              while (nextOccurrence <= today) {
+                nextOccurrence.setFullYear(nextOccurrence.getFullYear() + interval);
+              }
+              break;
+          }
+          
+          const timeDiff = nextOccurrence.getTime() - today.getTime();
+          return Math.round(timeDiff / (1000 * 3600 * 24));
+        } else {
+          const timeDiff = eventDateOnly.getTime() - today.getTime();
+          return Math.round(timeDiff / (1000 * 3600 * 24));
+        }
+      };
+      
+      const timeRemainingA = calculateTimeRemaining(a);
+      const timeRemainingB = calculateTimeRemaining(b);
+      
+      return timeRemainingA - timeRemainingB;
+    });
+    
+    return filterEvents(sortedEvents);
+  };
+
+  const getPastEvents = () => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    // Show archived events that were past events (non-recurring events that occurred before today)
+    const filteredEvents = archivedEvents.filter(event => {
+      if (event.isRecurrent) return false;
+      const eventDateStr = event.startDate || event.date;
+      if (!eventDateStr) return false;
+      const eventDate = new Date(eventDateStr);
+      const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
+      return eventDateOnly < today;
+    });
+    
+    return filterEvents(filteredEvents);
+  };
+
+  // Get current bulk context based on active tab
+  const getBulkContext = (): BulkActionContext => {
+    if (activeTab === 'archived') return 'archivedEvents';
+    if (activeTab === 'folders') return 'eventFolders';
+    return 'events';
+  };
+
+  // Helper functions for archived selection
+  const getArchivedEventIds = (): string[] => archivedEvents.map(e => e.id);
+  const getArchivedEventFolderIds = (): string[] => archivedEventFolders.map(f => f.id);
+
+  // Computed selection states for archived tab
+  const isAllArchivedEventsSelected = archivedEvents.length > 0 && 
+    archivedEvents.every(e => selectedItems.has(e.id));
+  const isAllArchivedEventFoldersSelected = archivedEventFolders.length > 0 && 
+    archivedEventFolders.every(f => selectedItems.has(f.id));
+
+  // Get all item IDs for current view
+  const getAllItemIds = (): string[] => {
+    if (activeTab === 'archived') {
+      return [...archivedEvents.map(e => e.id), ...archivedEventFolders.map(f => f.id)];
+    }
+    if (activeTab === 'folders') {
+      return eventFolders.map(f => f.id);
+    }
+    return filterEvents(events).map(e => e.id);
+  };
+
+  // Handle bulk actions
+  const handleBulkAction = (action: BulkActionType, color?: string) => {
+    const ids = Array.from(selectedItems);
+    const idSet = new Set(ids);
+    
+    switch (action) {
+      case 'all':
+        toggleAll(getAllItemIds());
+        break;
+      case 'allItems': {
+        // Toggle selection of archived events only
+        const eventIds = getArchivedEventIds();
+        const allEventsSelected = eventIds.every(id => selectedItems.has(id));
+        if (allEventsSelected) {
+          // Deselect all events (keep folders selected)
+          const folderIds = getArchivedEventFolderIds();
+          const currentFolderSelections = Array.from(selectedItems).filter(id => folderIds.includes(id));
+          if (currentFolderSelections.length > 0) {
+            toggleAll(currentFolderSelections);
+          } else {
+            clearSelection();
+          }
+        } else {
+          // Select all events (keep existing folder selections)
+          const currentFolderSelections = Array.from(selectedItems).filter(id => 
+            archivedEventFolders.some(f => f.id === id));
+          toggleAll([...currentFolderSelections, ...eventIds]);
+        }
+        break;
+      }
+      case 'allFolders': {
+        // Toggle selection of archived folders only
+        const folderIds = getArchivedEventFolderIds();
+        const allFoldersSelected = folderIds.every(id => selectedItems.has(id));
+        if (allFoldersSelected) {
+          // Deselect all folders (keep events selected)
+          const eventIds = getArchivedEventIds();
+          const currentEventSelections = Array.from(selectedItems).filter(id => eventIds.includes(id));
+          if (currentEventSelections.length > 0) {
+            toggleAll(currentEventSelections);
+          } else {
+            clearSelection();
+          }
+        } else {
+          // Select all folders (keep existing event selections)
+          const currentEventSelections = Array.from(selectedItems).filter(id => 
+            archivedEvents.some(e => e.id === id));
+          toggleAll([...currentEventSelections, ...folderIds]);
+        }
+        break;
+      }
+      case 'pin':
+        // Batch update events - toggle pin state
+        setEvents(prev => prev.map(event => 
+          idSet.has(event.id) ? { ...event, pinned: !event.pinned } : event
+        ));
+        // Batch update folders
+        setEventFolders(prev => prev.map(folder => 
+          idSet.has(folder.id) ? { ...folder, pinned: !folder.pinned } : folder
+        ));
+        clearSelection();
+        exitBulkMode();
+        toast.success(`${ids.length} items updated`);
+        break;
+      case 'share':
+        // Copy event names to clipboard
+        const eventsToShare = events.filter(e => idSet.has(e.id));
+        const shareText = eventsToShare.map(e => `${e.name}${e.description ? `: ${e.description}` : ''}`).join('\n');
+        navigator.clipboard.writeText(shareText).then(() => {
+          toast.success('Event content copied to clipboard!');
+        }).catch(() => {
+          toast.error('Failed to copy event content');
+        });
+        clearSelection();
+        exitBulkMode();
+        break;
+      case 'copy':
+        // Batch copy events
+        const copiedEvents = events.filter(e => idSet.has(e.id)).map(event => ({
+          ...event,
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          name: `${event.name} (Copy)`,
+          createdAt: new Date().toISOString(),
+          pinned: false
+        }));
+        setEvents(prev => [...prev, ...copiedEvents]);
+        clearSelection();
+        exitBulkMode();
+        toast.success(`${ids.length} events copied`);
+        break;
+      case 'move':
+        if (ids.length > 0) {
+          setSelectedEventsForMove(ids);
+          setIsMoveToEventFolderOpen(true);
+        }
+        break;
+      case 'color':
+        if (color) {
+          // Batch update colors
+          setEvents(prev => prev.map(e => idSet.has(e.id) ? { ...e, color } : e));
+          setEventFolders(prev => prev.map(f => idSet.has(f.id) ? { ...f, color } : f));
+          clearSelection();
+          exitBulkMode();
+          toast.success(`Color applied to ${ids.length} items`);
+        }
+        break;
+      case 'archive':
+        // Show confirmation dialog for bulk archive
+        setPendingBulkAction({ ids, action: 'archive' });
+        setBulkArchiveDialogOpen(true);
+        break;
+      case 'delete':
+        // Show confirmation dialog for bulk delete
+        setPendingBulkAction({ ids, action: 'delete' });
+        setBulkDeleteDialogOpen(true);
+        break;
+      case 'restore': {
+        const appendUniqueById = <T extends { id: string }>(prev: T[], items: T[]) => {
+          const existing = new Set(prev.map(i => i.id));
+          const next = [...prev];
+          for (const item of items) {
+            if (!existing.has(item.id)) {
+              existing.add(item.id);
+              next.push(item);
+            }
+          }
+          return next;
+        };
+
+        const foldersToRestore = archivedEventFolders.filter(f => idSet.has(f.id));
+        const eventsToRestoreAll = archivedEvents.filter(e => idSet.has(e.id));
+        const eventIdsRestoredViaFolders = new Set<string>();
+
+        // Restore folders (and their still-archived events)
+        if (foldersToRestore.length > 0) {
+          const eventIdsAssignedElsewhere = new Set<string>(eventFolders.flatMap(f => f.eventIds));
+
+          const sanitizedFolders = foldersToRestore.map(f => ({
+            ...f,
+            archived: false,
+            eventIds: f.eventIds.filter(id => !eventIdsAssignedElsewhere.has(id)),
+          }));
+
+          sanitizedFolders.forEach(f => f.eventIds.forEach(id => eventIdsRestoredViaFolders.add(id)));
+
+          const eventsFromFoldersToRestore = archivedEvents.filter(e => eventIdsRestoredViaFolders.has(e.id));
+          // Strip originalFolderId from restored events
+          const cleanedEventsFromFolders = eventsFromFoldersToRestore.map(e => {
+            const { originalFolderId, ...restored } = e;
+            return restored;
+          });
+
+          setEventFolders(prev => [...prev, ...sanitizedFolders]);
+          setArchivedEventFolders(prev => prev.filter(f => !idSet.has(f.id)));
+
+          if (cleanedEventsFromFolders.length > 0) {
+            setEvents(prev => appendUniqueById(prev, cleanedEventsFromFolders));
+            setArchivedEvents(prev => prev.filter(e => !eventIdsRestoredViaFolders.has(e.id)));
+          }
+        }
+
+        // Restore individually-selected events (with folder re-association)
+        const eventsToRestore = eventsToRestoreAll.filter(e => !eventIdsRestoredViaFolders.has(e.id));
+        if (eventsToRestore.length > 0) {
+          // Strip originalFolderId and collect re-associations
+          const restoredEvents = eventsToRestore.map(e => {
+            const { originalFolderId, ...restored } = e;
+            return restored;
+          });
+          
+          setEvents(prev => appendUniqueById(prev, restoredEvents));
+          setArchivedEvents(prev => prev.filter(e => !(idSet.has(e.id) && !eventIdsRestoredViaFolders.has(e.id))));
+          
+          // Re-associate events with their original folders if they still exist
+          setEventFolders(prev => {
+            let updated = [...prev];
+            eventsToRestore.forEach(event => {
+              const originalFolderId = event.originalFolderId;
+              if (originalFolderId) {
+                const folderIndex = updated.findIndex(f => f.id === originalFolderId);
+                if (folderIndex !== -1 && !updated[folderIndex].eventIds.includes(event.id)) {
+                  updated[folderIndex] = {
+                    ...updated[folderIndex],
+                    eventIds: [...updated[folderIndex].eventIds, event.id]
+                  };
+                }
+              }
+            });
+            return updated;
+          });
+        }
+
+        clearSelection();
+        exitBulkMode();
+        toast.success(`${ids.length} items restored`);
+        break;
+      }
+    }
+  };
+
+  // Render event list based on view type
+  const renderEventList = (eventList: Event[], emptyMessage: string, isArchived = false) => {
+    if (eventList.length === 0) {
+      return (
+        <Card>
+          <CardContent className="text-center py-8">
+            <p className="text-muted-foreground">{emptyMessage}</p>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    const gridClass = viewType === 'list' ? 'grid grid-cols-1 gap-2' : 
+                     viewType === 'medium' ? 'grid grid-cols-3 gap-2' :
+                     'grid grid-cols-2 gap-2'; // large
+
+    return (
+      <div className={gridClass}>
+        {eventList.map(event => (
+          <EventCard
+            key={event.id}
+            event={event}
+            onClick={() => isBulkMode ? toggleItem(event.id) : (isArchived ? null : openEventDetails(event))}
+            onEdit={() => openEventDetails(event)}
+            onArchive={!isArchived ? confirmArchiveEvent : undefined}
+            onUnarchive={isArchived ? unarchiveEvent : undefined}
+            onDelete={deleteEvent}
+            onCopy={copyEvent}
+            onShare={() => {}}
+            onMoveToFolder={!isArchived ? handleMoveToEventFolder : undefined}
+            onPin={!isArchived ? pinEvent : undefined}
+            onUnpin={!isArchived ? unpinEvent : undefined}
+            isDeleted={false}
+            isArchived={isArchived}
+            searchQuery={searchQuery}
+            viewType={viewType}
+            showBulkCheckbox={isBulkMode}
+            isBulkSelected={selectedItems.has(event.id)}
+            onBulkSelect={toggleItem}
+          />
+        ))}
+      </div>
+    );
+  };
+
+  const renderEventFolderList = (folderList: EventFolder[], emptyMessage: string, isArchived = false) => {
+    if (folderList.length === 0) {
+      return (
+        <Card>
+          <CardContent className="text-center py-8">
+            {!isArchived ? (
+              <Button 
+                onClick={() => setIsEventFolderCreatorOpen(true)}
+                className="h-12 px-8 text-base font-medium rounded-full bg-black text-white hover:bg-black/90"
+              >
+                Create Folder
+                <FolderOpen className="ml-2" size={20} />
+              </Button>
+            ) : (
+              <p className="text-muted-foreground">{emptyMessage}</p>
+            )}
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+        {folderList.map(folder => (
+          <EventFolderCard
+            key={folder.id}
+            folder={folder}
+            events={isArchived ? archivedEvents : getAllEvents()}
+            onEdit={!isArchived ? editEventFolder : undefined}
+            onArchive={!isArchived ? confirmArchiveEventFolder : undefined}
+            onUnarchive={isArchived ? unarchiveEventFolder : undefined}
+            onDelete={deleteEventFolder}
+            onPin={!isArchived ? pinEventFolder : undefined}
+            onUnpin={!isArchived ? unpinEventFolder : undefined}
+            isArchived={isArchived}
+            isDeleted={false}
+            searchQuery={searchQuery}
+            onEditEvent={openEventDetails}
+            onArchiveEvent={confirmArchiveEvent}
+            onDeleteEvent={deleteEvent}
+            onCopyEvent={copyEvent}
+            onMoveEventToFolder={(eventId) => {
+              setSelectedEventForMove(eventId);
+              setIsMoveToEventFolderOpen(true);
+            }}
+            showBulkCheckbox={isBulkMode}
+            isBulkSelected={selectedItems.has(folder.id)}
+            onBulkSelect={toggleItem}
+          />
+        ))}
+      </div>
+    );
+  };
+
+  const { t } = useLanguage();
+
+  return (
+    <Layout 
+      showSearch={true}
+      searchQuery={searchQuery}
+      onSearchChange={setSearchQuery}
+      isBulkMode={isBulkMode}
+      pageTitle={t('events')}
+    >
+      <div {...swipeHandlers} className="space-y-2">
+        {/* Floating Add Button */}
+        {!isBulkMode && activeTab !== 'archived' && (
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={handleAddButtonClick} 
+            className={cn(
+              "fixed bottom-20 right-2 h-14 w-14 rounded-full z-30 bg-black text-white hover:bg-black hover:text-white",
+              "transition-all duration-300 ease-out",
+              scrollDirection === 'down' 
+                ? "opacity-0 translate-y-4 pointer-events-none" 
+                : "opacity-100 translate-y-0"
+            )}
+          >
+            <Plus size={24} />
+          </Button>
+        )}
+
+        {/* Add Event Dialog */}
+        <EventEditor
+          isOpen={isAddDialogOpen}
+          onClose={() => setIsAddDialogOpen(false)}
+          onSave={handleCreateEvent}
+          mode="create"
+        />
+
+        {/* Edit Event Dialog */}
+        <EventEditor
+          isOpen={!!selectedEvent}
+          onClose={() => setSelectedEvent(null)}
+          onSave={handleUpdateEvent}
+          initialEvent={selectedEvent}
+          mode="edit"
+        />
+
+        {/* Events Tabs */}
+        <Tabs value={activeTab} onValueChange={(tab) => { setActiveTab(tab); exitBulkMode(); }} className="w-full">
+          <div className="fixed top-16 left-0 right-0 z-40 px-2">
+            <div className="flex items-center justify-between py-2">
+            <SlidingTabsList 
+              activeValue={activeTab} 
+              values={['all-events', 'folders', 'archived']}
+            >
+              <TabsTrigger value="all-events">Events</TabsTrigger>
+              <TabsTrigger value="folders">Folders</TabsTrigger>
+              <TabsTrigger value="archived">Archived</TabsTrigger>
+            </SlidingTabsList>
+            <div className="flex items-center gap-1">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="rounded-full hover:bg-black hover:text-white focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:!size-6 data-[state=open]:bg-black data-[state=open]:text-white"
+                data-state={isBulkMode ? "open" : "closed"}
+                onClick={(e) => { toggleBulkMode(); e.currentTarget.blur(); }}
+                onMouseDown={(e) => e.preventDefault()}
+              >
+                <FileStack className="h-6 w-6" />
+              </Button>
+              {activeTab === 'folders' ? (
+                <EventFolderViewSettings
+                  sortType={folderSortType}
+                  sortDirection={folderSortDirection}
+                  onSortTypeChange={setFolderSortType}
+                  onSortDirectionChange={setFolderSortDirection}
+                />
+              ) : (
+                <EventViewSettings
+                  viewType={viewType}
+                  sortType={sortType}
+                  sortDirection={sortDirection}
+                  onViewTypeChange={setViewType}
+                  onSortTypeChange={setSortType}
+                  onSortDirectionChange={setSortDirection}
+                />
+              )}
+            </div>
+            </div>
+          </div>
+          
+          <TabsContent value="all-events" className="mt-14 space-y-2">
+            {getAllEvents().length === 0 ? (
+              <Card>
+                <CardContent className="text-center py-8">
+                  <Button 
+                    onClick={handleAddButtonClick}
+                    className="h-12 px-8 text-base font-medium rounded-full bg-black text-white hover:bg-black/90"
+                  >
+                    Create Event
+                    <Calendar className="ml-2" size={20} />
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              renderEventList(getAllEvents(), "No events yet")
+            )}
+          </TabsContent>
+          
+          <TabsContent value="folders" className="mt-14 space-y-2">
+            {getEventFolders().length === 0 ? (
+              <Card>
+                <CardContent className="text-center py-8">
+                  <Button 
+                    onClick={handleAddButtonClick}
+                    className="h-12 px-8 text-base font-medium rounded-full bg-black text-white hover:bg-black/90"
+                  >
+                    Create Folder
+                    <FolderOpen className="ml-2" size={20} />
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              renderEventFolderList(getEventFolders(), "No folders yet.")
+            )}
+          </TabsContent>
+          
+          <TabsContent value="archived" className="mt-14 space-y-2">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <h3 className="text-lg font-medium">Archived Events</h3>
+                {renderEventList(archivedEvents, "No archived events", true)}
+              </div>
+              
+              <div className="space-y-2">
+                <h3 className="text-lg font-medium">Archived Folders</h3>
+                {renderEventFolderList(archivedEventFolders, "No archived folders", true)}
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        {/* Delete Confirmation Dialog */}
+        <ConfirmationDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          title={`Delete ${itemToDelete?.type === 'event' ? 'Event' : 'Event Folder'}`}
+          description={`Are you sure you want to permanently delete this ${itemToDelete?.type === 'event' ? 'event' : 'event folder'}?${itemToDelete?.type === 'eventFolder' ? ' All events in this folder will also be deleted.' : ''} This action cannot be undone.`}
+          action="delete"
+          onConfirm={() => {
+            if (itemToDelete) {
+              if (itemToDelete.type === 'event') {
+                confirmDeleteEvent(itemToDelete.id);
+              } else {
+                confirmDeleteEventFolder(itemToDelete.id);
+              }
+            }
+            setItemToDelete(null);
+          }}
+        />
+
+        {/* Archive Confirmation Dialog */}
+        <ConfirmationDialog
+          open={archiveDialogOpen}
+          onOpenChange={setArchiveDialogOpen}
+          title={`Archive ${itemToArchive?.type === 'event' ? 'Event' : 'Event Folder'}`}
+          description={`Are you sure you want to archive this ${itemToArchive?.type === 'event' ? 'event' : 'event folder'}?${itemToArchive?.type === 'eventFolder' ? ' All events in this folder will also be archived.' : ''} You can restore it later from the archived section.`}
+          action="archive"
+          onConfirm={() => {
+            if (itemToArchive) {
+              if (itemToArchive.type === 'event') {
+                performArchiveEvent(itemToArchive.id);
+              } else {
+                performArchiveEventFolder(itemToArchive.id);
+              }
+            }
+            setItemToArchive(null);
+          }}
+        />
+        <EventFolderCreator
+          isOpen={isEventFolderCreatorOpen}
+          onClose={() => {
+            setIsEventFolderCreatorOpen(false);
+            setSelectedEventForMove(null);
+          }}
+          onSave={addEventFolder}
+          eventIdToMove={selectedEventForMove}
+        />
+
+        <EventFolderEditor
+          isOpen={isEventFolderEditorOpen}
+          onClose={() => setIsEventFolderEditorOpen(false)}
+          onSave={updateEventFolder}
+          folder={selectedEventFolder}
+        />
+
+        <MoveToEventFolderDialog
+          isOpen={isMoveToEventFolderOpen}
+          onClose={() => {
+            setIsMoveToEventFolderOpen(false);
+            setSelectedEventForMove(null);
+            setSelectedEventsForMove(null);
+          }}
+          folders={eventFolders}
+          onSelectFolder={handleEventFolderSelect}
+          onCreateNewFolder={handleCreateEventFolderFromDialog}
+          currentFolderId={selectedEventForMove ? eventFolders.find(f => f.eventIds.includes(selectedEventForMove))?.id : undefined}
+        />
+
+        {/* Bulk Archive Confirmation Dialog */}
+        <ConfirmationDialog
+          open={bulkArchiveDialogOpen}
+          onOpenChange={setBulkArchiveDialogOpen}
+          title="Archive Selected Items"
+          description={`Are you sure you want to archive ${pendingBulkAction?.ids.length || 0} item(s)? You can restore them later from the archived section.`}
+          action="archive"
+          onConfirm={() => {
+            if (pendingBulkAction) {
+              const { ids } = pendingBulkAction;
+              const idSet = new Set(ids);
+              
+              if (activeTab === 'folders') {
+                // Batch archive folders
+                const foldersToArchive = eventFolders.filter(f => idSet.has(f.id)).map(f => ({ ...f, archived: true }));
+
+                // Archive all events inside those folders
+                const eventIdsToArchive = new Set<string>(foldersToArchive.flatMap(f => f.eventIds));
+                const eventsToArchive = events.filter(e => eventIdsToArchive.has(e.id));
+
+                setArchivedEventFolders(prev => [...prev, ...foldersToArchive]);
+                setArchivedEvents(prev => [...prev, ...eventsToArchive]);
+
+                // Remove folders and their events from active lists
+                setEventFolders(prev => prev
+                  .filter(f => !idSet.has(f.id))
+                  .map(f => ({ ...f, eventIds: f.eventIds.filter(id => !eventIdsToArchive.has(id)) }))
+                );
+                setEvents(prev => prev.filter(e => !eventIdsToArchive.has(e.id)));
+              } else {
+                // Batch archive events
+                const eventsToArchive = events.filter(e => idSet.has(e.id));
+                setArchivedEvents(prev => [...prev, ...eventsToArchive]);
+                setEvents(prev => prev.filter(e => !idSet.has(e.id)));
+                // Remove from folders
+                setEventFolders(prev => prev.map(folder => ({
+                  ...folder,
+                  eventIds: folder.eventIds.filter(id => !idSet.has(id))
+                })));
+              }
+              clearSelection();
+              exitBulkMode();
+              toast.success(`${ids.length} items archived`);
+            }
+            setPendingBulkAction(null);
+          }}
+          onCancel={() => setPendingBulkAction(null)}
+        />
+
+        {/* Bulk Delete Confirmation Dialog */}
+        <ConfirmationDialog
+          open={bulkDeleteDialogOpen}
+          onOpenChange={setBulkDeleteDialogOpen}
+          title="Delete Selected Items"
+          description={`Are you sure you want to permanently delete ${pendingBulkAction?.ids.length || 0} item(s)? This action cannot be undone.`}
+          action="delete"
+          onConfirm={() => {
+            if (pendingBulkAction) {
+              const { ids } = pendingBulkAction;
+              const idSet = new Set(ids);
+              
+              if (activeTab === 'archived') {
+                // Batch delete both events AND folders in archived tab
+                setArchivedEvents(prev => prev.filter(e => !idSet.has(e.id)));
+                setArchivedEventFolders(prev => prev.filter(f => !idSet.has(f.id)));
+              } else if (activeTab === 'folders') {
+                // Batch delete folders
+                setEventFolders(prev => prev.filter(f => !idSet.has(f.id)));
+                setArchivedEventFolders(prev => prev.filter(f => !idSet.has(f.id)));
+              } else {
+                // Batch delete events
+                setEvents(prev => prev.filter(e => !idSet.has(e.id)));
+                setArchivedEvents(prev => prev.filter(e => !idSet.has(e.id)));
+                // Remove from folders
+                setEventFolders(prev => prev.map(folder => ({
+                  ...folder,
+                  eventIds: folder.eventIds.filter(id => !idSet.has(id))
+                })));
+                setArchivedEventFolders(prev => prev.map(folder => ({
+                  ...folder,
+                  eventIds: folder.eventIds.filter(id => !idSet.has(id))
+                })));
+              }
+              clearSelection();
+              exitBulkMode();
+              toast.success(`${ids.length} items deleted`);
+            }
+            setPendingBulkAction(null);
+          }}
+          onCancel={() => setPendingBulkAction(null)}
+        />
+
+        {/* Folder Restore Confirmation Dialog */}
+        <ConfirmationDialog
+          open={folderRestoreDialogOpen}
+          onOpenChange={(open) => {
+            setFolderRestoreDialogOpen(open);
+            if (!open) setFolderToRestore(null);
+          }}
+          title="Restore Folder"
+          description={(() => {
+            if (!folderToRestore) return '';
+            const folder = archivedEventFolders.find(f => f.id === folderToRestore);
+            if (!folder) return '';
+            const eventIdsAssignedElsewhere = new Set<string>(eventFolders.flatMap(f => f.eventIds));
+            const sanitizedEventIds = folder.eventIds.filter(id => !eventIdsAssignedElsewhere.has(id));
+            const count = archivedEvents.filter(e => sanitizedEventIds.includes(e.id)).length;
+            return `Do you also want to restore the ${count} event${count !== 1 ? 's' : ''} inside this folder?`;
+          })()}
+          action="restore"
+          confirmLabel="Restore All"
+          onConfirm={() => {
+            if (folderToRestore) restoreEventFolderWithEvents(folderToRestore);
+            setFolderToRestore(null);
+          }}
+          secondaryAction={{
+            label: 'Folder Only',
+            onClick: () => {
+              if (folderToRestore) restoreEventFolderOnly(folderToRestore);
+              setFolderToRestore(null);
+            }
+          }}
+        />
+
+        <BulkActionBar
+          context={getBulkContext()}
+          isVisible={isBulkMode}
+          isAllSelected={isAllSelected(getAllItemIds())}
+          isAllItemsSelected={isAllArchivedEventsSelected}
+          isAllFoldersSelected={isAllArchivedEventFoldersSelected}
+          selectedCount={selectedItems.size}
+          onAction={handleBulkAction}
+        />
+      </div>
+    </Layout>
+  );
+}

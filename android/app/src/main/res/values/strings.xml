@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">HabiTrkr</string>
+    <string name="title_activity_main">HabiTrkr</string>
+    <string name="package_name">app.habitvault.tracker</string>
+    <string name="custom_url_scheme">app.habitvault.tracker</string>
+</resources>

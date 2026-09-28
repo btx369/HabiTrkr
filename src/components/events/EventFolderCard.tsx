@@ -1,0 +1,221 @@
+import { useState, useRef, useEffect } from 'react';
+import { FolderOpen, ChevronDown, ChevronRight, Pin, Check, RotateCcw, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { CardContent } from '@/components/ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { EventFolder } from '@/types/eventFolder';
+import { Event } from '@/types/event';
+import { EventCard } from '@/components/events/EventCard';
+import { ItemActionMenu } from '@/components/shared/ItemActionMenu';
+import { highlightText } from '@/lib/textHighlight';
+import { ColoredCard } from '@/components/shared/ColoredCard';
+import { isDefaultColor } from '@/lib/cardColorStyles';
+import { getColoredIconClass } from '@/lib/coloredButtonStyles';
+import { cn } from '@/lib/utils';
+
+interface EventFolderCardProps {
+  folder: EventFolder;
+  events: Event[];
+  onEdit?: (folderId: string) => void;
+  onArchive?: (folderId: string) => void;
+  onUnarchive?: (folderId: string) => void;
+  onDelete?: (folderId: string) => void;
+  onPin?: (folderId: string) => void;
+  onUnpin?: (folderId: string) => void;
+  onCopy?: (folderId: string) => void;
+  onRestore?: (folderId: string) => void;
+  isArchived?: boolean;
+  isDeleted?: boolean;
+  searchQuery?: string;
+  onEditEvent?: (event: Event) => void;
+  onArchiveEvent?: (eventId: string) => void;
+  onDeleteEvent?: (eventId: string) => void;
+  onPinEvent?: (eventId: string) => void;
+  onUnpinEvent?: (eventId: string) => void;
+  onCopyEvent?: (eventId: string) => void;
+  onMoveEventToFolder?: (eventId: string) => void;
+  /** Bulk selection props */
+  showBulkCheckbox?: boolean;
+  isBulkSelected?: boolean;
+  onBulkSelect?: (id: string) => void;
+}
+
+export function EventFolderCard({ 
+  folder, 
+  events,
+  onEdit, 
+  onArchive, 
+  onUnarchive, 
+  onDelete, 
+  onPin, 
+  onUnpin, 
+  onCopy,
+  onRestore,
+  isArchived = false,
+  isDeleted = false,
+  searchQuery = '',
+  onEditEvent,
+  onArchiveEvent,
+  onDeleteEvent,
+  onPinEvent,
+  onUnpinEvent,
+  onCopyEvent,
+  onMoveEventToFolder,
+  showBulkCheckbox = false,
+  isBulkSelected = false,
+  onBulkSelect,
+}: EventFolderCardProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const folderEvents = events.filter(event => folder.eventIds.includes(event.id));
+
+  // Track when bulk mode was enabled for animation control
+  const bulkModeEntryRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (showBulkCheckbox) {
+      if (bulkModeEntryRef.current === null) {
+        bulkModeEntryRef.current = Date.now();
+      }
+    } else {
+      bulkModeEntryRef.current = null;
+    }
+  }, [showBulkCheckbox]);
+
+  // Only animate checkbox on initial bulk mode entry (within 100ms)
+  const shouldAnimateCheckbox = bulkModeEntryRef.current !== null && 
+    (Date.now() - bulkModeEntryRef.current) < 100;
+  
+  // Use standardized color helpers
+  const hasColor = !isDefaultColor(folder.color);
+  const iconColorClass = getColoredIconClass(hasColor);
+  const mutedTextColorClass = hasColor ? 'text-[#000000]/70' : 'text-muted-foreground';
+  const textColorClass = hasColor ? 'text-[#000000]' : 'text-foreground';
+
+  // Bulk selection checkbox component - renders inline, replacing the menu
+  const BulkCheckbox = () => (
+    <div 
+      className={shouldAnimateCheckbox ? "animate-in zoom-in-50 duration-300" : ""}
+      onClick={(e) => {
+        e.stopPropagation();
+        onBulkSelect?.(folder.id);
+      }}
+    >
+      <div className={cn(
+        "h-6 w-6 rounded-full border-2 flex items-center justify-center transition-colors cursor-pointer",
+        isBulkSelected 
+          ? "bg-black border-black" 
+          : "border-muted-foreground bg-background/80 backdrop-blur-sm"
+      )}>
+        {isBulkSelected && <Check size={14} className="text-white" />}
+      </div>
+    </div>
+  );
+
+  return (
+    <ColoredCard 
+      color={folder.color}
+      className="transition-all group relative"
+    >
+      <Collapsible open={isOpen} onOpenChange={showBulkCheckbox ? undefined : setIsOpen}>
+        <CardContent className="px-2 py-2">
+          <div className="flex items-start gap-3">
+            <div className="flex-1 min-w-0">
+              <CollapsibleTrigger asChild>
+                <div 
+                  className="flex items-center gap-2 cursor-pointer"
+                  onClick={(e) => {
+                    if (showBulkCheckbox) {
+                      e.preventDefault();
+                      onBulkSelect?.(folder.id);
+                    }
+                  }}
+                >
+                  {isOpen ? (
+                    <ChevronDown size={14} className={iconColorClass} />
+                  ) : (
+                    <ChevronRight size={14} className={iconColorClass} />
+                  )}
+                  <h4 className={`text-sm font-medium truncate flex-1 ${textColorClass}`}>{highlightText(folder.name, searchQuery)}</h4>
+                </div>
+              </CollapsibleTrigger>
+              {folder.description && (
+                <p className={`text-xs ${mutedTextColorClass} mb-1 ml-6`}>{highlightText(folder.description, searchQuery)}</p>
+              )}
+              <p className={`text-xs ${mutedTextColorClass} ml-6`}>
+                {folderEvents.length} events
+              </p>
+            </div>
+            <div className="flex items-center gap-1">
+              {folder.pinned && <Pin size={14} className={iconColorClass} />}
+              <FolderOpen size={14} className={iconColorClass} />
+              {showBulkCheckbox ? (
+                <BulkCheckbox />
+              ) : (isArchived || isDeleted) ? (
+                <div className="flex gap-1">
+                  <Button 
+                    size="icon" 
+                    variant="outline" 
+                    className="rounded-full h-8 w-8" 
+                    onClick={(e) => { e.stopPropagation(); onUnarchive ? onUnarchive(folder.id) : onRestore?.(folder.id); }}
+                  >
+                    <RotateCcw size={14} />
+                  </Button>
+                  <Button 
+                    size="icon" 
+                    variant="destructive" 
+                    className="rounded-full h-8 w-8" 
+                    onClick={(e) => { e.stopPropagation(); onDelete?.(folder.id); }}
+                  >
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
+              ) : (
+                <ItemActionMenu
+                  isPinned={folder.pinned}
+                  isArchived={isArchived}
+                  isDeleted={isDeleted}
+                  onPin={onPin ? () => onPin(folder.id) : undefined}
+                  onUnpin={onUnpin ? () => onUnpin(folder.id) : undefined}
+                  onEdit={onEdit ? () => onEdit(folder.id) : undefined}
+                  onArchive={onArchive ? () => onArchive(folder.id) : undefined}
+                  onDelete={onDelete ? () => onDelete(folder.id) : undefined}
+                  onRestore={isArchived && onUnarchive ? () => onUnarchive(folder.id) : onRestore ? () => onRestore(folder.id) : undefined}
+                />
+              )}
+            </div>
+          </div>
+        </CardContent>
+        
+        <CollapsibleContent>
+          <CardContent className="pt-0 pb-2.5 px-1">
+            {folderEvents.length === 0 ? (
+              <div className={`text-center py-4 ${mutedTextColorClass} text-sm`}>
+                No events in this folder yet
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-1">
+                {folderEvents.map(event => (
+                  <div key={event.id} className="scale-95">
+                    <EventCard 
+                      event={event} 
+                      onClick={() => onEditEvent?.(event)}
+                      onEdit={() => onEditEvent?.(event)}
+                      onArchive={() => onArchiveEvent?.(event.id)}
+                      onDelete={() => onDeleteEvent?.(event.id)}
+                      onCopy={() => onCopyEvent?.(event.id)}
+                      onMoveToFolder={() => onMoveEventToFolder?.(event.id)}
+                      isDeleted={isDeleted}
+                      isArchived={isArchived}
+                      searchQuery={searchQuery}
+                      forceBackground={hasColor}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </CollapsibleContent>
+      </Collapsible>
+    </ColoredCard>
+  );
+}
