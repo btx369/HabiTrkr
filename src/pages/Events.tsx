@@ -212,7 +212,7 @@ export default function Events() {
     const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
     
     if (event.isRecurrent) {
-      let nextOccurrence = new Date(eventDateOnly);
+      const nextOccurrence = new Date(eventDateOnly);
       const interval = event.recurrenceInterval || 1;
       
       if (nextOccurrence.getTime() === today.getTime()) return 0;
@@ -415,7 +415,7 @@ export default function Events() {
             
             if (event.isRecurrent) {
               // For recurring events, find the next occurrence based on recurrence type
-              let nextOccurrence = new Date(eventDateOnly);
+              const nextOccurrence = new Date(eventDateOnly);
               const interval = event.recurrenceInterval || 1;
               
               // If today is the event date, return 0
@@ -519,7 +519,7 @@ export default function Events() {
             
             if (event.isRecurrent) {
               // For recurring events, find the next occurrence based on recurrence type
-              let nextOccurrence = new Date(eventDateOnly);
+              const nextOccurrence = new Date(eventDateOnly);
               const interval = event.recurrenceInterval || 1;
               
               // If today is the event date, return 0
@@ -933,7 +933,7 @@ export default function Events() {
             
             if (event.isRecurrent) {
               // For recurring events, find the next occurrence based on recurrence type
-              let nextOccurrence = new Date(eventDateOnly);
+              const nextOccurrence = new Date(eventDateOnly);
               const interval = event.recurrenceInterval || 1;
               
               // If today is the event date, return 0
@@ -1069,7 +1069,7 @@ export default function Events() {
         
         if (event.isRecurrent) {
           // For recurring events, find the next occurrence based on recurrence type
-          let nextOccurrence = new Date(eventDateOnly);
+          const nextOccurrence = new Date(eventDateOnly);
           const interval = event.recurrenceInterval || 1;
           
           // If today is the event date, return 0
@@ -1342,7 +1342,7 @@ export default function Events() {
           
           // Re-associate events with their original folders if they still exist
           setEventFolders(prev => {
-            let updated = [...prev];
+            const updated = [...prev];
             eventsToRestore.forEach(event => {
               const originalFolderId = event.originalFolderId;
               if (originalFolderId) {

@@ -2,8 +2,9 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-export interface TextareaProps
-  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
+// A type alias rather than an empty `interface extends`: an interface with no members
+// is equivalent to its supertype, which is exactly what the old form was doing.
+export type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, ...props }, ref) => {

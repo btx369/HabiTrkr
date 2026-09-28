@@ -652,7 +652,7 @@ export function NoteViewer({
     
     // Check if there's any meaningful content
     let hasContent = false;
-    let updatedNote: any = {};
+    const updatedNote: any = {};
     
     if (note.type === 'text' && editedDescription.trim()) {
       hasContent = true;

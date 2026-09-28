@@ -7,12 +7,12 @@ interface TextPart {
 
 const processInlineFormatting = (text: string): ReactNode[] => {
   const result: ReactNode[] = [];
-  let currentIndex = 0;
+  const currentIndex = 0;
   
   // Parse inline formatting: **bold**, *italic*, __underline__
   const regex = /(\*\*.*?\*\*|\*.*?\*|__.*?__)/g;
   let match;
-  let lastIndex = 0;
+  const lastIndex = 0;
   
   const matches: Array<{ index: number; text: string; type: 'bold' | 'italic' | 'underline' }> = [];
   

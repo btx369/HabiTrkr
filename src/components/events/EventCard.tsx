@@ -148,7 +148,7 @@ export function EventCard({
     const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
     
     if (event.isRecurrent) {
-      let nextOccurrence = new Date(eventDateOnly);
+      const nextOccurrence = new Date(eventDateOnly);
       const interval = event.recurrenceInterval || 1;
       
       if (nextOccurrence.getTime() === today.getTime()) {
