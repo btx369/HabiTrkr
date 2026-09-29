@@ -82,6 +82,18 @@ export default function Notes() {
   // Computed viewType based on active tab for backward compatibility
   const viewType = activeTab === 'archived' ? archivedNotesViewType : allNotesViewType;
   const setViewType = activeTab === 'archived' ? setArchivedNotesViewType : setAllNotesViewType;
+
+  /**
+   * `?view=list|large|medium` forces a view for this visit without saving it, so a
+   * specific layout can be opened and checked directly. Useful for verifying the grid
+   * views, which are otherwise two clicks deep in the settings menu.
+   */
+  const forcedViewType = (() => {
+    if (typeof window === 'undefined') return null;
+    const raw = new URLSearchParams(window.location.search).get('view');
+    return raw === 'list' || raw === 'large' || raw === 'medium' ? (raw as ViewType) : null;
+  })();
+  const effectiveViewType = forcedViewType ?? viewType;
   const [allNotesSortType, setAllNotesSortType] = useLocalStorage<SortType>('notesAllSortType', 'dateCreated');
   const [allNotesSortDirection, setAllNotesSortDirection] = useLocalStorage<SortDirection>('notesAllSortDirection', 'desc');
   const [archivedNotesSortType, setArchivedNotesSortType] = useLocalStorage<SortType>('notesArchivedSortType', 'dateCreated');
@@ -1296,7 +1308,7 @@ export default function Notes() {
       let insertIndex = -1;
       
       // Find where to insert based on Y position for list view or both X,Y for grid views
-      if (viewType === 'list') {
+      if (effectiveViewType === 'list') {
         // For list view, use vertical positioning
         for (let i = 0; i < noteElements.length; i++) {
           const element = noteElements[i] as HTMLElement;
@@ -1502,7 +1514,7 @@ export default function Notes() {
   };
 
   const getGridClassName = () => {
-    switch (viewType) {
+    switch (effectiveViewType) {
       case 'medium':
         return 'grid grid-cols-3 gap-2';
       case 'large':
@@ -1667,7 +1679,7 @@ export default function Notes() {
           if (isDragging && draggedNote && dragInsertIndex >= 0) {
             // Don't apply gap transform to the dragged note itself
             if (note.id !== draggedNote) {
-              if (viewType === 'list') {
+              if (effectiveViewType === 'list') {
                 // For list view, create vertical gap
                 if (index >= dragInsertIndex && (draggedIndex === -1 || index < draggedIndex)) {
                   gapTransform = 'translateY(80px)'; // Height of a typical note card
@@ -1676,16 +1688,16 @@ export default function Notes() {
                 }
               } else {
                 // For grid views, the gap effect is more complex based on grid layout
-                const itemsPerRow = viewType === 'medium' ? 3 : 2;
+                const itemsPerRow = effectiveViewType === 'medium' ? 3 : 2;
                 const draggedRow = Math.floor(draggedIndex / itemsPerRow);
                 const insertRow = Math.floor(dragInsertIndex / itemsPerRow);
                 const currentRow = Math.floor(index / itemsPerRow);
                 
                 if (currentRow >= insertRow && (draggedIndex === -1 || currentRow < draggedRow)) {
-                  const noteHeight = viewType === 'medium' ? 200 : 240;
+                  const noteHeight = effectiveViewType === 'medium' ? 200 : 240;
                   gapTransform = `translateY(${noteHeight + 16}px)`; // Add gap margin
                 } else if (currentRow > insertRow && draggedIndex !== -1 && currentRow > draggedRow) {
-                  const noteHeight = viewType === 'medium' ? 200 : 240;
+                  const noteHeight = effectiveViewType === 'medium' ? 200 : 240;
                   gapTransform = `translateY(${noteHeight + 16}px)`;
                 }
               }
@@ -1720,7 +1732,7 @@ export default function Notes() {
                 onUnlock={options.onUnlock}
                 isArchived={options.isArchived}
                 searchQuery={searchQuery}
-                viewType={viewType}
+                viewType={effectiveViewType}
                 draggable={sortType === 'custom' && !isBulkMode}
                 isDragged={draggedNote === note.id}
                 isDraggedOver={draggedOverNote === note.id}
@@ -2026,7 +2038,7 @@ export default function Notes() {
               />
             ) : (
               <ViewSettings
-                viewType={viewType}
+                viewType={effectiveViewType}
                 sortType={sortType}
                 sortDirection={sortDirection}
                 onViewTypeChange={setViewType}

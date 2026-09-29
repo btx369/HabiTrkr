@@ -443,18 +443,26 @@ export function NoteCard({
         onTouchStart={draggable ? onTouchStart : undefined}
       >
         <CardContent className="py-2 px-2 h-full flex flex-col">
-          <div className="flex items-center justify-end gap-2 mb-1">
-            <div className="flex items-center gap-1">
-              {note.pinned && <Pin size={14} className={iconColorClass} />}
-              {note.locked && <Lock size={14} className={iconColorClass} />}
-            </div>
-            {showBulkCheckbox ? (
-              <BulkCheckbox />
-            ) : (isArchived || isDeleted) ? (
-              <div className="flex gap-1">
-                <Button 
-                  size="icon" 
-                  variant="outline" 
+          {/* Title and actions share one row, matching list view. They used to be
+              stacked, which put the title on its own line below the menu in 3x. */}
+          <div className="flex items-start gap-2 mb-1">
+            {shouldShowTitle() && (
+              <CardTitle className={`flex-1 min-w-0 font-bold truncate break-words ${textColorClass} text-xs`}>
+                {highlightText(note.name, searchQuery)}
+              </CardTitle>
+            )}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex items-center gap-1">
+                {note.pinned && <Pin size={14} className={iconColorClass} />}
+                {note.locked && <Lock size={14} className={iconColorClass} />}
+              </div>
+              {showBulkCheckbox ? (
+                <BulkCheckbox />
+              ) : (isArchived || isDeleted) ? (
+                <div className="flex gap-1">
+                  <Button 
+                    size="icon" 
+                    variant="outline" 
                   className="rounded-full h-8 w-8" 
                   onClick={(e) => {
                     e.stopPropagation();
@@ -494,13 +502,8 @@ export function NoteCard({
                 iconColorClass={iconColorClass}
               />
             )}
+            </div>
           </div>
-
-          {shouldShowTitle() && (
-            <CardTitle className={`font-bold mb-0.5 truncate break-words ${textColorClass} text-xs`}>
-              {highlightText(note.name, searchQuery)}
-            </CardTitle>
-          )}
 
           <div className="flex-1 overflow-hidden">
             {renderNoteContent()}
@@ -531,24 +534,32 @@ export function NoteCard({
       <CardContent className={`px-2 py-2 h-full ${viewType !== 'list' ? 'flex flex-col' : ''}`}>
         {viewType === 'large' ? (
           <>
-            <div className="flex items-center justify-end gap-2 mb-2">
-              <div className="flex items-center gap-1">
-                {note.pinned && <Pin size={14} className={iconColorClass} />}
-                {note.locked && <Lock size={14} className={iconColorClass} />}
-              </div>
-              {showBulkCheckbox ? (
-                <BulkCheckbox />
-              ) : (isArchived || isDeleted) ? (
-                <div className="flex gap-1">
-                  <Button 
-                    size="icon" 
-                    variant="outline" 
-                    className="rounded-full h-8 w-8" 
-                    onClick={(e) => {
-                    e.stopPropagation();
-                    if (onUnarchive) onUnarchive(note.id);
-                    else onRestore?.(note.id);
-                  }}
+            {/* Title and actions share one row, matching list view. They used to be
+                stacked, which pushed the title onto its own line below the menu. */}
+            <div className="flex items-start gap-2 mb-2">
+              {shouldShowTitle() && (
+                <CardTitle className={`flex-1 min-w-0 font-bold truncate break-words text-sm ${textColorClass}`}>
+                  {highlightText(note.name, searchQuery)}
+                </CardTitle>
+              )}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex items-center gap-1">
+                  {note.pinned && <Pin size={14} className={iconColorClass} />}
+                  {note.locked && <Lock size={14} className={iconColorClass} />}
+                </div>
+                {showBulkCheckbox ? (
+                  <BulkCheckbox />
+                ) : (isArchived || isDeleted) ? (
+                  <div className="flex gap-1">
+                    <Button 
+                      size="icon" 
+                      variant="outline" 
+                      className="rounded-full h-8 w-8" 
+                      onClick={(e) => {
+                      e.stopPropagation();
+                      if (onUnarchive) onUnarchive(note.id);
+                      else onRestore?.(note.id);
+                    }}
                   >
                     <RotateCcw size={14} />
                   </Button>
@@ -582,13 +593,8 @@ export function NoteCard({
                   iconColorClass={iconColorClass}
                 />
               )}
+              </div>
             </div>
-            
-            {shouldShowTitle() && (
-              <CardTitle className={`font-bold mb-0.5 truncate break-words text-sm ${textColorClass}`}>
-                {highlightText(note.name, searchQuery)}
-              </CardTitle>
-            )}
             
             <div className="flex-1 overflow-hidden">
               {renderNoteContent()}

@@ -1242,7 +1242,7 @@ export function NoteViewer({
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="h-8 w-8 p-0 self-center"
+                  className="h-8 w-8 p-0 self-center hover:bg-black/10"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <MoreVertical size={16} />
@@ -1496,7 +1496,7 @@ export function NoteViewer({
                         <span className="flex-1 break-words">{audioItem.label}</span>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 flex-shrink-0">
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 flex-shrink-0 hover:bg-black/10">
                               <MoreVertical size={14} />
                             </Button>
                           </DropdownMenuTrigger>
