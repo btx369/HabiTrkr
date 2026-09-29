@@ -232,6 +232,8 @@ export function NoteCard({
                         audioUrl={audio.url}
                         initialDuration={audio.duration}
                         compact
+                        showSeeker
+                        showSpeedControl
                         size={audioSize}
                       />
                     ))}
@@ -288,8 +290,8 @@ export function NoteCard({
               audioUrl={note.audioUrl!}
               initialDuration={note.duration}
               compact={!isListView}
-              showSeeker={isListView}
-              showSpeedControl={isListView}
+              showSeeker
+              showSpeedControl
               size={audioSize}
             />
             {audioTextContent && (
@@ -326,6 +328,8 @@ export function NoteCard({
                         audioUrl={audio.url}
                         initialDuration={audio.duration}
                         compact
+                        showSeeker
+                        showSpeedControl
                         size={audioSize}
                       />
                     ))}
@@ -493,7 +497,7 @@ export function NoteCard({
           </div>
 
           {shouldShowTitle() && (
-            <CardTitle className={`font-medium mb-0.5 truncate break-words ${textColorClass} text-xs`}>
+            <CardTitle className={`font-bold mb-0.5 truncate break-words ${textColorClass} text-xs`}>
               {highlightText(note.name, searchQuery)}
             </CardTitle>
           )}
@@ -581,7 +585,7 @@ export function NoteCard({
             </div>
             
             {shouldShowTitle() && (
-              <CardTitle className={`font-medium mb-0.5 truncate break-words text-sm ${textColorClass}`}>
+              <CardTitle className={`font-bold mb-0.5 truncate break-words text-sm ${textColorClass}`}>
                 {highlightText(note.name, searchQuery)}
               </CardTitle>
             )}
@@ -594,7 +598,7 @@ export function NoteCard({
           <div className="flex items-start gap-2 flex-1">
             <div className="flex-1 min-w-0 overflow-hidden">
               {shouldShowTitle() && (
-                <CardTitle className={`font-medium mb-1 truncate break-words text-sm ${textColorClass}`}>
+                <CardTitle className={`font-bold mb-1 truncate break-words text-sm ${textColorClass}`}>
                   {highlightText(note.name, searchQuery)}
                 </CardTitle>
               )}

@@ -30,12 +30,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ItemActionMenu } from '@/components/shared/ItemActionMenu';
+import { AudioPlayer } from '@/components/shared/AudioPlayer';
 import { Note, ListItem } from '@/types/note';
 import { NoteEditor } from './NoteEditor';
 import { NoteActionBar } from './NoteActionBar';
 import { highlightText } from '@/lib/textHighlight';
 import { renderMarkdownWithHighlight } from '@/lib/markdownRenderer';
-import { RenderNoteContent, parseNoteContent } from '@/lib/noteContentRenderer';
+import { parseNoteContent } from '@/lib/noteContentRenderer';
 import { ImageGalleryViewer } from './ImageGalleryViewer';
 import { isDefaultColor } from '@/lib/cardColorStyles';
 import { getColoredIconButtonStyles, getColoredIconClass, getColoredBorderClass } from '@/lib/coloredButtonStyles';
@@ -54,6 +55,24 @@ function hexToRgba(hexColor: string, alpha: number): string {
   const g = parseInt(hex.substring(2, 4), 16);
   const b = parseInt(hex.substring(4, 6), 16);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+/**
+ * Hover tint for controls sitting on a coloured note: the same colour a step lighter,
+ * matching how ColoredCard tints its own controls. Kept identical in formula so a note
+ * looks the same whether it is open or shown as a card.
+ */
+function getLighterColor(hexColor: string): string {
+  const hex = hexColor.replace('#', '');
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+
+  const lighterR = Math.min(255, Math.round(r + (255 - r) * 0.25));
+  const lighterG = Math.min(255, Math.round(g + (255 - g) * 0.25));
+  const lighterB = Math.min(255, Math.round(b + (255 - b) * 0.25));
+
+  return `rgba(${lighterR}, ${lighterG}, ${lighterB}, 0.6)`;
 }
 
 interface NoteViewerProps {
@@ -1194,28 +1213,30 @@ export function NoteViewer({
         return (
           <div key={uniqueKey} className="block w-full max-w-full space-y-2">
             <div className="flex items-center gap-2">
-              <audio 
-                ref={(el) => {
-                  if (el) {
-                    audioRefs.current[uniqueKey] = el;
-                  } else {
-                    delete audioRefs.current[uniqueKey];
-                  }
-                }}
-                src={a.content} 
-                controls 
-                className="flex-1"
+              {/* Shared AudioPlayer rather than a native <audio controls>: the native
+                  element rendered a different control set from the note cards and had no
+                  playback-speed control. `onPlay` preserves the previous behaviour of
+                  stopping any other track in this note. */}
+              <div
+                className="flex-1 min-w-0"
                 onClick={(e) => e.stopPropagation()}
                 onDoubleClick={(e) => e.stopPropagation()}
                 onMouseDown={(e) => e.stopPropagation()}
-                onPlay={() => {
-                  Object.entries(audioRefs.current).forEach(([key, el]) => {
-                    if (key !== uniqueKey && el && !el.paused) {
-                      el.pause();
-                    }
-                  });
-                }}
-              />
+              >
+                <AudioPlayer
+                  audioUrl={a.content}
+                  initialDuration={a.duration ?? 0}
+                  showSeeker
+                  showSpeedControl
+                  onPlay={() => {
+                    Object.entries(audioRefs.current).forEach(([key, el]) => {
+                      if (key !== uniqueKey && el && !el.paused) {
+                        el.pause();
+                      }
+                    });
+                  }}
+                />
+              </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
@@ -1462,14 +1483,13 @@ export function NoteViewer({
               <div className="space-y-3 mb-4">
                 {listAudioWithLabels.map((audioItem, idx) => (
                   <div key={idx} className="space-y-2">
-                    <audio
-                      controls
-                      src={audioItem.content}
-                      className="w-full h-10"
-                      style={{ 
-                        backgroundColor: 'transparent',
-                        outline: 'none'
-                      }}
+                    {/* Shared player for consistency with the cards and the text-note
+                        audio list; the native element had no speed control. */}
+                    <AudioPlayer
+                      audioUrl={audioItem.content}
+                      initialDuration={audioItem.duration ?? 0}
+                      showSeeker
+                      showSpeedControl
                     />
                     {audioItem.label && (
                       <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground px-1">
@@ -1633,14 +1653,13 @@ export function NoteViewer({
         return (
           <div className="h-full flex flex-col">
             <div className="mb-4">
-              <audio 
-                src={note.audioUrl} 
-                controls 
-                className="w-full rounded-lg"
-                style={{
-                  filter: 'brightness(1) contrast(1)',
-                  backgroundColor: 'transparent'
-                }}
+              {/* Shared player, matching the audio-note card. */}
+              <AudioPlayer
+                audioUrl={note.audioUrl!}
+                initialDuration={note.duration ?? 0}
+                showSeeker
+                showSpeedControl
+                onEnded={() => {}}
               />
             </div>
             
@@ -1794,7 +1813,16 @@ export function NoteViewer({
         className={`fixed inset-0 w-full max-w-none h-full max-h-none m-0 !rounded-none flex flex-col p-0 border-0 translate-x-0 translate-y-0 left-0 top-0 backdrop-blur-xl data-[state=open]:animate-hero-expand data-[state=closed]:animate-hero-collapse ${
           hasColor ? 'text-[#000000] [&_.text-muted-foreground]:text-[#000000]/70 [&_.text-foreground]:text-[#000000]' : ''
         }`}
-        style={{ backgroundColor: hasColor ? hexToRgba(note.color, 0.75) : 'hsl(var(--card))' }}
+        // `--card-hover-color` is set here for the same reason ColoredCard sets it:
+        // the action menu (⋮) inside styles its hover with that variable. Without it the
+        // variable was undefined on this dialog and the button hovered to no colour at
+        // all, unlike every card, which tints a shade lighter than the card itself.
+        style={{
+          backgroundColor: hasColor ? hexToRgba(note.color, 0.75) : 'hsl(var(--card))',
+          ...(hasColor
+            ? ({ '--card-hover-color': getLighterColor(note.color) } as React.CSSProperties)
+            : {}),
+        }}
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >

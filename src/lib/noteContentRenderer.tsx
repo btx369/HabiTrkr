@@ -1,4 +1,3 @@
-import React from 'react';
 
 interface ContentPart {
   type: 'text' | 'image' | 'audio';
@@ -63,62 +62,3 @@ export const parseNoteContent = (content: string): ContentPart[] => {
   return reorderContentParts(parts);
 };
 
-interface RenderNoteContentProps {
-  content: string;
-  highlightFn?: (text: string) => React.ReactNode;
-}
-
-export const RenderNoteContent: React.FC<RenderNoteContentProps> = ({ 
-  content, 
-  highlightFn 
-}) => {
-  const parts = parseNoteContent(content);
-  
-  // Normalize leading whitespace from the first text part
-  const normalizedParts = parts.map((part, index) => {
-    if (index === 0 && part.type === 'text') {
-      return {
-        ...part,
-        content: part.content.replace(/^[\s\n\r]+/, '')
-      };
-    }
-    return part;
-  });
-
-  return (
-    <>
-      {normalizedParts.map((part, index) => {
-        if (part.type === 'image') {
-          return (
-            <img
-              key={index}
-              src={part.content}
-              alt="Note image"
-              className="block w-full h-auto rounded-lg mb-4 last:mb-0"
-            />
-          );
-        } else if (part.type === 'audio') {
-          return (
-            <div key={index} className="block mb-2 last:mb-0">
-              <audio 
-                src={part.content} 
-                controls 
-                className="w-full rounded-lg"
-                style={{
-                  filter: 'brightness(1) contrast(1)',
-                  backgroundColor: 'transparent'
-                }}
-              />
-            </div>
-          );
-        } else {
-          return (
-            <span key={index}>
-              {highlightFn ? highlightFn(part.content) : part.content}
-            </span>
-          );
-        }
-      })}
-    </>
-  );
-};

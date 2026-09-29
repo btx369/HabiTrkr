@@ -6,7 +6,10 @@ import { Slider } from '@/components/ui/slider';
 interface AudioPlayerProps {
   audioUrl: string;
   initialDuration?: number;
-  /** Compact mode for grid views - smaller buttons, no slider */
+  /**
+   * Smaller controls, for cards in the grid views. Affects sizing only — the layout is
+   * always play · seeker · time · speed, so the player looks the same everywhere.
+   */
   compact?: boolean;
   /** Show seek slider */
   showSeeker?: boolean;
@@ -16,6 +19,8 @@ interface AudioPlayerProps {
   size?: 'sm' | 'md';
   /** Callback when audio ends */
   onEnded?: () => void;
+  /** Called when this player starts playing, so callers can pause other tracks */
+  onPlay?: () => void;
 }
 
 /**
@@ -30,12 +35,19 @@ export function AudioPlayer({
   showSpeedControl = false,
   size = 'md',
   onEnded,
+  onPlay,
 }: AudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(initialDuration);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // `onPlay` is called from togglePlayback, which is recreated each render, so reading
+  // it directly is fine; kept in a ref anyway so a caller passing an inline function
+  // cannot change behaviour between renders.
+  const onPlayRef = useRef(onPlay);
+  onPlayRef.current = onPlay;
 
   // Cleanup audio on unmount
   useEffect(() => {
@@ -84,7 +96,10 @@ export function AudioPlayer({
       setIsPlaying(false);
     } else {
       audio.play()
-        .then(() => setIsPlaying(true))
+        .then(() => {
+          setIsPlaying(true);
+          onPlayRef.current?.();
+        })
         .catch(() => setIsPlaying(false));
     }
   };
@@ -117,24 +132,9 @@ export function AudioPlayer({
 
   const buttonSize = size === 'sm' || compact ? 'h-6 w-6' : 'h-8 w-8';
   const iconSize = size === 'sm' || compact ? 10 : 12;
-
-  if (compact) {
-    // Compact mode: just play button and time
-    return (
-      <div className="flex items-center gap-2">
-        <Button
-          size="sm"
-          onClick={togglePlayback}
-          className={`${buttonSize} rounded-full p-0 flex-shrink-0`}
-        >
-          {isPlaying ? <Pause size={iconSize} /> : <Play size={iconSize} />}
-        </Button>
-        <span className="text-xs text-muted-foreground">
-          {formatDuration(currentTime)}/{formatDuration(duration)}
-        </span>
-      </div>
-    );
-  }
+  const speedButtonClass = compact
+    ? 'h-6 px-1.5 text-[10px]'
+    : 'h-8 px-2 text-xs';
 
   return (
     <div className="flex items-center gap-2">
@@ -148,7 +148,7 @@ export function AudioPlayer({
 
       {showSeeker && (
         <div
-          className="flex-1 mx-2"
+          className="flex-1 mx-2 min-w-0"
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
           onTouchStart={(e) => e.stopPropagation()}
@@ -163,7 +163,7 @@ export function AudioPlayer({
         </div>
       )}
 
-      <span className="text-xs text-muted-foreground flex-shrink-0">
+      <span className={`${compact ? 'text-[10px]' : 'text-xs'} text-muted-foreground flex-shrink-0`}>
         {formatDuration(Math.floor(currentTime))}/{formatDuration(Math.floor(duration))}
       </span>
 
@@ -172,7 +172,7 @@ export function AudioPlayer({
           size="sm"
           variant="outline"
           onClick={cyclePlaybackSpeed}
-          className="h-8 px-2 text-xs flex-shrink-0"
+          className={`${speedButtonClass} flex-shrink-0`}
         >
           {playbackSpeed}×
         </Button>
@@ -285,6 +285,7 @@ export function MultiAudioPlayer({ audios, size = 'md' }: MultiAudioPlayerProps)
 
   const buttonSize = size === 'sm' ? 'h-6 w-6' : 'h-8 w-8';
   const iconSize = size === 'sm' ? 10 : 12;
+  const speedButtonClass = size === 'sm' ? 'h-6 px-1.5 text-[10px]' : 'h-8 px-2 text-xs';
 
   return (
     <div className="flex flex-col gap-2">
@@ -304,7 +305,7 @@ export function MultiAudioPlayer({ audios, size = 'md' }: MultiAudioPlayerProps)
             </Button>
 
             <div
-              className="flex-1 mx-2"
+              className="flex-1 mx-2 min-w-0"
               onClick={(e) => e.stopPropagation()}
               onMouseDown={(e) => e.stopPropagation()}
               onTouchStart={(e) => e.stopPropagation()}
@@ -318,24 +319,24 @@ export function MultiAudioPlayer({ audios, size = 'md' }: MultiAudioPlayerProps)
               />
             </div>
 
-            <span className="text-xs text-muted-foreground flex-shrink-0">
+            <span className={`${size === 'sm' ? 'text-[10px]' : 'text-xs'} text-muted-foreground flex-shrink-0`}>
               {formatDuration(Math.floor(currentTime))}/{formatDuration(Math.floor(duration))}
             </span>
+
+            {/* Speed control sits in the same row as the seeker, matching AudioPlayer.
+                It used to render on its own row underneath, which read as unrelated to
+                the track it applies to. */}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={cyclePlaybackSpeed}
+              className={`${speedButtonClass} flex-shrink-0`}
+            >
+              {playbackSpeed}×
+            </Button>
           </div>
         );
       })}
-
-      {/* Shared playback speed button */}
-      <div className="flex justify-end">
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={cyclePlaybackSpeed}
-          className="h-8 px-2 text-xs"
-        >
-          {playbackSpeed}×
-        </Button>
-      </div>
     </div>
   );
 }
