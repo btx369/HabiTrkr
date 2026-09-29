@@ -26,7 +26,7 @@ import { NoteEditor } from '@/components/notes/NoteEditor';
 import { highlightText } from '@/lib/textHighlight';
 import { updateTagUsage } from '@/lib/tagStorage';
 import { autoImportNoteToFolders } from '@/lib/folderAutoImport';
-import { parseSearchQuery } from '@/lib/tagParser';
+import { parseSearchExpression, matchesSearchExpression } from '@/lib/tagParser';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { useBulkSelection } from '@/hooks/useBulkSelection';
 import { BulkActionBar, BulkActionType, BulkActionContext } from '@/components/shared/BulkActionBar';
@@ -1093,60 +1093,31 @@ export default function Notes() {
   };
 
   // Search functionality
+  //
+  // Text matching differs per note type (list notes search their items), so it is
+  // passed into the shared expression evaluator rather than duplicated here.
+  // A query with no operators behaves exactly as it always has: every term, tags
+  // included, must match.
   const searchInNote = (note: Note, query: string): boolean => {
-    const searchQuery = parseSearchQuery(query);
-    
-    // 1. Check tag matches (if tags in query)
-    if (searchQuery.tags.length > 0) {
-      const noteTags = note.tags || [];
-      const tagMatch = searchQuery.operator === 'and'
-        ? searchQuery.tags.every(tag => noteTags.includes(tag))
-        : searchQuery.tags.some(tag => noteTags.includes(tag));
-      
-      if (!tagMatch) return false;
-    }
-    
-    // 2. Check text filters (if + filters exist)
-    if (searchQuery.textFilters.length > 0) {
-      const textMatch = searchQuery.textFilters.every(filter => {
-        const searchTerm = filter.toLowerCase();
-        if (note.name.toLowerCase().includes(searchTerm)) return true;
-        
-        switch (note.type) {
-          case 'text':
-            return note.description.toLowerCase().includes(searchTerm);
-          case 'list':
-            return note.items.some(item => item.text.toLowerCase().includes(searchTerm));
-          case 'audio':
-          case 'image':
-            return note.description?.toLowerCase().includes(searchTerm) || false;
-          default:
-            return false;
-        }
-      });
-      
-      if (!textMatch) return false;
-    }
-    
-    // 3. If no tags/filters, use existing search logic
-    if (searchQuery.tags.length === 0 && searchQuery.textFilters.length === 0) {
-      const searchTerm = query.toLowerCase();
-      if (note.name.toLowerCase().includes(searchTerm)) return true;
-      
+    const expression = parseSearchExpression(query);
+
+    const matchesText = (term: string): boolean => {
+      if (note.name.toLowerCase().includes(term)) return true;
+
       switch (note.type) {
         case 'text':
-          return note.description.toLowerCase().includes(searchTerm);
+          return note.description.toLowerCase().includes(term);
         case 'list':
-          return note.items.some(item => item.text.toLowerCase().includes(searchTerm));
+          return note.items.some(item => item.text.toLowerCase().includes(term));
         case 'audio':
         case 'image':
-          return note.description?.toLowerCase().includes(searchTerm) || false;
+          return note.description?.toLowerCase().includes(term) || false;
         default:
           return false;
       }
-    }
-    
-    return true;
+    };
+
+    return matchesSearchExpression(expression, note.tags, matchesText);
   };
 
   const searchInFolder = (folder: NoteFolder, query: string): boolean => {

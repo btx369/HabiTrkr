@@ -18,7 +18,7 @@ import { EventFolderCreator } from '@/components/events/EventFolderCreator';
 import { EventFolderEditor } from '@/components/events/EventFolderEditor';
 import { EventEditor } from '@/components/events/EventEditor';
 import { MoveToEventFolderDialog } from '@/components/events/MoveToEventFolderDialog';
-import { parseSearchQuery } from '@/lib/tagParser';
+import { parseSearchExpression, matchesSearchExpression } from '@/lib/tagParser';
 import { updateTagUsage } from '@/lib/tagStorage';
 import { autoImportEventToFolders } from '@/lib/folderAutoImport';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
@@ -841,38 +841,17 @@ export default function Events() {
   };
 
   // Search functionality
+  //
+  // Same shared evaluator as Notes, so `and`/`or` behave identically on both pages.
+  // Events only search their own name and description.
   const searchInEvent = (event: Event, query: string): boolean => {
-    const searchQuery = parseSearchQuery(query);
-    
-    // 1. Check tag matches (if tags in query)
-    if (searchQuery.tags.length > 0) {
-      const eventTags = event.tags || [];
-      const tagMatch = searchQuery.operator === 'and'
-        ? searchQuery.tags.every(tag => eventTags.includes(tag))
-        : searchQuery.tags.some(tag => eventTags.includes(tag));
-      
-      if (!tagMatch) return false;
-    }
-    
-    // 2. Check text filters (if + filters exist)
-    if (searchQuery.textFilters.length > 0) {
-      const textMatch = searchQuery.textFilters.every(filter => {
-        const searchTerm = filter.toLowerCase();
-        return event.name.toLowerCase().includes(searchTerm) || 
-               (event.description?.toLowerCase().includes(searchTerm) || false);
-      });
-      
-      if (!textMatch) return false;
-    }
-    
-    // 3. If no tags/filters, use existing search logic
-    if (searchQuery.tags.length === 0 && searchQuery.textFilters.length === 0) {
-      const searchTerm = query.toLowerCase();
-      return event.name.toLowerCase().includes(searchTerm) || 
-             (event.description?.toLowerCase().includes(searchTerm) || false);
-    }
-    
-    return true;
+    const expression = parseSearchExpression(query);
+
+    const matchesText = (term: string): boolean =>
+      event.name.toLowerCase().includes(term) ||
+      (event.description?.toLowerCase().includes(term) || false);
+
+    return matchesSearchExpression(expression, event.tags, matchesText);
   };
 
   const filterEvents = (eventList: Event[]): Event[] => {
