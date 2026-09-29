@@ -1,10 +1,10 @@
 /**
- * Verifica o realce (highlight) das palavras encontradas pelo search.
+ * Checks the search highlighting: which parts of a piece of text get marked.
  *
- * O que se testa: dado um texto e uma query, que pedaços ficam realçados.
- * Isto é o que o utilizador vê a amarelo.
+ * Given some text and a query, this reports the spans the user would see highlighted
+ * in yellow.
  *
- * Uso: node scripts/verify-highlight.mjs
+ * Usage: node scripts/verify-highlight.mjs
  */
 
 import { build } from 'esbuild';
@@ -36,7 +36,7 @@ fs.writeFileSync(bundleFile, res.outputFiles[0].text);
 const mod = await import(`file:///${bundleFile.replace(/\\/g, '/')}?v=${Date.now()}`);
 fs.rmSync(bundleDir, { recursive: true, force: true });
 
-/** Reduz o resultado a uma string legível: [texto] para realçado, texto normal fora. */
+/** Renders the result as a readable string: [text] for a highlight, plain text outside. */
 function render(node) {
   if (typeof node === 'string') return node;
   if (Array.isArray(node)) return node.map(render).join('');
@@ -55,40 +55,40 @@ const check = (label, actual, expected) => {
   const ok = actual === expected;
   if (!ok) failures++;
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${label}`);
-  if (!ok) console.log(`        obtido   = ${JSON.stringify(actual)}\n        esperado = ${JSON.stringify(expected)}`);
+  if (!ok) console.log(`        actual   = ${JSON.stringify(actual)}\n        expected = ${JSON.stringify(expected)}`);
 };
 
 const TEXT = 'Weekly goals and client budget review';
 
-console.log('\n=== 1. Search simples (comportamento que já existia) ===');
-check('palavra única', highlight(TEXT, 'client'), 'Weekly goals and [client] budget review');
-check('maiúsculas/minúsculas', highlight(TEXT, 'WEEKLY'), '[Weekly] goals and client budget review');
-check('query vazia -> sem realce', highlight(TEXT, ''), TEXT);
-check('sem correspondência -> sem realce', highlight(TEXT, 'zzz'), TEXT);
-check('ocorrências múltiplas', highlight('budget and budget', 'budget'), '[budget] and [budget]');
+console.log('\n=== 1. Plain search (existing behaviour) ===');
+check('single word', highlight(TEXT, 'client'), 'Weekly goals and [client] budget review');
+check('upper/lower case', highlight(TEXT, 'WEEKLY'), '[Weekly] goals and client budget review');
+check('empty query -> no highlight', highlight(TEXT, ''), TEXT);
+check('no match -> no highlight', highlight(TEXT, 'zzz'), TEXT);
+check('multiple occurrences', highlight('budget and budget', 'budget'), '[budget] and [budget]');
 
-console.log('\n=== 2. Com tags e operadores (o que estava em falta) ===');
-check('"#a and client" realça só a palavra', highlight(TEXT, '#a and client'), 'Weekly goals and [client] budget review');
-check('"#a" sozinho não realça texto', highlight(TEXT, '#a'), TEXT);
-check('"and" sozinho não realça', highlight(TEXT, 'and'), TEXT);
-check('"#a or budget" realça budget', highlight(TEXT, '#a or budget'), 'Weekly goals and client [budget] review');
-check('duas palavras com or', highlight(TEXT, 'weekly or budget'), '[Weekly] goals and client [budget] review');
-check('tag + duas palavras', highlight(TEXT, '#x and weekly and review'), '[Weekly] goals and client budget [review]');
+console.log('\n=== 2. With tags and operators (what was missing) ===');
+check('"#a and client" highlights only the word', highlight(TEXT, '#a and client'), 'Weekly goals and [client] budget review');
+check('"#a" alone highlights no text', highlight(TEXT, '#a'), TEXT);
+check('"and" alone highlights nothing', highlight(TEXT, 'and'), TEXT);
+check('"#a or budget" highlights budget', highlight(TEXT, '#a or budget'), 'Weekly goals and client [budget] review');
+check('two words with or', highlight(TEXT, 'weekly or budget'), '[Weekly] goals and client [budget] review');
+check('tag plus two words', highlight(TEXT, '#x and weekly and review'), '[Weekly] goals and client budget [review]');
 
-console.log('\n=== 3. Maiúsculas no operador e espaços ===');
+console.log('\n=== 3. Operator casing and extra spaces ===');
 check('"#a AND client"', highlight(TEXT, '#a AND client'), 'Weekly goals and [client] budget review');
 check('"  #a   and   client  "', highlight(TEXT, '  #a   and   client  '), 'Weekly goals and [client] budget review');
 
-console.log('\n=== 4. Casos difíceis ===');
-check('palavra repetida na query não duplica realce', highlight('budget', 'budget or budget'), '[budget]');
-check('prefixo de outra palavra', highlight('budgeting', 'budget'), '[budget]ing');
-// Termo com caracteres de regex não pode rebentar nem realçar a mais.
-check('termo com parênteses', highlight('a (b) c', '(b)'), 'a [(b)] c');
-// Um termo só de pontuação não tem nada de útil para realçar, por isso é ignorado.
-check('termo só com asterisco é ignorado', highlight('x * y', '*'), 'x * y');
-check('termo com asterisco e letras funciona', highlight('x a*b y', 'a*b'), 'x [a*b] y');
-check('texto vazio', highlight('', 'client'), '');
-check('termo sem letras é ignorado', highlight(TEXT, 'and and'), TEXT);
+console.log('\n=== 4. Edge cases ===');
+check('repeated term does not double-highlight', highlight('budget', 'budget or budget'), '[budget]');
+check('prefix of another word', highlight('budgeting', 'budget'), '[budget]ing');
+// A term containing regex characters must neither throw nor highlight too much.
+check('term with parentheses', highlight('a (b) c', '(b)'), 'a [(b)] c');
+// A term made only of punctuation has nothing useful to highlight, so it is ignored.
+check('punctuation-only term is ignored', highlight('x * y', '*'), 'x * y');
+check('term with an asterisk and letters works', highlight('x a*b y', 'a*b'), 'x [a*b] y');
+check('empty text', highlight('', 'client'), '');
+check('term without letters is ignored', highlight(TEXT, 'and and'), TEXT);
 
-console.log(failures === 0 ? '\nTODAS AS VERIFICAÇÕES DE REALCE PASSARAM' : `\n${failures} VERIFICAÇÃO(ÕES) FALHARAM`);
+console.log(failures === 0 ? '\nALL HIGHLIGHT CHECKS PASSED' : `\n${failures} CHECK(S) FAILED`);
 process.exit(failures === 0 ? 0 : 1);
