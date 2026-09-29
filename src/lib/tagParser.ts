@@ -14,6 +14,18 @@ export interface SearchCondition {
 export type SearchExpression = SearchCondition[][];
 
 /**
+ * Marker for a query the parser cannot honour (currently only the removed `+word`
+ * syntax). Distinct from an EMPTY expression, which means "no search" and matches
+ * everything — an invalid query must match nothing instead of showing the whole list.
+ */
+export const INVALID_EXPRESSION: SearchExpression = [[]];
+
+/** True when `expression` came from a query that cannot be honoured. */
+export function isInvalidExpression(expression: SearchExpression): boolean {
+  return expression.length === 1 && expression[0].length === 0;
+}
+
+/**
  * Parse tags from user input: "#work #project" -> ['work', 'project']
  * Tags are normalized to lowercase and stored without #
  */
@@ -68,7 +80,7 @@ export function parseSearchExpression(query: string): SearchExpression {
   if (tokens.length === 0) return [];
 
   // Pass 1: collect conditions and operators in order.
-  const parts: Array<SearchCondition | 'and' | 'or'> = [];
+  const parts: Array<SearchCondition | 'and' | 'or' | 'invalid'> = [];
   for (const token of tokens) {
     const lower = token.toLowerCase();
 
@@ -78,12 +90,16 @@ export function parseSearchExpression(query: string): SearchExpression {
       const tag = token.substring(1).toLowerCase();
       if (tag) parts.push({ type: 'tag', value: tag });
     } else if (token.startsWith('+')) {
-      const text = token.substring(1).toLowerCase();
-      if (text) parts.push({ type: 'text', value: text });
+      // The `+word` prefix was removed: words are conditions on their own now.
+      // Kept as an explicit invalid marker rather than ignored, so a query still
+      // using it returns nothing instead of silently matching unrelated items.
+      parts.push('invalid');
     } else {
       parts.push({ type: 'text', value: lower });
     }
   }
+
+  if (parts.includes('invalid')) return INVALID_EXPRESSION;
 
   // Pass 2: split on `or` first (lowest precedence), then on `and` within each group.
   // Consecutive terms with no operator form an implicit AND.
@@ -102,7 +118,8 @@ export function parseSearchExpression(query: string): SearchExpression {
       // An `and` between two conditions does not break the group; the conditions
       // either side simply both have to match, which is what the group already means.
       continue;
-    } else {
+    } else if (part !== 'invalid') {
+      // 'invalid' was already handled above by returning INVALID_EXPRESSION.
       group.push(part);
     }
   }
@@ -125,6 +142,9 @@ export function matchesSearchExpression(
   matchesText: (term: string) => boolean,
 ): boolean {
   if (expression.length === 0) return true;
+
+  // An invalid query matches nothing, so the list shows zero results rather than all.
+  if (isInvalidExpression(expression)) return false;
 
   const itemTags = tags ?? [];
 

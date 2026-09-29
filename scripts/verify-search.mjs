@@ -100,13 +100,18 @@ checkSet('"#a or #b and #c" = #a OR (#b AND #c)', search('#a or #b and #c'), ['A
 checkSet('"#a and clients or #c" = (#a AND clients) OR #c', search('#a and clients or #c'), ['Alpha', 'Charlie', 'Both']);
 checkSet('"#a and #c or #b" = (#a AND #c) OR #b', search('#a and #c or #b'), ['Both', 'Bravo']);
 
-console.log('\n=== 5. Palavras como texto (novo) ===');
+console.log('\n=== 5. Palavras como texto ===');
 checkSet('"#a and clients" -> tag + palavra', search('#a and clients'), ['Alpha']);
 checkSet('"#a and budget" -> tag + palavra noutra nota', search('#a and budget'), ['Both']);
 checkSet('"#a and zzzz" -> palavra inexistente', search('#a and zzzz'), []);
-checkSet('"+clients" (compatibilidade) ainda funciona', search('+clients'), ['Alpha']);
-checkSet('"#a and +clients" misto', search('#a and +clients'), ['Alpha']);
 checkSet('palavra sozinha com or: "clients or budget"', search('clients or budget'), ['Alpha', 'Both']);
+
+console.log('\n=== 5b. A sintaxe "+" foi removida ===');
+// O "+" já não é suportado. Tem de devolver NADA (não a lista toda), para não
+// parecer que a pesquisa funcionou.
+check('"+clients" já não é suportado', search('+clients'), []);
+check('"#a and +clients" também não', search('#a and +clients'), []);
+check('"+" sozinho não rebenta', search('+'), []);
 
 console.log('\n=== 6. Maiúsculas e espaços ===');
 checkSet('"#A AND #C"', search('#A AND #C'), ['Both']);

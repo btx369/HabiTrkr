@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { splitBySearchTerms } from './textHighlight';
 
 interface TextPart {
   type: 'text' | 'bold' | 'italic' | 'underline';
@@ -96,46 +97,30 @@ export const renderMarkdownWithHighlight = (text: string, searchQuery: string): 
   if (!searchQuery.trim()) {
     return renderMarkdown(text);
   }
-  
-  // For search highlighting, we'll apply a simpler approach
-  // that highlights the search term while preserving markdown formatting
+
+  // Uses the shared search-term splitter so this agrees with the plain highlighter.
+  // It previously built its own regex from the raw query, which meant a query
+  // containing an operator or a tag highlighted nothing here at all.
   const lines = text.split('\n');
-  const regex = new RegExp(`(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-  
+
   return lines.map((line, idx) => {
     const key = `line-${idx}`;
-    
-    const highlightInline = (textToHighlight: string): ReactNode[] => {
-      const parts = textToHighlight.split(regex);
-      return parts.map((part, partIdx) => {
-        if (part.toLowerCase() === searchQuery.toLowerCase()) {
-          return (
-            <mark key={`highlight-${partIdx}`} className="bg-yellow-200 dark:bg-yellow-800 text-foreground rounded-sm px-0 py-0">
-              {part}
-            </mark>
-          );
-        }
-        return part;
-      });
-    };
-    
-    // Process inline formatting with highlighting
-    const processWithBoth = (text: string): ReactNode[] => {
-      // First apply search highlighting
-      const highlightedParts = text.split(regex);
-      
-      return highlightedParts.map((part, partIdx) => {
-        if (part.toLowerCase() === searchQuery.toLowerCase()) {
+
+    /**
+     * Splits on the search terms and renders them. Non-matching parts still get inline
+     * markdown formatting applied, so `**bold**` keeps working next to a highlight.
+     */
+    const processWithBoth = (text: string): ReactNode[] =>
+      splitBySearchTerms(text, searchQuery).map((segment, partIdx) => {
+        if (segment.matched) {
           return (
             <mark key={`h-${partIdx}`} className="bg-yellow-200 dark:bg-yellow-800 text-foreground rounded-sm px-0 py-0">
-              {part}
+              {segment.text}
             </mark>
           );
         }
-        // Then apply inline formatting to non-highlighted parts
-        return <span key={`s-${partIdx}`}>{processInlineFormatting(part)}</span>;
+        return <span key={`s-${partIdx}`}>{processInlineFormatting(segment.text)}</span>;
       });
-    };
     
     // Check for headings
     if (line.startsWith('# ')) {
