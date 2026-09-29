@@ -84,14 +84,14 @@ export default function Notes() {
   const setViewType = activeTab === 'archived' ? setArchivedNotesViewType : setAllNotesViewType;
 
   /**
-   * `?view=list|large|medium` forces a view for this visit without saving it, so a
+   * `?view=list|x2|x3` forces a view for this visit without saving it, so a
    * specific layout can be opened and checked directly. Useful for verifying the grid
    * views, which are otherwise two clicks deep in the settings menu.
    */
   const forcedViewType = (() => {
     if (typeof window === 'undefined') return null;
     const raw = new URLSearchParams(window.location.search).get('view');
-    return raw === 'list' || raw === 'large' || raw === 'medium' ? (raw as ViewType) : null;
+    return raw === 'list' || raw === 'x2' || raw === 'x3' ? (raw as ViewType) : null;
   })();
   const effectiveViewType = forcedViewType ?? viewType;
   const [allNotesSortType, setAllNotesSortType] = useLocalStorage<SortType>('notesAllSortType', 'dateCreated');
@@ -1515,9 +1515,9 @@ export default function Notes() {
 
   const getGridClassName = () => {
     switch (effectiveViewType) {
-      case 'medium':
+      case 'x3':
         return 'grid grid-cols-3 gap-2';
-      case 'large':
+      case 'x2':
         return 'grid grid-cols-2 gap-2';
       case 'list':
       default:
@@ -1688,16 +1688,16 @@ export default function Notes() {
                 }
               } else {
                 // For grid views, the gap effect is more complex based on grid layout
-                const itemsPerRow = effectiveViewType === 'medium' ? 3 : 2;
+                const itemsPerRow = effectiveViewType === 'x3' ? 3 : 2;
                 const draggedRow = Math.floor(draggedIndex / itemsPerRow);
                 const insertRow = Math.floor(dragInsertIndex / itemsPerRow);
                 const currentRow = Math.floor(index / itemsPerRow);
                 
                 if (currentRow >= insertRow && (draggedIndex === -1 || currentRow < draggedRow)) {
-                  const noteHeight = effectiveViewType === 'medium' ? 200 : 240;
+                  const noteHeight = effectiveViewType === 'x3' ? 200 : 240;
                   gapTransform = `translateY(${noteHeight + 16}px)`; // Add gap margin
                 } else if (currentRow > insertRow && draggedIndex !== -1 && currentRow > draggedRow) {
-                  const noteHeight = effectiveViewType === 'medium' ? 200 : 240;
+                  const noteHeight = effectiveViewType === 'x3' ? 200 : 240;
                   gapTransform = `translateY(${noteHeight + 16}px)`;
                 }
               }

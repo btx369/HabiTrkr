@@ -10,8 +10,10 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
+import { VIEW_LABELS, type ViewType } from '@/types/view';
 
-export type ViewType = 'medium' | 'large' | 'list';
+// Re-exported so existing importers keep working from this module.
+export type { ViewType } from '@/types/view';
 export type EventSortType = 'title' | 'dateCreated' | 'dateModified' | 'daysRemaining';
 export type EventSortDirection = 'asc' | 'desc';
 
@@ -66,9 +68,9 @@ export function EventViewSettings({
       <DropdownMenuContent align="end" className="w-48 bg-background border border-border">
         <DropdownMenuLabel>View</DropdownMenuLabel>
         <DropdownMenuRadioGroup value={viewType} onValueChange={onViewTypeChange}>
-          <DropdownMenuRadioItem value="medium">3x</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="large">2x</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="list">List</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="x3">{VIEW_LABELS.x3}</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="x2">{VIEW_LABELS.x2}</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="list">{VIEW_LABELS.list}</DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
         
         <DropdownMenuSeparator />

@@ -50,3 +50,24 @@ export const RENAMED_KEYS: ReadonlyArray<{ old: string; current: string }> = [
   { old: 'user-profile-avatar', current: PROFILE_AVATAR_KEY },
   { old: 'habitVault.repairedDateRanges', current: REPAIRED_DATE_RANGES_KEY },
 ];
+
+/** The four places a Notes/Events view mode is stored. */
+export const VIEW_TYPE_KEYS: readonly string[] = [
+  'notesAllViewType',
+  'notesArchivedViewType',
+  'eventsAllViewType',
+  'eventsArchivedViewType',
+];
+
+/**
+ * Keys that kept their name but whose stored VALUES were renamed, so the old value has
+ * to be rewritten in place.
+ *
+ * The view modes were `medium`/`large`, which described card size; they are now `x3`/`x2`,
+ * which describe the cards per row and match the labels in the UI. A stored `medium`
+ * would otherwise match no known mode and the page would fall back to `list`.
+ *
+ * Add to this map (never remove) whenever a stored value is renamed.
+ */
+export const RETIRED_VALUES: ReadonlyArray<{ key: string; values: Record<string, string> }> =
+  VIEW_TYPE_KEYS.map((key) => ({ key, values: { medium: 'x3', large: 'x2' } }));

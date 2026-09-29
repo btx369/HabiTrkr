@@ -1359,8 +1359,8 @@ export default function Events() {
     }
 
     const gridClass = viewType === 'list' ? 'grid grid-cols-1 gap-2' : 
-                     viewType === 'medium' ? 'grid grid-cols-3 gap-2' :
-                     'grid grid-cols-2 gap-2'; // large
+                     viewType === 'x3' ? 'grid grid-cols-3 gap-2' :
+                     'grid grid-cols-2 gap-2'; // x2
 
     return (
       <div className={gridClass}>

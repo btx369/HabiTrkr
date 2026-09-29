@@ -112,9 +112,9 @@ export function NoteCard({
 
   const getCardHeight = () => {
     switch (viewType) {
-      case 'medium':
+      case 'x3':
         return 'h-[11.5rem]';
-      case 'large':
+      case 'x2':
         return 'h-[14rem]';
       case 'list':
       default:
@@ -167,8 +167,8 @@ export function NoteCard({
       );
     }
 
-    const isSmallOrMedium = viewType === 'medium';
-    const textSize = viewType === 'medium' ? 'text-xs' : 'text-sm';
+    const isX3View = viewType === 'x3';
+    const textSize = viewType === 'x3' ? 'text-xs' : 'text-sm';
     const hasTitle = shouldShowTitle();
     const isListView = viewType === 'list';
     const audioSize = 'md';
@@ -176,9 +176,9 @@ export function NoteCard({
     
     // Calculate line clamps based on view type and title presence
     const getTextLineClamp = () => {
-      if (viewType === 'medium') {
+      if (viewType === 'x3') {
         return hasTitle ? 'line-clamp-8' : 'line-clamp-9';
-      } else if (viewType === 'large') {
+      } else if (viewType === 'x2') {
         return hasTitle ? 'line-clamp-15' : 'line-clamp-16';
       } else {
         return 'line-clamp-8';
@@ -186,9 +186,9 @@ export function NoteCard({
     };
 
     const getAudioLineClamp = () => {
-      if (viewType === 'medium') {
+      if (viewType === 'x3') {
         return hasTitle ? 'line-clamp-5' : 'line-clamp-6';
-      } else if (viewType === 'large') {
+      } else if (viewType === 'x2') {
         return hasTitle ? 'line-clamp-5' : 'line-clamp-6';
       } else {
         return 'line-clamp-4';
@@ -196,7 +196,7 @@ export function NoteCard({
     };
 
     const getImageLineClamp = () => {
-      if (viewType === 'medium') {
+      if (viewType === 'x3') {
         return hasTitle ? 'line-clamp-3' : 'line-clamp-4';
       } else {
         return 'line-clamp-3';
@@ -204,9 +204,9 @@ export function NoteCard({
     };
 
     const getListItemsToShow = () => {
-      if (viewType === 'medium') {
+      if (viewType === 'x3') {
         return hasTitle ? 7 : 8;
-      } else if (viewType === 'large') {
+      } else if (viewType === 'x2') {
         return hasTitle ? 15 : 16;
       } else {
         return 4;
@@ -219,7 +219,7 @@ export function NoteCard({
         const embeddedAudios = extractEmbeddedAudio(note.description);
         
         return (
-          <div className={`${isSmallOrMedium ? 'flex-1 flex flex-col gap-2' : 'mt-1 flex-1 flex flex-col gap-2'}`}>
+          <div className={`${isX3View ? 'flex-1 flex flex-col gap-2' : 'mt-1 flex-1 flex flex-col gap-2'}`}>
             {embeddedAudios.length > 0 && (
               <>
                 {isListView ? (
@@ -257,7 +257,7 @@ export function NoteCard({
         const itemsToDisplay = uncheckedItems.slice(0, maxUncheckedToShow);
         
         return (
-          <div className={`${isSmallOrMedium ? '' : 'mt-1'} ${viewType === 'medium' ? 'space-y-0.5' : 'space-y-1'} overflow-hidden`}>
+          <div className={`${isX3View ? '' : 'mt-1'} ${viewType === 'x3' ? 'space-y-0.5' : 'space-y-1'} overflow-hidden`}>
             {itemsToDisplay.map((item) => (
               <div key={item.id} className="flex items-center gap-2 min-w-0">
                 <div
@@ -285,7 +285,7 @@ export function NoteCard({
       case 'audio':
         const audioTextContent = extractTextContent(note.description || '');
         return (
-          <div className={`${isSmallOrMedium ? '' : 'mt-2'} space-y-2`}>
+          <div className={`${isX3View ? '' : 'mt-2'} space-y-2`}>
             <AudioPlayer
               audioUrl={note.audioUrl!}
               initialDuration={note.duration}
@@ -307,13 +307,13 @@ export function NoteCard({
         const imageEmbeddedAudios = extractEmbeddedAudio(note.description || '');
         
         return (
-          <div className={`${isSmallOrMedium ? '' : 'mt-2'} space-y-2`}>
+          <div className={`${isX3View ? '' : 'mt-2'} space-y-2`}>
             <img
               src={note.imageUrl}
               alt={note.name}
               className={`w-full object-cover rounded-md ${
-                viewType === 'medium' ? 'h-20' : 
-                viewType === 'large' ? 'h-28' : 'h-28'
+                viewType === 'x3' ? 'h-20' : 
+                viewType === 'x2' ? 'h-28' : 'h-28'
               }`}
             />
             {imageEmbeddedAudios.length > 0 && (
@@ -423,8 +423,8 @@ export function NoteCard({
     }
   };
 
-  // For medium view, use a different layout
-  if (viewType === 'medium') {
+  // 3x view is the narrowest, so it uses its own layout
+  if (viewType === 'x3') {
     return (
       <ColoredCard 
         color={note.color}
@@ -513,7 +513,7 @@ export function NoteCard({
     );
   }
 
-  // For large and list views
+  // 2x and list views
   return (
     <ColoredCard 
       color={note.color}
@@ -532,7 +532,7 @@ export function NoteCard({
       onTouchStart={draggable ? onTouchStart : undefined}
     >
       <CardContent className={`px-2 py-2 h-full ${viewType !== 'list' ? 'flex flex-col' : ''}`}>
-        {viewType === 'large' ? (
+        {viewType === 'x2' ? (
           <>
             {/* Title and actions share one row, matching list view. They used to be
                 stacked, which pushed the title onto its own line below the menu. */}

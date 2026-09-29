@@ -108,9 +108,9 @@ export function EventCard({
 
   const getCardHeight = () => {
     switch (viewType) {
-      case 'medium':
+      case 'x3':
         return 'h-40 overflow-hidden';
-      case 'large':
+      case 'x2':
         return 'h-48 overflow-hidden';
       case 'list':
       default:
@@ -120,9 +120,9 @@ export function EventCard({
 
   const getDescriptionLength = () => {
     switch (viewType) {
-      case 'medium':
+      case 'x3':
         return 60;
-      case 'large':
+      case 'x2':
         return 100;
       case 'list':
       default:
