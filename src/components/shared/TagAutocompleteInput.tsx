@@ -114,7 +114,7 @@ export function TagAutocompleteInput({
           className={cn(
             // Base input styles to match exactly (from input.tsx)
             "absolute inset-0 pointer-events-none flex items-center overflow-hidden",
-            "px-3 py-2 text-base md:text-sm",
+            "px-3 py-2 text-sm md:text-sm",
             inputClassName
           )}
           aria-hidden="true"

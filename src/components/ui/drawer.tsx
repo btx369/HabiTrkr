@@ -42,8 +42,7 @@ const DrawerContent = React.forwardRef<
       ref={ref}
       className={cn(
         "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-fit max-h-[100dvh] md:max-h-[85vh] flex-col rounded-t-[10px] transition-transform duration-300 ease-out",
-        "bg-[hsl(0_0%_100%/0.8)] dark:bg-[hsl(0_0%_0%/0.8)] backdrop-blur-xl",
-        "border-t border-[hsl(var(--glass-border))]",
+        "bg-popover border-t border-border backdrop-blur-xl",
         className
       )}
       style={style}

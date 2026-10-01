@@ -3,21 +3,32 @@ import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
-import { useRipple } from "@/hooks/useRipple"
 
 const buttonVariants = cva(
-  "relative overflow-hidden inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:scale-[1.02] active:scale-[0.98]",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:scale-[1.02] active:scale-[0.98]",
   {
     variants: {
       variant: {
         default: "bg-primary/10 text-primary hover:bg-primary/20",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        /*
+         * Hover comes from `hover:bg-hover`, the single shared hover surface defined in
+         * index.css, so every clickable element in the app reacts identically. That token
+         * is a low-alpha veil of the foreground rather than the solid --accent swatch: a
+         * veil adapts to whatever sits underneath (page, white card, coloured note),
+         * whereas a filled colour has to be right for all of them and was wrong for most.
+         *
+         * Two traps live here. Do NOT reintroduce `hover:bg-foreground/6`: 6 is not on
+         * Tailwind's opacity scale, so the class compiles to nothing and the button
+         * silently loses its hover entirely. And do NOT use --accent: at 95% against a
+         * white card it is invisible, which is what made the note menu dots look white.
+         */
         outline:
-          "border border-input bg-background dark:bg-muted text-foreground hover:bg-accent hover:text-accent-foreground",
+          "border border-input bg-background dark:bg-muted text-foreground hover:bg-hover hover:text-foreground",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "bg-transparent hover:bg-accent hover:text-accent-foreground",
+        ghost: "bg-transparent hover:bg-hover hover:text-foreground",
         /** Like ghost, but with NO hover styles (for icon buttons that should not react on hover). */
         ghostStatic: "bg-transparent",
         link: "text-primary underline-offset-4 hover:underline",
@@ -43,40 +54,12 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, onClick, ...props }, ref) => {
-    const { ref: rippleRef, createRipple } = useRipple<HTMLButtonElement>();
-    
-    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-      createRipple(e);
-      onClick?.(e);
-    };
-
-    // Combined ref handler for both ripple and forwarded ref
-    const setRefs = React.useCallback((node: HTMLButtonElement | null) => {
-      (rippleRef as React.MutableRefObject<HTMLButtonElement | null>).current = node;
-      if (typeof ref === 'function') {
-        ref(node);
-      } else if (ref) {
-        ref.current = node;
-      }
-    }, [ref, rippleRef]);
-
-    if (asChild) {
-      return (
-        <Slot
-          className={cn(buttonVariants({ variant, size, className }))}
-          ref={setRefs}
-          onClick={handleClick}
-          {...props}
-        />
-      );
-    }
-
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button";
     return (
-      <button
+      <Comp
         className={cn(buttonVariants({ variant, size, className }))}
-        ref={setRefs}
-        onClick={handleClick}
+        ref={ref}
         {...props}
       />
     );

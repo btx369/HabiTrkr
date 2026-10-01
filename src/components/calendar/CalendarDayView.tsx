@@ -2,7 +2,6 @@ import { useMemo, useEffect, useRef, useState } from 'react';
 import { format, isToday, getHours, getMinutes } from 'date-fns';
 import { Clock } from 'lucide-react';
 import { Event } from '@/types/event';
-import { CalendarEventItem } from './CalendarEventItem';
 import { cn } from '@/lib/utils';
 import { getCardColorStylesWithFallback } from '@/lib/cardColorStyles';
 
@@ -191,7 +190,7 @@ export function CalendarDayView({
   const dayNumber = format(currentDate, 'd');
 
   return (
-    <div className="flex flex-col bg-[rgba(242,244,247,0.75)] dark:bg-[hsl(var(--glass-bg))] backdrop-blur-[12px] rounded-[20px] border border-[rgba(255,255,255,0.4)] overflow-hidden">
+    <div className="flex flex-col bg-[hsl(var(--surface-card))] backdrop-blur-[12px] rounded-[20px] border border-[hsl(var(--glass-border))] overflow-hidden">
       {/* Header with day info and all-day events */}
       <div className="flex border-b-2 border-black dark:border-white">
         {/* Day label */}

@@ -137,7 +137,13 @@ export function AudioPlayer({
     : 'h-8 px-2 text-xs';
 
   return (
-    <div className="flex items-center gap-2">
+    /*
+     * Tighter gaps on a phone. Measured at 390px in the 3x view the row is 101px wide and its
+     * parts come to 106px with the default gap-2 — over by 5px, which is what made the speed
+     * button sit flush against the edge. gap-1 on small screens returns 8px and the row fits.
+     * From `sm` up there is room and the original spacing is restored.
+     */
+    <div className="flex items-center gap-1 sm:gap-2">
       <Button
         size="sm"
         onClick={togglePlayback}
@@ -146,9 +152,21 @@ export function AudioPlayer({
         {isPlaying ? <Pause size={iconSize} /> : <Play size={iconSize} />}
       </Button>
 
+      {/*
+        * The seeker is hidden on phones and kept from `sm` upwards.
+        *
+        * It is the only part of this row that can shrink, and below `sm` there is nothing
+        * left to give: at 390px the 3x grid gives a card 119px of width, and the fixed parts
+        * alone (play button, clock, speed button, gaps) come to 140px. The row overflowed by
+        * about 37px, which cut off both the seeker and the speed button. Hiding the seeker
+        * leaves roughly 100px for 70px of content.
+        *
+        * Seeking is still available anywhere the note is opened, so nothing is lost that
+        * cannot be reached another way.
+        */}
       {showSeeker && (
         <div
-          className="flex-1 mx-2 min-w-0"
+          className="hidden sm:block flex-1 mx-2 min-w-0"
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
           onTouchStart={(e) => e.stopPropagation()}
@@ -163,7 +181,19 @@ export function AudioPlayer({
         </div>
       )}
 
-      <span className={`${compact ? 'text-[10px]' : 'text-xs'} text-muted-foreground flex-shrink-0`}>
+      {/*
+        * The clock shows elapsed/total again on a phone. With the seeker gone there is room
+        * for it: the row now spends roughly 70px of its ~103px on the play button, the clock
+        * and the speed button, so showing "0:12/1:35" costs about 20px and still fits. The
+        * total is the only sense of length available once the bar is hidden, which is exactly
+        * why it comes back here.
+        *
+        * `ml-auto` is what parks the speed button against the RIGHT edge. Below `sm` the
+        * seeker is display:none, so it no longer sits between the clock and the button and
+        * nothing pushed the button across — it drifted left and looked unanchored. From `sm`
+        * up the seeker takes the free space itself and this has no effect.
+        */}
+      <span className={`${compact ? 'text-[10px]' : 'text-xs'} text-muted-foreground flex-shrink-0 tabular-nums ml-auto sm:ml-0`}>
         {formatDuration(Math.floor(currentTime))}/{formatDuration(Math.floor(duration))}
       </span>
 
@@ -295,7 +325,7 @@ export function MultiAudioPlayer({ audios, size = 'md' }: MultiAudioPlayerProps)
         const duration = audioDurations.get(audio.url) || audio.duration || 0;
 
         return (
-          <div key={audio.url} className="flex items-center gap-2">
+          <div key={audio.url} className="flex items-center gap-1 sm:gap-2">
             <Button
               size="sm"
               onClick={(e) => toggleAudio(audio.url, audio.duration, e)}
@@ -304,8 +334,11 @@ export function MultiAudioPlayer({ audios, size = 'md' }: MultiAudioPlayerProps)
               {isPlaying ? <Pause size={iconSize} /> : <Play size={iconSize} />}
             </Button>
 
+            {/* Same treatment as AudioPlayer: see the note there. This variant renders in
+                list view, where the row is full width, but the parts are identical and the
+                narrow-column case is one layout change away from reappearing. */}
             <div
-              className="flex-1 mx-2 min-w-0"
+              className="hidden sm:block flex-1 mx-2 min-w-0"
               onClick={(e) => e.stopPropagation()}
               onMouseDown={(e) => e.stopPropagation()}
               onTouchStart={(e) => e.stopPropagation()}
@@ -319,7 +352,9 @@ export function MultiAudioPlayer({ audios, size = 'md' }: MultiAudioPlayerProps)
               />
             </div>
 
-            <span className={`${size === 'sm' ? 'text-[10px]' : 'text-xs'} text-muted-foreground flex-shrink-0`}>
+            {/* Elapsed/total, and `ml-auto` to park the speed button on the right edge once
+                the seeker is hidden below `sm`. Same reasoning as AudioPlayer above. */}
+            <span className={`${size === 'sm' ? 'text-[10px]' : 'text-xs'} text-muted-foreground flex-shrink-0 tabular-nums ml-auto sm:ml-0`}>
               {formatDuration(Math.floor(currentTime))}/{formatDuration(Math.floor(duration))}
             </span>
 

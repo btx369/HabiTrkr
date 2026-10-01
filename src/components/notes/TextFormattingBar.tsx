@@ -27,11 +27,14 @@ export function TextFormattingBar({ onFormat, onClose, editor, noteColor }: Text
   const iconButtonStyles = getColoredIconButtonStyles(!!hasColor);
   const iconColorClass = getColoredIconClass(!!hasColor);
   
-  // Custom hover styles for formatting bar buttons on non-colored notes
-  // Uses black background with white icons for consistency
+  /*
+   * Hover on an uncoloured note uses the shared --hover veil; on a coloured note the tint
+   * comes from the note colour. (The comment here used to claim "black background with
+   * white icons", which the code had already stopped doing.)
+   */
   const themedHoverStyles = hasColor
     ? `${iconButtonStyles.className} ${iconColorClass}`
-    : 'hover:bg-black hover:text-white';
+    : 'hover:bg-hover';
   
   // Container styling - no border-t here, parent BottomDock handles it
   const containerStyle = hasColor 
@@ -42,7 +45,10 @@ export function TextFormattingBar({ onFormat, onClose, editor, noteColor }: Text
     : 'backdrop-blur-sm bg-background/95 p-2';
   const dividerClass = hasColor ? 'bg-[#000000]/20' : 'bg-border';
   
-  // Active button styling - black background with white icons
+  /*
+   * Open/active state. On a coloured note this is a dark veil of the note's own colour; on
+   * an uncoloured note it is a filled dark pill, which reads as "this control is engaged".
+   */
   const activeButtonClass = hasColor
     ? 'bg-[#000000]/20 hover:bg-[#000000]/30 text-[#000000]'
     : 'bg-black text-white hover:bg-black/90';

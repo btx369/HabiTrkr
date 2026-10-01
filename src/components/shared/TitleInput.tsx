@@ -36,8 +36,17 @@ export function TitleInput({
   };
 
   return (
-    <div>
-      <Label htmlFor={id} className="text-base flex items-center gap-2">
+    /*
+     * `space-y-2` gives the label 8px of clearance from its input.
+     *
+     * Without it the label sat flush against the box below it — this component had no spacing
+     * of its own, and it is used for Title, Location and Description, so all three were
+     * affected. The sections that already looked right (Alert, Tags) got their spacing from a
+     * wrapper, and DatePickerInput used `mb-1`, which is 4px: three different gaps in one
+     * dialog. 8px is the value the correct ones already used.
+     */
+    <div className="space-y-2">
+      <Label htmlFor={id} className="text-sm flex items-center gap-2">
         {Icon && <Icon size={16} color={iconColor} />}
         {label}
         {required && <span className="text-destructive">*</span>}
@@ -52,7 +61,7 @@ export function TitleInput({
         placeholder={placeholder}
         maxLength={maxLength}
         required={required}
-        className="h-12 text-base bg-muted"
+        className="h-10 text-sm bg-muted"
       />
     </div>
   );

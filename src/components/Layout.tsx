@@ -3,7 +3,6 @@ import { useLocation } from 'react-router-dom';
 import { Header } from './Header';
 import { BottomNavigation } from './BottomNavigation';
 import { cn } from '@/lib/utils';
-import { useTheme } from '@/contexts/ThemeContext';
 
 interface LayoutProps {
   children: ReactNode;
@@ -26,9 +25,8 @@ export const Layout = ({
   pageTitle,
   shieldHeight = '7.25rem'
 }: LayoutProps) => {
-  const { theme } = useTheme();
   const location = useLocation();
-  const bgColor = theme === 'dark' ? '#121212' : '#EDEAE6';
+  const bgColor = 'hsl(var(--background))';
 
   useEffect(() => {
     window.scrollTo(0, 0);

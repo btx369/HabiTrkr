@@ -83,7 +83,7 @@ export function CustomAlertDialog({
         <div className="space-y-6 py-4">
           {/* Number input */}
           <div>
-            <Label htmlFor="alert-value" className="text-base">
+            <Label htmlFor="alert-value" className="text-sm">
               Alert Time
             </Label>
             <Input
@@ -102,7 +102,7 @@ export function CustomAlertDialog({
 
           {/* Unit selector */}
           <div className="space-y-2">
-            <Label className="text-base">Time Unit</Label>
+            <Label className="text-sm">Time Unit</Label>
             <div className="grid grid-cols-2 gap-2">
               {(Object.keys(UNIT_LABELS) as AlertCustomUnit[]).map((unitOption) => (
                 <Button

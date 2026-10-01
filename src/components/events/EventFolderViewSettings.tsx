@@ -50,9 +50,9 @@ export function EventFolderViewSettings({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="ghost"
+          variant="ghostStatic"
           size="icon"
-          className="text-foreground hover:bg-black hover:text-white rounded-full data-[state=open]:bg-black data-[state=open]:text-white focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:!size-6"
+          className="text-foreground hover:bg-hover hover:text-foreground rounded-full data-[state=open]:bg-hover data-[state=open]:text-foreground focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:!size-5"
         >
           <Settings className="h-6 w-6" />
         </Button>

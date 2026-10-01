@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  ChevronLeft, 
   ChevronRight, 
   Shield, 
   Tag, 
@@ -41,6 +40,7 @@ import { useLanguage, Language, nativeLanguageNames } from '@/contexts/LanguageC
 import { useWeekStart, WeekStartDay } from '@/contexts/WeekStartContext';
 import { useToastSettings } from '@/contexts/ToastContext';
 import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
+import { PageHeader } from '@/components/shared/PageHeader';
 import { getLocalStorageString, setLocalStorageString } from '@/lib/localStorageUtils';
 
 export default function Profile() {
@@ -191,7 +191,7 @@ export default function Profile() {
     return t('sunday');
   };
 
-  const bgColor = theme === 'dark' ? '#121212' : '#EDEAE6';
+  const bgColor = 'hsl(var(--background))';
 
   return (
     <div 
@@ -199,23 +199,10 @@ export default function Profile() {
       style={{ backgroundColor: bgColor }}
     >
       {/* Header */}
-      <div className="px-4 py-4">
-        <div className="flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(-1)}
-            className="text-foreground hover:bg-black hover:text-white rounded-full [&_svg]:!size-6"
-          >
-            <ChevronLeft size={24} />
-          </Button>
-          <h1 className="text-xl font-semibold text-foreground">{t('profile')}</h1>
-          <div className="w-10" /> {/* Spacer for centering */}
-        </div>
-      </div>
+      <PageHeader title={t('profile')} onBack={() => navigate(-1)} />
 
       {/* Content */}
-      <div className="px-4 pb-8 space-y-6">
+      <div className="px-2 pb-8 space-y-6">
         {/* Profile Card */}
         <div className="bg-[hsl(var(--glass-bg))] backdrop-blur-xl border border-[hsl(var(--glass-border))] rounded-[20px] p-6">
           <div className="flex items-center gap-4">
@@ -351,7 +338,7 @@ export default function Profile() {
                         setLanguage(lang);
                         setLanguageDialogOpen(false);
                       }}
-                      className="w-full flex items-center justify-between px-4 py-3 rounded-lg hover:bg-muted/50 transition-colors"
+                      className="w-full flex items-center justify-between px-4 py-3 rounded-lg hover:bg-hover transition-colors"
                     >
                       <span>{nativeLanguageNames[lang]}</span>
                       {language === lang && <Check className="h-4 w-4 text-primary" />}
@@ -375,7 +362,7 @@ export default function Profile() {
                         setWeekStartDay(day);
                         setWeekStartDialogOpen(false);
                       }}
-                      className="w-full flex items-center justify-between px-4 py-3 rounded-lg hover:bg-muted/50 transition-colors"
+                      className="w-full flex items-center justify-between px-4 py-3 rounded-lg hover:bg-hover transition-colors"
                     >
                       <span>{t(day)}</span>
                       {weekStartDay === day && <Check className="h-4 w-4 text-primary" />}
@@ -390,7 +377,9 @@ export default function Profile() {
             <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
                 <Download size={20} className="text-foreground shrink-0" />
-                <span className="font-medium text-foreground">{t('dataStorage')}</span>
+                {/* text-sm for the same reason as SettingsRow: otherwise it inherits the
+                    16px body size and sits a step above every other label on the page. */}
+                <span className="text-sm font-medium text-foreground">{t('dataStorage')}</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 <Button 
@@ -498,11 +487,22 @@ interface SettingsRowProps {
 }
 
 function SettingsRow({ icon, label, value, onClick, rightElement, showChevron, labelClassName }: SettingsRowProps) {
+  // Hover uses the muted surface, which in light reads as a soft beige (rgb(239,237,236)).
+  //
+  // This previously read `[@media_(hover:_hover)]:hover:bg-foreground/5`. Tailwind did not
+  // compile that arbitrary variant, so no rule was ever emitted and these rows had NO
+  // hover at all. A plain `hover:` class is generated and works.
+  /*
+   * `text-sm` is explicit here on purpose. Without it the label inherited the body's 16px,
+   * which made it LARGER than the value beside it (text-sm) and larger than the section
+   * headings (also text-sm) — an inverted hierarchy. Measured against grok.com, whose
+   * labels sit at 14px, this was the one screen in the app rendering a full step too big.
+   */
   const content = (
-    <div className="flex items-center justify-between p-4 active:bg-foreground/5 [@media_(hover:_hover)]:hover:bg-foreground/5 transition-colors cursor-pointer">
+    <div className="flex items-center justify-between p-4 transition-colors cursor-pointer hover:bg-hover active:bg-muted">
       <div className="flex items-center gap-3">
         <span className="text-foreground">{icon}</span>
-        <span className={`font-medium ${labelClassName || 'text-foreground'}`}>{label}</span>
+        <span className={`text-sm font-medium ${labelClassName || 'text-foreground'}`}>{label}</span>
       </div>
       <div className="flex items-center gap-2">
         {value && <span className="text-muted-foreground text-sm">{value}</span>}
@@ -513,7 +513,9 @@ function SettingsRow({ icon, label, value, onClick, rightElement, showChevron, l
   );
 
   if (onClick) {
-    return <button onClick={onClick} className="w-full text-left focus:outline-none">{content}</button>;
+    // text-sm on the button itself, not just inside it: the wrapper was still computing to
+    // the 16px body size, which is what a text measurement of the row reports.
+    return <button onClick={onClick} className="w-full text-left text-sm focus:outline-none">{content}</button>;
   }
   return content;
 }

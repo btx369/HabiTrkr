@@ -444,14 +444,16 @@ export function NoteCard({
       >
         <CardContent className="py-2 px-2 h-full flex flex-col">
           {/* Title and actions share one row, matching list view. They used to be
-              stacked, which put the title on its own line below the menu in 3x. */}
+              stacked, which put the title on its own line below the menu in 3x.
+              `ml-auto` is what keeps the menu pinned right: with no title there is no
+              `flex-1` sibling to push it, so it would otherwise collapse to the left. */}
           <div className="flex items-start gap-2 mb-1">
             {shouldShowTitle() && (
               <CardTitle className={`flex-1 min-w-0 font-bold truncate break-words ${textColorClass} text-xs`}>
                 {highlightText(note.name, searchQuery)}
               </CardTitle>
             )}
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-2 ml-auto flex-shrink-0">
               <div className="flex items-center gap-1">
                 {note.pinned && <Pin size={14} className={iconColorClass} />}
                 {note.locked && <Lock size={14} className={iconColorClass} />}
@@ -535,14 +537,16 @@ export function NoteCard({
         {viewType === 'x2' ? (
           <>
             {/* Title and actions share one row, matching list view. They used to be
-                stacked, which pushed the title onto its own line below the menu. */}
+                stacked, which pushed the title onto its own line below the menu.
+                `ml-auto` is what keeps the menu pinned right: with no title there is no
+                `flex-1` sibling to push it, so it would otherwise collapse to the left. */}
             <div className="flex items-start gap-2 mb-2">
               {shouldShowTitle() && (
                 <CardTitle className={`flex-1 min-w-0 font-bold truncate break-words text-sm ${textColorClass}`}>
                   {highlightText(note.name, searchQuery)}
                 </CardTitle>
               )}
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex items-center gap-2 ml-auto flex-shrink-0">
                 <div className="flex items-center gap-1">
                   {note.pinned && <Pin size={14} className={iconColorClass} />}
                   {note.locked && <Lock size={14} className={iconColorClass} />}

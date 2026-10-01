@@ -48,3 +48,7 @@ ios/App/App/public/
 
 # Local screenshot output from scripts/screenshot.mjs
 .screenshots/
+
+# Loose screenshots kept for visual review while working on the UI. Not deliverable
+# assets — the app itself loads no images from here.
+preview/

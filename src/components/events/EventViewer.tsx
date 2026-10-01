@@ -105,19 +105,21 @@ export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventV
   const iconColorClass = getColoredIconClass(hasColor);
   const borderClass = getColoredBorderClass(hasColor, 100);
 
-  // Generate background style based on event color
+  /*
+   * An uncoloured event reads the page background, not `--card`. `--card` is pure white,
+   * so the viewer opened as a bright cold sheet while the note viewer next to it used the
+   * warm surface. Same token in both places now.
+   */
   const getBackgroundStyle = (): React.CSSProperties => {
     if (!hasColor) {
-      return { backgroundColor: 'hsl(var(--card))' };
+      return { backgroundColor: 'hsl(var(--background))' };
     }
     return { backgroundColor: event.color };
   };
 
-  // Custom hover styles for Edit and X buttons on non-colored events
-  // Light theme: dark blue background with white icons
   const editCloseButtonStyles = hasColor 
     ? iconButtonStyles.className 
-    : 'hover:bg-black hover:text-white';
+    : 'hover:bg-hover';
 
   // Text color classes using the standard pattern
   const textColorClass = hasColor ? 'text-[#000000]' : 'text-foreground';
@@ -177,14 +179,14 @@ export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventV
             <Calendar size={18} className="mt-0.5 shrink-0" />
             <div className="flex flex-col">
               {isSameDay ? (
-                <span className="text-base">{formattedStartDate}</span>
+                <span className="text-sm">{formattedStartDate}</span>
               ) : (
                 <>
-                  <span className="text-base">
+                  <span className="text-sm">
                     <span className="font-medium">Start:</span> {formattedStartDate}
                   </span>
                   {formattedEndDate && (
-                    <span className="text-base">
+                    <span className="text-sm">
                       <span className="font-medium">End:</span> {formattedEndDate}
                     </span>
                   )}
@@ -197,12 +199,12 @@ export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventV
           {event.isAllDay || (!startTime && !endTime) ? (
             <div className={`flex items-center gap-2 ${mutedTextClass}`}>
               <Clock size={18} />
-              <span className="text-base font-medium">All Day</span>
+              <span className="text-sm font-medium">All Day</span>
             </div>
           ) : (startTime || endTime) && (
             <div className={`flex items-center gap-2 ${mutedTextClass}`}>
               <Clock size={18} />
-              <span className="text-base">
+              <span className="text-sm">
                 {startTime && formatTime(startTime)}
                 {startTime && endTime && ' - '}
                 {endTime && formatTime(endTime)}
@@ -214,7 +216,7 @@ export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventV
           {event.location && (
             <div className={`flex items-start gap-2 ${mutedTextClass}`}>
               <MapPin size={18} className="mt-0.5 shrink-0" />
-              <span className="text-base">{event.location}</span>
+              <span className="text-sm">{event.location}</span>
             </div>
           )}
 
@@ -222,13 +224,13 @@ export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventV
           {alertText && (
             <div className={`flex items-center gap-2 ${mutedTextClass}`}>
               <Bell size={18} />
-              <span className="text-base">{alertText}</span>
+              <span className="text-sm">{alertText}</span>
             </div>
           )}
 
           {/* Description */}
           {event.description && (
-            <p className={`text-base ${mutedTextClass}`}>
+            <p className={`text-sm ${mutedTextClass}`}>
               {event.description}
             </p>
           )}

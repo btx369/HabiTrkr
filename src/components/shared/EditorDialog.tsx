@@ -56,14 +56,14 @@ export function EditorDialog({
         <Button 
           variant="outline" 
           onClick={handleCancel} 
-          className="flex-1 h-12 text-base border-black dark:border-transparent text-black dark:text-foreground hover:text-black dark:hover:text-foreground"
+          className="flex-1 h-10 text-sm border-black dark:border-transparent text-black dark:text-foreground hover:text-black dark:hover:text-foreground"
         >
           {cancelLabel}
         </Button>
         <Button 
           onClick={onSave} 
           disabled={saveDisabled} 
-          className="flex-1 h-12 text-base bg-black text-white hover:bg-black/90"
+          className="flex-1 h-10 text-sm bg-black text-white hover:bg-black/90"
         >
           {saveLabel}
         </Button>

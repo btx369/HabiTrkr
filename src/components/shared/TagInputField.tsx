@@ -79,12 +79,12 @@ export function TagInputField({
         onChange={(e) => setTagInput(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        className="h-12 text-base"
+        className="h-10 text-sm"
       />
       <Button 
         type="button"
         onClick={handleAddTags} 
-        className="w-full h-12 text-base"
+        className="w-full h-10 text-sm"
         disabled={!tagInput.trim()}
       >
         Add Tags

@@ -1045,6 +1045,33 @@ export function NoteViewer({
     return audios;
   };
 
+  /**
+   * Removes an audio clip and its caption from a list note's markdown.
+   *
+   * Matching is done by index, not by rebuilding the marker and string-replacing it. The
+   * label is optional, so the old reconstruction produced `[audionote:<url>:undefined]`
+   * whenever a clip had no caption — a marker that is never in the content, so the delete
+   * silently did nothing. `encodeURIComponent(undefined)` also yields the literal string
+   * "undefined" rather than failing, so nothing warned about it either.
+   */
+  const removeAudioFromContent = (content: string, url: string): string => {
+    let result = content;
+
+    // The caption marker carries a free-form label, so find it by index like upsertAudioNote.
+    const noteStart = result.indexOf(`[audionote:${url}:`);
+    if (noteStart !== -1) {
+      const noteEnd = result.indexOf(']', noteStart);
+      if (noteEnd !== -1) result = result.slice(0, noteStart) + result.slice(noteEnd + 1);
+    }
+
+    // The clip itself. Deleting the caption but leaving the player behind would look like
+    // the delete had half-worked.
+    const audioRegex = new RegExp(`\\[audio:${url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}:[\\d.]+\\]`, 'g');
+    result = result.replace(audioRegex, '');
+
+    return result;
+  };
+
   const upsertAudioNote = (content: string, url: string, duration: number, noteText: string): string => {
     console.log('[upsertAudioNote] Called with:', { 
       url: url.substring(0, 50) + '...', 
@@ -1240,9 +1267,18 @@ export function NoteViewer({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button 
-                  variant="ghost" 
+                  variant="ghostStatic" 
                   size="icon" 
-                  className="h-8 w-8 p-0 self-center hover:bg-black/10"
+                  /*
+                   * `--card-hover-color` rather than a fixed `hover:bg-black/10`. A black veil
+                   * is invisible in dark mode, where the surface underneath is already near
+                   * black, so this menu had no hover there at all. The variable is already
+                   * defined by both containers that can host this row: the note dialog and
+                   * ColoredCard each set it to a tint of the note's own colour, or to the
+                   * shared --hover veil when the note has no colour. Reading it means one
+                   * class works on a plain note, on a coloured note, and in either theme.
+                   */
+                  className="h-8 w-8 p-0 self-center hover:bg-[var(--card-hover-color)] data-[state=open]:bg-[var(--card-hover-color)]"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <MoreVertical size={16} />
@@ -1449,11 +1485,11 @@ export function NoteViewer({
                 {images.length > 0 && renderImageGrid(images)}
                 {audioWithLabels.length > 0 && renderAudioList(audioWithLabels)}
                 {textContent ? (
-                  <div className="text-base leading-relaxed">
+                  <div className="text-sm leading-relaxed">
                     {renderMarkdownWithHighlight(textContent, searchQuery)}
                   </div>
                 ) : (
-                  <div className="text-base leading-relaxed text-muted-foreground min-h-[3rem] mb-0.5">
+                  <div className="text-sm leading-relaxed text-muted-foreground min-h-[3rem] mb-0.5">
                     Start writing...
                   </div>
                 )}
@@ -1496,16 +1532,13 @@ export function NoteViewer({
                         <span className="flex-1 break-words">{audioItem.label}</span>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 flex-shrink-0 hover:bg-black/10">
+                            <Button variant="ghostStatic" size="sm" className="h-6 w-6 p-0 flex-shrink-0 hover:bg-[var(--card-hover-color)] data-[state=open]:bg-[var(--card-hover-color)]">
                               <MoreVertical size={14} />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="bg-background border border-border">
                             <DropdownMenuItem onClick={() => {
-                              const updatedDesc = listDescription.replace(
-                                `[audionote:${audioItem.content}:${encodeURIComponent(audioItem.label)}]`,
-                                ''
-                              );
+                              const updatedDesc = removeAudioFromContent(listDescription, audioItem.content);
                               setEditedDescription(updatedDesc);
                               const updatedNote = { ...note, description: updatedDesc } as ListNote;
                               if (onSave) onSave(note.id, updatedNote);
@@ -1540,20 +1573,20 @@ export function NoteViewer({
                         onChange={(e) => updateListItem(item.id, e.target.value)}
                         onKeyDown={(e) => handleListItemKeyDown(e, item.id)}
                         placeholder="List item..."
-                        className="text-base flex-1 border-none shadow-none focus-visible:ring-0 p-1 bg-transparent rounded-none h-7"
+                        className="text-sm flex-1 border-none shadow-none focus-visible:ring-0 p-1 bg-transparent rounded-none h-7"
                       />
                       <Button
                         size="sm"
                         variant="ghost"
                         onClick={() => removeListItem(item.id)}
-                        className="h-6 w-6 p-0 flex-shrink-0 text-muted-foreground hover:text-destructive hover:bg-black/10"
+                        className="h-6 w-6 p-0 flex-shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                       >
                         <X size={12} />
                       </Button>
                     </div>
                   ) : (
                      <span 
-                       className="text-base leading-none break-words flex-1 min-w-0 cursor-pointer hover:bg-black/10 p-1 min-h-[1.75rem] flex items-center"
+                       className="text-sm leading-none break-words flex-1 min-w-0 cursor-pointer hover:bg-hover p-1 min-h-[1.75rem] flex items-center"
                        onClick={(e) => startEditingContent(e, item.id)}
                       >
                        {highlightText(item.text, searchQuery)}
@@ -1566,7 +1599,7 @@ export function NoteViewer({
                 <Button
                   variant="outline"
                   onClick={isEditingContent ? addListItem : beginAddItem}
-                  className="h-8 w-full justify-start text-muted-foreground hover:bg-black/10 flex-shrink-0"
+                  className="h-8 w-full justify-start text-muted-foreground hover:bg-hover flex-shrink-0"
                 >
                   <Plus size={16} className="mr-2" />
                   List item
@@ -1607,20 +1640,20 @@ export function NoteViewer({
                                 onChange={(e) => updateListItem(item.id, e.target.value)}
                                 onKeyDown={(e) => handleListItemKeyDown(e, item.id)}
                                 placeholder="List item..."
-                                className="text-base flex-1 border-none shadow-none focus-visible:ring-0 p-1 bg-transparent rounded-none line-through text-muted-foreground"
+                                className="text-sm flex-1 border-none shadow-none focus-visible:ring-0 p-1 bg-transparent rounded-none line-through text-muted-foreground"
                               />
                               <Button
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => removeListItem(item.id)}
-                                className="h-6 w-6 p-0 flex-shrink-0 text-muted-foreground hover:text-destructive hover:bg-black/10"
+                                className="h-6 w-6 p-0 flex-shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                               >
                                 <X size={12} />
                               </Button>
                             </div>
                           ) : (
                              <span 
-                               className="text-base leading-none line-through text-muted-foreground break-words flex-1 min-w-0 cursor-pointer hover:bg-black/10 p-1 flex items-center"
+                               className="text-sm leading-none line-through text-muted-foreground break-words flex-1 min-w-0 cursor-pointer hover:bg-hover p-1 flex items-center"
                                onClick={(e) => startEditingContent(e, item.id)}
                              >
                               {highlightText(item.text, searchQuery)}
@@ -1703,11 +1736,11 @@ export function NoteViewer({
                 {audioImages.length > 0 && renderImageGrid(audioImages)}
                 {audioWithLabelsAudio.length > 0 && renderAudioList(audioWithLabelsAudio)}
                 {audioTextContent ? (
-                  <div className="text-base leading-relaxed">
+                  <div className="text-sm leading-relaxed">
                     {renderMarkdownWithHighlight(audioTextContent, searchQuery)}
                   </div>
                 ) : (
-                  <div className="text-base leading-relaxed text-muted-foreground min-h-[3rem] mb-0.5">
+                  <div className="text-sm leading-relaxed text-muted-foreground min-h-[3rem] mb-0.5">
                     Start writing...
                   </div>
                 )}
@@ -1776,11 +1809,11 @@ export function NoteViewer({
               >
                 {imageWithLabelsAudio.length > 0 && renderAudioList(imageWithLabelsAudio)}
                 {imageTextContent ? (
-                  <div className="text-base leading-relaxed">
+                  <div className="text-sm leading-relaxed">
                     {renderMarkdownWithHighlight(imageTextContent, searchQuery)}
                   </div>
                 ) : (
-                  <div className="text-base leading-relaxed text-muted-foreground min-h-[3rem] mb-0.5">
+                  <div className="text-sm leading-relaxed text-muted-foreground min-h-[3rem] mb-0.5">
                     Start writing...
                   </div>
                 )}
@@ -1800,11 +1833,17 @@ export function NoteViewer({
   const iconColorClass = getColoredIconClass(hasColor);
   const borderClass = getColoredBorderClass(hasColor, 20);
   
-  // Custom hover styles for header buttons on non-colored notes
-  // Black background with white icons for consistent styling
+  /*
+   * Hover for the header buttons (search, close, ⋮) on an uncoloured note: the shared
+   * --hover veil, so the button tints and the ICON KEEPS ITS COLOUR. The old intent here
+   * was a black pill with white icons, which is why the menu icon carried an explicit
+   * `group-hover:text-white`; that flipped the dots to white on a light background and
+   * made them look like they had vanished. On a coloured note the tint is derived from
+   * the note colour instead.
+   */
   const themedHoverStyles = hasColor 
     ? iconButtonStyles.className 
-    : 'hover:bg-black hover:text-white';
+    : 'hover:bg-hover';
   
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -1817,8 +1856,13 @@ export function NoteViewer({
         // the action menu (⋮) inside styles its hover with that variable. Without it the
         // variable was undefined on this dialog and the button hovered to no colour at
         // all, unlike every card, which tints a shade lighter than the card itself.
+        //
+        // An uncoloured note reads the page background, not `--card`. `--card` is pure
+        // white, which made the whole note body a bright cold sheet while the action bar
+        // at the bottom (a translucent wash over it) came out visibly greyer — the bar
+        // looked wrong but the body was the thing out of step.
         style={{
-          backgroundColor: hasColor ? hexToRgba(note.color, 0.75) : 'hsl(var(--card))',
+          backgroundColor: hasColor ? hexToRgba(note.color, 0.75) : 'hsl(var(--background))',
           ...(hasColor
             ? ({ '--card-hover-color': getLighterColor(note.color) } as React.CSSProperties)
             : {}),
@@ -1846,7 +1890,7 @@ export function NoteViewer({
                 onClick={() => {
                   saveContent();
                 }}
-                className="h-8 w-8 p-0 flex-shrink-0 hover:bg-black/10 rounded-full bg-primary/10"
+                className="h-8 w-8 p-0 flex-shrink-0 hover:bg-hover rounded-full bg-primary/10"
               >
                 <Check size={16} className="text-primary" />
               </Button>
@@ -1867,7 +1911,7 @@ export function NoteViewer({
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search in note..."
-                    className="text-base h-8 px-2 border-none shadow-none focus-visible:ring-0 bg-transparent rounded-none flex-1 min-w-0"
+                    className="text-sm h-8 px-2 border-none shadow-none focus-visible:ring-0 bg-transparent rounded-none flex-1 min-w-0"
                     onKeyDown={(e) => {
                       if (e.key === 'Escape') {
                         handleSearchToggle();
@@ -1906,7 +1950,7 @@ export function NoteViewer({
                 />
               ) : (
               <DialogTitle 
-                  className={`text-lg font-medium truncate cursor-pointer px-2 py-1 rounded-full ${hasColor ? iconButtonStyles.className : 'hover:bg-black hover:text-white'}`}
+                  className={`text-lg font-medium truncate cursor-pointer px-2 py-1 rounded-full ${hasColor ? iconButtonStyles.className : 'hover:bg-hover hover:text-foreground'}`}
                   onClick={startEditingTitle}
                 >
                   {highlightText(note.name || '', searchQuery)}
@@ -1937,7 +1981,7 @@ export function NoteViewer({
               onMoveToFolder={onMoveToFolder ? () => onMoveToFolder(note.id) : undefined}
               size="md"
               hoverClass={themedHoverStyles}
-              iconColorClass={hasColor ? 'text-[#000000]' : 'text-foreground group-hover:text-white'}
+              iconColorClass={hasColor ? 'text-[#000000]' : 'text-foreground'}
             />
             <Button
               variant={iconButtonStyles.variant}

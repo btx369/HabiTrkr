@@ -22,7 +22,6 @@ interface EventFolderCardProps {
   onDelete?: (folderId: string) => void;
   onPin?: (folderId: string) => void;
   onUnpin?: (folderId: string) => void;
-  onCopy?: (folderId: string) => void;
   onRestore?: (folderId: string) => void;
   isArchived?: boolean;
   isDeleted?: boolean;
@@ -30,8 +29,13 @@ interface EventFolderCardProps {
   onEditEvent?: (event: Event) => void;
   onArchiveEvent?: (eventId: string) => void;
   onDeleteEvent?: (eventId: string) => void;
-  onPinEvent?: (eventId: string) => void;
-  onUnpinEvent?: (eventId: string) => void;
+  /*
+   * Note there is no onCopy for the folder and no pin/unpin for the events inside it.
+   * Folder actions are pin/edit/archive/delete/restore, the same set NoteFolderCard offers;
+   * an event's own actions live on the nested EventCard, which does receive onCopyEvent.
+   * `onCopy`, `onPinEvent` and `onUnpinEvent` used to be declared and destructured here
+   * without ever being used or passed in — dead props left behind by a refactor.
+   */
   onCopyEvent?: (eventId: string) => void;
   onMoveEventToFolder?: (eventId: string) => void;
   /** Bulk selection props */
@@ -49,7 +53,6 @@ export function EventFolderCard({
   onDelete, 
   onPin, 
   onUnpin, 
-  onCopy,
   onRestore,
   isArchived = false,
   isDeleted = false,
@@ -57,8 +60,6 @@ export function EventFolderCard({
   onEditEvent,
   onArchiveEvent,
   onDeleteEvent,
-  onPinEvent,
-  onUnpinEvent,
   onCopyEvent,
   onMoveEventToFolder,
   showBulkCheckbox = false,

@@ -60,16 +60,35 @@ export const Header = ({ showSearch = false, searchQuery = '', onSearchChange, p
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50">
-      <div className="flex items-center justify-between py-4 px-2 gap-3">
+      {/*
+        * `py-2`, not `py-4`. Measured at 390px the bar was 72px tall: 16 + a 40px button + 16.
+        * Eight pixels of that either side is a lot of empty chrome on a phone, and the icons
+        * inside are 20px, so the padding was more than double the glyph. `py-2` takes the bar
+        * to 56px and returns 16px of vertical space to the content, which is the scarce
+        * dimension here.
+        *
+        * The content offset in Layout (`pt-16`) is unchanged: it still clears the shorter bar.
+        */}
+      <div className="flex items-center justify-between py-2 px-2 gap-3">
         {/* Left: Search Button (always visible when showSearch is true) */}
         {showSearch && (
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setIsSearchExpanded(true)}
-          className={`text-foreground hover:bg-black hover:text-white rounded-full shrink-0 transition-opacity duration-200 [&_svg]:!size-7 ${isSearchExpanded ? 'opacity-0 pointer-events-none w-0 p-0' : ''}`}
+          /*
+           * No `!size-7` and no `size={28}`. The arbitrary variant `[&_svg]:!size-7` was
+           * forcing the glyph to 28px and overriding the `size={28}` attribute on the icon,
+           * so the number in the JSX was decorative and editing it did nothing.
+           *
+           * 20px is what the reference uses: grok.com renders a 20px glyph inside the same
+           * 40x40 button, and 28px in a 40px circle leaves only 6px of breathing room, which
+           * is what made the top bar read as heavy. The Button base sets `[&_svg]:size-4`;
+           * this is one step up from that, set explicitly.
+           */
+          className={`text-foreground hover:bg-hover hover:text-foreground rounded-full shrink-0 transition-opacity duration-200 ${isSearchExpanded ? 'opacity-0 pointer-events-none w-0 p-0' : ''}`}
         >
-          <Search size={28} />
+          <Search size={20} />
           </Button>
         )}
         
@@ -89,7 +108,7 @@ export const Header = ({ showSearch = false, searchQuery = '', onSearchChange, p
                 variant="ghost"
                 size="sm"
                 onClick={handleCloseSearch}
-                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0 z-20 text-foreground hover:bg-black hover:text-white rounded-full"
+                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0 z-20 text-foreground hover:bg-hover hover:text-foreground rounded-full"
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -113,9 +132,10 @@ export const Header = ({ showSearch = false, searchQuery = '', onSearchChange, p
           variant="ghost"
           size="icon"
           onClick={() => navigate('/profile')}
-          className="text-foreground hover:bg-black hover:text-white rounded-full shrink-0 [&_svg]:!size-7"
+          /* Same 20px as the search button: the two are a pair and must match. */
+          className="text-foreground hover:bg-hover hover:text-foreground rounded-full shrink-0"
         >
-          <UserRound size={28} />
+          <UserRound size={20} />
         </Button>
       </div>
     </div>

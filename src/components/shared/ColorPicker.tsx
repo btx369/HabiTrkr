@@ -19,7 +19,7 @@ export function ColorPicker({
 }: ColorPickerProps) {
   return (
     <div>
-      <Label className="text-base flex items-center gap-2">
+      <Label className="text-sm flex items-center gap-2">
         {Icon && <Icon size={16} color={iconColor} />}
         {label}
       </Label>

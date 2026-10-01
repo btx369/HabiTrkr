@@ -55,7 +55,7 @@ export function DaySelector({
           type="button"
           onClick={() => handleDayClick(visualIndex)}
           className={cn(
-            "w-9 h-9 sm:w-12 sm:h-12 rounded-full text-sm sm:text-base touch-manipulation transition-colors flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background",
+            "w-9 h-9 sm:w-12 sm:h-10 rounded-full text-sm sm:text-sm touch-manipulation transition-colors flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background",
             isDaySelected(visualIndex) 
               ? "bg-black text-white hover:bg-black/90" 
               : "bg-muted-foreground/35 hover:bg-muted-foreground/45"

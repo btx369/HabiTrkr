@@ -17,7 +17,7 @@ import { EventFolderCard } from '@/components/events/EventFolderCard';
 import { EventFolderCreator } from '@/components/events/EventFolderCreator';
 import { EventFolderEditor } from '@/components/events/EventFolderEditor';
 import { EventEditor } from '@/components/events/EventEditor';
-import { MoveToEventFolderDialog } from '@/components/events/MoveToEventFolderDialog';
+import { MoveToFolderDialog } from '@/components/shared/MoveToFolderDialog';
 import { parseSearchExpression, matchesSearchExpression } from '@/lib/tagParser';
 import { updateTagUsage } from '@/lib/tagStorage';
 import { autoImportEventToFolders } from '@/lib/folderAutoImport';
@@ -1399,7 +1399,7 @@ export default function Events() {
             {!isArchived ? (
               <Button 
                 onClick={() => setIsEventFolderCreatorOpen(true)}
-                className="h-12 px-8 text-base font-medium rounded-full bg-black text-white hover:bg-black/90"
+                className="h-10 px-8 text-sm font-medium rounded-full bg-black text-white hover:bg-black/90"
               >
                 Create Folder
                 <FolderOpen className="ml-2" size={20} />
@@ -1459,11 +1459,11 @@ export default function Events() {
         {/* Floating Add Button */}
         {!isBulkMode && activeTab !== 'archived' && (
           <Button 
-            variant="ghost" 
+            variant="ghostStatic" 
             size="icon" 
             onClick={handleAddButtonClick} 
             className={cn(
-              "fixed bottom-20 right-2 h-14 w-14 rounded-full z-30 bg-black text-white hover:bg-black hover:text-white",
+              "fixed bottom-20 right-2 h-14 w-14 rounded-full z-30 bg-black text-white hover:bg-black/90",
               "transition-all duration-300 ease-out",
               scrollDirection === 'down' 
                 ? "opacity-0 translate-y-4 pointer-events-none" 
@@ -1505,9 +1505,9 @@ export default function Events() {
             </SlidingTabsList>
             <div className="flex items-center gap-1">
               <Button 
-                variant="ghost" 
+                variant="ghostStatic" 
                 size="icon"
-                className="rounded-full hover:bg-black hover:text-white focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:!size-6 data-[state=open]:bg-black data-[state=open]:text-white"
+                className="rounded-full hover:bg-hover hover:text-foreground focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:!size-5 data-[state=open]:bg-hover data-[state=open]:text-foreground"
                 data-state={isBulkMode ? "open" : "closed"}
                 onClick={(e) => { toggleBulkMode(); e.currentTarget.blur(); }}
                 onMouseDown={(e) => e.preventDefault()}
@@ -1541,7 +1541,7 @@ export default function Events() {
                 <CardContent className="text-center py-8">
                   <Button 
                     onClick={handleAddButtonClick}
-                    className="h-12 px-8 text-base font-medium rounded-full bg-black text-white hover:bg-black/90"
+                    className="h-10 px-8 text-sm font-medium rounded-full bg-black text-white hover:bg-black/90"
                   >
                     Create Event
                     <Calendar className="ml-2" size={20} />
@@ -1559,7 +1559,7 @@ export default function Events() {
                 <CardContent className="text-center py-8">
                   <Button 
                     onClick={handleAddButtonClick}
-                    className="h-12 px-8 text-base font-medium rounded-full bg-black text-white hover:bg-black/90"
+                    className="h-10 px-8 text-sm font-medium rounded-full bg-black text-white hover:bg-black/90"
                   >
                     Create Folder
                     <FolderOpen className="ml-2" size={20} />
@@ -1640,7 +1640,7 @@ export default function Events() {
           folder={selectedEventFolder}
         />
 
-        <MoveToEventFolderDialog
+        <MoveToFolderDialog
           isOpen={isMoveToEventFolderOpen}
           onClose={() => {
             setIsMoveToEventFolderOpen(false);
@@ -1651,6 +1651,8 @@ export default function Events() {
           onSelectFolder={handleEventFolderSelect}
           onCreateNewFolder={handleCreateEventFolderFromDialog}
           currentFolderId={selectedEventForMove ? eventFolders.find(f => f.eventIds.includes(selectedEventForMove))?.id : undefined}
+          getItemCount={(folder) => folder.eventIds.length}
+          itemNoun="events"
         />
 
         {/* Bulk Archive Confirmation Dialog */}

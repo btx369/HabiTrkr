@@ -2,28 +2,61 @@ import { Button } from '@/components/ui/button';
 import { CardContent } from '@/components/ui/card';
 import { ColoredCard } from '@/components/shared/ColoredCard';
 import { EditorDialog } from '@/components/shared/EditorDialog';
-import { HabitFolder } from '@/types/habitFolder';
 import { FolderCheck, FolderOpen, FolderPlus } from 'lucide-react';
 import { isDefaultColor } from '@/lib/cardColorStyles';
 import { getColoredIconClass } from '@/lib/coloredButtonStyles';
 
-interface MoveToHabitFolderDialogProps {
+/**
+ * The fields this dialog actually needs from a folder.
+ *
+ * Declared structurally rather than as a union of NoteFolder | EventFolder | HabitFolder,
+ * because those three differ in ways that do not matter here — NoteFolder carries
+ * createdAt/modifiedAt/lastNoteAddedAt while the other two do not — and a union would force
+ * every caller to satisfy a shape this component never reads.
+ */
+export interface MovableFolder {
+  id: string;
+  name: string;
+  description?: string;
+  color: string;
+}
+
+interface MoveToFolderDialogProps<T extends MovableFolder> {
   isOpen: boolean;
   onClose: () => void;
-  folders: HabitFolder[];
+  folders: T[];
   onSelectFolder: (folderId: string) => void;
   onCreateNewFolder: () => void;
   currentFolderId?: string;
+  /**
+   * How many items the folder holds, and what to call them. Notes, events and habits each
+   * keep their ids under a different key, so the caller supplies the count rather than this
+   * component guessing at `noteIds` / `eventIds` / `habitIds`.
+   */
+  getItemCount: (folder: T) => number;
+  itemNoun: string;
+  emptyMessage?: string;
 }
 
-export function MoveToHabitFolderDialog({
-  isOpen, 
-  onClose, 
-  folders, 
+/**
+ * Picks the folder an item should move into.
+ *
+ * This replaces three separate components — one each for notes, events and habits — that
+ * were 90 lines apiece with six lines of difference between them: the folder type, the name
+ * of the count field, and the word after the count. Anything fixed in one of them had to be
+ * fixed in all three, and the third copy had already drifted.
+ */
+export function MoveToFolderDialog<T extends MovableFolder>({
+  isOpen,
+  onClose,
+  folders,
   onSelectFolder,
   onCreateNewFolder,
-  currentFolderId
-}: MoveToHabitFolderDialogProps) {
+  currentFolderId,
+  getItemCount,
+  itemNoun,
+  emptyMessage = 'No folders available',
+}: MoveToFolderDialogProps<T>) {
   return (
     <EditorDialog
       isOpen={isOpen}
@@ -34,7 +67,7 @@ export function MoveToHabitFolderDialog({
       <div className="space-y-3 max-h-[400px] overflow-y-auto">
         {folders.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-muted-foreground mb-4">No folders available</p>
+            <p className="text-muted-foreground mb-4">{emptyMessage}</p>
             <Button onClick={onCreateNewFolder} className="bg-black text-white hover:bg-black/90">
               Create New Folder
               <FolderPlus size={16} className="ml-2" />
@@ -62,7 +95,7 @@ export function MoveToHabitFolderDialog({
                           <p className="text-sm text-muted-foreground">{folder.description}</p>
                         )}
                         <p className="text-xs text-muted-foreground">
-                          {folder.habitIds.length} habits
+                          {getItemCount(folder)} {itemNoun}
                         </p>
                       </div>
                       {isCurrentFolder ? (

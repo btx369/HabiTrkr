@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu, 
@@ -24,7 +23,7 @@ import {
 import { Note } from '@/types/note';
 import { TagEditorPopover } from './TagEditorPopover';
 import { isDefaultColor } from '@/lib/cardColorStyles';
-import { getColoredOutlineButtonStyles, getColoredIconClass, getColoredBorderClass } from '@/lib/coloredButtonStyles';
+import { getColoredBorderClass } from '@/lib/coloredButtonStyles';
 
 interface NoteActionBarProps {
   note: Note;
@@ -53,35 +52,53 @@ export const NoteActionBar = ({
   showFormattingBar,
   isTextNote
 }: NoteActionBarProps) => {
-  const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
-  const [isTagPopoverOpen, setIsTagPopoverOpen] = useState(false);
-  
   const hasColor = !isDefaultColor(note.color);
-  const outlineStyles = getColoredOutlineButtonStyles(hasColor);
-  const iconColorClass = getColoredIconClass(hasColor);
   const borderClass = getColoredBorderClass(hasColor, 20);
   
-  // Custom hover styles for action bar buttons on non-colored notes
-  // Black background with white icons for consistent styling
-  const themedHoverStyles = hasColor
-    ? `${outlineStyles.className} ${iconColorClass}`
-    : 'hover:bg-black hover:text-white border border-input';
-  
-  // Active state styling (when menu/popover is open)
-  const activeStyles = hasColor
-    ? `bg-[#000000]/20 text-[#000000]`
-    : 'bg-black text-white';
+  /*
+   * Every button in this bar shares one set of states — Add, Tags, Alerts, Audio and Text
+   * Format. They used to diverge: Add baked a permanent `bg-[#000000]/20` into its resting
+   * state, so on a coloured note it sat visibly darker than its neighbours, while Tags and
+   * Text Format kept a hover tint even when open.
+   *
+   *   rest    transparent — the buttons are glyphs on the note, nothing more
+   *   hover   the note-colour veil, or the shared --hover veil on a plain note
+   *   active  solid black with a white glyph, held until the control is closed
+   *
+   * The active fill is deliberately the same on a coloured note as on a plain one. A
+   * translucent veil of the note's own colour was tried first and was not readable: on a
+   * pale note (#FEF3C7) the open state and the hover state looked alike, so "something is
+   * open" stopped being obvious. Solid black contrasts with every note colour there is.
+   *
+   * Do NOT add `bg-transparent` to the shared part of these strings. `.bg-transparent` and
+   * `.bg-black` have identical specificity, so the one Tailwind emits LAST wins — and it
+   * emits `.bg-transparent` after `.bg-black`. A resting `bg-transparent` alongside a
+   * `bg-black` active state therefore makes the active state silently invisible. Keeping the
+   * background inside mutually exclusive branches lets tailwind-merge drop the loser, which
+   * is why `bg-transparent` appears only in the branch that needs it.
+   */
+  const sizeStyles = 'h-9 w-9 rounded-full p-0';
+  const restStyles = hasColor
+    ? 'bg-transparent hover:bg-black/10'
+    : 'bg-transparent hover:bg-hover';
+
+  /*
+   * `data-[state=open]` only exists on the Radix triggers (Add, Tags), which set that
+   * attribute themselves. Text Format is a plain toggle button, so the attribute never
+   * appears and that rule never fired — it was the one button in the bar that did not stay
+   * black. It reports the same state through `aria-pressed` instead, which is also the
+   * accessible way to express a toggle.
+   */
+  const openTriggerStyles = 'data-[state=open]:bg-black data-[state=open]:text-white';
+  const activeButtonStyles = 'bg-black text-white hover:bg-black';
 
   return (
     <div className={`flex items-center justify-center gap-2 p-3 ${hasColor ? 'bg-transparent' : 'bg-background/50 backdrop-blur-sm'}`}>
-      <DropdownMenu onOpenChange={setIsAddMenuOpen}>
+      <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button 
             size="sm" 
-            className={`h-9 w-9 rounded-full p-0 ${isAddMenuOpen 
-              ? activeStyles 
-              : (hasColor ? `bg-[#000000]/20 hover:bg-[#000000]/30 ${iconColorClass}` : 'hover:bg-black hover:text-white')
-            }`}
+            className={`${sizeStyles} ${restStyles} ${openTriggerStyles}`}
           >
             <Plus size={16} />
           </Button>
@@ -106,11 +123,11 @@ export const NoteActionBar = ({
         </DropdownMenuContent>
       </DropdownMenu>
       
-      <Popover onOpenChange={setIsTagPopoverOpen}>
+      <Popover>
         <PopoverTrigger asChild>
           <Button 
             size="sm" 
-            className={`h-9 w-9 rounded-full p-0 ${isTagPopoverOpen ? activeStyles : themedHoverStyles}`}
+            className={`${sizeStyles} ${restStyles} ${openTriggerStyles}`}
           >
             <Tag size={16} />
           </Button>
@@ -118,7 +135,9 @@ export const NoteActionBar = ({
         <PopoverContent 
           side="top" 
           align="center" 
-          className={`w-80 p-3 z-[60] ${hasColor ? borderClass : 'bg-popover'}`}
+          // Same surface as the Add dropdown beside it: --popover, not a literal. On a
+          // coloured note the tint stays, since the panel sits on that colour.
+          className={`w-80 p-3 z-[60] ${hasColor ? borderClass : 'bg-popover border-border'}`}
           style={hasColor ? { backgroundColor: note.color } : {}}
         >
           <TagEditorPopover 
@@ -131,7 +150,7 @@ export const NoteActionBar = ({
       
       <Button 
         size="sm" 
-        className={`h-9 w-9 rounded-full p-0 ${themedHoverStyles}`}
+        className={`${sizeStyles} ${restStyles}`}
         onClick={onRemindMe}
       >
         <Bell size={16} />
@@ -139,7 +158,7 @@ export const NoteActionBar = ({
       
       <Button 
         size="sm" 
-        className={`h-9 w-9 rounded-full p-0 ${themedHoverStyles}`}
+        className={`${sizeStyles} ${restStyles}`}
         onClick={onTranscribeAudio}
         title="Transcribe audio to text (Coming soon)"
       >
@@ -149,7 +168,8 @@ export const NoteActionBar = ({
       {isTextNote && onToggleFormatting && (
         <Button 
           size="sm" 
-          className={`h-9 w-9 rounded-full p-0 ${showFormattingBar ? activeStyles : themedHoverStyles}`}
+          className={`${sizeStyles} ${showFormattingBar ? activeButtonStyles : restStyles}`}
+          aria-pressed={showFormattingBar}
           onClick={onToggleFormatting}
         >
           <Type size={16} />

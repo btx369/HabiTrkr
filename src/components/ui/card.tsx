@@ -10,9 +10,9 @@ const Card = React.forwardRef<
     ref={ref}
     className={cn(
       "rounded-[20px] text-card-foreground",
-      "bg-[rgba(242,244,247,0.75)] dark:bg-[hsl(var(--glass-bg))]",
+      "bg-[hsl(var(--surface-card))]",
       "backdrop-blur-[12px]",
-      "border border-[rgba(255,255,255,0.4)] dark:border-[hsl(var(--glass-border))]",
+      "border border-[hsl(var(--glass-border))]",
       "",
       className
     )}

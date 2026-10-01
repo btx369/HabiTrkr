@@ -181,7 +181,7 @@ export function BulkActionBar({
   return (
     <div 
       className={cn(
-        "fixed bottom-[72px] left-0 right-0 z-40 bg-black border-t border-gray-800",
+        "fixed bottom-[72px] left-0 right-0 z-40 bg-nav border-t border-nav-border",
         "transform transition-transform duration-300",
         isVisible ? "translate-y-0" : "translate-y-[calc(100%+72px)] pointer-events-none"
       )}
@@ -199,8 +199,8 @@ export function BulkActionBar({
               <Popover key={action.type} open={colorPopoverOpen} onOpenChange={setColorPopoverOpen}>
               <PopoverTrigger asChild>
                   <Button
-                    variant="ghost"
-                    className="flex flex-1 flex-col items-center justify-center h-11 md:h-14 min-w-0 px-1 md:px-2 gap-0 text-primary-foreground hover:text-primary-foreground hover:bg-primary-foreground/20"
+                    variant="ghostStatic"
+                    className="flex flex-1 flex-col items-center justify-center h-11 md:h-14 min-w-0 px-1 md:px-2 gap-0 text-primary-foreground hover:text-primary-foreground hover:bg-primary-foreground/20 data-[state=open]:bg-primary-foreground/20"
                     disabled={selectedCount === 0}
                   >
                     <Icon size={20} className="md:w-[22px] md:h-[22px] shrink-0" />
@@ -226,7 +226,7 @@ export function BulkActionBar({
                 "flex flex-1 flex-col items-center justify-center h-11 md:h-14 min-w-0 px-1 md:px-2 gap-0",
                 action.type === 'delete'
                   ? "text-destructive hover:text-destructive hover:bg-destructive/20" 
-                  : "text-primary-foreground hover:text-primary-foreground hover:bg-primary-foreground/20"
+                  : "text-primary-foreground hover:text-primary-foreground hover:bg-primary-foreground/20 data-[state=open]:bg-primary-foreground/20"
               )}
               onClick={() => onAction(action.type)}
               disabled={!isSelectionAction && selectedCount === 0}

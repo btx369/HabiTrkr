@@ -14,7 +14,7 @@ import { HabitCard, ArchivedHabitCard } from '@/components/habits/HabitCard';
 import { HabitFolderCard } from '@/components/habits/HabitFolderCard';
 import { HabitFolderCreator } from '@/components/habits/HabitFolderCreator';
 import { HabitFolderEditor } from '@/components/habits/HabitFolderEditor';
-import { MoveToHabitFolderDialog } from '@/components/habits/MoveToHabitFolderDialog';
+import { MoveToFolderDialog } from '@/components/shared/MoveToFolderDialog';
 import { HabitViewSettings, HabitSortType, HabitSortDirection } from '@/components/habits/HabitViewSettings';
 import { HabitFolderViewSettings, HabitFolderSortType, HabitFolderSortDirection } from '@/components/habits/HabitFolderViewSettings';
 import { BulkActionBar, BulkActionType, BulkActionContext } from '@/components/shared/BulkActionBar';
@@ -842,9 +842,9 @@ export default function HabitTracker() {
                 </span>
               )}
               <Button 
-                variant="ghost" 
+                variant="ghostStatic" 
                 size="icon"
-                className="rounded-full hover:bg-black hover:text-white focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:!size-6 data-[state=open]:bg-black data-[state=open]:text-white"
+                className="rounded-full hover:bg-hover hover:text-foreground focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:!size-5 data-[state=open]:bg-hover data-[state=open]:text-foreground"
                 data-state={isBulkMode ? "open" : "closed"}
                 onClick={(e) => { toggleBulkMode(); e.currentTarget.blur(); }}
                 onMouseDown={(e) => e.preventDefault()}
@@ -878,15 +878,15 @@ export default function HabitTracker() {
 
             {/* Calendar Navigation - only visible on habits tab */}
             {activeTab === 'habits' && (
-              <div className="rounded-[20px] bg-[rgba(242,244,247,0.75)] dark:bg-[hsl(var(--glass-bg))] backdrop-blur-[12px] border border-[rgba(255,255,255,0.4)] dark:border-[hsl(var(--glass-border))] shadow-[0_8px_32px_rgba(0,0,0,0.1)] px-2 py-2 mb-2">
+              <div className="rounded-[20px] bg-[hsl(var(--surface-card))] backdrop-blur-[12px] border border-[hsl(var(--glass-border))] shadow-[0_8px_32px_rgba(0,0,0,0.1)] px-2 py-2 mb-2">
                 <div className="flex items-center justify-between mb-2">
-                  <Button variant="ghost" size="icon" className="text-foreground hover:bg-black hover:text-white rounded-full [&_svg]:!size-6" onClick={() => setCurrentWeek(subWeeks(currentWeek, 1))}>
+                  <Button variant="ghost" size="icon" className="text-foreground hover:bg-hover hover:text-foreground rounded-full [&_svg]:!size-5" onClick={() => setCurrentWeek(subWeeks(currentWeek, 1))}>
                     <ChevronLeft size={24} />
                   </Button>
                   <h3 className="font-medium">
                     {format(weekStart, 'MMM d')} - {format(addDays(weekStart, 6), 'MMM d, yyyy')}
                   </h3>
-                  <Button variant="ghost" size="icon" className="text-foreground hover:bg-black hover:text-white rounded-full [&_svg]:!size-6" onClick={() => setCurrentWeek(addWeeks(currentWeek, 1))}>
+                  <Button variant="ghost" size="icon" className="text-foreground hover:bg-hover hover:text-foreground rounded-full [&_svg]:!size-5" onClick={() => setCurrentWeek(addWeeks(currentWeek, 1))}>
                     <ChevronRight size={24} />
                   </Button>
                 </div>
@@ -914,7 +914,7 @@ export default function HabitTracker() {
                 <CardContent className="text-center py-8">
                   <Button 
                     onClick={() => setIsAddDialogOpen(true)}
-                    className="h-12 px-8 text-base font-medium rounded-full bg-black text-white hover:bg-black/90"
+                    className="h-10 px-8 text-sm font-medium rounded-full bg-black text-white hover:bg-black/90"
                   >
                     Create Habit
                     <Target className="ml-2" size={20} />
@@ -954,7 +954,7 @@ export default function HabitTracker() {
                 <CardContent className="text-center py-8">
                   <Button 
                     onClick={() => setIsFolderCreatorOpen(true)}
-                    className="h-12 px-8 text-base font-medium rounded-full bg-black text-white hover:bg-black/90"
+                    className="h-10 px-8 text-sm font-medium rounded-full bg-black text-white hover:bg-black/90"
                   >
                     Create Folder
                     <Target className="ml-2" size={20} />
@@ -1071,11 +1071,11 @@ export default function HabitTracker() {
 
       {/* Floating Add Button */}
       <Button 
-        variant="ghost" 
+        variant="ghostStatic" 
         size="icon" 
         onClick={handleAddButtonClick}
         className={cn(
-          "fixed bottom-20 right-2 h-14 w-14 rounded-full z-30 px-0 py-0 bg-black text-white hover:bg-black hover:text-white",
+          "fixed bottom-20 right-2 h-14 w-14 rounded-full z-30 px-0 py-0 bg-black text-white hover:bg-black/90",
           "transition-all duration-300 ease-out",
           scrollDirection === 'down' || activeTab === 'archived'
             ? "opacity-0 translate-y-4 pointer-events-none" 
@@ -1125,13 +1125,15 @@ export default function HabitTracker() {
         folder={selectedFolder}
       />
 
-      <MoveToHabitFolderDialog
+      <MoveToFolderDialog
         isOpen={isMoveToFolderOpen}
         onClose={() => { setIsMoveToFolderOpen(false); setHabitToMove(null); }}
         folders={habitFolders}
         onSelectFolder={handleMoveToFolder}
         onCreateNewFolder={() => { setIsMoveToFolderOpen(false); setIsFolderCreatorOpen(true); }}
         currentFolderId={habitToMove ? habitFolders.find(f => f.habitIds.includes(habitToMove))?.id : undefined}
+        getItemCount={(folder) => folder.habitIds.length}
+        itemNoun="habits"
       />
 
       <ConfirmationDialog

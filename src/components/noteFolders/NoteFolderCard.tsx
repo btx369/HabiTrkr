@@ -29,7 +29,12 @@ interface NoteFolderCardProps {
   onPinFolder: (folderId: string) => void;
   onUnpinFolder: (folderId: string) => void;
   onEditFolder: (folderId: string) => void;
-  onArchiveFolder: (folderId: string) => void;
+  /*
+   * Optional, and the body already treats it that way (`onArchiveFolder ? ... : undefined`)
+   * because Notes passes undefined while the Archived tab is open. The non-optional type
+   * was simply wrong, which is why this only surfaced once strict mode was switched on.
+   */
+  onArchiveFolder?: (folderId: string) => void;
   onDeleteFolder: (folderId: string) => void;
   onRestoreFolder?: (folderId: string) => void;
   isDeleted?: boolean;

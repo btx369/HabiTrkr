@@ -33,7 +33,7 @@ export function NoteTypePopup({ isOpen, onTypeSelect, onClose }: NoteTypePopupPr
               key={type}
               onClick={() => onTypeSelect(type)}
               variant="secondary"
-              className="h-12 px-6 rounded-full flex items-center gap-3 w-[110px] justify-start"
+              className="h-10 px-6 rounded-full flex items-center gap-3 w-[110px] justify-start"
             >
             <Icon size={20} />
             <span className="font-medium">{label}</span>

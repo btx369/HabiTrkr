@@ -123,7 +123,7 @@ const ScrollColumn = ({
             key={index}
             className={cn(
               "flex items-center justify-center text-center cursor-pointer transition-all duration-200 snap-center",
-              "hover:bg-muted/50",
+              "hover:bg-hover/50",
               index === selectedIndex 
                 ? "text-foreground font-semibold scale-110" 
                 : "text-muted-foreground"
@@ -315,7 +315,12 @@ export function DatePickerInput({ value, onChange, className, id, label, icon: I
     <>
       <div className={cn("relative", className)}>
         {label && (
-          <Label className="text-sm text-muted-foreground mb-1 block">{label}</Label>
+          /*
+           * `mb-2`, not `mb-1`. The 4px this used was one of three different label gaps in the
+           * same editor — 0px in TitleInput, 4px here, 8px in the sections that relied on a
+           * wrapper. 8px matches those and matches the field above and below it.
+           */
+          <Label className="text-sm text-muted-foreground mb-2 block">{label}</Label>
         )}
         <div className="relative">
           {iconPosition === 'left' && (
@@ -333,7 +338,7 @@ export function DatePickerInput({ value, onChange, className, id, label, icon: I
             readOnly
             onClick={() => setIsPickerOpen(true)}
             className={cn(
-              "w-full h-12 py-2 text-base border border-input rounded-md bg-muted cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+              "w-full h-10 py-2 text-sm border border-input rounded-md bg-muted cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
               iconPosition === 'left' ? "pl-10 pr-3" : "px-3"
             )}
             placeholder="Select date"

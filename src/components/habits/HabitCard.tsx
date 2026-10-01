@@ -312,7 +312,7 @@ export function HabitCard({
                           ? 'bg-muted text-muted-foreground cursor-not-allowed' 
                           : isCompleted 
                             ? 'bg-black text-white' 
-                            : 'bg-background/60 text-foreground hover:bg-background/80')
+                            : 'bg-muted/60 text-foreground hover:bg-hover')
                   }`}
                 >
                   {isCompleted ? '✓' : format(date, 'd')}

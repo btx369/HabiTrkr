@@ -259,7 +259,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
         {/* Date and Time Section */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label className="text-base flex items-center gap-2">
+            <Label className="text-sm flex items-center gap-2">
               <CalendarClock size={16} color={ICON_COLOR} />
               Date and Time
             </Label>
@@ -293,7 +293,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
                   type="button"
                   variant="outline"
                   onClick={() => setIsStartTimePickerOpen(true)}
-                  className="w-full h-12 text-base bg-muted justify-start gap-2"
+                  className="w-full h-10 text-sm bg-muted justify-start gap-2"
                 >
                   <Clock size={16} color={ICON_COLOR} />
                   {formData.startTime || 'Set time'}
@@ -320,7 +320,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
                   type="button"
                   variant="outline"
                   onClick={() => setIsEndTimePickerOpen(true)}
-                  className={`w-full h-12 text-base justify-start gap-2 ${hasEndDateError ? 'bg-destructive/20 border-destructive/50' : 'bg-muted'}`}
+                  className={`w-full h-10 text-sm justify-start gap-2 ${hasEndDateError ? 'bg-destructive/20 border-destructive/50' : 'bg-muted'}`}
                 >
                   <Clock size={16} color={ICON_COLOR} />
                   {formData.endTime || 'Set time'}
@@ -332,7 +332,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
 
         {/* Recurrent Event */}
         <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-          <Label htmlFor="recurrent" className="text-base">Recurrent Event</Label>
+          <Label htmlFor="recurrent" className="text-sm">Recurrent Event</Label>
           <Switch 
             id="recurrent" 
             checked={formData.isRecurrent} 
@@ -343,7 +343,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
         {formData.isRecurrent && (
           <div id="recurrent-options" className="space-y-4 p-4 bg-muted rounded-lg">
             <div>
-              <Label className="text-base">Repeat every</Label>
+              <Label className="text-sm">Repeat every</Label>
               <div className="flex gap-3 mt-3">
                 <Input 
                   type="number" 
@@ -357,7 +357,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
                     ...prev, 
                     recurrenceInterval: parseInt(e.target.value) || 1 
                   }))}
-                  className="w-20 h-12 text-base bg-background"
+                  className="w-20 h-10 text-sm bg-background"
                 />
                 <select 
                   value={formData.recurrenceType} 
@@ -365,7 +365,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
                     ...prev, 
                     recurrenceType: e.target.value as EventFormData['recurrenceType'] 
                   }))}
-                  className="px-4 py-3 border rounded-md bg-background h-12 text-base flex-1"
+                  className="px-4 py-3 border rounded-md bg-background h-10 text-sm flex-1"
                 >
                   <option value="daily">Day(s)</option>
                   <option value="weekly">Week(s)</option>
@@ -377,7 +377,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
             
             {formData.recurrenceType === 'weekly' && (
               <div>
-                <Label className="text-base">On these days</Label>
+                <Label className="text-sm">On these days</Label>
                 <DaySelector 
                   selectedDays={formData.recurrenceDays}
                   onDaysChange={(days) => setFormData(prev => ({ ...prev, recurrenceDays: days as number[] }))}
@@ -390,7 +390,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
 
         {/* Alert */}
         <div className="space-y-2">
-          <Label className="text-base flex items-center gap-2">
+          <Label className="text-sm flex items-center gap-2">
             <Bell size={16} color={ICON_COLOR} />
             Alert
           </Label>
@@ -398,7 +398,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
             value={formData.alertType}
             onValueChange={handleAlertChange}
           >
-            <SelectTrigger className="h-12 text-base bg-muted">
+            <SelectTrigger className="h-10 text-sm bg-muted">
               <SelectValue>
                 {getAlertDisplayValue()}
               </SelectValue>

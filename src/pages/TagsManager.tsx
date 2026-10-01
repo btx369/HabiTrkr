@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Tag, Search, Pencil, Trash2 } from 'lucide-react';
+import { Tag, Search, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useToastSettings } from '@/contexts/ToastContext';
 import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
+import { PageHeader } from '@/components/shared/PageHeader';
 import { EditorDialog } from '@/components/shared/EditorDialog';
 import { getAllTagsWithCounts, renameTagGlobally, deleteTagGlobally } from '@/lib/tagStorage';
-import blurredBackground from '@/assets/blurred_background.png';
 
 interface TagWithCount {
   tag: string;
@@ -20,13 +19,9 @@ export default function TagsManager() {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { toast } = useToastSettings();
-  const { theme } = useTheme();
 
-  // This page renders its own full-height container instead of using <Layout>, so it
-  // has to pick the background itself. The blurred artwork is a LIGHT-mode asset; in
-  // dark mode it left a bright image sitting under dark surfaces, which no other page
-  // does. Keep the image for light mode only and fall back to the themed surface.
-  const isDark = theme === 'dark';
+  // This page renders its own full-height container instead of using <Layout>, so it has to
+  // pick the background itself. It reads --background like every other page.
 
   const [allTags, setAllTags] = useState<TagWithCount[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -102,28 +97,18 @@ export default function TagsManager() {
   };
 
   return (
-    <div 
-      className={`min-h-screen ${isDark ? 'bg-background' : 'bg-cover bg-center bg-fixed'}`}
-      style={isDark ? undefined : { backgroundImage: `url(${blurredBackground})` }}
-    >
+    /*
+     * Plain page background. This screen used to paint a photographic backdrop in light mode
+     * only, which made it the one page that did not match the warm off-white palette — and
+     * the asset alone was 791 KB. Dark mode already ignored it, so removing it makes both
+     * themes consistent with the rest of the app.
+     */
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="px-4 py-4">
-        <div className="flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(-1)}
-            className="text-foreground hover:bg-black hover:text-white rounded-full [&_svg]:!size-6"
-          >
-            <ChevronLeft size={24} />
-          </Button>
-          <h1 className="text-xl font-semibold text-foreground">{t('manageTags')}</h1>
-          <div className="w-10" />
-        </div>
-      </div>
+      <PageHeader title={t('manageTags')} onBack={() => navigate(-1)} />
 
       {/* Content */}
-      <div className="px-4 pb-8 space-y-4">
+      <div className="px-2 pb-8 space-y-4">
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />

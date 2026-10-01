@@ -20,7 +20,7 @@ import { NoteViewer } from '@/components/notes/NoteViewer';
 import { NoteFolderCreator } from '@/components/noteFolders/NoteFolderCreator';
 import { NoteFolderCard } from '@/components/noteFolders/NoteFolderCard';
 import { NoteFolderEditor } from '@/components/noteFolders/NoteFolderEditor';
-import { MoveToNoteFolderDialog } from '@/components/noteFolders/MoveToNoteFolderDialog';
+import { MoveToFolderDialog } from '@/components/shared/MoveToFolderDialog';
 import { PinPadDialog } from '@/components/notes/PinPadDialog';
 import { NoteEditor } from '@/components/notes/NoteEditor';
 import { highlightText } from '@/lib/textHighlight';
@@ -657,27 +657,40 @@ export default function Notes() {
       // This is an existing note - update it
       console.log('Updating existing note');
       const updatesWithModifiedAt = { ...updates, modifiedAt: new Date().toISOString() };
-      
-      // Create the updated note to check if it's empty
-      let updatedNote: Note | null = null;
-      
-      setNotes((prev: Note[]) => prev.map(note => {
-        if (note.id === noteId) {
-          updatedNote = { ...note, ...updatesWithModifiedAt } as Note;
-          return updatedNote;
-        }
-        return note;
-      }));
-      
-      setArchivedNotes((prev: Note[]) => prev.map(note => {
-        if (note.id === noteId) {
-          updatedNote = { ...note, ...updatesWithModifiedAt } as Note;
-          return updatedNote;
-        }
-        return note;
-      }));
-      
-      // Auto-import to folders based on tags if note was updated
+
+      /*
+       * Derive the updated note SYNCHRONOUSLY, from the state as it is now.
+       *
+       * This used to be assembled inside the two setState updater callbacks, assigning to an
+       * outer `let updatedNote`. That silently did nothing: React does not run an updater
+       * until it processes the update, so by the time the very next line read the variable it
+       * was still null. Both consumers below were therefore dead code — the tag-driven folder
+       * auto-import never ran, and noteToView was never refreshed. A `&& updatedNote` guard
+       * made it a no-op rather than a crash, which is why nobody noticed.
+       *
+       * Updaters must also stay pure; writing to a variable outside them is not allowed to
+       * have an observable effect, and under StrictMode they run twice.
+       */
+      const sourceNote =
+        notes.find(note => note.id === noteId) ??
+        archivedNotes.find(note => note.id === noteId) ??
+        null;
+      // `Note` is a discriminated union, and spreading a union widens it to a shape the
+      // compiler can no longer prove is any one member. The cast restores what the merge
+      // actually guarantees: the source member's own fields, with the updates applied.
+      const updatedNote: Note | null = sourceNote
+        ? ({ ...sourceNote, ...updatesWithModifiedAt } as Note)
+        : null;
+
+      setNotes((prev: Note[]) => prev.map(note => (
+        (note.id === noteId ? { ...note, ...updatesWithModifiedAt } : note) as Note
+      )));
+
+      setArchivedNotes((prev: Note[]) => prev.map(note => (
+        (note.id === noteId ? { ...note, ...updatesWithModifiedAt } : note) as Note
+      )));
+
+      // Auto-import to folders based on tags if the note's tags changed
       if (updatedNote && updates.tags !== undefined) {
         setFolders(prev => autoImportNoteToFolders(updatedNote, prev));
       }
@@ -1559,7 +1572,7 @@ export default function Notes() {
           <CardContent className="text-center py-8">
             <Button 
               onClick={handleAddButtonClick}
-              className="h-12 px-8 text-base font-medium rounded-full bg-black text-white hover:bg-black/90"
+              className="h-10 px-8 text-sm font-medium rounded-full bg-black text-white hover:bg-black/90"
             >
               Create Folder
               <FolderOpen className="ml-2" size={20} />
@@ -1658,7 +1671,7 @@ export default function Notes() {
             ) : (
               <Button 
                 onClick={handleAddButtonClick}
-                className="h-12 px-8 text-base font-medium rounded-full bg-black text-white hover:bg-black/90"
+                className="h-10 px-8 text-sm font-medium rounded-full bg-black text-white hover:bg-black/90"
               >
                 Create Note
                 <Notebook className="ml-2" size={20} />
@@ -1992,11 +2005,11 @@ export default function Notes() {
       <div {...swipeHandlers}>
         {!isBulkMode && activeTab !== 'archived' && (
           <Button 
-            variant="ghost"
+            variant="ghostStatic"
             size="icon" 
             onClick={handleAddButtonClick} 
             className={cn(
-              "fixed bottom-20 right-2 h-14 w-14 rounded-full z-30 bg-black text-white hover:bg-black hover:text-white",
+              "fixed bottom-20 right-2 h-14 w-14 rounded-full z-30 bg-black text-white hover:bg-black/90",
               "transition-all duration-300 ease-out",
               scrollDirection === 'down' 
                 ? "opacity-0 translate-y-4 pointer-events-none" 
@@ -2020,9 +2033,9 @@ export default function Notes() {
           </SlidingTabsList>
           <div className="flex items-center gap-1">
             <Button 
-              variant="ghost" 
+              variant="ghostStatic" 
               size="icon"
-              className="rounded-full hover:bg-black hover:text-white focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:!size-6 data-[state=open]:bg-black data-[state=open]:text-white"
+              className="rounded-full hover:bg-hover hover:text-foreground focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:!size-5 data-[state=open]:bg-hover data-[state=open]:text-foreground"
               data-state={isBulkMode ? "open" : "closed"}
               onClick={(e) => { toggleBulkMode(); e.currentTarget.blur(); }}
               onMouseDown={(e) => e.preventDefault()}
@@ -2154,7 +2167,7 @@ export default function Notes() {
         mode={pinPadMode}
       />
 
-      <MoveToNoteFolderDialog
+      <MoveToFolderDialog
         isOpen={isMoveToFolderOpen}
         onClose={() => {
           setIsMoveToFolderOpen(false);
@@ -2164,6 +2177,8 @@ export default function Notes() {
         onSelectFolder={handleFolderSelect}
         onCreateNewFolder={handleCreateFolderFromDialog}
         currentFolderId={selectedNoteForMove?.length === 1 ? folders.find(f => f.noteIds.includes(selectedNoteForMove[0]))?.id : undefined}
+        getItemCount={(folder) => folder.noteIds.length}
+        itemNoun="notes"
       />
 
       {/* Delete Confirmation Dialog */}

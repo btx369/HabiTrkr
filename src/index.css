@@ -8,99 +8,218 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 220 14% 96%;
-    --foreground: 222.2 84% 4.9%;
+    /*
+     * Warm neutral palette modelled on Grok's light theme.
+     *
+     * The previous values were cool blue-greys (hue 210-222). Grok's are warm neutrals
+     * with no blue cast, which is what makes the light theme read as soft rather than
+     * clinical. Reference values it was matched to:
+     *   page      rgb(249, 248, 247)
+     *   card      rgb(255, 255, 255)
+     *   text      rgb(5, 5, 5)
+     *   secondary rgb(133, 133, 133)
+     *   border    rgba(15, 13, 10, 0.04)
+     */
+    --background: 30 14% 97%;
+    --foreground: 0 0% 2%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 0 0% 2%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    /*
+     * Card surface, opaque. The cards used to hardcode a cool blue-grey wash
+     * (`bg-[rgba(242,244,247,0.75)]`), which ignored the theme entirely — changing the
+     * palette had no visible effect on them. They now read this token instead, so the
+     * surface follows the theme like everything else.
+     */
+    --surface-card: 0 0% 100% / 0.82;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /*
+     * Search-match highlight. It was `bg-yellow-200 dark:bg-yellow-800` in two separate
+     * files — a cold lemon yellow on a warm beige palette, and a saturated yellow-brown in
+     * dark that read almost as strongly as the text it was meant to sit behind. A token lets
+     * both themes be tuned together; the light value is deliberately an amber, so the
+     * highlight belongs to the same family as the rest of the palette.
+     */
+    --highlight: 45 93% 78%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /*
+     * Floating surfaces: menus, popovers, dialogs and drawers.
+     *
+     * Warm off-white, not pure white. A pure white sheet on a 97% beige page reads as a
+     * bright, cold cutout, which is exactly how the Tags popover looked next to the Add
+     * menu.
+     *
+     * Fully opaque on purpose. An alpha here makes a menu's colour depend on whatever it
+     * happens to float over: the same token composited over the note dialog came out
+     * lighter than over the page, so two menus side by side looked like different shades.
+     * The note surfaces that need the page showing through set their own translucent
+     * colour inline and keep their own blur.
+     *
+     * Every floating component reads THIS token. They previously hardcoded
+     * `bg-[hsl(0_0%_100%/0.85)]`, which ignored the palette and also beat any `bg-*` a
+     * caller passed in, so surfaces could not be themed from one place.
+     */
+    --popover: 30 14% 97%;
+    --popover-foreground: 0 0% 2%;
 
-    --muted: 220 14% 92%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /*
+     * The accent a switch paints when it is ON.
+     *
+     * A saturated blue, because that is what both references use and it is what people now
+     * read as "on": grok.com paints its active controls around rgb(56, 96, 190) and
+     * rgb(41, 159, 255), and claude.ai uses rgb(130, 182, 255). The warm palette contains no
+     * blue at all, so this is deliberately the one cool colour in the app — a toggle that
+     * matched the palette would lose the signal that makes it worth having.
+     *
+     * Tuned slightly darker and richer than the brightest reference blue so the white knob
+     * stays legible on it in light mode. Deliberately the same in both themes: "on" should
+     * not change identity when the lights go out.
+     */
+    --switch-on: 217 83% 46%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --primary: 0 0% 5%;
+    --primary-foreground: 0 0% 99%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --secondary: 30 9% 95%;
+    --secondary-foreground: 0 0% 5%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Recessed surfaces: the subtle step below the page background. */
+    --muted: 30 8% 93%;
+    --muted-foreground: 0 0% 52%;
 
-    --radius: 0.75rem;
-    
-    --shadow-card: none;
+    /*
+     * The hover surface — use this for every hover, never --muted or --accent.
+     *
+     * It is a translucent veil of the foreground colour, NOT a filled swatch, and that
+     * distinction is the whole point. Measured on grok.com, their hover is
+     * rgba(15, 13, 10, 0.06) over the page: a ~4% luminance shift. Because it is a
+     * low-alpha wash it composites correctly over the page, over a white card, and over
+     * a coloured note alike, whereas a solid colour needs hand-tuning for each of those
+     * and always ends up wrong against one of them.
+     *
+     * An earlier attempt used --muted here. That turned every hover into a filled beige
+     * block and made the menu dots on a default-coloured note read as white.
+     *
+     * The alpha is the tuning knob; keep 0.06 unless matching a fresh measurement.
+     * Components sitting on a card with a custom colour use --card-hover-color instead,
+     * where a black veil reads better against a saturated background.
+     */
+    --hover: 0 0% 2% / 0.06;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /*
+     * --accent is the "selected or raised" surface, NOT the hover colour. At 95% against
+     * a 97% page it is barely visible, and against a white card it is invisible entirely,
+     * which is what made the note menu dots appear to turn white. Use --hover above for
+     * interaction feedback.
+     */
+    --accent: 30 8% 95%;
+    --accent-foreground: 0 0% 5%;
 
-    /* Glassmorphism variables - Light theme (frosted glass) */
-    --gradient-start: 240 52% 67%;
-    --gradient-mid: 213 66% 72%;
-    --gradient-end: 175 70% 75%;
-    --glass-bg: 220 14% 96% / 0.75;
-    --glass-border: 0 0% 100% / 0.4;
-    --glass-shadow: none;
-  }
-
-  .dark {
-    --background: 0 0% 7.1%;
-    --foreground: 0 0% 100%;
-
-    --card: 0 0% 11.8%;
-    --card-foreground: 0 0% 100%;
-
-    --popover: 0 0% 11.8%;
-    --popover-foreground: 0 0% 100%;
-
-    --primary: 0 0% 100%;
-    --primary-foreground: 0 0% 7.1%;
-
-    --secondary: 0 0% 11.8%;
-    --secondary-foreground: 0 0% 100%;
-
-    --muted: 0 0% 18%;
-    --muted-foreground: 0 0% 70%;
-
-    --accent: 0 0% 18%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 72% 55%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 30%;
-    --ring: 0 0% 100%;
-    --sidebar-background: 0 0% 7.1%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 0 0% 7.1%;
-    --sidebar-accent: 0 0% 18%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 20%;
-    --sidebar-ring: 0 0% 100%;
+    --border: 30 8% 91%;
+    --input: 30 8% 89%;
+    --ring: 0 0% 2%;
 
-    /* Glassmorphism variables - Dark theme (cool gray) */
-    --gradient-start: 0 0% 0%;
-    --gradient-end: 0 0% 26%;
-    --glass-bg: 220 5% 15% / 0.85;
-    --glass-border: 220 5% 25% / 0.3;
-    --glass-shadow: none;
+    --radius: 0.75rem;
+    /*
+     * Default for the per-card hover tint. Anything sitting on a card reads this
+     * variable for its hover background; a ColoredCard with a custom colour overwrites it
+     * with a tint derived from that colour. Defining it globally means a surface that
+     * forgets to set it still gets the standard veil instead of an undefined value, which
+     * silently produced NO hover at all.
+     */
+    --card-hover-color: hsl(var(--hover));
+
+
+    /* Glassmorphism variables - Light theme (frosted glass) */
+    --glass-bg: 30 14% 97% / 0.75;
+    --glass-border: 0 0% 100% / 0.4;
+
+    /*
+     * Scrim for the dark floating chrome: the bottom navigation capsule and the bulk action
+     * bar. Both are deliberately dark in BOTH themes, so they cannot read the normal surface
+     * tokens — `--primary` or `--foreground` invert with the theme and would turn them white
+     * in dark mode. Giving them their own tokens is what lets the palette be changed from one
+     * place instead of from literals buried in components. The values are the ones those
+     * components already used, so this is a move, not a redesign.
+     */
+    --nav-bg: 0 0% 0%;
+    --nav-border: 0 0% 16%;
+    --nav-active: 0 0% 13%;
+    --nav-icon: 0 0% 45%;
+    --nav-icon-hover: 0 0% 75%;
+  }
+
+  /*
+   * Dark theme, matched to Grok's.
+   *
+   * The previous dark was near-black and fully neutral (#121212 page, #1E1E1E card),
+   * which read as harsh. Grok sits noticeably higher and warmer:
+   *   page      rgb(19, 18, 17)   -> 3.7% lightness
+   *   raised    rgb(38, 36, 33)   -> 7.4% lightness, roughly double the page
+   *   text      rgb(252, 252, 252)
+   *   secondary rgb(158, 158, 158)
+   *   border    rgba(252, 252, 252, 0.10)
+   * The page/raised gap is what makes the layering visible without strong borders.
+   */
+  .dark {
+    --background: 30 6% 7%;
+    --foreground: 0 0% 99%;
+
+    --card: 30 7% 14%;
+    --card-foreground: 0 0% 99%;
+
+    /* Same token, dark value. Matches the raised surface Grok uses. */
+    --surface-card: 30 7% 14% / 0.85;
+
+    /* See the light block: the shared surface for every floating component. */
+    --popover: 30 6% 10%;
+    --popover-foreground: 0 0% 99%;
+
+    --primary: 0 0% 99%;
+    --primary-foreground: 30 6% 7%;
+
+    --secondary: 30 7% 14%;
+    --secondary-foreground: 0 0% 99%;
+
+    --muted: 30 6% 18%;
+    --muted-foreground: 0 0% 62%;
+
+    /*
+     * The dark counterpart of --hover, matching the measurement taken on grok.com:
+     * rgba(252, 252, 252, 0.10) over their page. The alpha is much higher than the light
+     * 0.06 on purpose. A 6% veil over a near-black page moves luminance by under one
+     * unit and is simply not visible; the same *perceived* step needs a bigger alpha in
+     * the dark. Match the measured result, never the raw number.
+     */
+    --hover: 0 0% 99% / 0.10;
+
+    /*
+     * See the light block. Kept in the same family but much darker and less saturated: a
+     * light amber behind dark text would glare on a near-black page, and the matched word
+     * still has to stay the most legible thing in the line.
+     */
+    --highlight: 38 55% 30%;
+
+    /* --accent is the "selected or raised" surface, not the hover colour. */
+    --accent: 30 6% 16%;
+    --accent-foreground: 0 0% 99%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 99%;
+
+    --border: 30 6% 21%;
+    --input: 30 6% 27%;
+    --ring: 0 0% 99%;
+    /* See the light block: the default hover tint for anything sitting on a card. */
+    --card-hover-color: hsl(var(--hover));
+
+    /* Glassmorphism variables - Dark theme (warm neutral) */
+    --glass-bg: 30 6% 14% / 0.85;
+    --glass-border: 30 6% 26% / 0.3;
   }
 }
 
@@ -162,12 +281,4 @@ audio::-moz-media-controls {
 }
 .no-scrollbar:focus-visible {
   outline: none;
-}
-
-/* Ripple effect animation */
-@keyframes ripple-effect {
-  to {
-    transform: scale(2.5);
-    opacity: 0;
-  }
 }

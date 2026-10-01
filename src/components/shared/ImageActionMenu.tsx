@@ -47,9 +47,9 @@ export function ImageActionMenu({
       <DropdownMenuTrigger asChild>
         {trigger || (
           <Button
-            variant="ghost"
+            variant="ghostStatic"
             size="sm"
-            className={`h-8 w-8 p-0 text-white hover:bg-white/20 ${triggerClassName}`}
+            className={`h-8 w-8 p-0 text-white hover:bg-white/20 data-[state=open]:bg-white/20 ${triggerClassName}`}
             onClick={(e) => e.stopPropagation()}
             aria-label="Image options"
           >

@@ -114,7 +114,7 @@ export const renderMarkdownWithHighlight = (text: string, searchQuery: string): 
       splitBySearchTerms(text, searchQuery).map((segment, partIdx) => {
         if (segment.matched) {
           return (
-            <mark key={`h-${partIdx}`} className="bg-yellow-200 dark:bg-yellow-800 text-foreground rounded-sm px-0 py-0">
+            <mark key={`h-${partIdx}`} className="bg-highlight text-foreground rounded-sm px-0 py-0">
               {segment.text}
             </mark>
           );

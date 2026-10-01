@@ -60,6 +60,32 @@ export default {
 					DEFAULT: 'hsl(var(--accent))',
 					foreground: 'hsl(var(--accent-foreground))'
 				},
+				/*
+				 * The shared hover surface. Exposed as `hover` so call sites read
+				 * `hover:bg-hover` — the token describes the intent, and its alpha is
+				 * tuned per theme inside index.css. Never hardcode the veil here.
+				 */
+				hover: 'hsl(var(--hover))',
+				/*
+				 * Search-match highlight, so both themes can be tuned together instead of the
+				 * two files that render highlights each hardcoding their own yellow.
+				 */
+				highlight: 'hsl(var(--highlight))',
+				/* The ON colour for switches. See index.css for why it is blue. */
+				switch: {
+					on: 'hsl(var(--switch-on))'
+				},
+				/*
+				 * Scrim for the floating bottom navigation. Separate from the surface tokens
+				 * because that capsule stays dark in both themes; the normal tokens invert.
+				 */
+				nav: {
+					DEFAULT: 'hsl(var(--nav-bg))',
+					border: 'hsl(var(--nav-border))',
+					active: 'hsl(var(--nav-active))',
+					icon: 'hsl(var(--nav-icon))',
+					'icon-hover': 'hsl(var(--nav-icon-hover))'
+				},
 				popover: {
 					DEFAULT: 'hsl(var(--popover))',
 					foreground: 'hsl(var(--popover-foreground))'
@@ -67,16 +93,6 @@ export default {
 				card: {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
-				},
-				sidebar: {
-					DEFAULT: 'hsl(var(--sidebar-background))',
-					foreground: 'hsl(var(--sidebar-foreground))',
-					primary: 'hsl(var(--sidebar-primary))',
-					'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-					accent: 'hsl(var(--sidebar-accent))',
-					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-					border: 'hsl(var(--sidebar-border))',
-					ring: 'hsl(var(--sidebar-ring))'
 				}
 			},
 			borderRadius: {

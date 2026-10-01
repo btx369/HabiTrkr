@@ -47,7 +47,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       attributes: {
         class: cn(
           'focus:outline-none',
-          'text-base leading-relaxed p-0 m-0',
+          'text-sm leading-relaxed p-0 m-0',
           className
         ),
       },

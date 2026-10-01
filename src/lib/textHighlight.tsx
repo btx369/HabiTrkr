@@ -131,7 +131,7 @@ export const highlightText = (text: string, searchQuery: string): ReactNode => {
     nodes.push(
       <mark
         key={index}
-        className="bg-yellow-200 dark:bg-yellow-800 text-foreground rounded-sm px-0 py-0 leading-[inherit] tracking-[inherit] font-[inherit]"
+        className="bg-highlight text-foreground rounded-sm px-0 py-0 leading-[inherit] tracking-[inherit] font-[inherit]"
       >
         {text.slice(span.start, span.end)}
       </mark>,

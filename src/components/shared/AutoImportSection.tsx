@@ -28,7 +28,7 @@ export function AutoImportSection({
   return (
     <div className="space-y-3 p-4 bg-muted rounded-lg">
       <div className="flex items-center justify-between">
-        <Label htmlFor="autoImport" className="text-base">Auto-import by tags</Label>
+        <Label htmlFor="autoImport" className="text-sm">Auto-import by tags</Label>
         <Switch
           id="autoImport"
           checked={enabled}

@@ -10,7 +10,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
-import { VIEW_LABELS, type ViewType } from '@/types/view';
+import { VIEW_LABELS, isViewType, type ViewType } from '@/types/view';
 
 // Re-exported so existing importers keep working from this module.
 export type { ViewType } from '@/types/view';
@@ -58,16 +58,27 @@ export function EventViewSettings({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="ghost"
+          variant="ghostStatic"
           size="icon"
-          className="text-foreground hover:bg-black hover:text-white rounded-full data-[state=open]:bg-black data-[state=open]:text-white focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:!size-6"
+          className="text-foreground hover:bg-hover hover:text-foreground rounded-full data-[state=open]:bg-hover data-[state=open]:text-foreground focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:!size-5"
         >
           <Settings className="h-6 w-6" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48 bg-background border border-border">
         <DropdownMenuLabel>View</DropdownMenuLabel>
-        <DropdownMenuRadioGroup value={viewType} onValueChange={onViewTypeChange}>
+        {/*
+          Radix types this callback as `(value: string) => void`, so the value has to be
+          narrowed back to ViewType. The guard runs the same membership check the union
+          describes — the stored value comes from localStorage, and a cast would let an
+          unknown string through into a Record<ViewType, number> lookup.
+        */}
+        <DropdownMenuRadioGroup
+          value={viewType}
+          onValueChange={(value) => {
+            if (isViewType(value)) onViewTypeChange(value);
+          }}
+        >
           <DropdownMenuRadioItem value="x3">{VIEW_LABELS.x3}</DropdownMenuRadioItem>
           <DropdownMenuRadioItem value="x2">{VIEW_LABELS.x2}</DropdownMenuRadioItem>
           <DropdownMenuRadioItem value="list">{VIEW_LABELS.list}</DropdownMenuRadioItem>

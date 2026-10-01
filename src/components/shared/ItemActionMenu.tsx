@@ -69,7 +69,24 @@ export function ItemActionMenu({
         <Button
           variant="ghost"
           size="icon"
-          className={`group ${buttonSize} p-0 ${hoverClass ? `transition-transform duration-200 hover:scale-105 ${hoverClass}` : 'transition-opacity hover:bg-[var(--card-hover-color)]'}`}
+          /*
+           * The trigger carries `hover:text-current` on purpose. The ghost variant sets
+           * `hover:text-foreground`, which is right on a plain card but wrong on a card
+           * with a custom colour: it would flip the dots to an unrelated colour on hover
+           * while the card itself keeps its own text colour. Inheriting keeps the icon
+           * consistent with its card in both cases.
+           *
+           * Both paths need an `open` treatment, and neither had one: Radix sets
+           * data-state="open" on this trigger, but no rule keyed off it, so opening the menu
+           * gave no feedback at all on the button you had just pressed. The plain path tints
+           * with the shared veil; the coloured path holds its full opacity, since its
+           * resting look already comes from --card-hover-color.
+           */
+          className={`group ${buttonSize} p-0 hover:text-current ${
+            hoverClass
+              ? `transition-transform duration-200 hover:scale-105 data-[state=open]:bg-[var(--card-hover-color)] ${hoverClass}`
+              : 'transition-opacity hover:bg-hover data-[state=open]:bg-hover'
+          }`}
           onClick={(e) => e.stopPropagation()}
         >
           <MoreVertical size={iconSize} className={iconColorClass} />

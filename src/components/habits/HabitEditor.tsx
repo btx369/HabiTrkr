@@ -227,7 +227,7 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
       />
       
       <div>
-        <Label className="text-base">{mode === 'create' ? 'Days of the Week' : 'Active Days'}</Label>
+        <Label className="text-sm">{mode === 'create' ? 'Days of the Week' : 'Active Days'}</Label>
         <DaySelector 
           selectedDays={formData.selectedDays}
           onDaysChange={(days) => setFormData(prev => ({ ...prev, selectedDays: days as boolean[] }))}
@@ -236,7 +236,7 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
       </div>
       
       <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-        <Label htmlFor="number-of-days" className="text-base">Number of days</Label>
+        <Label htmlFor="number-of-days" className="text-sm">Number of days</Label>
         <Switch 
           id="number-of-days" 
           checked={formData.useNumberOfDays} 
@@ -247,7 +247,7 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
       {formData.useNumberOfDays && (
         <div className="space-y-4 p-4 bg-muted rounded-lg">
           <div>
-            <Label className="text-base">Days per week</Label>
+            <Label className="text-sm">Days per week</Label>
             <div className="flex gap-3 mt-2">
               <Input 
                 type="number" 
@@ -262,7 +262,7 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
                   ...prev, 
                   numberOfDaysPerWeek: Math.min(Math.max(parseInt(e.target.value) || 1, 1), 7)
                 }))}
-                className="w-20 h-10 text-base"
+                className="w-20 h-10 text-sm"
               />
               <div className="flex items-center px-2 text-sm text-muted-foreground">
                 days per week
@@ -271,7 +271,7 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
           </div>
           
           <div className="flex items-center justify-between">
-            <Label htmlFor="times-per-day" className="text-base">Times a day</Label>
+            <Label htmlFor="times-per-day" className="text-sm">Times a day</Label>
             <Switch 
               id="times-per-day" 
               checked={formData.useTimesPerDay} 
@@ -284,7 +284,7 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
           
           {formData.useTimesPerDay && (
             <div>
-              <Label className="text-base">Times per day</Label>
+              <Label className="text-sm">Times per day</Label>
               <div className="flex gap-3 mt-2">
                 <Input 
                   type="number" 
@@ -299,7 +299,7 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
                     ...prev, 
                     timesPerDay: Math.min(Math.max(parseInt(e.target.value) || 1, 1), 999)
                   }))}
-                  className="w-20 h-10 text-base"
+                  className="w-20 h-10 text-sm"
                 />
                 <div className="flex items-center px-2 text-sm text-muted-foreground">
                   times per day
@@ -311,7 +311,7 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
       )}
       
       <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-        <Label htmlFor="unlimited-times" className="text-base">Unlimited times</Label>
+        <Label htmlFor="unlimited-times" className="text-sm">Unlimited times</Label>
         <Switch 
           id="unlimited-times" 
           checked={formData.useUnlimitedTimes} 

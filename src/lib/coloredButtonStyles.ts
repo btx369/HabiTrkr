@@ -1,18 +1,21 @@
 /**
- * Helper utilities for styling icon buttons on colored surfaces.
+ * Helper utilities for styling icon buttons on coloured surfaces.
  * Prevents dark theme issues by avoiding button variants that include
  * conflicting hover text colors (hover:text-accent-foreground) or
  * theme-specific backgrounds (dark:bg-muted).
  * 
  * USAGE:
- * For colored surfaces (notes, events, habits with custom colors):
+ * For coloured surfaces (notes, events, habits with custom colors):
  * - Use variant="ghostStatic" to avoid hover text/bg overrides
  * - Apply manual hover backgrounds (black/10, black/20)
  * - Icons inherit black from parent container
  * 
- * For non-colored surfaces:
+ * For non-coloured surfaces:
  * - Use standard ghost/outline variants
- * - Apply hover:bg-accent for theme-aware hover
+ * - Apply hover:bg-hover, the shared hover token from index.css
+ *
+ * Never use --accent for hover: at 95% lightness it is invisible against a white card,
+ * which is what made the 3-dot menu on a default-coloured note look like it turned white.
  */
 
 type ButtonVariant = 'ghost' | 'ghostStatic' | 'outline' | 'default';
@@ -56,7 +59,7 @@ export function getColoredIconButtonStyles(
   
   return {
     variant: baseVariant,
-    className: 'hover:bg-accent',
+    className: 'hover:bg-hover',
   };
 }
 
@@ -81,7 +84,7 @@ export function getColoredOutlineButtonStyles(hasColor: boolean): ColoredButtonC
   
   return {
     variant: 'outline',
-    className: 'border-border hover:bg-accent',
+    className: 'border-border hover:bg-hover',
   };
 }
 
