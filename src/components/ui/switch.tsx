@@ -9,13 +9,14 @@ const Switch = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <SwitchPrimitives.Root
     /*
-     * ON is blue, from --switch-on. Both references do this and it is what people now read
-     * as "on"; the surrounding palette is warm and has no blue in it, which is exactly why
-     * the signal stands out. Kept identical in light and dark so "on" does not change
-     * identity with the theme.
+     * ON is a solid near-black fill in light mode and near-white in dark, both from
+     * --switch-on. That is the same inversion --primary makes, so a switch agrees with the
+     * filled buttons beside it instead of importing a colour the palette does not contain.
      *
-     * The hover steps the fill DOWN rather than up: against a saturated colour, lightening
-     * reads as disabled while darkening reads as pressed.
+     * The hover steps the fill DOWN in light mode: against near-black, a lighter fill reads
+     * as disabled and a darker one as pressed. In dark mode the direction is irrelevant —
+     * the fill is already at the top of its range — so the same rule applying weakly there
+     * is fine rather than worth a second variant.
      */
     className={cn(
       /*
@@ -34,15 +35,13 @@ const Switch = React.forwardRef<
     ref={ref}
   >
     {/*
-      * White knob in both themes. `bg-background` was near-white in light but near-BLACK in
-      * dark, which put a dark knob on the blue fill; on a blue track the knob has to be
-      * white or the switch reads as inverted.
-      *
-      * The travel is 16px: track 36 minus knob 16 minus 2px of border and inset either side.
+      * The knob takes `--primary-foreground`, so it inverts with the fill: white on the
+      * near-black track in light mode, dark on the near-white track in dark. A fixed white
+      * knob would vanish into the dark theme's fill and leave nothing to read as a knob.
       */}
     <SwitchPrimitives.Thumb
       className={cn(
-        "pointer-events-none block h-4 w-4 rounded-full bg-white shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0"
+        "pointer-events-none block h-4 w-4 rounded-full bg-primary-foreground shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0"
       )}
     />
   </SwitchPrimitives.Root>

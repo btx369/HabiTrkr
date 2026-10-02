@@ -1919,11 +1919,30 @@ export function NoteViewer({
                   className="text-lg md:text-lg font-medium py-1 px-2 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent rounded-full"
                 />
               ) : (
-              <DialogTitle 
-                  className={`text-lg font-medium truncate cursor-pointer px-2 py-1 rounded-full ${hasColor ? iconButtonStyles.className : 'hover:bg-hover hover:text-foreground'}`}
+              /*
+               * The title doubles as the control that edits it, and when a note has no
+               * title yet it renders nothing at all — an invisible hit area with no hint
+               * that a title can be given. It used to look filled in only because new
+               * notes were seeded with the literal word "Title", which put a bogus value
+               * in the data and had to be special-cased out of the cards. The prompt
+               * below is display-only, so the field stays genuinely empty until typed in.
+               *
+               * The pencil is always present for an untitled note rather than appearing
+               * on hover: there is no hover on a touch screen, and that is where the
+               * prompt is needed most.
+               */
+              <DialogTitle
+                  className={`group flex items-center gap-1.5 text-lg font-medium truncate cursor-pointer px-2 py-1 rounded-full ${hasColor ? iconButtonStyles.className : 'hover:bg-hover hover:text-foreground'}`}
                   onClick={startEditingTitle}
                 >
-                  {highlightText(note.name || '', searchQuery)}
+                  {note.name ? (
+                    highlightText(note.name, searchQuery)
+                  ) : (
+                    <>
+                      <span className="text-muted-foreground/70 italic font-normal">Add a title</span>
+                      <Edit size={14} className="flex-shrink-0 text-muted-foreground/50" />
+                    </>
+                  )}
                 </DialogTitle>
               )}
             </div>

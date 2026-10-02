@@ -64,19 +64,17 @@ All colors MUST be HSL.
     --popover-foreground: 0 0% 2%;
 
     /*
-     * The accent a switch paints when it is ON.
+     * The fill a switch paints when it is ON.
      *
-     * A saturated blue, because that is what both references use and it is what people now
-     * read as "on": grok.com paints its active controls around rgb(56, 96, 190) and
-     * rgb(41, 159, 255), and claude.ai uses rgb(130, 182, 255). The warm palette contains no
-     * blue at all, so this is deliberately the one cool colour in the app — a toggle that
-     * matched the palette would lose the signal that makes it worth having.
+     * Near-black, matching `--primary`, so a switch agrees with the filled buttons beside
+     * it and belongs to the app's warm palette. It was briefly a saturated blue, borrowed
+     * from the references, but the app's own filled controls are black and the blue read
+     * as an import rather than as part of the interface.
      *
-     * Tuned slightly darker and richer than the brightest reference blue so the white knob
-     * stays legible on it in light mode. Deliberately the same in both themes: "on" should
-     * not change identity when the lights go out.
+     * This is the LIGHT value. The dark theme overrides it, because a black fill would
+     * vanish into a near-black page and take the whole switch with it — see the dark block.
      */
-    --switch-on: 217 83% 46%;
+    --switch-on: 0 0% 5%;
 
     --primary: 0 0% 5%;
     --primary-foreground: 0 0% 99%;
@@ -181,6 +179,16 @@ All colors MUST be HSL.
 
     --primary: 0 0% 99%;
     --primary-foreground: 30 6% 7%;
+
+    /*
+     * The switch inverts with the theme, exactly as `--primary` does.
+     *
+     * A black fill on a 7%-lightness page is invisible: the track would disappear and the
+     * knob would be the only thing left, which reads as a broken control rather than an on
+     * one. Near-white keeps the same "solidly filled = on" idea that black gives in light
+     * mode, and the knob turns dark to stay legible against it.
+     */
+    --switch-on: 0 0% 99%;
 
     --secondary: 30 7% 14%;
     --secondary-foreground: 0 0% 99%;
