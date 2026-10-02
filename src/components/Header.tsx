@@ -30,18 +30,52 @@ export const Header = ({ showSearch = false, searchQuery = '', onSearchChange, p
   const closeSearchRef = useRef(handleCloseSearch);
   closeSearchRef.current = handleCloseSearch;
 
+  /**
+   * Collapse the field, but let the press that caused it finish first.
+   *
+   * Clearing the query here re-renders the page's list with every item restored, and
+   * that happens *between* mousedown and mouseup. The card that was under the cursor is
+   * replaced by a different one, so the click lands on an element with no handler and
+   * the note never opens — the search had to be dismissed before a filtered result
+   * could be tapped. Deferring the clear by a turn keeps the list still for the whole
+   * press, so the click reaches the card the user actually aimed at.
+   *
+   * Escape and the close button clear immediately; there is no press to protect there.
+   */
+  const deferTimeoutRef = useRef<number | null>(null);
+
+  const handleClickOutside = () => {
+    setIsSearchExpanded(false);
+    if (deferTimeoutRef.current !== null) window.clearTimeout(deferTimeoutRef.current);
+    deferTimeoutRef.current = window.setTimeout(() => {
+      deferTimeoutRef.current = null;
+      onSearchChange?.('');
+    }, 0);
+  };
+
+  const handleClickOutsideRef = useRef(handleClickOutside);
+  handleClickOutsideRef.current = handleClickOutside;
+
   // Click outside detection
   useEffect(() => {
     if (!isSearchExpanded) return;
 
-    const handleClickOutside = (event: MouseEvent) => {
+    const onMouseDown = (event: MouseEvent) => {
       if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
-        closeSearchRef.current();
+        handleClickOutsideRef.current();
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', onMouseDown);
+    return () => {
+      document.removeEventListener('mousedown', onMouseDown);
+      // A pending clear must not survive the search being closed or the bar unmounting,
+      // or it would wipe a query the user has since typed.
+      if (deferTimeoutRef.current !== null) {
+        window.clearTimeout(deferTimeoutRef.current);
+        deferTimeoutRef.current = null;
+      }
+    };
   }, [isSearchExpanded]);
 
   // Escape key detection

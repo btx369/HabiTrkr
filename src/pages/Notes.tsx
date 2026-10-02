@@ -41,7 +41,6 @@ const NOTE_TABS = ['all-notes', 'folders', 'archived'];
 
 export default function Notes() {
   const { toast } = useToastSettings();
-  console.log('Notes component rendering...');
   const [notes, setNotes] = useLocalStorage<Note[]>('notes', []);
   const [archivedNotes, setArchivedNotes] = useLocalStorage<Note[]>('archivedNotes', []);
   const [folders, setFolders] = useLocalStorage<NoteFolder[]>('folders', []);
@@ -142,10 +141,6 @@ export default function Notes() {
 
   // Scroll direction for hiding Add button
   const scrollDirection = useScrollDirection();
-
-  console.log('State variables initialized:', {
-    showNoteTypePopup
-  });
 
   // Check if any dialog/editor is open - blocks swipe navigation
   const isAnyDialogOpen = isNoteViewerOpen || isFolderCreatorOpen || isFolderEditorOpen || 
@@ -579,8 +574,17 @@ export default function Notes() {
     }));
   };
 
-  // Helper function to determine if a note is completely empty
+  /**
+   * A note counts as content when it has a title OR a body.
+   *
+   * The title used to be ignored here, so a note given only a title was judged empty:
+   * a new one was silently dropped instead of being created, and an existing one was
+   * deleted the moment its body was cleared. Typing a title is writing the note.
+   */
   const isNoteEmpty = (note: Note): boolean => {
+    const hasTitle = (note.name || '').trim() !== '';
+    if (hasTitle) return false;
+
     switch (note.type) {
       case 'text':
         // Text note is empty if description has no content
@@ -615,12 +619,6 @@ export default function Notes() {
   };
 
   const saveNoteFromViewer = (noteId: string, updates: Partial<Note>) => {
-    console.log('saveNoteFromViewer called:', {
-      noteId,
-      updates,
-      noteToView: noteToView,
-      existingNote: notes.find(note => note.id === noteId)
-    });
     
     // Track tag usage if tags are being updated
     if (updates.tags !== undefined) {
@@ -638,11 +636,9 @@ export default function Notes() {
     if (!existingNote && noteToView) {
       // This is a new note - add it to the notes array
       const newNote = { ...noteToView, ...updates } as Note;
-      console.log('Creating new note:', newNote);
       
       // Check if the new note is empty
       if (isNoteEmpty(newNote)) {
-        console.log('New note is empty, not saving');
         setIsNoteViewerOpen(false);
         setNoteToView(null);
         return;
@@ -656,7 +652,6 @@ export default function Notes() {
       setFolders(prev => autoImportNoteToFolders(newNote, prev));
     } else {
       // This is an existing note - update it
-      console.log('Updating existing note');
       const updatesWithModifiedAt = { ...updates, modifiedAt: new Date().toISOString() };
 
       /*
@@ -703,7 +698,6 @@ export default function Notes() {
       
       // Check if the note is now empty and auto-delete it
       if (updatedNote && isNoteEmpty(updatedNote)) {
-        console.log('Note is empty after update, auto-deleting');
         // Remove from notes array
         setNotes((prev: Note[]) => prev.filter(n => n.id !== noteId));
         setArchivedNotes((prev: Note[]) => prev.filter(n => n.id !== noteId));

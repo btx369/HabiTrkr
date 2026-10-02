@@ -252,8 +252,9 @@ export function NoteViewer({
           title: note?.name || 'Image',
           url: imageUrl,
         });
-      } catch (err) {
-        console.log('Share cancelled or failed');
+      } catch {
+        // The user dismissed the share sheet, or the platform refused it. Either way
+        // there is nothing to recover from and nothing to report.
       }
     } else {
       // Fallback to copying the URL
@@ -642,15 +643,18 @@ export function NoteViewer({
     setIsEditingContent(true);
   };
 
+  /**
+   * Save the title, once the user has finished editing it.
+   *
+   * This deliberately does NOT run on every keystroke. Saving on each character called
+   * up into the page, which replaced `noteToView`, which re-rendered this viewer and
+   * dropped it out of title-editing mode — so the field vanished after the first letter
+   * and further typing went nowhere.
+   *
+   * Enter commits and closes the field; clicking away commits too. That is the whole
+   * interaction, so no debounce is needed.
+   */
   const saveTitle = () => {
-    console.log('saveTitle called:', {
-      noteId: note.id,
-      noteName: note.name,
-      editedTitle: editedTitle.trim(),
-      noteDescription: note.type === 'text' || note.type === 'audio' || note.type === 'image' ? note.description : 'N/A',
-      editedDescription: editedDescription
-    });
-    
     if (onSave && editedTitle.trim() !== note.name) {
       onSave(note.id, { name: editedTitle.trim() });
     }
@@ -660,15 +664,6 @@ export function NoteViewer({
   const saveContent = () => {
     if (!onSave) return;
     
-    console.log('saveContent called:', {
-      noteId: note.id,
-      noteType: note.type,
-      noteName: note.name,
-      noteDescription: note.type === 'text' || note.type === 'audio' || note.type === 'image' ? note.description : 'N/A',
-      editedTitle: editedTitle,
-      editedDescription: editedDescription,
-      isNewNote: isNewNote
-    });
     
     // Check if there's any meaningful content
     let hasContent = false;
@@ -688,7 +683,6 @@ export function NoteViewer({
       setDisplayItems(filteredItems);
     }
     
-    console.log('saveContent updatedNote:', updatedNote);
     
     // Only save if there's content or if this is an existing note
     if (hasContent || !isNewNote) {
@@ -1011,7 +1005,6 @@ export function NoteViewer({
   };
 
   const getAudiosWithLabels = (content: string): { content: string; duration?: number; label?: string }[] => {
-    console.log('[getAudiosWithLabels] Input content:', content);
     const audios: { content: string; duration?: number; label?: string }[] = [];
     
     // First, extract all audionote markers into a map
@@ -1022,11 +1015,9 @@ export function NoteViewer({
       const url = noteMatch[1];
       const encodedLabel = noteMatch[2];
       const decodedLabel = decodeURIComponent(encodedLabel);
-      console.log('[getAudiosWithLabels] Found audionote:', { url: url.substring(0, 50) + '...', encodedLabel, decodedLabel });
       audioNotes.set(url, decodedLabel);
     }
     
-    console.log('[getAudiosWithLabels] Total audionotes found:', audioNotes.size);
     
     // Then extract audio markers and match with their notes
     const audioRegex = /\[audio:(.+):([\d.]+)\]/g;
@@ -1035,11 +1026,9 @@ export function NoteViewer({
       const url = m[1];
       const duration = parseFloat(m[2]);
       const label = audioNotes.get(url);
-      console.log('[getAudiosWithLabels] Found audio:', { url: url.substring(0, 50) + '...', duration, label, hasLabel: !!label });
       audios.push({ content: url, duration, label });
     }
     
-    console.log('[getAudiosWithLabels] Total audios returned:', audios.length);
     return audios;
   };
 
@@ -1071,26 +1060,17 @@ export function NoteViewer({
   };
 
   const upsertAudioNote = (content: string, url: string, duration: number, noteText: string): string => {
-    console.log('[upsertAudioNote] Called with:', { 
-      url: url.substring(0, 50) + '...', 
-      noteText, 
-      contentLength: content.length 
-    });
-    console.log('[upsertAudioNote] Full content:', content);
     
     const text = noteText.trim().slice(0, 25);
     const encoded = encodeURIComponent(text);
     const newNoteMarker = `[audionote:${url}:${encoded}]`;
-    console.log('[upsertAudioNote] New note marker:', newNoteMarker.substring(0, 100) + '...');
     
     // Check if an audionote already exists for this URL and replace it
     const noteStart = content.indexOf(`[audionote:${url}:`);
-    console.log('[upsertAudioNote] Looking for existing audionote at position:', noteStart);
     if (noteStart !== -1) {
       const noteEnd = content.indexOf(']', noteStart);
       if (noteEnd !== -1) {
         const result = content.slice(0, noteStart) + newNoteMarker + content.slice(noteEnd + 1);
-        console.log('[upsertAudioNote] Updated existing note. New content:', result);
         return result;
       }
     }
@@ -1098,8 +1078,6 @@ export function NoteViewer({
     // Otherwise, insert after the audio marker (any duration)
     const audioMarker = `[audio:${url}:`;
     const audioStart = content.indexOf(audioMarker);
-    console.log('[upsertAudioNote] Looking for audio marker:', audioMarker.substring(0, 100) + '...');
-    console.log('[upsertAudioNote] Audio marker position:', audioStart);
     
     if (audioStart === -1) {
       console.error('[upsertAudioNote] Could not find audio marker in content!');
@@ -1113,7 +1091,6 @@ export function NoteViewer({
     }
     
     const result = content.slice(0, audioEnd + 1) + newNoteMarker + content.slice(audioEnd + 1);
-    console.log('[upsertAudioNote] Inserted new note. New content:', result);
     return result;
   };
 
@@ -1931,17 +1908,12 @@ export function NoteViewer({
                 <Input
                   ref={titleInputRef}
                   value={editedTitle}
-                  onChange={(e) => {
-                    setEditedTitle(e.target.value);
-                    // Auto-save title as user types
-                    if (onSave && e.target.value.trim() !== note.name) {
-                      onSave(note.id, { name: e.target.value.trim() });
-                    }
-                  }}
-                  onBlur={() => setIsEditingTitle(false)}
+                  onChange={(e) => setEditedTitle(e.target.value)}
+                  onBlur={saveTitle}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
-                      setIsEditingTitle(false);
+                      e.preventDefault();
+                      saveTitle();
                     }
                   }}
                   className="text-lg md:text-lg font-medium py-1 px-2 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent rounded-full"
