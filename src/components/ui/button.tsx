@@ -31,13 +31,25 @@ const buttonVariants = cva(
          * veil adapts to whatever sits underneath (page, white card, coloured note),
          * whereas a filled colour has to be right for all of them and was wrong for most.
          *
-         * Two traps live here. Do NOT reintroduce `hover:bg-foreground/6`: 6 is not on
-         * Tailwind's opacity scale, so the class compiles to nothing and the button
-         * silently loses its hover entirely. And do NOT use --accent: at 95% against a
-         * white card it is invisible, which is what made the note menu dots look white.
+         * Three traps live here.
+         *
+         * Do NOT reintroduce `hover:bg-foreground/6`: 6 is not on Tailwind's opacity
+         * scale, so the class compiles to nothing and the button silently loses its
+         * hover entirely.
+         *
+         * Do NOT use --accent: at 95% against a white card it is invisible, which is what
+         * made the note menu dots look white.
+         *
+         * And a `dark:` fill needs a `dark:hover:` counterpart. `dark:bg-muted` compiles to
+         * `.dark .dark\:x` — two classes of specificity — while `hover:bg-hover` is
+         * `.hover\:x:hover`, one class plus a pseudo-class; the `dark:` rule is emitted
+         * later, so it won in EVERY state and the button had no hover in dark mode at all.
+         * `dark:hover:bg-hover` matches that specificity, which is the same fix
+         * TagSuggestions already uses. A `dark:bg-transparent` does not help: it is still a
+         * `dark:` utility and still outranks the plain hover.
          */
         outline:
-          "border border-input bg-background dark:bg-muted text-foreground hover:bg-hover hover:text-foreground",
+          "border border-input bg-background dark:bg-muted text-foreground hover:bg-hover hover:text-foreground dark:hover:bg-hover dark:hover:text-foreground",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "bg-transparent hover:bg-hover hover:text-foreground",

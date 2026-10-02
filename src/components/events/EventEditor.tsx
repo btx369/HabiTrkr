@@ -267,8 +267,19 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
           iconColor={ICON_COLOR}
         />
 
-        {/* Date and Time Section */}
-        <div className="space-y-2">
+        {/*
+          * Date and Time Section.
+          *
+          * `space-y-3` (12px) throughout, so the section has ONE rhythm instead of three:
+          * it used to be 8px from this label to the fields, 12px from a date field to its
+          * "Set time" button, and then 24px out to the next section. The pairing that
+          * matters most — a date and the time that goes with it — was therefore the second
+          * largest gap in the block, which read as the two being unrelated while the
+          * label drifted up towards the Title above it.
+          *
+          * Measured before the change: 24 / 8 / 12 / 24. After: 24 / 12 / 12 / 24.
+          */}
+        <div className="space-y-3">
           <div className="flex items-center justify-between">
             <Label className="text-sm flex items-center gap-2">
               <CalendarClock size={16} color={ICON_COLOR} />
@@ -283,7 +294,15 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          {/*
+            * `items-start`: the two columns hold the same fields but the End column can
+            * grow — it turns red and gains padding when the end date is invalid. Left to
+            * stretch, the shorter Start column was padded down to match, which pushed the
+            * section's own box well below its visible "Set time" button and made the gap to
+            * the next section depend on the other column's height. Each column now ends
+            * where its own content ends.
+            */}
+          <div className="grid grid-cols-2 gap-4 items-start">
             {/* Start */}
             {/*
               * `space-y-3` (12px), not `space-y-2`. Inside a column the date field and the
@@ -353,7 +372,20 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
           </div>
         </div>
 
-        {/* Recurrent Event */}
+        {/*
+          * Recurrent Event.
+          *
+          * No negative margin here, deliberately. The gap to "Set time" above is the shared
+          * 24px section break, the same as every other section in this form.
+          *
+          * What made this junction look wrong was never the gap: the Start column is shorter
+          * than the End column, and the date grid stretched it to match. That padding pushed
+          * the "Date and Time" section's own box well past its visible "Set time" button, so
+          * the distance to this box was measured from empty space rather than from the
+          * button the eye lands on. `items-start` on the date grid fixes it at the source.
+          * Reducing the margin on top of that produced an overlap, which is how the real
+          * cause was found.
+          */}
         <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
           <Label htmlFor="recurrent" className="text-sm">Recurrent Event</Label>
           <Switch 

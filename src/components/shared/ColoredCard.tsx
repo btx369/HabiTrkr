@@ -87,8 +87,13 @@ export const ColoredCard = React.forwardRef<HTMLDivElement, ColoredCardProps>(
       <Card
         ref={ref}
         className={cn(
-          // Micro-interaction: subtle scale on tap/click
-          "transition-transform duration-150 ease-out",
+          /*
+           * No tap or click animation. This carried `transition-transform duration-150`
+           * for a "subtle scale on tap" that no longer exists — the scale itself was
+           * removed and the transition was left behind, animating nothing. Cards still
+           * shrink while being dragged (`scale-105` on the drag ghost) and that is a
+           * different thing, driven by its own class at the call site.
+           */
           // Only apply text color overrides when card has a color AND is not using forceBackground
           hasColor && !forceBackground && "text-[#000000] [&_.text-muted-foreground]:text-[#000000]/70 [&_.text-foreground]:text-[#000000]",
           // When forceBackground is used, ensure text follows normal theme rules

@@ -962,7 +962,8 @@ export default function HabitTracker() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+              /* `items-start`: see the note about stretching in the archived-folder grid. */
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 items-start">
                 {filterFolders().map(folder => (
                   <HabitFolderCard
                     key={folder.id}
@@ -1032,7 +1033,13 @@ export default function HabitTracker() {
                     </CardContent>
                   </Card>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                  /*
+                   * `items-start` keeps a folder's height its own. A grid stretches its
+                   * cells to the tallest item in the row by default, so opening one folder
+                   * made every neighbour beside it just as tall and they read as if they
+                   * had all opened together.
+                   */
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 items-start">
                     {getArchivedFolders().map(folder => (
                       <HabitFolderCard
                         key={folder.id}

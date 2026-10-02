@@ -59,6 +59,11 @@ export function EditorDialog({
          * dark and the button lost its edge. `border-input` and `text-foreground` are the
          * values the outline variant uses everywhere else, so this now matches the other
          * secondary buttons in the app.
+         *
+         * No extra background classes here. The fill belongs to the `outline` variant, which
+         * pairs `bg-background dark:bg-muted` with `dark:hover:bg-hover` — see the note there
+         * about why a `dark:` fill without a `dark:hover:` counterpart silently kills the
+         * hover in dark mode.
          */}
         <Button 
           variant="outline" 
@@ -67,10 +72,17 @@ export function EditorDialog({
         >
           {cancelLabel}
         </Button>
+        {/*
+          * The filled action, using the same tokens as every other primary control so it
+          * inverts with the theme: near-black with a white label in light mode, near-white
+          * with a dark label in dark. It was `bg-black hover:bg-black/90`, which on a 7%
+          * lightness dialog is black on black — the hover lightened 10% of nothing, so the
+          * button appeared to have no hover in dark mode at all.
+          */}
         <Button 
           onClick={onSave} 
           disabled={saveDisabled} 
-          className="flex-1 h-10 text-sm bg-black text-white hover:bg-black/90"
+          className="flex-1 h-10 text-sm bg-primary text-primary-foreground hover:bg-primary/90"
         >
           {saveLabel}
         </Button>

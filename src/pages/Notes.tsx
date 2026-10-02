@@ -1584,7 +1584,16 @@ export default function Notes() {
     }
 
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+      /*
+       * `items-start` is what keeps a folder's height its own business.
+       *
+       * A grid stretches its cells to the tallest item in each row by default, so opening
+       * one folder made every neighbour in that row as tall as the expanded one. They were
+       * genuinely still closed — their state is local to each card — but they grew to the
+       * same height and read as if they had all opened together. On a phone the grid is a
+       * single column, so nothing shares a row and the problem never appeared there.
+       */
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 items-start">
         {finalSortedFolders.map((folder: NoteFolder) => (
           <NoteFolderCard
             key={folder.id}
