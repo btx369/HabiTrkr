@@ -52,3 +52,7 @@ ios/App/App/public/
 # Loose screenshots kept for visual review while working on the UI. Not deliverable
 # assets — the app itself loads no images from here.
 preview/
+
+# Scratch files written while working in the repo. Commit messages are passed to
+# `git commit -F`, and using `git add -A` afterwards swept them into the commit twice.
+commitmsg*.txt
