@@ -1467,8 +1467,9 @@ export default function Events() {
             variant="ghostStatic" 
             size="icon" 
             onClick={handleAddButtonClick} 
+            /* Same hairline as the floating nav capsule; see the note in Notes.tsx. */
             className={cn(
-              "fixed bottom-20 right-2 h-14 w-14 rounded-full z-30 bg-black text-white hover:bg-black/90",
+              "fixed bottom-20 right-2 h-14 w-14 rounded-full z-30 bg-black text-white border border-nav-border hover:bg-black/90",
               "transition-all duration-300 ease-out",
               scrollDirection === 'down' 
                 ? "opacity-0 translate-y-4 pointer-events-none" 

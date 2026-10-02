@@ -2019,8 +2019,15 @@ export default function Notes() {
             variant="ghostStatic"
             size="icon" 
             onClick={handleAddButtonClick} 
+            /*
+             * `border border-nav-border` gives this the same hairline as the floating nav
+             * capsule below it. Both are black in either theme, so on a dark page a pure
+             * black circle had no edge at all and read as a hole rather than a button; the
+             * nav solved the same problem with `--nav-border`, which is a fixed 16%
+             * lightness precisely so it does not invert with the theme.
+             */
             className={cn(
-              "fixed bottom-20 right-2 h-14 w-14 rounded-full z-30 bg-black text-white hover:bg-black/90",
+              "fixed bottom-20 right-2 h-14 w-14 rounded-full z-30 bg-black text-white border border-nav-border hover:bg-black/90",
               "transition-all duration-300 ease-out",
               scrollDirection === 'down' 
                 ? "opacity-0 translate-y-4 pointer-events-none" 
