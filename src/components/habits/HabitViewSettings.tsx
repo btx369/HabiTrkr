@@ -29,12 +29,11 @@ export function HabitViewSettings({
 
   const getSortLabel = (type: HabitSortType) => {
     // `Name` is the habit's title field, which the editor labels with the `title` key.
-    // `Completion Rate` has no translation key yet, so it stays in English.
     const labels = {
       name: t('title'),
       dateCreated: t('dateCreated'),
       dateModified: t('dateModified'),
-      completionRate: 'Completion Rate'
+      completionRate: t('completionRate')
     };
     return labels[type];
   };

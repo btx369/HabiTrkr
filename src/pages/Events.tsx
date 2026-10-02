@@ -1580,12 +1580,12 @@ export default function Events() {
           <TabsContent value="archived" className="mt-14 space-y-2">
             <div className="space-y-4">
               <div className="space-y-2">
-                <h3 className="text-lg font-medium">Archived Events</h3>
-                {renderEventList(archivedEvents, "No archived events", true)}
+                <h3 className="text-lg font-medium">{t('archivedEvents')}</h3>
+                {renderEventList(archivedEvents, t('noArchivedEvents'), true)}
               </div>
               
               <div className="space-y-2">
-                <h3 className="text-lg font-medium">Archived Folders</h3>
+                <h3 className="text-lg font-medium">{t('archivedFolders')}</h3>
                 {renderEventFolderList(archivedEventFolders, t('noArchivedFolders'), true)}
               </div>
             </div>
@@ -1658,7 +1658,7 @@ export default function Events() {
           onCreateNewFolder={handleCreateEventFolderFromDialog}
           currentFolderId={selectedEventForMove ? eventFolders.find(f => f.eventIds.includes(selectedEventForMove))?.id : undefined}
           getItemCount={(folder) => folder.eventIds.length}
-          itemNoun="events"
+          itemNoun={t('events')}
         />
 
         {/* Bulk Archive Confirmation Dialog */}

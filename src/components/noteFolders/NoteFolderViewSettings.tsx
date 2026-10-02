@@ -19,13 +19,14 @@ export type NoteFolderSortDirection = 'asc' | 'desc';
  *
  * The menu is rendered inside the component, so `t()` is called there. 'name' maps to the
  * `title` key because there is no separate key for it and the same field is labelled
- * "Title" in the editors; the other two below have no key yet and stay in English, which
- * is why they are literals rather than invented keys.
+ * "Title" in the editors.
  */
 const SORT_LABELS = {
   name: 'title',
   dateCreated: 'dateCreated',
   dateModified: 'dateModified',
+  recentlyAdded: 'recentlyAdded',
+  noteCount: 'noteCount',
 } as const;
 
 interface NoteFolderViewSettingsProps {
@@ -43,11 +44,7 @@ export function NoteFolderViewSettings({
 }: NoteFolderViewSettingsProps) {
   const { t } = useLanguage();
 
-  const getSortLabel = (type: NoteFolderSortType): string => {
-    if (type in SORT_LABELS) return t(SORT_LABELS[type as keyof typeof SORT_LABELS]);
-    // No key exists for these two yet, so they stay in English rather than showing a key.
-    return type === 'recentlyAdded' ? 'Recently Added' : 'Note Count';
-  };
+  const getSortLabel = (type: NoteFolderSortType): string => t(SORT_LABELS[type]);
 
   const handleSortClick = (newSortType: NoteFolderSortType) => {
     if (sortType === newSortType) {

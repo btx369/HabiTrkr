@@ -12,7 +12,8 @@ import {
 import { isDefaultColor } from '@/lib/cardColorStyles';
 import { getColoredIconButtonStyles, getColoredIconClass, getColoredBorderClass } from '@/lib/coloredButtonStyles';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useWeekStart, getOrderedDayNames, getVisualIndexFromJsDay } from '@/contexts/WeekStartContext';
+import { useDateLocale } from '@/lib/dateLocale';
+import { useWeekStart, getOrderedDayNameKeys, getVisualIndexFromJsDay } from '@/contexts/WeekStartContext';
 
 interface EventViewerProps {
   event: Event | null;
@@ -23,40 +24,70 @@ interface EventViewerProps {
 }
 
 /*
- * The short day names `getOrderedDayNames` returns, each mapped to the translation key for
- * that day's full name. Kept as keys because this is module level, where no hook can run;
- * the names are resolved with `t()` at render time.
+ * Full weekday translation keys, indexed by JS day value (0 = Sunday).
+ *
+ * Kept as keys because this is module level, where no hook can run; the names are resolved
+ * with `t()` at render time. The order comes from `getOrderedDayNameKeys`, which returns the
+ * short-name keys already ordered by the user's week start.
  */
-const DAY_NAME_KEYS: Record<string, string> = {
-  Sun: 'daySunday',
-  Mon: 'dayMonday',
-  Tue: 'dayTuesday',
-  Wed: 'dayWednesday',
-  Thu: 'dayThursday',
-  Fri: 'dayFriday',
-  Sat: 'daySaturday',
+const DAY_NAME_KEYS = [
+  'daySunday',
+  'dayMonday',
+  'dayTuesday',
+  'dayWednesday',
+  'dayThursday',
+  'dayFriday',
+  'daySaturday',
+] as const;
+
+/** The full-name key for each short-name key, so ordering can come from either list. */
+const DAY_FULL_BY_SHORT: Record<string, string> = {
+  dayShortSunday: 'daySunday',
+  dayShortMonday: 'dayMonday',
+  dayShortTuesday: 'dayTuesday',
+  dayShortWednesday: 'dayWednesday',
+  dayShortThursday: 'dayThursday',
+  dayShortFriday: 'dayFriday',
+  dayShortSaturday: 'daySaturday',
 };
 
-const ALERT_LABELS: Record<AlertType, string> = {
-  'none': 'No alert',
-  '5min': '5 minutes before',
-  '15min': '15 minutes before',
-  '30min': '30 minutes before',
-  '1hour': '1 hour before',
-  '4hours': '4 hours before',
-  '12hours': '12 hours before',
-  '1day': '1 day before',
-  '4weeks': '4 weeks before',
-  'custom': 'Custom'
+/*
+ * Alert intervals, as translation KEYS composed at render time.
+ *
+ * The labels used to be English text in this table. A bare key cannot express "30 minutes
+ * before", so each entry names a unit key and the render site joins it with `t('before')`.
+ * `value` discriminants are untouched.
+ */
+const ALERT_UNIT_KEYS: Record<AlertType, { count?: number; unit?: string } | 'none' | 'custom'> = {
+  'none': 'none',
+  '5min': { count: 5, unit: 'unitMinutes' },
+  '15min': { count: 15, unit: 'unitMinutes' },
+  '30min': { count: 30, unit: 'unitMinutes' },
+  '1hour': { count: 1, unit: 'unitHour' },
+  '4hours': { count: 4, unit: 'unitHours' },
+  '12hours': { count: 12, unit: 'unitHours' },
+  '1day': { count: 1, unit: 'unitDays' },
+  '4weeks': { count: 4, unit: 'unitWeeks' },
+  'custom': 'custom',
+};
+
+/** The unit key for each stored custom-alert unit. */
+const CUSTOM_ALERT_UNIT_KEYS: Record<string, string> = {
+  minutes: 'unitMinutes',
+  hours: 'unitHours',
+  days: 'unitDays',
+  weeks: 'unitWeeks',
 };
 
 export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventViewerProps) {
   const { t } = useLanguage();
+  const dateLocale = useDateLocale();
   const { weekStartDay } = useWeekStart();
 
-  // Full day names in the order the week starts on, so the recurrence days below read
-  // in the same order as the rest of the app.
-  const orderedDayNames = getOrderedDayNames(weekStartDay).map(shortName => t(DAY_NAME_KEYS[shortName]));
+  // Full day names in the order the week starts on. The short-name keys come back ordered
+  // by the week start, and both lists are indexed by JS day, so the position carries over.
+  const orderedDayNames = getOrderedDayNameKeys(weekStartDay)
+    .map((key) => t(DAY_FULL_BY_SHORT[key] ?? 'daySunday'));
 
   if (!event) return null;
 
@@ -67,11 +98,11 @@ export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventV
   const endTime = event.endTime;
 
   const formattedStartDate = startDate 
-    ? format(new Date(startDate), 'EEEE, MMMM d, yyyy')
+    ? format(new Date(startDate), 'EEEE, MMMM d, yyyy', { locale: dateLocale })
     : 'No date set';
 
   const formattedEndDate = endDate 
-    ? format(new Date(endDate), 'EEEE, MMMM d, yyyy')
+    ? format(new Date(endDate), 'EEEE, MMMM d, yyyy', { locale: dateLocale })
     : null;
 
   // Check if start and end dates are the same
@@ -110,12 +141,17 @@ export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventV
 
   const getAlertText = () => {
     if (!event.alertType || event.alertType === 'none') return null;
-    
+
     if (event.alertType === 'custom' && event.alertCustomValue && event.alertCustomUnit) {
-      return `${event.alertCustomValue} ${event.alertCustomUnit} before`;
+      // The stored unit is a value like 'minutes', so it maps through the same unit keys the
+      // preset intervals use rather than being printed raw.
+      const unitKey = CUSTOM_ALERT_UNIT_KEYS[event.alertCustomUnit];
+      return `${event.alertCustomValue} ${t(unitKey)} ${t('before')}`;
     }
-    
-    return ALERT_LABELS[event.alertType];
+
+    const entry = ALERT_UNIT_KEYS[event.alertType];
+    if (entry === 'none' || entry === 'custom') return null;
+    return `${entry.count} ${t(entry.unit as string)} ${t('before')}`;
   };
 
   const recurrenceText = getRecurrenceText();

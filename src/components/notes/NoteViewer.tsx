@@ -21,6 +21,7 @@ import {
   Pin
 } from 'lucide-react';
 import { useToastSettings } from '@/contexts/ToastContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -114,6 +115,7 @@ export function NoteViewer({
   onUnlock
 }: NoteViewerProps) {
   const { toast } = useToastSettings();
+  const { t } = useLanguage();
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingContent, setIsEditingContent] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
@@ -1267,7 +1269,7 @@ export function NoteViewer({
                   }}
                 >
                   <Edit size={14} className="mr-2" />
-                  {a.label ? 'Edit note' : 'Add note'}
+                  {a.label ? t('editNote') : t('addNote')}
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => {
@@ -1297,7 +1299,7 @@ export function NoteViewer({
                   className="text-destructive"
                 >
                   <Trash2 size={14} className="mr-2" />
-                  Delete
+                  {t('delete')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -1443,7 +1445,7 @@ export function NoteViewer({
                     const combined = allMarkers + newText;
                     setEditedDescription(combined);
                   }}
-                  placeholder="Start writing..."
+                  placeholder={t('startWriting')}
                   className="w-full min-h-[3rem]"
                   onFocus={() => {
                     if (!isEditingContent) {
@@ -1465,7 +1467,7 @@ export function NoteViewer({
                   </div>
                 ) : (
                   <div className="text-sm leading-relaxed text-muted-foreground min-h-[3rem] mb-0.5">
-                    Start writing...
+                    {t('startWriting')}
                   </div>
                 )}
               </div>
@@ -1694,7 +1696,7 @@ export function NoteViewer({
                     const combined = allMarkers + newText;
                     setEditedDescription(combined);
                   }}
-                  placeholder="Start writing..."
+                  placeholder={t('startWriting')}
                   className="w-full min-h-[3rem]"
                   onFocus={() => {
                     if (!isEditingContent) {
@@ -1716,7 +1718,7 @@ export function NoteViewer({
                   </div>
                 ) : (
                   <div className="text-sm leading-relaxed text-muted-foreground min-h-[3rem] mb-0.5">
-                    Start writing...
+                    {t('startWriting')}
                   </div>
                 )}
               </div>
@@ -1768,7 +1770,7 @@ export function NoteViewer({
                     const combined = allMarkers + newText;
                     setEditedDescription(combined);
                   }}
-                  placeholder="Start writing..."
+                  placeholder={t('startWriting')}
                   className="w-full min-h-[3rem]"
                   onFocus={() => {
                     if (!isEditingContent) {
@@ -1789,7 +1791,7 @@ export function NoteViewer({
                   </div>
                 ) : (
                   <div className="text-sm leading-relaxed text-muted-foreground min-h-[3rem] mb-0.5">
-                    Start writing...
+                    {t('startWriting')}
                   </div>
                 )}
               </div>
@@ -1846,8 +1848,8 @@ export function NoteViewer({
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
         <DialogHeader className={`flex-row items-center justify-between space-y-0 pb-2 border-b px-3 flex-shrink-0 h-14 ${borderClass}`}>
-          <DialogTitle className="sr-only" id="note-viewer-title">Note</DialogTitle>
-          <DialogDescription className="sr-only">Note editor</DialogDescription>
+          <DialogTitle className="sr-only" id="note-viewer-title">{t('noteViewerTitle')}</DialogTitle>
+          <DialogDescription className="sr-only">{t('noteViewerSubtitle')}</DialogDescription>
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <Button
                   variant={iconButtonStyles.variant}

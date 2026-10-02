@@ -1653,7 +1653,7 @@ export default function Notes() {
         </div>
         
         <div className="space-y-2">
-          <h3 className="text-lg font-medium">Archived Folders</h3>
+          <h3 className="text-lg font-medium">{t('archivedFolders')}</h3>
           {archivedFolders.length > 0 ? renderFolderList(archivedFolders, true) : (
             <Card>
               <CardContent className="text-center py-8">
@@ -2196,7 +2196,7 @@ export default function Notes() {
         onCreateNewFolder={handleCreateFolderFromDialog}
         currentFolderId={selectedNoteForMove?.length === 1 ? folders.find(f => f.noteIds.includes(selectedNoteForMove[0]))?.id : undefined}
         getItemCount={(folder) => folder.noteIds.length}
-        itemNoun="notes"
+        itemNoun={t('notes')}
       />
 
       {/* Delete Confirmation Dialog */}

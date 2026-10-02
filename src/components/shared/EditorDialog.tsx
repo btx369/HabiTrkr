@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface EditorDialogProps {
   isOpen: boolean;
@@ -40,11 +41,12 @@ export function EditorDialog({
   onSave,
   onCancel,
   saveLabel = 'Save',
-  cancelLabel = 'Cancel',
+  cancelLabel,
   saveDisabled = false,
   hideCloseButton = true,
   fullScreenOnly = false,
 }: EditorDialogProps) {
+  const { t } = useLanguage();
   const handleCancel = onCancel || onClose;
 
   const renderFooter = () => {
@@ -70,7 +72,13 @@ export function EditorDialog({
           onClick={handleCancel} 
           className="flex-1 h-10 text-sm text-foreground"
         >
-          {cancelLabel}
+          {/*
+            * `cancelLabel` is optional so the default can be translated: a default
+            * parameter cannot read `t`, which only exists once the hook has run inside
+            * the component. Callers that pass their own label still win, including an
+            * empty one.
+            */}
+          {cancelLabel ?? t('cancel')}
         </Button>
         {/*
           * The filled action, using the same tokens as every other primary control so it

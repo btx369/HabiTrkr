@@ -1,5 +1,6 @@
 import { Label } from '@/components/ui/label';
 import { NOTE_COLORS } from '@/constants/colors';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { LucideIcon } from 'lucide-react';
 
 interface ColorPickerProps {
@@ -13,15 +14,19 @@ interface ColorPickerProps {
 export function ColorPicker({ 
   selectedColor, 
   onColorChange, 
-  label = "Color",
+  label,
   icon: Icon,
   iconColor
 }: ColorPickerProps) {
+  const { t } = useLanguage();
+  // Defaulted here rather than in the parameter list: a default value cannot see the hook,
+  // and this label appears in every editor, so an English default leaked everywhere.
+  const resolvedLabel = label ?? t('color');
   return (
     <div>
       <Label className="text-sm flex items-center gap-2">
         {Icon && <Icon size={16} color={iconColor} />}
-        {label}
+        {resolvedLabel}
       </Label>
       <div className="grid grid-cols-6 gap-3 mt-3 p-1 justify-items-center">
         <button

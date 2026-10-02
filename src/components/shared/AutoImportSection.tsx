@@ -3,6 +3,7 @@ import { Switch } from '@/components/ui/switch';
 import { usePremiumAccount } from '@/hooks/usePremiumAccount';
 import { PremiumPrompt } from '@/components/shared/PremiumPrompt';
 import { TagInputField } from '@/components/shared/TagInputField';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface AutoImportSectionProps {
   enabled: boolean;
@@ -20,15 +21,16 @@ export function AutoImportSection({
   placeholder = "Add tags (e.g., #work #personal)"
 }: AutoImportSectionProps) {
   const [premiumAccount] = usePremiumAccount();
+  const { t } = useLanguage();
 
   if (!premiumAccount.isPremium) {
-    return <PremiumPrompt feature="Auto-import by tags" />;
+    return <PremiumPrompt feature={t('autoImportByTags')} />;
   }
 
   return (
     <div className="space-y-3 p-4 bg-muted rounded-lg">
       <div className="flex items-center justify-between">
-        <Label htmlFor="autoImport" className="text-sm">Auto-import by tags</Label>
+        <Label htmlFor="autoImport" className="text-sm">{t('autoImportByTags')}</Label>
         <Switch
           id="autoImport"
           checked={enabled}

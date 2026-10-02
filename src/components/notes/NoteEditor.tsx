@@ -6,6 +6,7 @@ import { TitleInput } from '@/components/shared/TitleInput';
 import { EditorDialog } from '@/components/shared/EditorDialog';
 import { useEditorForm } from '@/hooks/useEditorForm';
 import { useToastSettings } from '@/contexts/ToastContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { NotebookPen, Palette, Hash } from 'lucide-react';
 
 const ICON_COLOR = 'currentColor';
@@ -32,6 +33,7 @@ interface NoteEditorProps {
 export function NoteEditor({ note, isOpen, onClose, onSave }: NoteEditorProps) {
   const [hasTagError, setHasTagError] = useState(false);
   const { toast } = useToastSettings();
+  const { t } = useLanguage();
   
   const initialData = useMemo(() => 
     note ? {
@@ -84,13 +86,17 @@ export function NoteEditor({ note, isOpen, onClose, onSave }: NoteEditorProps) {
     <EditorDialog
       isOpen={isOpen}
       onClose={handleClose}
-      title="Edit Note"
+      /*
+       * `editNote` is "Edit note" in every language, so the dialog title reads slightly
+       * differently from the old hardcoded "Edit Note" — there is no `editNoteTitle` key.
+       */
+      title={t('editNote')}
       onSave={handleSave}
-      saveLabel="Save Changes"
+      saveLabel={t('save')}
     >
       <TitleInput
         id="noteTitle"
-        label="Title"
+        label={t('title')}
         value={formData.name}
         onChange={(value) => updateField('name', value)}
         placeholder="Enter note title..."

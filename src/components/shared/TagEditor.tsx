@@ -8,6 +8,7 @@ import { parseTagsFromInput } from '@/lib/tagParser';
 import { getAllTags, getActiveTagsFromStorage } from '@/lib/tagStorage';
 import { TagSuggestions } from '@/components/shared/TagSuggestions';
 import { useToastSettings } from '@/contexts/ToastContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { isDefaultColor } from '@/lib/cardColorStyles';
 import { getColoredIconClass, getColoredBorderClass } from '@/lib/coloredButtonStyles';
@@ -44,6 +45,7 @@ export function TagEditor({
   const [allTags, setAllTags] = useState<string[]>([]);
   const [suggestion, setSuggestion] = useState('');
   const { toast } = useToastSettings();
+  const { t } = useLanguage();
   useEffect(() => {
     // Get only tags that are currently in use, excluding ones already on this note
     const activeTags = getActiveTagsFromStorage();
@@ -189,7 +191,7 @@ export function TagEditor({
     <div className="space-y-2">
       <Label className={cn("text-sm flex items-center gap-2", hasNoteColor && iconColorClass)}>
         {Icon && <Icon size={14} className={hasNoteColor ? iconColorClass : ''} style={!hasNoteColor && iconColor ? { color: iconColor } : {}} />}
-        Tags <span className={cn(
+        {t('tags')} <span className={cn(
           "text-xs font-normal",
           tags.length >= TAG_LIMIT 
             ? "text-destructive" 
@@ -276,14 +278,14 @@ export function TagEditor({
           )}
           disabled={tagInput.trim() === '#' || tagInput.trim() === '' || tags.length >= TAG_LIMIT}
         >
-          Add
+          {t('add')}
         </Button>
       </div>
 
       {/* Suggestions */}
       {suggestions.length > 0 && (
         <div className="space-y-1">
-          <Label className={cn("text-xs", hasNoteColor ? "text-[#000000]" : "text-foreground")}>Suggestions</Label>
+          <Label className={cn("text-xs", hasNoteColor ? "text-[#000000]" : "text-foreground")}>{t('suggestions')}</Label>
           <TagSuggestions 
             suggestions={suggestions} 
             onSelect={handleSuggestionClick}

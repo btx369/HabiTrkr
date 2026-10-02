@@ -1,10 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Calendar, LucideIcon } from 'lucide-react';
 import { toDateKey } from '@/lib/dateUtils';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useDateLocale } from '@/lib/dateLocale';
 
 
 interface ScrollPickerProps {
@@ -16,10 +19,20 @@ interface ScrollPickerProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
-];
+/**
+ * The twelve month names for the active language, replacing a hardcoded English array.
+ *
+ * These are produced by date-fns rather than by the translation dictionary, because date-fns
+ * already ships correct month names for every language the app offers and month names are
+ * exactly the kind of thing a hand-written list gets subtly wrong.
+ */
+const useMonthNames = (): string[] => {
+  const locale = useDateLocale();
+  return useMemo(
+    () => Array.from({ length: 12 }, (_, month) => format(new Date(2024, month, 1), 'LLLL', { locale })),
+    [locale],
+  );
+};
 
 const getDaysInMonth = (month: number, year: number) => {
   return new Date(year, month + 1, 0).getDate();
@@ -157,6 +170,8 @@ export function DateScrollPicker({
   open, 
   onOpenChange 
 }: ScrollPickerProps) {
+  const { t } = useLanguage();
+  const monthNames = useMonthNames();
   const [tempDate, setTempDate] = useState(value);
 
   useEffect(() => {
@@ -223,12 +238,12 @@ export function DateScrollPicker({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-md mx-auto p-0">
         <div className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Select Date</h3>
+          <h3 className="text-lg font-semibold mb-4">{t('selectDate')}</h3>
           
           <div className="flex gap-4 mb-6">
             {/* Day Column */}
             <div className="flex-1">
-              <div className="text-sm font-medium text-center mb-2 text-muted-foreground">Day</div>
+              <div className="text-sm font-medium text-center mb-2 text-muted-foreground">{t('dayView')}</div>
               <ScrollColumn
                 items={days}
                 selectedIndex={Math.min(selectedDayIndex, days.length - 1)}
@@ -238,9 +253,9 @@ export function DateScrollPicker({
             
             {/* Month Column */}
             <div className="flex-1">
-              <div className="text-sm font-medium text-center mb-2 text-muted-foreground">Month</div>
+              <div className="text-sm font-medium text-center mb-2 text-muted-foreground">{t('monthView')}</div>
               <ScrollColumn
-                items={MONTHS}
+                items={monthNames}
                 selectedIndex={selectedMonthIndex}
                 onSelectionChange={handleMonthChange}
               />
@@ -248,7 +263,7 @@ export function DateScrollPicker({
             
             {/* Year Column */}
             <div className="flex-1">
-              <div className="text-sm font-medium text-center mb-2 text-muted-foreground">Year</div>
+              <div className="text-sm font-medium text-center mb-2 text-muted-foreground">{t('year')}</div>
               <ScrollColumn
                 items={years}
                 selectedIndex={selectedYearIndex}
@@ -259,7 +274,7 @@ export function DateScrollPicker({
           
           <div className="flex justify-between gap-3">
             <Button variant="outline" onClick={onCancel} className="flex-1">
-              Cancel
+              {t('cancel')}
             </Button>
             <Button onClick={handleConfirm} className="flex-1">
               OK
@@ -283,6 +298,8 @@ interface DatePickerInputProps {
 }
 
 export function DatePickerInput({ value, onChange, className, id, label, icon: Icon, iconColor, iconPosition = 'right' }: DatePickerInputProps) {
+  const { t } = useLanguage();
+  const dateLocale = useDateLocale();
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   
   // Parse the date value, ensuring we always have a valid Date object
@@ -300,13 +317,11 @@ export function DatePickerInput({ value, onChange, className, id, label, icon: I
   };
 
   const formatDisplayDate = (dateString: string) => {
-    if (!dateString) return 'Select date';
+    if (!dateString) return t('selectDate');
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      day: 'numeric',
-      month: 'short', 
-      year: 'numeric' 
-    });
+    // This was `toLocaleDateString('en-US', …)`, which printed "Oct 2, 2026" whatever
+    // language the app was set to. 'PP' is date-fns' localised medium date.
+    return format(date, 'PP', { locale: dateLocale });
   };
 
   const IconComponent = Icon || Calendar;
@@ -341,7 +356,7 @@ export function DatePickerInput({ value, onChange, className, id, label, icon: I
               "w-full h-10 py-2 text-sm border border-input rounded-md bg-muted cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
               iconPosition === 'left' ? "pl-10 pr-3" : "px-3"
             )}
-            placeholder="Select date"
+            placeholder={t('selectDate')}
           />
           {iconPosition === 'right' && (
             <IconComponent 

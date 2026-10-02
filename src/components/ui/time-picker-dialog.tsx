@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface TimePickerDialogProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ interface TimePickerDialogProps {
 }
 
 export function TimePickerDialog({ isOpen, onClose, onSave, initialTime }: TimePickerDialogProps) {
+  const { t } = useLanguage();
   const [hours, setHours] = useState('00');
   const [minutes, setMinutes] = useState('00');
   const [selectedField, setSelectedField] = useState<'hours' | 'minutes'>('hours');
@@ -79,7 +81,7 @@ export function TimePickerDialog({ isOpen, onClose, onSave, initialTime }: TimeP
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[320px]">
         <DialogHeader>
-          <DialogTitle>Select time</DialogTitle>
+          <DialogTitle>{t('selectTime')}</DialogTitle>
         </DialogHeader>
         
         <div className="flex items-center justify-center gap-2 py-6">
@@ -110,7 +112,7 @@ export function TimePickerDialog({ isOpen, onClose, onSave, initialTime }: TimeP
                 maxLength={2}
               />
             </div>
-            <span className="text-sm text-muted-foreground mt-2">Hour</span>
+            <span className="text-sm text-muted-foreground mt-2">{t('hour')}</span>
           </div>
 
           <span className="text-5xl font-light text-foreground mb-6">:</span>
@@ -142,13 +144,13 @@ export function TimePickerDialog({ isOpen, onClose, onSave, initialTime }: TimeP
                 maxLength={2}
               />
             </div>
-            <span className="text-sm text-muted-foreground mt-2">Minute</span>
+            <span className="text-sm text-muted-foreground mt-2">{t('minute')}</span>
           </div>
         </div>
 
         <div className="flex justify-end gap-4 pt-2">
           <Button variant="ghost" onClick={onClose}>
-            Cancel
+            {t('cancel')}
           </Button>
           <Button variant="ghost" onClick={handleSave} className="text-primary">
             OK

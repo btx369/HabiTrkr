@@ -18,6 +18,7 @@ import { highlightText } from '@/lib/textHighlight';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { useToastSettings } from '@/contexts/ToastContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useDateLocale } from '@/lib/dateLocale';
 import { useWeekStart, getJsDayFromVisualIndex } from '@/contexts/WeekStartContext';
 import { 
   startOfWeek, 
@@ -89,6 +90,7 @@ export default function Calendar() {
   
   const { toast } = useToastSettings();
   const { t } = useLanguage();
+  const dateLocale = useDateLocale();
   const { weekStartsOn, weekStartDay } = useWeekStart();
   // Seven short labels in the user's week-start order; `t()` runs here because the keys
   // themselves have to live at module level.
@@ -232,13 +234,13 @@ export default function Calendar() {
   // Get current period based on view mode
   const currentPeriod = useMemo(() => {
     if (viewMode === 'daily') {
-      return format(currentDate, 'EEEE, MMM d, yyyy');
+      return format(currentDate, 'EEEE, MMM d, yyyy', { locale: dateLocale });
     } else if (viewMode === 'weekly') {
       const start = startOfWeek(currentDate, { weekStartsOn });
       const end = endOfWeek(currentDate, { weekStartsOn });
-      return `${format(start, 'MMM d')} - ${format(end, 'MMM d, yyyy')}`;
+      return `${format(start, 'MMM d', { locale: dateLocale })} - ${format(end, 'MMM d, yyyy', { locale: dateLocale })}`;
     } else {
-      return format(currentDate, 'MMMM yyyy');
+      return format(currentDate, 'MMMM yyyy', { locale: dateLocale });
     }
   }, [currentDate, viewMode, weekStartsOn]);
 
@@ -464,7 +466,7 @@ export default function Calendar() {
               <Card>
                 <CardHeader className="px-2 py-2">
                   <CardTitle className="text-lg">
-                    {format(selectedDate, 'EEEE, MMMM d, yyyy')}
+                    {format(selectedDate, 'EEEE, MMMM d, yyyy', { locale: dateLocale })}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="px-2 pb-2 pt-0">

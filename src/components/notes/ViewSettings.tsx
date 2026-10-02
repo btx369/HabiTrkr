@@ -39,15 +39,15 @@ export function ViewSettings({
 
   /*
    * Sort option labels, resolved through `t()` here because the hook result is only in
-   * scope inside the component. `custom` has no translation key yet and keeps its literal
-   * label; the other three resolve to the `title` / `dateCreated` / `dateModified` keys.
+   * scope inside the component. The four labels resolve to the `title` / `dateCreated` /
+   * `dateModified` / `custom` keys.
    */
   const getSortLabel = (type: SortType) => {
     const labels = {
       title: t('title'),
       dateCreated: t('dateCreated'),
       dateModified: t('dateModified'),
-      custom: 'Custom'
+      custom: t('custom')
     };
     return labels[type];
   };
@@ -92,9 +92,9 @@ export function ViewSettings({
             if (isViewType(value)) onViewTypeChange(value);
           }}
         >
-          <DropdownMenuRadioItem value="x3">{VIEW_LABELS.x3}</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="x2">{VIEW_LABELS.x2}</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="list">{VIEW_LABELS.list}</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="x3">{t('viewX3')}</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="x2">{t('viewX2')}</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="list">{t('viewList')}</DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
         
         <DropdownMenuSeparator />
@@ -129,7 +129,7 @@ export function ViewSettings({
               <span className="h-2 w-2 rounded-full bg-primary" />
             )}
           </div>
-          <span>Custom</span>
+          <span>{t('custom')}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

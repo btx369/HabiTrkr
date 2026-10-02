@@ -50,20 +50,23 @@ export function useWeekStart() {
   return context;
 }
 
-// Helper function to get ordered day names based on week start
-export function getOrderedDayNames(weekStartDay: WeekStartDay): string[] {
-  const allDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  if (weekStartDay === 'sunday') return allDays;
-  if (weekStartDay === 'saturday') return ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
-  return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']; // monday
-}
-
-// Helper function to get ordered day initials based on week start
-export function getOrderedDayInitials(weekStartDay: WeekStartDay): string[] {
-  const allInitials = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-  if (weekStartDay === 'sunday') return allInitials;
-  if (weekStartDay === 'saturday') return ['S', 'S', 'M', 'T', 'W', 'T', 'F'];
-  return ['M', 'T', 'W', 'T', 'F', 'S', 'S']; // monday
+/**
+ * Ordered short weekday names, as translation KEYS rather than text.
+ *
+ * These used to return the literal strings 'Sun', 'Mon', … which meant any consumer that
+ * rendered them showed English no matter what language the app was set to. Keys can be
+ * resolved with `t()` at the render site, which is where a hook is allowed to run.
+ *
+ * Indexed by JS day (0 = Sunday), ordered by the configured week start.
+ */
+export function getOrderedDayNameKeys(weekStartDay: WeekStartDay): string[] {
+  const keys = [
+    'dayShortSunday', 'dayShortMonday', 'dayShortTuesday', 'dayShortWednesday',
+    'dayShortThursday', 'dayShortFriday', 'dayShortSaturday',
+  ];
+  if (weekStartDay === 'sunday') return keys;
+  if (weekStartDay === 'saturday') return [keys[6], ...keys.slice(0, 6)];
+  return [...keys.slice(1), keys[0]]; // monday
 }
 
 // Helper function to get the JS day value (0-6 where 0=Sunday) for a visual index

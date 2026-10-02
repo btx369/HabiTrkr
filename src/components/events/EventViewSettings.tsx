@@ -83,9 +83,9 @@ export function EventViewSettings({
             if (isViewType(value)) onViewTypeChange(value);
           }}
         >
-          <DropdownMenuRadioItem value="x3">{VIEW_LABELS.x3}</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="x2">{VIEW_LABELS.x2}</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="list">{VIEW_LABELS.list}</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="x3">{t('viewX3')}</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="x2">{t('viewX2')}</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="list">{t('viewList')}</DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
         
         <DropdownMenuSeparator />

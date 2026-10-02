@@ -1,15 +1,18 @@
 /**
  * Checks the interface in every language the app offers.
  *
- * Two failure modes are worth catching, and they look nothing alike:
+ * Three failure modes are worth catching, and they look nothing alike:
  *
  *  1. A raw translation key rendered on screen. `t()` returns the key when it cannot
  *     resolve one, so a missing entry shows "tabFolders" where a button should say
- *     "Folders". That is worse than an untranslated label, and it is invisible unless
- *     something looks for it.
- *  2. A language that is still entirely English. Expected for the six without
- *     translations yet, and asserted here so the gap stays a known one rather than
- *     drifting unnoticed.
+ *     "Folders". That is worse than an untranslated label.
+ *  2. A translated language showing English text. This is the one that actually matters to
+ *     a user, and it is the one an earlier version of this file failed to check: it only
+ *     looked for raw keys, so a screen that was still 80% English passed happily. The list
+ *     of English strings left on each screen is printed in full so the remaining work is
+ *     visible rather than merely counted.
+ *  3. A language that is still entirely English. Expected for the six without
+ *     translations yet, and asserted here so the gap stays a known one.
  *
  * Usage: node scripts/verify-i18n-coverage.mjs
  * Output: preview/i18n-coverage.txt
@@ -122,6 +125,56 @@ const chrome = spawn(CHROME, ['--headless=new', '--disable-gpu', '--no-sandbox',
 const report = [];
 const ROUTES = [['/notes', 'Notes'], ['/events', 'Events'], ['/calendar', 'Calendar'], ['/profile', 'Profile'], ['/tags', 'Tags']];
 
+/**
+ * Strings that are English by design, so a translated language showing them is not a
+ * defect. Kept as an explicit list: the guard has to stay meaningful, and silencing it by
+ * pattern would let real gaps through.
+ *
+ *  - product name and acronyms that are not translated
+ *  - clock times and date/number output, which come from date-fns and Intl
+ */
+const ALWAYS_ENGLISH = /^(\d|HabiTrkr$|#|OK$)/;
+
+/** One item of seeded user content per key, excluded from the count: it is data, not copy. */
+const SEEDED = new Set(['Groceries', 'milk and bread', 'milk', 'Home', 'home things', 'Dentist', 'checkup', 'Drink water', 'work', 'To do', 'call mum', 'test']);
+
+/** Text that is never interface copy: values, ids, single characters. */
+const isCopy = (s) =>
+  s.length > 1
+  && !/^[\d\s.,:/#%×✓+-]+$/.test(s)
+  && !ALWAYS_ENGLISH.test(s)
+  && /[A-Za-zÀ-ÿ]/.test(s);
+
+/**
+ * English strings that are also the translation in the language being checked.
+ *
+ * "Feedback" is "Feedback" in Italian, "Tags" is "Tags" in French — those are translated
+ * labels that happen to be spelled the same, and reporting them as untranslated would send
+ * whoever reads this output chasing strings that are already correct. A word is only
+ * considered a false positive when the TARGET language's dictionary value equals the
+ * English one.
+ */
+const sameInBoth = (sourceText, lang) => {
+  const block = new RegExp(`\\n  ${lang}: \\{([\\s\\S]*?)\\n  \\},`).exec(sourceText);
+  if (!block) return new Set();
+  const values = new Map();
+  for (const m of block[1].matchAll(/^\s+'([A-Za-z][A-Za-z0-9]*)': '([^']*)',$/gm)) {
+    values.set(m[1], m[2]);
+  }
+  const english = new Map();
+  const enBlock = /\n  en: \{([\s\S]*?)\n  \},/.exec(sourceText);
+  if (enBlock) {
+    for (const m of enBlock[1].matchAll(/^\s+'([A-Za-z][A-Za-z0-9]*)': '([^']*)',$/gm)) {
+      english.set(m[1], m[2]);
+    }
+  }
+  const out = new Set();
+  for (const [key, value] of values) {
+    if (english.get(key) === value) out.add(value);
+  }
+  return out;
+};
+
 try {
   const ws = new WebSocket(await getWsUrl(port));
   await new Promise((resolve, reject) => {
@@ -144,45 +197,146 @@ try {
   const languages = [...TRANSLATED, ...FALLBACK];
   const seenKeysIn = {};
   const englishishIn = {};
+  const detailIn = {};
 
-  for (const lang of languages) {
+  const mouseClick = async (x, y) => {
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x, y, buttons: 0 });
+    await sleep(110);
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', buttons: 1, clickCount: 1 });
+    await sleep(65);
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', buttons: 0, clickCount: 1 });
+    await sleep(700);
+  };
+  const clickExpr = async (expr) => {
+    const box = await cdp.eval(`(() => { const el = ${expr}; if (!el) return 'null';
+      const r = el.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0) return 'null';
+      return JSON.stringify({ x: Math.round(r.x + r.width / 2), y: Math.round(r.y + r.height / 2) }); })()`);
+    if (box === 'null') return false;
+    const b = JSON.parse(box);
+    await mouseClick(b.x, b.y);
+    return true;
+  };
+  const escape = async () => {
+    await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+    await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+    await sleep(600);
+  };
+
+  /**
+   * Collects the visible strings on the page, optionally including any open dialog.
+   *
+   * The editors matter most: hiding one behind a click is exactly how a check that only
+   * reads the main pages reports "3 English strings" while the user sees dozens. Every
+   * screen below is exercised with its editor open.
+   */
+  const collectStrings = () => cdp.eval(`JSON.stringify((() => {
+    const out = [];
+    document.querySelectorAll('body *').forEach((el) => {
+      if (el.closest('[aria-hidden="true"]')) return;
+      Array.from(el.childNodes).forEach((n) => {
+        if (n.nodeType !== 3) return;
+        const t = n.textContent.trim();
+        if (!t || t.length > 70) return;
+        out.push(t);
+      });
+    });
+    // Placeholders are copy too, and they never appear as text nodes.
+    document.querySelectorAll('input[placeholder], textarea[placeholder]').forEach((el) => {
+      const p = el.getAttribute('placeholder');
+      if (p && p.length <= 70) out.push(p);
+    });
+    return out;
+  })())`).then(JSON.parse);
+
+  /**
+   * Each entry opens something that holds copy the main page does not show. `open` returns
+   * whether it managed to, so a silent failure is reported rather than passing quietly.
+   */
+  const SURFACES = [
+    { name: 'Notes list', route: '/notes' },
+    { name: 'Note editor', route: '/notes', open: () => clickExpr(`Array.from(document.querySelectorAll('[data-note-card] button')).find(b => b.getAttribute('aria-haspopup') === 'menu')`) },
+    { name: 'Note viewer', route: '/notes', open: () => clickExpr(`document.querySelector('[data-note-card] > div')`) },
+    { name: 'Note type popup', route: '/notes', open: () => clickExpr(`Array.from(document.querySelectorAll('button')).find(b => b.querySelector('svg.lucide-plus'))`) },
+    { name: 'Notes view settings', route: '/notes', open: () => clickExpr(`Array.from(document.querySelectorAll('button')).find(b => b.querySelector('svg.lucide-settings'))`) },
+    { name: 'Events list', route: '/events' },
+    { name: 'Event editor', route: '/events', open: () => clickExpr(`Array.from(document.querySelectorAll('button')).find(b => { const s = b.querySelector('svg'); return s && String(s.getAttribute('class') || '').includes('plus'); })`) },
+    { name: 'Events view settings', route: '/events', open: () => clickExpr(`Array.from(document.querySelectorAll('button')).find(b => b.querySelector('svg.lucide-settings'))`) },
+    { name: 'Calendar', route: '/calendar' },
+    { name: 'Habits list', route: '/' },
+    { name: 'Habit editor', route: '/', open: () => clickExpr(`Array.from(document.querySelectorAll('button')).find(b => { const s = b.querySelector('svg'); return s && String(s.getAttribute('class') || '').includes('plus'); })`) },
+    { name: 'Habits view settings', route: '/', open: () => clickExpr(`Array.from(document.querySelectorAll('button')).find(b => b.querySelector('svg.lucide-settings'))`) },
+    { name: 'Profile', route: '/profile' },
+    { name: 'Tags', route: '/tags' },
+  ];
+
+  // The English dictionary values, for one specific signal: a string identical to a
+  // dictionary value while a non-English language is active means the label exists but was
+  // never wired. This is NOT the completeness measure — see the differential below.
+  const EN_VALUES = new Set([...dictSource.matchAll(/^\s+'([A-Za-z][A-Za-z0-9]*)': '([^']*)',$/gm)]
+    .filter((m, i, arr) => arr.findIndex((x) => x[1] === m[1]) === i)
+    .map((m) => m[2])
+    .filter(isCopy));
+
+  /**
+   * Reads every surface once, in the given language.
+   *
+   * A set of strings is not enough to judge translation, because the interesting case is a
+   * string that has NO key at all — it is invisible to any check that compares against the
+   * dictionary. So the same surfaces are read twice, once in English and once in the target
+   * language, and the two are compared: anything byte-identical between them never went
+   * through `t()`.
+   */
+  const readAllSurfaces = async (lang) => {
     await cdp.eval(`localStorage.setItem('habitrkr.language', ${JSON.stringify(lang)}); true`);
-
-    const rawKeys = new Set();
-    const visible = new Set();
-
-    for (const [route] of ROUTES) {
-      await cdp.send('Page.navigate', { url: BASE + route });
-      await sleep(2300);
-      const strings = JSON.parse(await cdp.eval(`JSON.stringify((() => {
-        const out = [];
-        document.querySelectorAll('body *').forEach((el) => {
-          if (el.closest('[aria-hidden="true"]')) return;
-          Array.from(el.childNodes).forEach((n) => {
-            if (n.nodeType !== 3) return;
-            const t = n.textContent.trim();
-            if (!t || t.length > 70) return;
-            out.push(t);
-          });
-        });
-        return out;
-      })())`));
-      for (const s of strings) {
-        visible.add(s);
-        if (DISTINCT_KEYS.includes(s)) rawKeys.add(s);
+    const strings = new Set();
+    const failed = [];
+    for (const surface of SURFACES) {
+      await cdp.send('Page.navigate', { url: BASE + surface.route });
+      await sleep(2200);
+      if (surface.open) {
+        const ok = await surface.open();
+        if (!ok) failed.push(surface.name);
+        await sleep(600);
       }
+      for (const s of await collectStrings()) strings.add(s);
+      if (surface.open) await escape();
     }
+    return { strings, failed };
+  };
 
-    seenKeysIn[lang] = [...rawKeys];
-    // How much of the interface is still English: count the words that exactly match the
-    // English dictionary values.
-    const enValues = new Set([...dictSource.matchAll(/^\s+'([A-Za-z][A-Za-z0-9]*)': '([^']*)',$/gm)]
-      .filter((m, i, arr) => arr.findIndex((x) => x[1] === m[1]) === i)
-      .map((m) => m[2]));
-    englishishIn[lang] = [...visible].filter((s) => enValues.has(s)).length;
-
-    report.push(`${lang}: raw keys ${rawKeys.size === 0 ? 'none' : [...rawKeys].join(', ')} | English strings still shown: ${englishishIn[lang]}`);
+  // English first: it is the reference for "what was left untranslated".
+  const english = await readAllSurfaces('en');
+  console.log(`surfaces read: ${SURFACES.length - english.failed.length}/${SURFACES.length}`);
+  if (english.failed.length) {
+    console.log(`  !  could not open: ${english.failed.join(', ')} — their copy was not checked`);
   }
+  console.log(`English run collected ${english.strings.size} string(s)\n`);
+
+  for (const lang of languages.filter((l) => l !== 'en')) {
+    const { strings, failed } = await readAllSurfaces(lang);
+
+    // A string present in both reads, unchanged, was never translated. Product names,
+    // pure numbers, the seeded user data and words that are genuinely the same in both
+    // languages are excluded; everything else is a real gap.
+    const sameWords = sameInBoth(dictSource, lang);
+    const untranslated = [...strings].filter((s) =>
+      english.strings.has(s) && isCopy(s) && !/^HabiTrkr/.test(s) && !sameWords.has(s) && !SEEDED.has(s));
+    const rawKeys = untranslated.filter((s) => DISTINCT_KEYS.includes(s));
+
+    seenKeysIn[lang] = rawKeys;
+    englishishIn[lang] = untranslated.length;
+    detailIn[lang] = untranslated.sort();
+
+    report.push(`=== ${lang} ===`);
+    report.push(`surfaces read: ${SURFACES.length - failed.length}/${SURFACES.length}${failed.length ? ` (could not open: ${failed.join(', ')})` : ''}`);
+    report.push(`raw keys rendered: ${rawKeys.length === 0 ? 'none' : rawKeys.join(', ')}`);
+    report.push(`identical to English: ${untranslated.length}`);
+    for (const s of untranslated.sort()) report.push(`    ${JSON.stringify(s)}`);
+    report.push('');
+  }
+  seenKeysIn.en = [];
+  englishishIn.en = 0;
 
   console.log('=== raw keys rendered on screen (should be none, in every language) ===');
   for (const lang of languages) {

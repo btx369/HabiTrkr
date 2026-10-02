@@ -140,9 +140,9 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
 
   const getModeChangeMessage = () => {
     if (pendingModeChange?.type === 'toUnlimited') {
-      return "Your completion count will be preserved. Today's completed status will be cleared since unlimited mode has no daily goal.";
+      return t('modeChangeToUnlimited');
     }
-    return "Your completion count will be preserved. If it meets the new daily goal, today will be marked as complete.";
+    return t('modeChangeToGoal');
   };
 
   // Auto-scroll when toggles are activated
@@ -201,7 +201,7 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
         label={t('title')}
         value={formData.name}
         onChange={(value) => setFormData(prev => ({ ...prev, name: value }))}
-        placeholder="e.g., Drink 8 glasses of water"
+        placeholder={t('placeholderHabitName')}
         maxLength={35}
         required
         icon={NotebookPen}
@@ -214,7 +214,7 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
           label={t('description')}
           value={formData.description}
           onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
-          placeholder="Add more details about this habit..."
+          placeholder={t('placeholderHabitDescription')}
           maxLength={35}
           icon={FileText}
           iconColor={ICON_COLOR}
@@ -229,7 +229,7 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
       />
       
       <div>
-        <Label className="text-sm">{mode === 'create' ? 'Days of the Week' : 'Active Days'}</Label>
+        <Label className="text-sm">{mode === 'create' ? t('daysOfWeek') : t('activeDays')}</Label>
         <DaySelector 
           selectedDays={formData.selectedDays}
           onDaysChange={(days) => setFormData(prev => ({ ...prev, selectedDays: days as boolean[] }))}
@@ -238,7 +238,7 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
       </div>
       
       <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-        <Label htmlFor="number-of-days" className="text-sm">Number of days</Label>
+        <Label htmlFor="number-of-days" className="text-sm">{t('numberOfDays')}</Label>
         <Switch 
           id="number-of-days" 
           checked={formData.useNumberOfDays} 
@@ -249,7 +249,7 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
       {formData.useNumberOfDays && (
         <div className="space-y-4 p-4 bg-muted rounded-lg">
           <div>
-            <Label className="text-sm">Days per week</Label>
+            <Label className="text-sm">{t('daysPerWeek')}</Label>
             <div className="flex gap-3 mt-2">
               <Input 
                 type="number" 
@@ -267,13 +267,13 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
                 className="w-20 h-10 text-sm"
               />
               <div className="flex items-center px-2 text-sm text-muted-foreground">
-                days per week
+                {t('daysPerWeekInline')}
               </div>
             </div>
           </div>
           
           <div className="flex items-center justify-between">
-            <Label htmlFor="times-per-day" className="text-sm">Times a day</Label>
+            <Label htmlFor="times-per-day" className="text-sm">{t('timesADay')}</Label>
             <Switch 
               id="times-per-day" 
               checked={formData.useTimesPerDay} 
@@ -286,7 +286,7 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
           
           {formData.useTimesPerDay && (
             <div>
-              <Label className="text-sm">Times per day</Label>
+              <Label className="text-sm">{t('timesPerDay')}</Label>
               <div className="flex gap-3 mt-2">
                 <Input 
                   type="number" 
@@ -304,7 +304,7 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
                   className="w-20 h-10 text-sm"
                 />
                 <div className="flex items-center px-2 text-sm text-muted-foreground">
-                  times per day
+                  {t('timesPerDayInline')}
                 </div>
               </div>
             </div>
@@ -313,7 +313,7 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
       )}
       
       <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-        <Label htmlFor="unlimited-times" className="text-sm">Unlimited times</Label>
+        <Label htmlFor="unlimited-times" className="text-sm">{t('unlimitedTimes')}</Label>
         <Switch 
           id="unlimited-times" 
           checked={formData.useUnlimitedTimes} 
@@ -324,7 +324,7 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
       <ConfirmationDialog
         open={showModeConfirmation}
         onOpenChange={setShowModeConfirmation}
-        title="Change Tracking Mode?"
+        title={t('changeTrackingMode')}
         description={getModeChangeMessage()}
         onConfirm={handleModeChangeConfirm}
         onCancel={handleModeChangeCancel}

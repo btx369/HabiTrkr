@@ -8,7 +8,8 @@ import { highlightText } from '@/lib/textHighlight';
 import { ViewType } from '@/components/events/EventViewSettings';
 import { ItemActionMenu } from '@/components/shared/ItemActionMenu';
 import { ColoredCard } from '@/components/shared/ColoredCard';
-import { useWeekStart, getOrderedDayNames, getVisualIndexFromJsDay } from '@/contexts/WeekStartContext';
+import { useWeekStart, getOrderedDayNameKeys, getVisualIndexFromJsDay } from '@/contexts/WeekStartContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { isDefaultColor } from '@/lib/cardColorStyles';
 import { getColoredIconClass, getColoredBorderClass } from '@/lib/coloredButtonStyles';
 import { cn } from '@/lib/utils';
@@ -62,7 +63,10 @@ export function EventCard({
   onBulkSelect,
 }: EventCardProps) {
   const { weekStartDay } = useWeekStart();
-  const orderedDayNames = getOrderedDayNames(weekStartDay);
+  const { t } = useLanguage();
+  // Short translated day names in week-start order: the function returns translation KEYS,
+  // because a hook cannot run in the provider.
+  const orderedDayNames = getOrderedDayNameKeys(weekStartDay).map((key) => t(key));
 
   // Track when bulk mode was enabled for animation control
   const bulkModeEntryRef = useRef<number | null>(null);
@@ -346,7 +350,7 @@ export function EventCard({
                   </Badge>
                 ) : daysRemaining === 0 ? (
                   <Badge className="text-xs bg-green-500 text-white">
-                    Today!
+                    {t('todayExclaim')}
                   </Badge>
                 ) : (
                   <Badge variant="secondary" className="text-xs">

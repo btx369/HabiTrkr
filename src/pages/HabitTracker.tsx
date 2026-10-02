@@ -20,6 +20,7 @@ import { HabitFolderViewSettings, HabitFolderSortType, HabitFolderSortDirection 
 import { BulkActionBar, BulkActionType, BulkActionContext } from '@/components/shared/BulkActionBar';
 import { useToastSettings } from '@/contexts/ToastContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useDateLocale } from '@/lib/dateLocale';
 import { useWeekStart, getJsDayFromVisualIndex } from '@/contexts/WeekStartContext';
 import { useScrollDirection } from '@/hooks/useScrollDirection';
 import { useBulkSelection } from '@/hooks/useBulkSelection';
@@ -53,6 +54,7 @@ const DAY_SHORT_KEYS = [
 export default function HabitTracker() {
   const { toast } = useToastSettings();
   const { t } = useLanguage();
+  const dateLocale = useDateLocale();
   const { weekStartsOn, weekStartDay } = useWeekStart();
   // Weekday labels follow the configured week start.
   const orderedDayNames = Array.from({ length: 7 }, (_, index) =>
@@ -903,7 +905,7 @@ export default function HabitTracker() {
                     <ChevronLeft size={24} />
                   </Button>
                   <h3 className="font-medium">
-                    {format(weekStart, 'MMM d')} - {format(addDays(weekStart, 6), 'MMM d, yyyy')}
+                    {format(weekStart, 'MMM d', { locale: dateLocale })} - {format(addDays(weekStart, 6), 'MMM d, yyyy', { locale: dateLocale })}
                   </h3>
                   <Button variant="ghost" size="icon" className="text-foreground hover:bg-hover hover:text-foreground rounded-full [&_svg]:!size-5" onClick={() => setCurrentWeek(addWeeks(currentWeek, 1))}>
                     <ChevronRight size={24} />
@@ -1017,11 +1019,11 @@ export default function HabitTracker() {
             <div className="space-y-4">
               {/* Archived Habits Section - filtered to exclude habits in archived folders */}
               <div className="space-y-2">
-                <h3 className="text-lg font-medium">Archived Habits</h3>
+                <h3 className="text-lg font-medium">{t('archivedHabits')}</h3>
                 {getArchivedHabitsFiltered().length === 0 ? (
                   <Card>
                     <CardContent className="text-center py-8">
-                      <p className="text-muted-foreground">No archived habits</p>
+                      <p className="text-muted-foreground">{t('noArchivedHabits')}</p>
                     </CardContent>
                   </Card>
                 ) : (
@@ -1044,7 +1046,7 @@ export default function HabitTracker() {
               
               {/* Archived Folders Section */}
               <div className="space-y-2">
-                <h3 className="text-lg font-medium">Archived Folders</h3>
+                <h3 className="text-lg font-medium">{t('archivedFolders')}</h3>
                 {getArchivedFolders().length === 0 ? (
                   <Card>
                     <CardContent className="text-center py-8">

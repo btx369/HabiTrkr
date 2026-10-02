@@ -49,28 +49,52 @@ interface EventEditorProps {
   mode?: 'create' | 'edit';
 }
 
-const ALERT_OPTIONS: { value: AlertType; label: string }[] = [
-  { value: 'none', label: 'None' },
-  { value: '5min', label: '5 minutes before' },
-  { value: '15min', label: '15 minutes before' },
-  { value: '30min', label: '30 minutes before' },
-  { value: '1hour', label: '1 hour before' },
-  { value: '4hours', label: '4 hours before' },
-  { value: '12hours', label: '12 hours before' },
-  { value: '1day', label: '1 day before' },
-  { value: '4weeks', label: '4 weeks before' },
-  { value: 'custom', label: 'Custom...' },
+/**
+ * The alert options, resolved with `t()`.
+ *
+ * Built by a function of `t` rather than declared as a constant, because most of the
+ * labels have to be COMPOSED from a count, a unit and `before` — a module level table
+ * cannot call the hook, and a bare key cannot express "5 minutes before". The caller
+ * resolves them once per render; see `alertOptions` in the component.
+ *
+ * `value` is the AlertType discriminant and is never translated.
+ */
+const getAlertOptions = (t: (key: string) => string): { value: AlertType; label: string }[] => [
+  { value: 'none', label: t('none') },
+  { value: '5min', label: `${5} ${t('unitMinutes')} ${t('before')}` },
+  { value: '15min', label: `${15} ${t('unitMinutes')} ${t('before')}` },
+  { value: '30min', label: `${30} ${t('unitMinutes')} ${t('before')}` },
+  // `unitHour` exists for exactly this: the plural key would read "1 hours before".
+  { value: '1hour', label: `${1} ${t('unitHour')} ${t('before')}` },
+  { value: '4hours', label: `${4} ${t('unitHours')} ${t('before')}` },
+  { value: '12hours', label: `${12} ${t('unitHours')} ${t('before')}` },
+  { value: '1day', label: `${1} ${t('unitDays')} ${t('before')}` },
+  { value: '4weeks', label: `${4} ${t('unitWeeks')} ${t('before')}` },
+  { value: 'custom', label: t('custom') },
 ];
 
 /**
- * The recurrence units, declared like ALERT_OPTIONS so both selects read the same way.
+ * The stored AlertCustomUnit values as unit translation keys, for composing the label of
+ * a custom alert ("30 minutes before") the same way the fixed options above do.
+ */
+const CUSTOM_ALERT_UNIT_KEYS: Record<AlertCustomUnit, string> = {
+  minutes: 'unitMinutes',
+  hours: 'unitHours',
+  days: 'unitDays',
+  weeks: 'unitWeeks',
+};
+
+/**
+ * The recurrence units, declared like the alert options so both selects read the same way.
+ * Here every label is a single key, so the table holds the KEY and the render site calls
+ * `t()` — the same pattern BulkActionBar uses.
  * These labels were previously the <option> text of a native select.
  */
 const RECURRENCE_OPTIONS: { value: EventFormData['recurrenceType']; label: string }[] = [
-  { value: 'daily', label: 'Day(s)' },
-  { value: 'weekly', label: 'Week(s)' },
-  { value: 'monthly', label: 'Month(s)' },
-  { value: 'yearly', label: 'Year(s)' },
+  { value: 'daily', label: 'repeatDays' },
+  { value: 'weekly', label: 'repeatWeeks' },
+  { value: 'monthly', label: 'repeatMonths' },
+  { value: 'yearly', label: 'repeatYears' },
 ];
 
 const getDefaultDates = () => {
@@ -239,11 +263,17 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
     }));
   };
 
+  /** The alert options with their labels resolved, for this render. */
+  const alertOptions = getAlertOptions(t);
+
   const getAlertDisplayValue = () => {
     if (formData.alertType === 'custom') {
-      return `${formData.alertCustomValue} ${formData.alertCustomUnit} before`;
+      // Composed like the fixed options, from the unit key behind the stored value.
+      return `${formData.alertCustomValue} ${t(CUSTOM_ALERT_UNIT_KEYS[formData.alertCustomUnit])} ${t('before')}`;
     }
-    return ALERT_OPTIONS.find(opt => opt.value === formData.alertType)?.label || 'None';
+    // Falls back to the same literal the `none` option shows, so the trigger can never
+    // read differently from the option it stands for.
+    return alertOptions.find(opt => opt.value === formData.alertType)?.label || t('none');
   };
 
   return (
@@ -262,7 +292,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
           label={t('title')}
           value={formData.name}
           onChange={(value) => setFormData(prev => ({ ...prev, name: value }))}
-          placeholder="e.g., Birthday party"
+          placeholder={t('placeholderEventTitle')}
           maxLength={35}
           required
           icon={NotebookPen}
@@ -270,14 +300,14 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
         />
 
         {/*
-          * Date and Time Section.
+          * dateAndTime section.
           *
           * `space-y-3` (12px) throughout, so the section has ONE rhythm instead of three:
           * it used to be 8px from this label to the fields, 12px from a date field to its
-          * "Set time" button, and then 24px out to the next section. The pairing that
+          * setTime button, and then 24px out to the next section. The pairing that
           * matters most — a date and the time that goes with it — was therefore the second
           * largest gap in the block, which read as the two being unrelated while the
-          * label drifted up towards the Title above it.
+          * label drifted up towards the title field above it.
           *
           * Measured before the change: 24 / 8 / 12 / 24. After: 24 / 12 / 12 / 24.
           */}
@@ -285,7 +315,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
           <div className="flex items-center justify-between">
             <Label className="text-sm flex items-center gap-2">
               <CalendarClock size={16} color={ICON_COLOR} />
-              Date and Time
+              {t('dateAndTime')}
             </Label>
             <div className="flex items-center gap-2">
               <Label htmlFor="all-day" className="text-sm text-muted-foreground">{t('allDay')}</Label>
@@ -300,7 +330,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
             * `items-start`: the two columns hold the same fields but the End column can
             * grow — it turns red and gains padding when the end date is invalid. Left to
             * stretch, the shorter Start column was padded down to match, which pushed the
-            * section's own box well below its visible "Set time" button and made the gap to
+            * section's own box well below its visible setTime button and made the gap to
             * the next section depend on the other column's height. Each column now ends
             * where its own content ends.
             */}
@@ -310,7 +340,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
               * `space-y-3` (12px), not `space-y-2`. Inside a column the date field and the
               * time button belong together, but every other label-to-control gap in this form
               * is 8px and the gap between sections is 24px — so an 8px pairing read as a
-              * section break and the "Set time" button looked adrift from the date above it.
+              * section break and the setTime button looked adrift from the date above it.
               * 12px keeps the pair together while staying clearly tighter than a section gap.
               */}
             <div className="space-y-3">
@@ -322,7 +352,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
                   startDate: value,
                   endDate: (!prev.endDate || prev.endDate === prev.startDate) ? value : prev.endDate
                 }))}
-                label="Start"
+                label={t('start')}
                 icon={CalendarDays}
                 iconColor={ICON_COLOR}
                 iconPosition="left"
@@ -354,7 +384,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
                   setFormData(prev => ({ ...prev, endDate: value }));
                   setHasEndDateError(false);
                 }}
-                label="End"
+                label={t('end')}
                 icon={CalendarDays}
                 iconColor={ICON_COLOR}
                 iconPosition="left"
@@ -377,12 +407,12 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
         {/*
           * Recurrent Event.
           *
-          * No negative margin here, deliberately. The gap to "Set time" above is the shared
+          * No negative margin here, deliberately. The gap to setTime above is the shared
           * 24px section break, the same as every other section in this form.
           *
           * What made this junction look wrong was never the gap: the Start column is shorter
           * than the End column, and the date grid stretched it to match. That padding pushed
-          * the "Date and Time" section's own box well past its visible "Set time" button, so
+          * the dateAndTime section's own box well past its visible setTime button, so
           * the distance to this box was measured from empty space rather than from the
           * button the eye lands on. `items-start` on the date grid fixes it at the source.
           * Reducing the margin on top of that produced an overlap, which is how the real
@@ -400,7 +430,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
         {formData.isRecurrent && (
           <div id="recurrent-options" className="space-y-4 p-4 bg-muted rounded-lg">
             <div>
-              <Label className="text-sm">Repeat every</Label>
+              <Label className="text-sm">{t('repeatEvery')}</Label>
               <div className="flex gap-3 mt-3">
                 <Input 
                   type="number" 
@@ -438,7 +468,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
                   <SelectContent>
                     {RECURRENCE_OPTIONS.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
-                        {option.label}
+                        {t(option.label)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -448,7 +478,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
             
             {formData.recurrenceType === 'weekly' && (
               <div>
-                <Label className="text-sm">On these days</Label>
+                <Label className="text-sm">{t('onTheseDays')}</Label>
                 <DaySelector 
                   selectedDays={formData.recurrenceDays}
                   onDaysChange={(days) => setFormData(prev => ({ ...prev, recurrenceDays: days as number[] }))}
@@ -475,7 +505,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {ALERT_OPTIONS.map((option) => (
+              {alertOptions.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
@@ -490,7 +520,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
           label={t('location')}
           value={formData.location}
           onChange={(value) => setFormData(prev => ({ ...prev, location: value }))}
-          placeholder="e.g., Conference Room A"
+          placeholder={t('placeholderLocation')}
           maxLength={100}
           icon={MapPin}
           iconColor={ICON_COLOR}
@@ -502,7 +532,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
           label={t('description')}
           value={formData.description}
           onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
-          placeholder="Add more details about this event..."
+          placeholder={t('placeholderEventDescription')}
           maxLength={200}
           icon={NotebookText}
           iconColor={ICON_COLOR}

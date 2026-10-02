@@ -38,14 +38,34 @@ interface BulkAction {
   type: BulkActionType;
   icon: typeof CheckSquare;
   /**
-   * A translation key, or plain English text when no key covers the label. See
-   * `resolveLabel` and `LABEL_KEYS` for how the two are distinguished.
+   * A translation key — every label in the tables below is one — or plain English text if a
+   * label is ever added without a key. See `resolveLabel` and `LABEL_KEYS` for how the two
+   * are told apart.
    */
   label: string;
 }
 
-/** The labels in the tables below that are translation keys rather than literal text. */
-const LABEL_KEYS = new Set(['all', 'pin', 'share', 'makeACopy', 'color', 'archive', 'delete', 'restore']);
+/**
+ * The labels in the tables below that are translation keys rather than literal text.
+ *
+ * Every label is a key today; the set stays explicit so that a literal label added later is
+ * rendered as written instead of being passed to `t()`.
+ */
+const LABEL_KEYS = new Set([
+  'all',
+  'pin',
+  'share',
+  'makeACopy',
+  'move',
+  'color',
+  'archive',
+  'delete',
+  'restore',
+  'allNotes',
+  'allEvents',
+  'allHabits',
+  'allFolders',
+]);
 
 // Action configurations by context
 const NOTES_ACTIONS: BulkAction[] = [
@@ -53,7 +73,7 @@ const NOTES_ACTIONS: BulkAction[] = [
   { type: 'pin', icon: Pin, label: 'pin' },
   { type: 'share', icon: Share, label: 'share' },
   { type: 'copy', icon: Copy, label: 'makeACopy' },
-  { type: 'move', icon: FolderInput, label: 'Move' },
+  { type: 'move', icon: FolderInput, label: 'move' },
   { type: 'color', icon: Palette, label: 'color' },
   { type: 'archive', icon: Archive, label: 'archive' },
   { type: 'delete', icon: Trash2, label: 'delete' },
@@ -63,7 +83,7 @@ const EVENTS_ACTIONS: BulkAction[] = [
   { type: 'all', icon: CheckSquare, label: 'all' },
   { type: 'share', icon: Share, label: 'share' },
   { type: 'copy', icon: Copy, label: 'makeACopy' },
-  { type: 'move', icon: FolderInput, label: 'Move' },
+  { type: 'move', icon: FolderInput, label: 'move' },
   { type: 'color', icon: Palette, label: 'color' },
   { type: 'archive', icon: Archive, label: 'archive' },
   { type: 'delete', icon: Trash2, label: 'delete' },
@@ -80,30 +100,30 @@ const FOLDERS_ACTIONS: BulkAction[] = [
 const HABITS_ACTIONS: BulkAction[] = [
   { type: 'all', icon: CheckSquare, label: 'all' },
   { type: 'pin', icon: Pin, label: 'pin' },
-  { type: 'move', icon: FolderInput, label: 'Move' },
+  { type: 'move', icon: FolderInput, label: 'move' },
   { type: 'color', icon: Palette, label: 'color' },
   { type: 'archive', icon: Archive, label: 'archive' },
   { type: 'delete', icon: Trash2, label: 'delete' },
 ];
 
-// Archived sections get separate "All Notes/Events" and "All Folders" buttons
+// Archived sections get separate allItems (allNotes/allEvents/allHabits) and allFolders buttons
 const ARCHIVED_NOTES_ACTIONS: BulkAction[] = [
-  { type: 'allItems', icon: Notebook, label: 'All Notes' },
-  { type: 'allFolders', icon: FolderOpen, label: 'All Folders' },
+  { type: 'allItems', icon: Notebook, label: 'allNotes' },
+  { type: 'allFolders', icon: FolderOpen, label: 'allFolders' },
   { type: 'restore', icon: ArchiveRestore, label: 'restore' },
   { type: 'delete', icon: Trash2, label: 'delete' },
 ];
 
 const ARCHIVED_EVENTS_ACTIONS: BulkAction[] = [
-  { type: 'allItems', icon: CheckSquare, label: 'All Events' },
-  { type: 'allFolders', icon: FolderOpen, label: 'All Folders' },
+  { type: 'allItems', icon: CheckSquare, label: 'allEvents' },
+  { type: 'allFolders', icon: FolderOpen, label: 'allFolders' },
   { type: 'restore', icon: ArchiveRestore, label: 'restore' },
   { type: 'delete', icon: Trash2, label: 'delete' },
 ];
 
 const ARCHIVED_HABITS_ACTIONS: BulkAction[] = [
-  { type: 'allItems', icon: CheckSquare, label: 'All Habits' },
-  { type: 'allFolders', icon: FolderOpen, label: 'All Folders' },
+  { type: 'allItems', icon: CheckSquare, label: 'allHabits' },
+  { type: 'allFolders', icon: FolderOpen, label: 'allFolders' },
   { type: 'restore', icon: ArchiveRestore, label: 'restore' },
   { type: 'delete', icon: Trash2, label: 'delete' },
 ];
@@ -149,9 +169,9 @@ export function BulkActionBar({
    * lowerCamelCase and every literal starts with a capital, so a heuristic would work
    * today and break silently the first time a key or a phrase does not fit that pattern.
    *
-   * The literals are the phrases that compose a noun with "All" ("All Notes", "All
-   * Events", "All Habits", "All Folders") and "Move", none of which have a key. They stay
-   * in English rather than showing a key name.
+   * Every label in the tables above is a key, so the literal branch is unused today. It is
+   * kept so that a label added without a key renders as written instead of putting the key
+   * name on the button.
    */
   const resolveLabel = (label: string): string =>
     LABEL_KEYS.has(label) ? t(label) : label;

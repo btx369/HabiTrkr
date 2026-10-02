@@ -57,7 +57,17 @@ export default function Profile() {
   const [languageDialogOpen, setLanguageDialogOpen] = useState(false);
   const [weekStartDialogOpen, setWeekStartDialogOpen] = useState(false);
 
-  // User profile state
+  /*
+   * 'User' is the placeholder name shown until the user types their own, and it stays in
+   * English on purpose.
+   *
+   * The moment it is written it becomes DATA — it is stored under PROFILE_NAME_KEY and read
+   * back as the person's name, exactly like a note's title. Translating it would either
+   * store whichever language happened to be active when the profile was first opened, so the
+   * name would never follow a language change, or require keeping it as a separate
+   * "is this still the default?" flag. Neither is worth it for a placeholder the user is
+   * expected to replace.
+   */
   const [userName, setUserName] = useState(() => getLocalStorageString(PROFILE_NAME_KEY, 'User'));
   const [userAvatar, setUserAvatar] = useState(() => getLocalStorageString(PROFILE_AVATAR_KEY, ''));
   const [isEditingName, setIsEditingName] = useState(false);

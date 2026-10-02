@@ -29,12 +29,11 @@ export function HabitFolderViewSettings({
 
   const getSortLabel = (type: HabitFolderSortType) => {
     // `Name` is the folder's title field, which the editor labels with the `title` key.
-    // `Habit Count` has no translation key yet, so it stays in English.
     const labels = {
       name: t('title'),
       dateCreated: t('dateCreated'),
       dateModified: t('dateModified'),
-      habitCount: 'Habit Count'
+      habitCount: t('habitCount')
     };
     return labels[type];
   };
