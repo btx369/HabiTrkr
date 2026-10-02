@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Search diagnostic — HabiTrkr</title>
+<style>
+  :root {
+    --bg: #f9f8f7; --card: #ffffff; --fg: #0b0a09; --muted: #6b6560;
+    --border: #e3ded8; --mark: #ffe680; --ok: #16794a; --no: #b3261e;
+    --code: #f1ede9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #131211; --card: #262421; --fg: #f2f0ee; --muted: #a49d96;
+      --border: #3a3733; --mark: #6b5a12; --ok: #56c98d; --no: #ff8a80;
+      --code: #1c1b19;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px; background: var(--bg); color: var(--fg);
+    font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 1000px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 15px; margin: 28px 0 10px; }
+  p.lede { color: var(--muted); margin: 0 0 20px; }
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px;
+  }
+  label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px; }
+  input[type="text"], textarea {
+    width: 100%; padding: 9px 11px; color: var(--fg); background: var(--bg);
+    border: 1px solid var(--border); border-radius: 9px;
+    font: inherit; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  textarea { min-height: 110px; resize: vertical; font-size: 12.5px; }
+  input[type="text"] { font-size: 15px; }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; }
+  .row > div { flex: 1 1 220px; }
+  button {
+    font: inherit; font-weight: 600; cursor: pointer; padding: 9px 18px;
+    border-radius: 999px; border: 1px solid var(--border);
+    background: var(--fg); color: var(--bg);
+  }
+  button.secondary { background: transparent; color: var(--fg); }
+  .help { color: var(--muted); font-size: 12.5px; margin-top: 6px; }
+  .stats { display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0 4px; }
+  .stat {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 14px; min-width: 120px;
+  }
+  .stat b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
+  .stat span { color: var(--muted); font-size: 12px; }
+  details.note {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; margin-bottom: 8px; overflow: hidden;
+  }
+  details.note[data-match="yes"] { border-left: 4px solid var(--ok); }
+  details.note[data-match="no"] { border-left: 4px solid var(--no); opacity: .78; }
+  summary {
+    cursor: pointer; padding: 11px 14px; display: flex; gap: 10px;
+    align-items: baseline; flex-wrap: wrap;
+  }
+  summary::marker { color: var(--muted); }
+  .badge {
+    font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+    padding: 2px 7px; border-radius: 5px; flex: none;
+  }
+  [data-match="yes"] .badge { background: var(--ok); color: var(--card); }
+  [data-match="no"] .badge { background: var(--no); color: var(--card); }
+  .title { font-weight: 600; }
+  .title.empty { font-weight: 400; font-style: italic; color: var(--muted); }
+  .meta { color: var(--muted); font-size: 12px; }
+  .why { padding: 0 14px 14px; }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 5px 0; vertical-align: top; }
+  td.f { white-space: nowrap; padding-right: 14px; color: var(--muted); font-size: 12.5px; vertical-align: top; }
+  td.f .lbl { color: var(--fg); }
+  td.f .sub { font-size: 10.5px; opacity: .7; text-transform: uppercase; letter-spacing: .05em; }
+  td.v { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; vertical-align: top; }
+  td.v.hit { color: var(--ok); font-weight: 600; }
+  td.v.miss { opacity: .55; }
+  td.v.raw { color: var(--muted); word-break: break-all; font-size: 11px; }
+  td.v.dim, .dim { color: var(--muted); opacity: .75; }
+  .explain {
+    background: var(--code); border-left: 3px solid var(--muted); border-radius: 8px;
+    padding: 10px 12px; margin: 0 0 12px; font-size: 12.5px; line-height: 1.5;
+  }
+  mark { background: var(--mark); color: inherit; border-radius: 3px; padding: 0 2px; }
+  code, pre {
+    background: var(--code); border-radius: 6px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px;
+  }
+  code { padding: 1px 5px; }
+  pre { padding: 12px; overflow-x: auto; margin: 8px 0 0; }
+  .warn {
+    border-left: 4px solid var(--no); background: var(--card);
+    border-radius: 10px; padding: 12px 16px; margin: 16px 0;
+  }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Search diagnostic</h1>
+  <p class="lede">
+    Runs the app&rsquo;s real search over your real notes and shows, note by note, which
+    stored field produced the match — including fields the note card never displays.
+  </p>
+
+  <div class="panel">
+    <div class="row">
+      <div>
+        <label for="query">Search query</label>
+        <input id="query" type="text" placeholder="e.g. asd" autocomplete="off" spellcheck="false" />
+      </div>
+      <div style="flex:0 0 auto">
+        <button id="analyse">Analyse</button>
+        <button id="clear" class="secondary">Clear</button>
+      </div>
+    </div>
+    <p class="help" id="queryHelp">Matching is case-insensitive substring search, split on spaces.</p>
+
+    <h2 style="margin-top:22px">Notes data</h2>
+    <p class="help" style="margin-top:0">
+      <strong>Nothing is uploaded anywhere.</strong> This page reads
+      <code>localStorage</code> directly, or you can paste the value of the
+      <code>notes</code> key below to inspect a snapshot instead.
+    </p>
+    <textarea id="notesJson" spellcheck="false"
+      placeholder='Paste the value of localStorage["notes"] here (starts with "[" )'></textarea>
+    <p class="help" id="source"></p>
+  </div>
+
+  <div id="warn" class="warn hidden"></div>
+  <div id="stats" class="stats"></div>
+  <div id="express"></div>
+  <div id="results"></div>
+</main>
+
+<script type="module">
+import { parseSearchExpression, matchesSearchExpression, isInvalidExpression }
+  from './src/lib/tagParser.ts';
+import { extractSearchableText } from './src/lib/noteSearchText.ts';
+
+// ── Mirrors searchInNote() in src/pages/Notes.tsx ────────────────────────────
+// The report shows two things per field: the RAW stored value (so an embedded
+// attachment is visible for what it is) and the EXTRACTED text the search actually
+// looks at. The two differ whenever a note carries an image or a sound, because those
+// live in `description` as a base64 data URL — thousands of arbitrary letters that a
+// search must never see.
+
+const RAW_PREVIEW = 600;
+
+function shrink(value) {
+  const s = String(value ?? '');
+  if (s.length <= RAW_PREVIEW) return { text: s, truncated: 0 };
+  return { text: s.slice(0, RAW_PREVIEW), truncated: s.length - RAW_PREVIEW };
+}
+
+function evaluate(note, expression) {
+  const textConds = expression.flat().filter(c => c.type === 'text');
+  const fields = [];
+
+  const record = (key, label, rawValues, extractedValue) => {
+    const raws = (rawValues ?? []).map(v => String(v ?? '')).filter(v => v !== '');
+    // What the search sees for this field, after attachments are removed.
+    const extracted = (extractedValue ?? '').toLowerCase();
+    fields.push({
+      key, label, raws, extracted,
+      matched: extracted !== '' && textConds.some(c => extracted.includes(c.value)),
+    });
+  };
+
+  const nameText = extractSearchableText({ name: note.name });
+  if (note.type === 'list') {
+    record('name', 'Name', [note.name], nameText);
+    record('items[].text', 'List items',
+      (note.items ?? []).map(i => i?.text),
+      (note.items ?? []).map(i => extractSearchableText(i?.text)).join(' '));
+    fields.push({ key: 'description', label: 'Description', raws: [], extracted: '', matched: false, absent: true });
+  } else {
+    record('name', 'Name', [note.name], nameText);
+    record('description', 'Description', [note.description],
+      extractSearchableText({ description: note.description }));
+    fields.push({ key: 'items[].text', label: 'List items', raws: [], extracted: '', matched: false, absent: true });
+  }
+
+  // Exactly what Notes.tsx does when it decides a note is a hit: only human-readable
+  // text is searched, so the encoding of a sound can never produce a match.
+  const matchesText = (term) => {
+    if (extractSearchableText(note).includes(term)) return true;
+    if (note.type === 'list') {
+      return (note.items ?? []).some(i => extractSearchableText(i?.text).includes(term));
+    }
+    return false;
+  };
+
+  const matched = matchesSearchExpression(expression, note.tags, matchesText);
+
+  // Which field ultimately produced the hit — recomputed so the UI can name it.
+  let reason = null;
+  let tagHint = null;
+  if (matched) {
+    const hitField = fields.find(f => f.matched);
+    if (hitField) {
+      const cond = textConds.find(c => hitField.extracted.includes(c.value));
+      reason = { kind: 'field', field: hitField, term: cond?.value ?? '' };
+    } else {
+      // The expression has no text condition at all, so this note qualified on a tag.
+      const tag = (note.tags ?? []).find(t =>
+        expression.flat().some(c => c.type === 'tag' && c.value === t));
+      reason = tag ? { kind: 'tag', tag } : { kind: 'unknown' };
+    }
+  } else {
+    // Worth calling out: a tag whose name contains the term is a near miss, because a
+    // bare word never matches a tag — `#` is what makes a search look at tags.
+    const tag = (note.tags ?? []).find(t =>
+      textConds.some(c => t.toLowerCase().includes(c.value)));
+    if (tag) tagHint = tag;
+  }
+
+  return { matched, fields, reason, tagHint };
+}
+
+// ── Reading the data ────────────────────────────────────────────────────────
+const NOTES_KEYS = ['notes', 'archivedNotes'];
+
+function readFromLocalStorage() {
+  const out = [];
+  for (const key of NOTES_KEYS) {
+    let raw = null;
+    try { raw = localStorage.getItem(key); } catch { /* blocked */ }
+    if (raw) out.push({ key, raw, note: `localStorage["${key}"]` });
+  }
+  return out;
+}
+
+function parseNotes(rawValue, label) {
+  const parsed = JSON.parse(rawValue);
+  if (!Array.isArray(parsed)) throw new Error(`${label} is not an array (got ${typeof parsed}).`);
+  return parsed;
+}
+
+// ── Rendering ───────────────────────────────────────────────────────────────
+const $ = (id) => document.getElementById(id);
+const queryEl = $('query'), notesEl = $('notesJson');
+let notes = [];
+let sourceLabel = '';
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function highlight(value, terms) {
+  const safe = escapeHtml(value);
+  const live = terms.filter(t => t);
+  if (!live.length) return safe;
+  // Longest first, so "as" does not chop up a match for "asd". Note the character
+  // class: `|` is deliberately NOT escaped, because it is the alternation between
+  // terms rather than part of any one term.
+  const pattern = live
+    .slice().sort((a, b) => b.length - a.length)
+    .map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .join('|');
+  return safe.replace(new RegExp(`(${pattern})`, 'gi'), '<mark>$1</mark>');
+}
+
+function fieldRow(f, terms) {
+  if (f.absent) {
+    return `<tr><td class="f" data-field="${escapeHtml(f.key)}" data-sub="absent">${f.label}</td>` +
+           `<td class="v miss">— not used by this note type —</td></tr>`;
+  }
+
+  const cls = f.matched ? 'v hit' : 'v miss';
+  const label = `<span class="lbl">${f.label}</span>`;
+  const rows = [];
+
+  // What the search reads. This is the value that decides the note's fate.
+  const extractedShown = f.extracted === ''
+    ? '<span class="dim">(nothing searchable — no readable text in this field)</span>'
+    : highlight(f.extracted, terms);
+  rows.push(
+    `<tr><td class="f" data-field="${escapeHtml(f.key)}" data-sub="reads">${label}<br>` +
+    `<span class="sub">search reads</span></td>` +
+    `<td class="${cls}">${extractedShown}</td></tr>`,
+  );
+
+  // What is actually stored, always shown so an empty field is not just a blank.
+  const rawJoined = f.raws.join('  ·  ');
+  const { text, truncated } = shrink(rawJoined);
+  const rawCls = f.raws.some(r => r.length > RAW_PREVIEW) ? 'v raw' : 'v dim';
+  rows.push(
+    `<tr><td class="f" data-field="${escapeHtml(f.key)}" data-sub="stored">${label}<br>` +
+    `<span class="sub">stored</span></td>` +
+    `<td class="${rawCls}">${text === '' ? '<span class="dim">(empty)</span>' : escapeHtml(text)}` +
+    (truncated ? `<span class="dim"> … ${truncated.toLocaleString()} more characters</span>` : '') +
+    `</td></tr>`,
+  );
+
+  return rows.join('');
+}
+
+function describeReason(r) {
+  if (r.kind === 'tag') return `Matched on tag <code>#${escapeHtml(r.tag)}</code>`;
+  if (r.kind === 'field') {
+    return `Matched on <strong>${r.field.label}</strong> — the term ` +
+           `<code>${escapeHtml(r.term)}</code> appears in the text this field is searched by, ` +
+           `shown under &ldquo;search reads&rdquo; below.`;
+  }
+  return 'Matched by the query, but no single text field explains it (operator logic).';
+}
+
+function describeMiss(tagHint) {
+  const base = 'No readable text contains the term, so the card stays hidden.';
+  if (!tagHint) return base;
+  return base + ` <strong>It does however carry the tag <code>#${escapeHtml(tagHint)}</code></strong>` +
+         ` — a bare word never matches a tag, so searching <code>#${escapeHtml(tagHint)}</code> would show it.`;
+}
+
+/** True when the note carries an attachment, i.e. its stored value holds a data URL. */
+function hasAttachment(note) {
+  const raw = `${note.description ?? ''}`;
+  return raw.includes('[audio:') || raw.includes('[image:');
+}
+
+/**
+ * Explains why a note full of encoded characters does not appear in the results, which
+ * is the whole reason this page exists. Without it, an empty "search reads" row next to
+ * a wall of base64 looks like a bug rather than the fix.
+ */
+function attachmentNote(note, terms) {
+  if (!hasAttachment(note)) return '';
+  const leaked = terms.filter(t => `${note.description ?? ''}`.toLowerCase().includes(t));
+  const leakedLine = leaked.length
+    ? `<br>The letters <code>${leaked.map(t => escapeHtml(t)).join('</code>, <code>')}</code> ` +
+      `<strong>do occur inside that encoded data</strong> — which is exactly the false ` +
+      `positive this page was built to expose. They are not words in the note, so the ` +
+      `note is correctly kept out of the results.`
+    : '';
+  return `<div class="explain"><strong>This note holds an attachment.</strong> Its stored ` +
+         `value contains a base64 data URL: thousands of arbitrary letters standing in for ` +
+         `a sound or a picture. Those characters are not text and are not searched.` +
+         leakedLine + `</div>`;
+}
+
+function render(expression) {
+  const terms = expression.flat().filter(c => c.type === 'text').map(c => c.value);
+  const tagTerms = expression.flat().filter(c => c.type === 'tag').map(c => c.value);
+  const results = notes.map(n => ({ n, ...evaluate(n, expression) }));
+  const hits = results.filter(r => r.matched);
+
+  $('stats').innerHTML = [
+    ['Notes scanned', notes.length],
+    ['Matching', hits.length],
+    ['Not matching', notes.length - hits.length],
+  ].map(([label, value]) =>
+    `<div class="stat"><b>${value}</b><span>${label}</span></div>`).join('');
+
+  const normalized = expression.length
+    ? expression.map(g => g.map(c => c.type === 'tag' ? `#${c.value}` : c.value).join(' AND '))
+        .join('  OR  ')
+    : '(empty query — matches everything)';
+  $('express').innerHTML =
+    `<h2>How the app read your query</h2>` +
+    `<div class="panel"><p style="margin:0 0 8px">Parsed as:</p><pre>${escapeHtml(normalized)}</pre>` +
+    (tagTerms.length
+      ? `<p class="help">Tag condition(s): ${tagTerms.map(t => `<code>#${escapeHtml(t)}</code>`).join(', ')}</p>`
+      : '') +
+    `<p class="help">Text term(s): ${terms.length ? terms.map(t => `<code>${escapeHtml(t)}</code>`).join(', ') : 'none'}</p>` +
+    `</div>`;
+
+  $('results').innerHTML = `<h2>Every note, with the field that decided it</h2>` +
+    results.map(({ n, matched, fields, reason, tagHint }, i) => {
+      const title = String(n.name ?? '').trim();
+      const titleHtml = title === ''
+        ? `<span class="title empty">(no name — the card shows no title)</span>`
+        : `<span class="title">${highlight(title, terms)}</span>`;
+      const chips = [
+        n.type ?? 'unknown',
+        `id ${String(n.id ?? '?').slice(0, 8)}`,
+        (n.tags ?? []).length ? (n.tags ?? []).map(t => `#${t}`).join(' ') : null,
+      ].filter(Boolean).map(t => `<span class="meta">${escapeHtml(t)}</span>`).join('<span class="meta"> · </span>');
+
+      return `<details class="note" data-match="${matched ? 'yes' : 'no'}" data-note-id="${escapeHtml(String(n.id ?? ''))}">
+  <summary>
+    <span class="badge">${matched ? 'shown' : 'hidden'}</span>
+    ${titleHtml}
+    ${chips}
+  </summary>
+  <div class="why">
+    <p style="margin:0 0 10px">${matched ? describeReason(reason) : describeMiss(tagHint)}</p>
+    ${attachmentNote(n, terms)}
+    <table>${fields.map(f => fieldRow(f, terms)).join('')}</table>
+  </div>
+</details>`;
+    }).join('');
+}
+
+function warn(html) {
+  const el = $('warn');
+  el.innerHTML = html;
+  el.classList.toggle('hidden', !html);
+}
+
+function analyse() {
+  const query = queryEl.value;
+  if (!notes.length) {
+    warn('<strong>No notes loaded.</strong> There is nothing to search. ' +
+         'Paste the value of <code>localStorage["notes"]</code> above.');
+    $('stats').innerHTML = ''; $('express').innerHTML = ''; $('results').innerHTML = '';
+    return;
+  }
+  warn('');
+  const expression = parseSearchExpression(query);
+  if (isInvalidExpression(expression)) {
+    warn('<strong>This query is invalid to the app.</strong> A term starting with ' +
+         '<code>+</code> is no longer supported, and an invalid query deliberately ' +
+         'matches nothing — you would see an empty list.');
+  }
+  render(expression);
+}
+
+// ── Wire up ─────────────────────────────────────────────────────────────────
+const stored = readFromLocalStorage();
+if (stored.length) {
+  try {
+    notes = stored.flatMap(s => parseNotes(s.raw, s.note));
+    sourceLabel = stored.map(s => s.note).join(' + ');
+    $('source').innerHTML =
+      `Loaded <strong>${notes.length}</strong> note(s) from ${escapeHtml(sourceLabel)}. ` +
+      `This is your current data in this browser.`;
+  } catch (e) {
+    warn(`<strong>Could not read your notes:</strong> ${escapeHtml(e.message)} ` +
+         `Paste the value of <code>localStorage["notes"]</code> below instead.`);
+  }
+} else {
+  $('source').innerHTML =
+    'No notes found in this browser\u2019s localStorage. ' +
+    'Open the app in this same browser and refresh, or paste a snapshot below.';
+}
+
+notesEl.addEventListener('input', () => {
+  const raw = notesEl.value.trim();
+  if (!raw) return;
+  try {
+    notes = parseNotes(raw, 'the pasted value');
+    sourceLabel = 'the pasted snapshot';
+    $('source').innerHTML = `Loaded <strong>${notes.length}</strong> note(s) from ${sourceLabel}.`;
+    warn('');
+    if (queryEl.value.trim()) analyse();
+  } catch (e) {
+    warn(`<strong>That is not valid JSON:</strong> ${escapeHtml(e.message)}`);
+  }
+});
+
+queryEl.addEventListener('input', () => { if (queryEl.value.trim()) analyse(); });
+$('analyse').addEventListener('click', analyse);
+$('clear').addEventListener('click', () => {
+  notesEl.value = ''; queryEl.value = '';
+  $('stats').innerHTML = ''; $('express').innerHTML = ''; $('results').innerHTML = '';
+  warn('');
+});
+
+if (notes.length) { $('query').focus(); }
+</script>
+</body>
+</html>

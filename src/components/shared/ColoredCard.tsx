@@ -88,7 +88,7 @@ export const ColoredCard = React.forwardRef<HTMLDivElement, ColoredCardProps>(
         ref={ref}
         className={cn(
           // Micro-interaction: subtle scale on tap/click
-          "transition-transform duration-150 ease-out active:scale-[0.98]",
+          "transition-transform duration-150 ease-out",
           // Only apply text color overrides when card has a color AND is not using forceBackground
           hasColor && !forceBackground && "text-[#000000] [&_.text-muted-foreground]:text-[#000000]/70 [&_.text-foreground]:text-[#000000]",
           // When forceBackground is used, ensure text follows normal theme rules

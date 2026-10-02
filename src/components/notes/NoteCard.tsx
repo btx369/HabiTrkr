@@ -10,8 +10,9 @@ import { Button } from '@/components/ui/button';
 import { CardContent, CardTitle } from '@/components/ui/card';
 import { Note } from '@/types/note';
 import { ViewType } from '@/components/notes/ViewSettings';
-import { highlightText } from '@/lib/textHighlight';
+import { excerptAroundMatch, highlightText } from '@/lib/textHighlight';
 import { parseNoteContent } from '@/lib/noteContentRenderer';
+import { extractSearchableText } from '@/lib/noteSearchText';
 import { renderMarkdownWithHighlight } from '@/lib/markdownRenderer';
 import { ItemActionMenu } from '@/components/shared/ItemActionMenu';
 import { ColoredCard } from '@/components/shared/ColoredCard';
@@ -139,15 +140,11 @@ export function NoteCard({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Helper function to extract only text content (no image or audio markers)
-  const extractTextContent = (content: string): string => {
-    const parts = parseNoteContent(content);
-    return parts
-      .filter(part => part.type === 'text')
-      .map(part => part.content)
-      .join('')
-      .trim();
-  };
+  // Helper function to extract only text content (no image or audio markers).
+  // Delegates to the shared extractor so the card and the search engine always agree
+  // on what counts as the note's text. Case is preserved here: this feeds the preview.
+  const extractTextContent = (content: string): string =>
+    extractSearchableText({ description: content }, { lowercase: false });
 
   // Helper function to extract embedded audio from content
   const extractEmbeddedAudio = (content: string): { url: string; duration: number }[] => {
@@ -215,7 +212,13 @@ export function NoteCard({
     
     switch (note.type) {
       case 'text':
-        const textContent = extractTextContent(note.description);
+        /*
+         * When searching, show the excerpt around the match rather than the opening of the
+         * note. The clamp below can only show a few lines, so a match further down was
+         * highlighted but off-screen — cards came back with nothing visible tying them to the
+         * query. The excerpt keeps the matched text inside the visible part.
+         */
+        const textContent = excerptAroundMatch(extractTextContent(note.description), searchQuery);
         const embeddedAudios = extractEmbeddedAudio(note.description);
         
         return (
@@ -283,7 +286,7 @@ export function NoteCard({
         );
       
       case 'audio':
-        const audioTextContent = extractTextContent(note.description || '');
+        const audioTextContent = excerptAroundMatch(extractTextContent(note.description || ''), searchQuery);
         return (
           <div className={`${isX3View ? '' : 'mt-2'} space-y-2`}>
             <AudioPlayer
@@ -303,7 +306,7 @@ export function NoteCard({
         );
       
       case 'image':
-        const imageTextContent = extractTextContent(note.description || '');
+        const imageTextContent = excerptAroundMatch(extractTextContent(note.description || ''), searchQuery);
         const imageEmbeddedAudios = extractEmbeddedAudio(note.description || '');
         
         return (

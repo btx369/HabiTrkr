@@ -30,7 +30,7 @@ export function ColorPicker({
           className={`w-8 h-8 rounded-full border-2 flex items-center justify-center bg-white transition-all ${
             selectedColor === '#FFFFFF' || selectedColor === ''
               ? 'border-foreground scale-110' 
-              : 'border-border hover:scale-105'
+              : 'border-border'
           }`}
         >
           <span className="text-gray-400 text-xs">✕</span>
@@ -42,7 +42,7 @@ export function ColorPicker({
             className={`w-8 h-8 rounded-full border-2 transition-all ${
               selectedColor === color 
                 ? 'border-foreground scale-110' 
-                : 'border-border hover:scale-105'
+                : 'border-border'
             }`}
             style={{ backgroundColor: color }}
             onClick={() => onColorChange(color)}

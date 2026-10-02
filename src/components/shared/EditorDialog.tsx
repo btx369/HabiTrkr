@@ -53,10 +53,17 @@ export function EditorDialog({
     
     return (
       <div className="flex gap-2 pt-4 w-full">
+        {/*
+         * Cancel reads the theme tokens rather than hardcoding `border-black` in light and a
+         * transparent border in dark, which is what it did before — the border vanished in
+         * dark and the button lost its edge. `border-input` and `text-foreground` are the
+         * values the outline variant uses everywhere else, so this now matches the other
+         * secondary buttons in the app.
+         */}
         <Button 
           variant="outline" 
           onClick={handleCancel} 
-          className="flex-1 h-10 text-sm border-black dark:border-transparent text-black dark:text-foreground hover:text-black dark:hover:text-foreground"
+          className="flex-1 h-10 text-sm text-foreground"
         >
           {cancelLabel}
         </Button>

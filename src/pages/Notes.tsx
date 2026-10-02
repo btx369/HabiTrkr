@@ -27,6 +27,7 @@ import { highlightText } from '@/lib/textHighlight';
 import { updateTagUsage } from '@/lib/tagStorage';
 import { autoImportNoteToFolders } from '@/lib/folderAutoImport';
 import { parseSearchExpression, matchesSearchExpression } from '@/lib/tagParser';
+import { extractSearchableText } from '@/lib/noteSearchText';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { useBulkSelection } from '@/hooks/useBulkSelection';
 import { BulkActionBar, BulkActionType, BulkActionContext } from '@/components/shared/BulkActionBar';
@@ -239,7 +240,7 @@ export default function Notes() {
   const createEmptyTextNote = () => {
     const newNote: TextNote = {
       id: Date.now().toString(),
-      name: 'Title',
+      name: '',
       type: 'text',
       description: '',
       color: '#FFFFFF',
@@ -256,7 +257,7 @@ export default function Notes() {
   const createEmptyListNote = () => {
     const newNote: ListNote = {
       id: Date.now().toString(),
-      name: 'Title',
+      name: '',
       type: 'list',
       items: [{ id: Date.now().toString(), text: '', completed: false }],
       color: '#FFFFFF',
@@ -274,7 +275,7 @@ export default function Notes() {
     // Create and immediately save the image note (like audio notes)
     const newNote: ImageNote = {
       id: Date.now().toString(),
-      name: 'Title',
+      name: '',
       type: 'image',
       imageUrl,
       description: '',
@@ -297,7 +298,7 @@ export default function Notes() {
     const audioMarker = `[audio:${audioUrl}:${duration}]`;
     const newNote: TextNote = {
       id: Date.now().toString(),
-      name: 'Title',
+      name: '',
       type: 'text',
       description: audioMarker,
       color: '#FFFFFF',
@@ -1123,21 +1124,25 @@ export default function Notes() {
   // passed into the shared expression evaluator rather than duplicated here.
   // A query with no operators behaves exactly as it always has: every term, tags
   // included, must match.
+  //
+  // Every field goes through `extractSearchableText` first. A note's `description`
+  // stores image and audio attachments as `[audio:<base64 data URL>:<seconds>]`, and a
+  // data URL is thousands of characters of arbitrary letters. Searching the raw field
+  // therefore matched notes on the *encoding* of a sound rather than on anything a
+  // reader could see. Extraction is the same parser the card renders with, so the text
+  // being searched and the text being displayed cannot drift apart.
   const searchInNote = (note: Note, query: string): boolean => {
     const expression = parseSearchExpression(query);
 
     const matchesText = (term: string): boolean => {
-      if (note.name.toLowerCase().includes(term)) return true;
+      if (extractSearchableText(note).includes(term)) return true;
 
       switch (note.type) {
-        case 'text':
-          return note.description.toLowerCase().includes(term);
         case 'list':
-          return note.items.some(item => item.text.toLowerCase().includes(term));
-        case 'audio':
-        case 'image':
-          return note.description?.toLowerCase().includes(term) || false;
+          return note.items.some(item => extractSearchableText(item.text).includes(term));
         default:
+          // 'text', 'audio' and 'image' keep all their words in `description`, which
+          // the call above already covered.
           return false;
       }
     };
@@ -1147,6 +1152,8 @@ export default function Notes() {
 
   const searchInFolder = (folder: NoteFolder, query: string): boolean => {
     const searchTerm = query.toLowerCase();
+    // A folder's own fields are plain text: unlike a note, a folder cannot carry an
+    // image or a recording, so there is nothing encoded to strip out here.
     if (folder.name.toLowerCase().includes(searchTerm) || 
         (folder.description?.toLowerCase().includes(searchTerm) || false)) {
       return true;
@@ -1720,6 +1727,7 @@ export default function Notes() {
           return (
             <div
               key={note.id}
+              data-note-card={note.id}
               style={{
                 transform: draggedNote === note.id && currentDragPos && dragStartPos ? 
                   `translate(${currentDragPos.x - dragStartPos.x}px, ${currentDragPos.y - dragStartPos.y}px)` : 

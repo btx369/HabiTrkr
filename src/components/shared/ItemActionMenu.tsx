@@ -84,8 +84,8 @@ export function ItemActionMenu({
            */
           className={`group ${buttonSize} p-0 hover:text-current ${
             hoverClass
-              ? `transition-transform duration-200 hover:scale-105 data-[state=open]:bg-[var(--card-hover-color)] ${hoverClass}`
-              : 'transition-opacity hover:bg-hover data-[state=open]:bg-hover'
+              ? `transition-colors duration-200 data-[state=open]:bg-[var(--card-hover-color)] ${hoverClass}`
+              : 'transition-colors hover:bg-hover data-[state=open]:bg-hover'
           }`}
           onClick={(e) => e.stopPropagation()}
         >

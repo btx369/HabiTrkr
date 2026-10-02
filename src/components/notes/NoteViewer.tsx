@@ -37,6 +37,7 @@ import { NoteActionBar } from './NoteActionBar';
 import { highlightText } from '@/lib/textHighlight';
 import { renderMarkdownWithHighlight } from '@/lib/markdownRenderer';
 import { parseNoteContent } from '@/lib/noteContentRenderer';
+import { extractSearchableText } from '@/lib/noteSearchText';
 import { ImageGalleryViewer } from './ImageGalleryViewer';
 import { isDefaultColor } from '@/lib/cardColorStyles';
 import { getColoredIconButtonStyles, getColoredIconClass, getColoredBorderClass } from '@/lib/coloredButtonStyles';
@@ -997,13 +998,10 @@ export function NoteViewer({
     return parts.filter(part => part.type === 'image').map(part => part.content);
   };
 
-  const extractTextContent = (content: string): string => {
-    const parts = parseNoteContent(content);
-    return parts
-      .filter(part => part.type === 'text')
-      .map(part => part.content)
-      .join('');
-  };
+  // Same extraction the card and the search engine use, but without trimming: the
+  // result is rendered as markdown, where leading whitespace is layout.
+  const extractTextContent = (content: string): string =>
+    extractSearchableText({ description: content }, { lowercase: false, trim: false });
 
   const extractAudio = (content: string): { content: string; duration?: number }[] => {
     const parts = parseNoteContent(content);
@@ -1878,7 +1876,7 @@ export function NoteViewer({
                   variant={iconButtonStyles.variant}
                   size="sm"
                   onClick={handleBackClick}
-                  className={`h-8 w-8 p-0 flex-shrink-0 rounded-full transition-transform duration-200 hover:scale-105 ${themedHoverStyles}`}
+                  className={`h-8 w-8 p-0 flex-shrink-0 rounded-full transition-colors duration-200 ${themedHoverStyles}`}
                 >
               <ArrowLeft size={16} />
             </Button>
@@ -1900,7 +1898,7 @@ export function NoteViewer({
                 variant={iconButtonStyles.variant}
                 size="sm"
                 onClick={handleSearchToggle}
-                className={`h-8 w-8 p-0 flex-shrink-0 rounded-full transition-transform duration-200 hover:scale-105 ${themedHoverStyles}`}
+                className={`h-8 w-8 p-0 flex-shrink-0 rounded-full transition-colors duration-200 ${themedHoverStyles}`}
               >
                 <Search size={16} />
               </Button>
@@ -1987,7 +1985,7 @@ export function NoteViewer({
               variant={iconButtonStyles.variant}
               size="sm"
               onClick={handleCloseClick}
-              className={`h-8 w-8 p-0 rounded-full transition-transform duration-200 hover:scale-105 ${themedHoverStyles}`}
+              className={`h-8 w-8 p-0 rounded-full transition-colors duration-200 ${themedHoverStyles}`}
             >
               <X size={14} />
             </Button>

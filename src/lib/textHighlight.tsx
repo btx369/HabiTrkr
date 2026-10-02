@@ -82,6 +82,42 @@ interface Span {
 }
 
 /**
+ * How much text to keep either side of a match when excerpting.
+ *
+ * The cards clamp their body text, so a match further down the note was highlighted but
+ * never seen: a search for "lor" returned cards showing only their opening words, with the
+ * reason they matched somewhere below the cut. The excerpt starts just before the match so
+ * the match itself always lands inside the visible clamp.
+ */
+const EXCERPT_BEFORE = 32;
+const EXCERPT_AFTER = 420;
+
+/**
+ * Returns the part of `text` around its first match, or `text` unchanged when nothing
+ * matches or no search is active.
+ *
+ * Adds an ellipsis on whichever side was cut, so it reads as an excerpt rather than as the
+ * whole note. Whitespace is collapsed first because note bodies contain newlines that would
+ * otherwise eat the limited clamp with empty lines.
+ */
+export function excerptAroundMatch(text: string, searchQuery: string): string {
+  if (!searchQuery.trim() || !text) return text;
+
+  const regex = buildSearchHighlightRegex(searchQuery);
+  if (!regex) return text;
+
+  const flat = text.replace(/\s+/g, ' ').trim();
+  const match = regex.exec(flat);
+  if (!match || match.index === undefined) return flat;
+
+  const start = Math.max(0, match.index - EXCERPT_BEFORE);
+  const end = Math.min(flat.length, match.index + match[0].length + EXCERPT_AFTER);
+
+  const head = flat.slice(start, end);
+  return `${start > 0 ? '…' : ''}${head}${end < flat.length ? '…' : ''}`;
+}
+
+/**
  * Finds every span of `text` matched by the text terms of the query.
  *
  * Uses a non-capturing group so nothing depends on how `String.split` positions its

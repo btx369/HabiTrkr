@@ -9,6 +9,7 @@ import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { EditorDialog } from '@/components/shared/EditorDialog';
 import { getAllTagsWithCounts, renameTagGlobally, deleteTagGlobally } from '@/lib/tagStorage';
+import { highlightText } from '@/lib/textHighlight';
 
 interface TagWithCount {
   tag: string;
@@ -134,7 +135,9 @@ export default function TagsManager() {
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <Tag size={18} className="text-primary shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <span className="font-medium text-foreground">#{tagData.tag}</span>
+                      {/* Same match highlighting the note and event cards use, so a search
+                          behaves the same way wherever it appears in the app. */}
+                      <span className="font-medium text-foreground">#{highlightText(tagData.tag, searchQuery)}</span>
                       <p className="text-xs text-muted-foreground">
                         {t('usedIn')} {tagData.count} {t('items')}
                       </p>

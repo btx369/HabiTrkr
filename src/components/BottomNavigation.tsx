@@ -34,14 +34,21 @@ export const BottomNavigation = ({ hidden = false }: BottomNavigationProps) => {
             <button
               key={path}
               onClick={() => navigate(path)}
-              className="group flex items-center justify-center hover:scale-105 active:scale-[0.95] transition-transform duration-200"
+              /*
+               * The hover used to be a scale on this wrapper, which the rest of the app no
+               * longer does. Feedback comes from the surface instead: a light veil on the dark
+               * capsule for the inactive items, and the icon stepping up a shade. The active
+               * item keeps its filled circle and does not lighten, so the current page never
+               * looks like something you are about to open.
+               */
+              className="group flex items-center justify-center"
             >
                 <div
                   className={cn(
                     "flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300 ease-out",
                     isActive 
                       ? "bg-nav-active text-white" 
-                      : "bg-transparent text-nav-icon group-hover:text-nav-icon-hover"
+                      : "bg-transparent text-nav-icon group-hover:text-nav-icon-hover group-hover:bg-white/10"
                   )}
                 >
                 <Icon size={20} />

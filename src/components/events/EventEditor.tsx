@@ -61,6 +61,17 @@ const ALERT_OPTIONS: { value: AlertType; label: string }[] = [
   { value: 'custom', label: 'Custom...' },
 ];
 
+/**
+ * The recurrence units, declared like ALERT_OPTIONS so both selects read the same way.
+ * These labels were previously the <option> text of a native select.
+ */
+const RECURRENCE_OPTIONS: { value: EventFormData['recurrenceType']; label: string }[] = [
+  { value: 'daily', label: 'Day(s)' },
+  { value: 'weekly', label: 'Week(s)' },
+  { value: 'monthly', label: 'Month(s)' },
+  { value: 'yearly', label: 'Year(s)' },
+];
+
 const getDefaultDates = () => {
   const today = getTodayKey();
   return { startDate: today, endDate: today };
@@ -274,7 +285,14 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
           </div>
           <div className="grid grid-cols-2 gap-4">
             {/* Start */}
-            <div className="space-y-2">
+            {/*
+              * `space-y-3` (12px), not `space-y-2`. Inside a column the date field and the
+              * time button belong together, but every other label-to-control gap in this form
+              * is 8px and the gap between sections is 24px — so an 8px pairing read as a
+              * section break and the "Set time" button looked adrift from the date above it.
+              * 12px keeps the pair together while staying clearly tighter than a section gap.
+              */}
+            <div className="space-y-3">
               <DatePickerInput
                 id="event-start-date"
                 value={formData.startDate}
@@ -293,7 +311,12 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
                   type="button"
                   variant="outline"
                   onClick={() => setIsStartTimePickerOpen(true)}
-                  className="w-full h-10 text-sm bg-muted justify-start gap-2"
+                  /*
+                   * `rounded-md`, because the Button base is `rounded-full`. The date field
+                   * directly above is a rounded-md input and so is every other control in this
+                   * form, so this one was the odd shape out.
+                   */
+                  className="w-full h-10 text-sm bg-muted justify-start gap-2 rounded-md"
                 >
                   <Clock size={16} color={ICON_COLOR} />
                   {formData.startTime || 'Set time'}
@@ -301,8 +324,8 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
               )}
             </div>
             
-            {/* End */}
-            <div className={`space-y-2 p-2 -m-2 rounded-lg transition-colors ${hasEndDateError ? 'bg-destructive/20' : ''}`}>
+            {/* End — same `space-y-3` as the Start column above, so the two line up. */}
+            <div className={`space-y-3 p-2 -m-2 rounded-lg transition-colors ${hasEndDateError ? 'bg-destructive/20' : ''}`}>
               <DatePickerInput
                 id="event-end-date"
                 value={formData.endDate}
@@ -320,7 +343,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
                   type="button"
                   variant="outline"
                   onClick={() => setIsEndTimePickerOpen(true)}
-                  className={`w-full h-10 text-sm justify-start gap-2 ${hasEndDateError ? 'bg-destructive/20 border-destructive/50' : 'bg-muted'}`}
+                  className={`w-full h-10 text-sm justify-start gap-2 rounded-md ${hasEndDateError ? 'bg-destructive/20 border-destructive/50' : 'bg-muted'}`}
                 >
                   <Clock size={16} color={ICON_COLOR} />
                   {formData.endTime || 'Set time'}
@@ -359,19 +382,33 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
                   }))}
                   className="w-20 h-10 text-sm bg-background"
                 />
-                <select 
-                  value={formData.recurrenceType} 
-                  onChange={e => setFormData(prev => ({ 
-                    ...prev, 
-                    recurrenceType: e.target.value as EventFormData['recurrenceType'] 
+                {/*
+                  * The custom Select, matching the Alert field below it: same trigger styling,
+                  * same popup surface, same hover and the same check mark against the chosen
+                  * option. This replaced a native <select>, which rendered with the OS
+                  * control's own styling and could not match the rest of the form.
+                  *
+                  * The width comes from `flex-1` on the trigger so it fills the row beside the
+                  * interval input, exactly as the native element did.
+                  */}
+                <Select
+                  value={formData.recurrenceType}
+                  onValueChange={(value) => setFormData(prev => ({
+                    ...prev,
+                    recurrenceType: value as EventFormData['recurrenceType']
                   }))}
-                  className="px-4 py-3 border rounded-md bg-background h-10 text-sm flex-1"
                 >
-                  <option value="daily">Day(s)</option>
-                  <option value="weekly">Week(s)</option>
-                  <option value="monthly">Month(s)</option>
-                  <option value="yearly">Year(s)</option>
-                </select>
+                  <SelectTrigger className="h-10 text-sm bg-muted flex-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {RECURRENCE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             
