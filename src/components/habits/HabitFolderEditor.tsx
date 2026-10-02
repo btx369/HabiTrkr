@@ -3,6 +3,7 @@ import { HabitFolder } from '@/types/habitFolder';
 import { ColorPicker } from '@/components/shared/ColorPicker';
 import { TitleInput } from '@/components/shared/TitleInput';
 import { EditorDialog } from '@/components/shared/EditorDialog';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { NotebookPen, FileText, Palette } from 'lucide-react';
 
 const ICON_COLOR = 'currentColor';
@@ -15,6 +16,7 @@ interface HabitFolderEditorProps {
 }
 
 export function HabitFolderEditor({ isOpen, onClose, onSave, folder }: HabitFolderEditorProps) {
+  const { t } = useLanguage();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [color, setColor] = useState('#FFFFFF');
@@ -53,12 +55,12 @@ export function HabitFolderEditor({ isOpen, onClose, onSave, folder }: HabitFold
       onClose={handleClose}
       title="Edit Folder"
       onSave={handleSave}
-      saveLabel="Save Changes"
+      saveLabel={t('save')}
       saveDisabled={!name.trim()}
     >
       <TitleInput
         id="folder-name"
-        label="Title"
+        label={t('title')}
         value={name}
         onChange={setName}
         placeholder="Enter folder title..."
@@ -70,7 +72,7 @@ export function HabitFolderEditor({ isOpen, onClose, onSave, folder }: HabitFold
       
       <TitleInput
         id="folder-description"
-        label="Description"
+        label={t('description')}
         value={description}
         onChange={setDescription}
         placeholder="Enter folder description..."

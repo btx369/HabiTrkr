@@ -123,8 +123,17 @@ export function NoteCard({
     }
   };
 
+  /**
+   * Whether the card draws a title at all.
+   *
+   * This used to also treat the literal string "Title" as absent, because new notes were
+   * seeded with that word as their name — a real value in the data that had to be hidden
+   * or every note appeared to be called "Title". Notes are created with an empty name now,
+   * so the app no longer produces that value and the special case is gone. If a note is
+   * named "Title" today, someone typed it, and it should be shown like any other title.
+   */
   const shouldShowTitle = () => {
-    return note.name && note.name.trim() !== '' && note.name !== 'Title';
+    return Boolean(note.name && note.name.trim() !== '');
   };
 
   const handleListItemToggle = (itemId: string, e: React.MouseEvent) => {

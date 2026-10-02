@@ -7,6 +7,7 @@ import { HabitFolder } from '@/types/habitFolder';
 import { Habit } from '@/types/habit';
 import { HabitCard, ArchivedHabitCard } from '@/components/habits/HabitCard';
 import { ItemActionMenu } from '@/components/shared/ItemActionMenu';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { highlightText } from '@/lib/textHighlight';
 import { ColoredCard } from '@/components/shared/ColoredCard';
 import { isDefaultColor } from '@/lib/cardColorStyles';
@@ -66,6 +67,7 @@ export function HabitFolderCard({
   isBulkSelected = false,
   onBulkSelect,
 }: HabitFolderCardProps) {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const folderHabits = habits.filter(habit => folder.habitIds.includes(habit.id));
 
@@ -145,7 +147,7 @@ export function HabitFolderCard({
                 <p className={`text-xs ${mutedTextColorClass} mb-1 ml-6`}>{highlightText(folder.description, searchQuery)}</p>
               )}
               <p className={`text-xs ${mutedTextColorClass} ml-6`}>
-                {folderHabits.length} habits
+                {folderHabits.length} {t('habits')}
               </p>
             </div>
             <div className="flex items-center gap-1">

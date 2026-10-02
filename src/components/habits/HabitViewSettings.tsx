@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export type HabitSortType = 'name' | 'dateCreated' | 'dateModified' | 'completionRate';
 export type HabitSortDirection = 'asc' | 'desc';
@@ -24,11 +25,15 @@ export function HabitViewSettings({
   onSortTypeChange,
   onSortDirectionChange
 }: HabitViewSettingsProps) {
+  const { t } = useLanguage();
+
   const getSortLabel = (type: HabitSortType) => {
+    // `Name` is the habit's title field, which the editor labels with the `title` key.
+    // `Completion Rate` has no translation key yet, so it stays in English.
     const labels = {
-      name: 'Name',
-      dateCreated: 'Date Created',
-      dateModified: 'Date Modified',
+      name: t('title'),
+      dateCreated: t('dateCreated'),
+      dateModified: t('dateModified'),
       completionRate: 'Completion Rate'
     };
     return labels[type];
@@ -57,7 +62,7 @@ export function HabitViewSettings({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48 bg-background border border-border">
-        <DropdownMenuLabel>Organise</DropdownMenuLabel>
+        <DropdownMenuLabel>{t('sortBy')}</DropdownMenuLabel>
         {(['name', 'dateCreated', 'dateModified', 'completionRate'] as const).map((type) => (
           <DropdownMenuItem
             key={type}

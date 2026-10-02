@@ -1401,7 +1401,7 @@ export default function Events() {
                 onClick={() => setIsEventFolderCreatorOpen(true)}
                 className="h-10 px-8 text-sm font-medium rounded-full bg-black text-white hover:bg-black/90"
               >
-                Create Folder
+                {t('createFolder')}
                 <FolderOpen className="ml-2" size={20} />
               </Button>
             ) : (
@@ -1505,9 +1505,9 @@ export default function Events() {
               activeValue={activeTab} 
               values={['all-events', 'folders', 'archived']}
             >
-              <TabsTrigger value="all-events">Events</TabsTrigger>
-              <TabsTrigger value="folders">Folders</TabsTrigger>
-              <TabsTrigger value="archived">Archived</TabsTrigger>
+              <TabsTrigger value="all-events">{t('events')}</TabsTrigger>
+              <TabsTrigger value="folders">{t('tabFolders')}</TabsTrigger>
+              <TabsTrigger value="archived">{t('tabArchived')}</TabsTrigger>
             </SlidingTabsList>
             <div className="flex items-center gap-1">
               <Button 
@@ -1549,7 +1549,7 @@ export default function Events() {
                     onClick={handleAddButtonClick}
                     className="h-10 px-8 text-sm font-medium rounded-full bg-black text-white hover:bg-black/90"
                   >
-                    Create Event
+                    {t('createEvent')}
                     <Calendar className="ml-2" size={20} />
                   </Button>
                 </CardContent>
@@ -1567,7 +1567,7 @@ export default function Events() {
                     onClick={handleAddButtonClick}
                     className="h-10 px-8 text-sm font-medium rounded-full bg-black text-white hover:bg-black/90"
                   >
-                    Create Folder
+                    {t('createFolder')}
                     <FolderOpen className="ml-2" size={20} />
                   </Button>
                 </CardContent>
@@ -1586,7 +1586,7 @@ export default function Events() {
               
               <div className="space-y-2">
                 <h3 className="text-lg font-medium">Archived Folders</h3>
-                {renderEventFolderList(archivedEventFolders, "No archived folders", true)}
+                {renderEventFolderList(archivedEventFolders, t('noArchivedFolders'), true)}
               </div>
             </div>
           </TabsContent>

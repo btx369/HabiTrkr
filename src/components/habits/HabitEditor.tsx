@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Habit } from '@/types/habit';
 import { getTodayKey } from '@/lib/dateUtils';
 import { useEditorForm } from '@/hooks/useEditorForm';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { NotebookPen, FileText, Palette } from 'lucide-react';
 
 const ICON_COLOR = 'currentColor';
@@ -47,6 +48,7 @@ const defaults: HabitFormData = {
 };
 
 export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'create' }: HabitEditorProps) {
+  const { t } = useLanguage();
   const initialData = useMemo(() => 
     initialHabit ? {
       name: initialHabit.name,
@@ -189,14 +191,14 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
     <EditorDialog
       isOpen={isOpen}
       onClose={handleClose}
-      title={mode === 'create' ? 'Create Habit' : 'Edit Habit'}
+      title={mode === 'create' ? t('createHabit') : 'Edit Habit'}
       onSave={handleSave}
-      saveLabel={mode === 'create' ? 'Create Habit' : 'Save Changes'}
+      saveLabel={mode === 'create' ? t('createHabit') : t('save')}
       saveDisabled={!formData.name.trim()}
     >
       <TitleInput
         id="habit-name"
-        label="Title"
+        label={t('title')}
         value={formData.name}
         onChange={(value) => setFormData(prev => ({ ...prev, name: value }))}
         placeholder="e.g., Drink 8 glasses of water"
@@ -209,7 +211,7 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
       {mode === 'create' && (
         <TitleInput
           id="habit-description"
-          label="Description"
+          label={t('description')}
           value={formData.description}
           onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
           placeholder="Add more details about this habit..."

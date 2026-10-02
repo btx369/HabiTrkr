@@ -20,7 +20,7 @@ import { HabitFolderViewSettings, HabitFolderSortType, HabitFolderSortDirection 
 import { BulkActionBar, BulkActionType, BulkActionContext } from '@/components/shared/BulkActionBar';
 import { useToastSettings } from '@/contexts/ToastContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useWeekStart, getOrderedDayNames } from '@/contexts/WeekStartContext';
+import { useWeekStart, getJsDayFromVisualIndex } from '@/contexts/WeekStartContext';
 import { useScrollDirection } from '@/hooks/useScrollDirection';
 import { useBulkSelection } from '@/hooks/useBulkSelection';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
@@ -33,10 +33,31 @@ import { cn } from '@/lib/utils';
 // time) and left the callbacks reading a value the linter could not verify.
 const HABIT_TABS = ['habits', 'folders', 'archived'];
 
+// Short weekday translation keys, indexed by JS day value (0 = Sunday). Kept as KEYS
+// rather than text because this is module level, where no hook can run; the header below
+// resolves them with `t()` at render time.
+//
+// These are the dedicated short-name keys, not the full names cut to three characters.
+// Slicing looks fine in English and Portuguese and is wrong in German, which needs
+// "Di/Mi/Do" where the first three letters give "Die/Mit/Don".
+const DAY_SHORT_KEYS = [
+  'dayShortSunday',
+  'dayShortMonday',
+  'dayShortTuesday',
+  'dayShortWednesday',
+  'dayShortThursday',
+  'dayShortFriday',
+  'dayShortSaturday',
+] as const;
+
 export default function HabitTracker() {
   const { toast } = useToastSettings();
+  const { t } = useLanguage();
   const { weekStartsOn, weekStartDay } = useWeekStart();
-  const orderedDayNames = getOrderedDayNames(weekStartDay);
+  // Weekday labels follow the configured week start.
+  const orderedDayNames = Array.from({ length: 7 }, (_, index) =>
+    t(DAY_SHORT_KEYS[getJsDayFromVisualIndex(index, weekStartDay)])
+  );
   
   // Tab navigation
   const [activeTab, setActiveTab] = useState('habits');
@@ -812,8 +833,6 @@ export default function HabitTracker() {
     }
   };
 
-  const { t } = useLanguage();
-
   return (
     <Layout 
       showSearch={true}
@@ -828,9 +847,9 @@ export default function HabitTracker() {
           <div className="fixed top-16 left-0 right-0 z-40 px-2">
             <div className="flex items-start justify-between py-2">
             <SlidingTabsList activeValue={activeTab} values={['habits', 'folders', 'archived']}>
-              <TabsTrigger value="habits">Habits</TabsTrigger>
-              <TabsTrigger value="folders">Folders</TabsTrigger>
-              <TabsTrigger value="archived">Archived</TabsTrigger>
+              <TabsTrigger value="habits">{t('habits')}</TabsTrigger>
+              <TabsTrigger value="folders">{t('tabFolders')}</TabsTrigger>
+              <TabsTrigger value="archived">{t('tabArchived')}</TabsTrigger>
             </SlidingTabsList>
             <div className="flex items-center gap-1">
               {showTodayButton && activeTab === 'habits' && (
@@ -916,7 +935,7 @@ export default function HabitTracker() {
                     onClick={() => setIsAddDialogOpen(true)}
                     className="h-10 px-8 text-sm font-medium rounded-full bg-black text-white hover:bg-black/90"
                   >
-                    Create Habit
+                    {t('createHabit')}
                     <Target className="ml-2" size={20} />
                   </Button>
                 </CardContent>
@@ -956,7 +975,7 @@ export default function HabitTracker() {
                     onClick={() => setIsFolderCreatorOpen(true)}
                     className="h-10 px-8 text-sm font-medium rounded-full bg-black text-white hover:bg-black/90"
                   >
-                    Create Folder
+                    {t('createFolder')}
                     <Target className="ml-2" size={20} />
                   </Button>
                 </CardContent>
@@ -1029,7 +1048,7 @@ export default function HabitTracker() {
                 {getArchivedFolders().length === 0 ? (
                   <Card>
                     <CardContent className="text-center py-8">
-                      <p className="text-muted-foreground">No archived folders</p>
+                      <p className="text-muted-foreground">{t('noArchivedFolders')}</p>
                     </CardContent>
                   </Card>
                 ) : (
@@ -1141,7 +1160,7 @@ export default function HabitTracker() {
         onCreateNewFolder={() => { setIsMoveToFolderOpen(false); setIsFolderCreatorOpen(true); }}
         currentFolderId={habitToMove ? habitFolders.find(f => f.habitIds.includes(habitToMove))?.id : undefined}
         getItemCount={(folder) => folder.habitIds.length}
-        itemNoun="habits"
+        itemNoun={t('habits')}
       />
 
       <ConfirmationDialog

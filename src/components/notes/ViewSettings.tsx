@@ -11,6 +11,7 @@ import {
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
 import { VIEW_LABELS, isViewType, type ViewType } from '@/types/view';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 // Re-exported so existing importers keep working from this module.
 export type { ViewType } from '@/types/view';
@@ -34,11 +35,18 @@ export function ViewSettings({
   onSortTypeChange,
   onSortDirectionChange
 }: ViewSettingsProps) {
+  const { t } = useLanguage();
+
+  /*
+   * Sort option labels, resolved through `t()` here because the hook result is only in
+   * scope inside the component. `custom` has no translation key yet and keeps its literal
+   * label; the other three resolve to the `title` / `dateCreated` / `dateModified` keys.
+   */
   const getSortLabel = (type: SortType) => {
     const labels = {
-      title: 'Title',
-      dateCreated: 'Date Created',
-      dateModified: 'Date Modified',
+      title: t('title'),
+      dateCreated: t('dateCreated'),
+      dateModified: t('dateModified'),
       custom: 'Custom'
     };
     return labels[type];
@@ -71,7 +79,7 @@ export function ViewSettings({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48 bg-background border border-border">
-        <DropdownMenuLabel>View</DropdownMenuLabel>
+        <DropdownMenuLabel>{t('view')}</DropdownMenuLabel>
         {/*
           Radix types this callback as `(value: string) => void`, so the value has to be
           narrowed back to ViewType. The guard runs the same membership check the union
@@ -91,7 +99,7 @@ export function ViewSettings({
         
         <DropdownMenuSeparator />
         
-        <DropdownMenuLabel>Organise</DropdownMenuLabel>
+        <DropdownMenuLabel>{t('sortBy')}</DropdownMenuLabel>
         {(['title', 'dateCreated', 'dateModified'] as const).map((type) => (
           <DropdownMenuItem
             key={type}

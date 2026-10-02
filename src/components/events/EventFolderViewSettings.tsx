@@ -9,6 +9,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export type EventFolderSortType = 'title' | 'dateCreated' | 'dateModified' | 'daysRemaining';
 export type EventFolderSortDirection = 'asc' | 'desc';
@@ -26,14 +27,17 @@ export function EventFolderViewSettings({
   onSortTypeChange,
   onSortDirectionChange
 }: EventFolderViewSettingsProps) {
+  const { t } = useLanguage();
+
   const getSortLabel = (type: EventFolderSortType) => {
+    // Values are translation keys, resolved through `t` below.
     const labels = {
-      title: 'Title',
-      dateCreated: 'Date Created',
-      dateModified: 'Date Modified',
-      daysRemaining: 'Days Remaining'
+      title: 'title',
+      dateCreated: 'dateCreated',
+      dateModified: 'dateModified',
+      daysRemaining: 'daysRemaining'
     };
-    return labels[type];
+    return t(labels[type]);
   };
 
   const handleSortClick = (newSortType: EventFolderSortType) => {
@@ -58,7 +62,7 @@ export function EventFolderViewSettings({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48 bg-background border border-border">
-        <DropdownMenuLabel>Organise</DropdownMenuLabel>
+        <DropdownMenuLabel>{t('sortBy')}</DropdownMenuLabel>
         {(['title', 'dateCreated', 'dateModified', 'daysRemaining'] as const).map((type) => (
           <DropdownMenuItem
             key={type}

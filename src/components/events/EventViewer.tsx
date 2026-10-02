@@ -11,6 +11,8 @@ import {
 } from '@/components/ui/responsive-dialog';
 import { isDefaultColor } from '@/lib/cardColorStyles';
 import { getColoredIconButtonStyles, getColoredIconClass, getColoredBorderClass } from '@/lib/coloredButtonStyles';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useWeekStart, getOrderedDayNames, getVisualIndexFromJsDay } from '@/contexts/WeekStartContext';
 
 interface EventViewerProps {
   event: Event | null;
@@ -20,7 +22,20 @@ interface EventViewerProps {
   onDelete: (event: Event) => void;
 }
 
-const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+/*
+ * The short day names `getOrderedDayNames` returns, each mapped to the translation key for
+ * that day's full name. Kept as keys because this is module level, where no hook can run;
+ * the names are resolved with `t()` at render time.
+ */
+const DAY_NAME_KEYS: Record<string, string> = {
+  Sun: 'daySunday',
+  Mon: 'dayMonday',
+  Tue: 'dayTuesday',
+  Wed: 'dayWednesday',
+  Thu: 'dayThursday',
+  Fri: 'dayFriday',
+  Sat: 'daySaturday',
+};
 
 const ALERT_LABELS: Record<AlertType, string> = {
   'none': 'No alert',
@@ -36,6 +51,13 @@ const ALERT_LABELS: Record<AlertType, string> = {
 };
 
 export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventViewerProps) {
+  const { t } = useLanguage();
+  const { weekStartDay } = useWeekStart();
+
+  // Full day names in the order the week starts on, so the recurrence days below read
+  // in the same order as the rest of the app.
+  const orderedDayNames = getOrderedDayNames(weekStartDay).map(shortName => t(DAY_NAME_KEYS[shortName]));
+
   if (!event) return null;
 
   // Use startDate/endDate if available, fallback to legacy date field
@@ -77,8 +99,8 @@ export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventV
 
     if (event.recurrenceType === 'weekly' && event.recurrenceDays?.length) {
       const days = event.recurrenceDays
-        .sort((a, b) => a - b)
-        .map(d => DAY_NAMES[d])
+        .sort((a, b) => getVisualIndexFromJsDay(a, weekStartDay) - getVisualIndexFromJsDay(b, weekStartDay))
+        .map(d => orderedDayNames[getVisualIndexFromJsDay(d, weekStartDay)])
         .join(', ');
       text += ` on ${days}`;
     }
@@ -143,7 +165,7 @@ export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventV
                 className={`${iconColorClass} ${editCloseButtonStyles}`}
               >
                 <Pencil size={16} className="mr-2" />
-                Edit
+                {t('edit')}
               </Button>
               <ResponsiveDialogTitle className={`text-lg font-semibold ${textColorClass} sr-only`}>
                 Event Details
@@ -199,7 +221,7 @@ export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventV
           {event.isAllDay || (!startTime && !endTime) ? (
             <div className={`flex items-center gap-2 ${mutedTextClass}`}>
               <Clock size={18} />
-              <span className="text-sm font-medium">All Day</span>
+              <span className="text-sm font-medium">{t('allDay')}</span>
             </div>
           ) : (startTime || endTime) && (
             <div className={`flex items-center gap-2 ${mutedTextClass}`}>

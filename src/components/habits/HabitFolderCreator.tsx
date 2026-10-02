@@ -3,6 +3,7 @@ import { HabitFolder } from '@/types/habitFolder';
 import { ColorPicker } from '@/components/shared/ColorPicker';
 import { TitleInput } from '@/components/shared/TitleInput';
 import { EditorDialog } from '@/components/shared/EditorDialog';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { NotebookPen, FileText, Palette } from 'lucide-react';
 
 const ICON_COLOR = 'currentColor';
@@ -14,6 +15,7 @@ interface HabitFolderCreatorProps {
 }
 
 export function HabitFolderCreator({ isOpen, onClose, onSave }: HabitFolderCreatorProps) {
+  const { t } = useLanguage();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [color, setColor] = useState('#FFFFFF');
@@ -45,12 +47,12 @@ export function HabitFolderCreator({ isOpen, onClose, onSave }: HabitFolderCreat
       onClose={handleClose}
       title="Create New Folder"
       onSave={handleSave}
-      saveLabel="Create Folder"
+      saveLabel={t('createFolder')}
       saveDisabled={!name.trim()}
     >
       <TitleInput
         id="folder-name"
-        label="Title"
+        label={t('title')}
         value={name}
         onChange={setName}
         placeholder="Enter folder title..."
@@ -62,7 +64,7 @@ export function HabitFolderCreator({ isOpen, onClose, onSave }: HabitFolderCreat
       
       <TitleInput
         id="folder-description"
-        label="Description"
+        label={t('description')}
         value={description}
         onChange={setDescription}
         placeholder="Enter folder description..."

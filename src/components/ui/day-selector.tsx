@@ -1,6 +1,19 @@
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
-import { useWeekStart, getOrderedDayInitials, getJsDayFromVisualIndex, getVisualIndexFromJsDay, getHabitIndexFromVisualIndex, getVisualIndexFromHabitIndex } from "@/contexts/WeekStartContext";
+import { useWeekStart, getJsDayFromVisualIndex, getHabitIndexFromVisualIndex, getVisualIndexFromHabitIndex } from "@/contexts/WeekStartContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+
+/**
+ * Short weekday names as translation keys, indexed by JS day (0 = Sunday).
+ *
+ * Kept as keys rather than text so the array can stay at module level; `t()` is called at
+ * the render site. Slicing the full names would not do: German needs "Di/Mi/Do" where the
+ * first three letters give "Die/Mit/Don".
+ */
+const DAY_SHORT_KEYS = [
+  'dayShortSunday', 'dayShortMonday', 'dayShortTuesday', 'dayShortWednesday',
+  'dayShortThursday', 'dayShortFriday', 'dayShortSaturday',
+] as const;
 
 interface DaySelectorProps {
   selectedDays: boolean[] | number[];
@@ -16,7 +29,11 @@ export function DaySelector({
   variant = 'toggle'
 }: DaySelectorProps) {
   const { weekStartDay } = useWeekStart();
-  const dayInitials = getOrderedDayInitials(weekStartDay);
+  const { t } = useLanguage();
+  // The grid is always seven cells, one per visual column, starting at the user's week start.
+  const dayInitials = Array.from({ length: 7 }, (_, visualIndex) =>
+    t(DAY_SHORT_KEYS[getJsDayFromVisualIndex(visualIndex, weekStartDay)]),
+  );
 
   const handleDayClick = (visualIndex: number) => {
     if (variant === 'toggle') {

@@ -6,6 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { ReactNode } from 'react';
 
 export type ItemActionType = 'pin' | 'unpin' | 'edit' | 'archive' | 'delete' | 'restore' | 'lock' | 'unlock' | 'copy' | 'share' | 'moveToFolder';
@@ -55,6 +56,8 @@ export function ItemActionMenu({
   hoverClass,
   children,
 }: ItemActionMenuProps) {
+  const { t } = useLanguage();
+
   const handleAction = (action: () => void, e: React.MouseEvent) => {
     e.stopPropagation();
     action();
@@ -98,7 +101,7 @@ export function ItemActionMenu({
             {onRestore && (
               <DropdownMenuItem onClick={(e) => handleAction(onRestore, e)}>
                 <ArchiveRestore size={14} className="mr-2" />
-                Restore
+                {t('restore')}
               </DropdownMenuItem>
             )}
             {onDelete && (
@@ -107,7 +110,7 @@ export function ItemActionMenu({
                 destructive
               >
                 <Trash2 size={14} className="mr-2" />
-                Delete
+                {t('delete')}
               </DropdownMenuItem>
             )}
           </>
@@ -116,7 +119,7 @@ export function ItemActionMenu({
             {onRestore && (
               <DropdownMenuItem onClick={(e) => handleAction(onRestore, e)}>
                 <ArchiveRestore size={14} className="mr-2" />
-                Restore
+                {t('restore')}
               </DropdownMenuItem>
             )}
             {onDelete && (
@@ -125,7 +128,7 @@ export function ItemActionMenu({
                 destructive
               >
                 <Trash2 size={14} className="mr-2" />
-                Delete
+                {t('delete')}
               </DropdownMenuItem>
             )}
           </>
@@ -135,57 +138,57 @@ export function ItemActionMenu({
               onUnpin && (
                 <DropdownMenuItem onClick={(e) => handleAction(onUnpin, e)}>
                   <PinOff size={14} className="mr-2" />
-                  Unpin
+                  {t('unpin')}
                 </DropdownMenuItem>
               )
             ) : (
               onPin && (
                 <DropdownMenuItem onClick={(e) => handleAction(onPin, e)}>
                   <Pin size={14} className="mr-2" />
-                  Pin
+                  {t('pin')}
                 </DropdownMenuItem>
               )
             )}
             {onEdit && (
               <DropdownMenuItem onClick={(e) => handleAction(onEdit, e)}>
                 <Edit3 size={14} className="mr-2" />
-                Edit
+                {t('edit')}
               </DropdownMenuItem>
             )}
             {onLock && !isLocked && (
               <DropdownMenuItem onClick={(e) => handleAction(onLock, e)}>
                 <Lock size={14} className="mr-2" />
-                Lock
+                {t('lock')}
               </DropdownMenuItem>
             )}
             {onUnlock && isLocked && (
               <DropdownMenuItem onClick={(e) => handleAction(onUnlock, e)}>
                 <Lock size={14} className="mr-2" />
-                Unlock
+                {t('unlock')}
               </DropdownMenuItem>
             )}
             {onShare && (
               <DropdownMenuItem onClick={(e) => handleAction(onShare, e)}>
                 <Share2 size={14} className="mr-2" />
-                Share
+                {t('share')}
               </DropdownMenuItem>
             )}
             {onCopy && (
               <DropdownMenuItem onClick={(e) => handleAction(onCopy, e)}>
                 <Copy size={14} className="mr-2" />
-                Make a Copy
+                {t('makeACopy')}
               </DropdownMenuItem>
             )}
             {onMoveToFolder && (
               <DropdownMenuItem onClick={(e) => handleAction(onMoveToFolder, e)}>
                 <FolderOpen size={14} className="mr-2" />
-                Move to Folder
+                {t('moveToFolder')}
               </DropdownMenuItem>
             )}
             {onArchive && (
               <DropdownMenuItem onClick={(e) => handleAction(onArchive, e)}>
                 <Archive size={14} className="mr-2" />
-                Archive
+                {t('archive')}
               </DropdownMenuItem>
             )}
             {onDelete && (
@@ -194,7 +197,7 @@ export function ItemActionMenu({
                 destructive
               >
                 <Trash2 size={14} className="mr-2" />
-                Delete
+                {t('delete')}
               </DropdownMenuItem>
             )}
             {children}

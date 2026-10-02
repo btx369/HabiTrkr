@@ -2,6 +2,7 @@ import { FileText, List, Mic, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NoteType } from '@/types/note';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface NoteTypePopupProps {
   isOpen: boolean;
@@ -11,13 +12,16 @@ interface NoteTypePopupProps {
 
 export function NoteTypePopup({ isOpen, onTypeSelect, onClose }: NoteTypePopupProps) {
   const { theme } = useTheme();
+  const { t } = useLanguage();
+  // The hook has to run before this early return, which is why the labels below can
+  // resolve through `t()` even though the popup renders nothing while closed.
   if (!isOpen) return null;
 
   const noteTypes = [
-    { type: 'audio' as NoteType, icon: Mic, label: 'Audio' },
-    { type: 'image' as NoteType, icon: Camera, label: 'Image' },
-    { type: 'list' as NoteType, icon: List, label: 'List' },
-    { type: 'text' as NoteType, icon: FileText, label: 'Text' },
+    { type: 'audio' as NoteType, icon: Mic, label: t('noteAudio') },
+    { type: 'image' as NoteType, icon: Camera, label: t('noteImage') },
+    { type: 'list' as NoteType, icon: List, label: t('noteList') },
+    { type: 'text' as NoteType, icon: FileText, label: t('noteText') },
   ];
 
   return (
@@ -47,9 +51,9 @@ export function NoteTypePopup({ isOpen, onTypeSelect, onClose }: NoteTypePopupPr
                *
                * The `secondary` variant hovers with `bg-secondary/80`, and these buttons sit
                * over the note list with only a 20% scrim behind them. At 80% alpha the cards
-               * showed straight through the button — hovering "Audio" let you read the page
-               * title and the tabs underneath it. A translucent hover only works where
-               * something opaque sits behind the element; here nothing does.
+               * showed straight through the button — hovering the "noteAudio" option let you
+               * read the page title and the tabs underneath it. A translucent hover only works
+               * where something opaque sits behind the element; here nothing does.
                *
                * The tone is branched rather than written as `dark:` utilities, because a
                * `dark:` class outranks a plain `hover:` one and would kill the hover in the

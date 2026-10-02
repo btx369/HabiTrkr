@@ -18,7 +18,7 @@ import { highlightText } from '@/lib/textHighlight';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { useToastSettings } from '@/contexts/ToastContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useWeekStart, getOrderedDayNames } from '@/contexts/WeekStartContext';
+import { useWeekStart, getJsDayFromVisualIndex } from '@/contexts/WeekStartContext';
 import { 
   startOfWeek, 
   endOfWeek, 
@@ -45,6 +45,35 @@ type ViewMode = 'daily' | 'weekly' | 'monthly';
 // unsafe to list as a useCallback dependency.
 const VIEW_MODES: ViewMode[] = ['daily', 'weekly', 'monthly'];
 
+/*
+ * Full weekday translation keys, indexed by JS day value (0 = Sunday), and their short
+ * counterparts for the month grid.
+ *
+ * Kept as keys because this is module level, where no hook can run; the labels are
+ * resolved with `t()` at render time. The short ones are dedicated keys rather than the
+ * full names cut to three characters: German needs "Di/Mi/Do" where slicing gives
+ * "Die/Mit/Don".
+ */
+const DAY_NAME_KEYS = [
+  'daySunday',
+  'dayMonday',
+  'dayTuesday',
+  'dayWednesday',
+  'dayThursday',
+  'dayFriday',
+  'daySaturday',
+] as const;
+
+const DAY_SHORT_KEYS = [
+  'dayShortSunday',
+  'dayShortMonday',
+  'dayShortTuesday',
+  'dayShortWednesday',
+  'dayShortThursday',
+  'dayShortFriday',
+  'dayShortSaturday',
+] as const;
+
 export default function Calendar() {
   const [events, setEvents] = useLocalStorage<Event[]>('events', []);
   const [eventFolders, setEventFolders] = useLocalStorage<EventFolder[]>('eventFolders', []);
@@ -59,8 +88,13 @@ export default function Calendar() {
   const [deletingEvent, setDeletingEvent] = useState<Event | null>(null);
   
   const { toast } = useToastSettings();
+  const { t } = useLanguage();
   const { weekStartsOn, weekStartDay } = useWeekStart();
-  const orderedDayNames = getOrderedDayNames(weekStartDay);
+  // Seven short labels in the user's week-start order; `t()` runs here because the keys
+  // themselves have to live at module level.
+  const orderedDayNames = Array.from({ length: 7 }, (_, index) =>
+    t(DAY_SHORT_KEYS[getJsDayFromVisualIndex(index, weekStartDay)])
+  );
 
   // View mode swipe navigation
   const handleSwipeLeft = useCallback(() => {
@@ -237,10 +271,7 @@ export default function Calendar() {
     }
   }, [currentDate, viewMode, weekStartsOn]);
 
-  const { t } = useLanguage();
-
-  return (
-    <Layout 
+  return (    <Layout 
       showSearch={true}
       searchQuery={searchQuery}
       onSearchChange={setSearchQuery}
@@ -256,9 +287,9 @@ export default function Calendar() {
               activeValue={viewMode} 
               values={['daily', 'weekly', 'monthly']}
             >
-              <TabsTrigger value="daily">Day</TabsTrigger>
-              <TabsTrigger value="weekly">Week</TabsTrigger>
-              <TabsTrigger value="monthly">Month</TabsTrigger>
+              <TabsTrigger value="daily">{t('dayView')}</TabsTrigger>
+              <TabsTrigger value="weekly">{t('weekView')}</TabsTrigger>
+              <TabsTrigger value="monthly">{t('monthView')}</TabsTrigger>
             </SlidingTabsList>
           </Tabs>
           
@@ -311,7 +342,9 @@ export default function Calendar() {
           <div className="space-y-2 mt-2">
             {filteredWeekDays.map(day => {
               const dayEvents = filterEvents(getEventsForDate(day));
-              const dayOfWeek = format(day, 'EEEE');
+              // The full day name here, not the abbreviation: this is a per-day heading with
+              // room for it. The month grid uses the short keys.
+              const dayOfWeek = t(DAY_NAME_KEYS[day.getDay()]);
               const dayOfMonth = format(day, 'd');
               
               return (
@@ -332,7 +365,7 @@ export default function Calendar() {
                   </CardHeader>
                   <CardContent className="px-2 pb-2 pt-0">
                     {dayEvents.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">No events</p>
+                      <p className="text-sm text-muted-foreground">{t('noEvents')}</p>
                     ) : (
                       <div className="space-y-2">
                         {[...dayEvents].sort((a, b) => {
@@ -375,8 +408,8 @@ export default function Calendar() {
               <CardContent className="px-2 py-2">
                 {/* Week day headers */}
                 <div className="grid grid-cols-7 gap-1 mb-2">
-                  {orderedDayNames.map(day => (
-                    <div key={day} className="text-center text-sm font-medium text-muted-foreground p-2">
+                  {orderedDayNames.map((day, index) => (
+                    <div key={index} className="text-center text-sm font-medium text-muted-foreground p-2">
                       {day}
                     </div>
                   ))}

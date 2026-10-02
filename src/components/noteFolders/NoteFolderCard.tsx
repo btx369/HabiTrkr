@@ -3,6 +3,7 @@ import { FolderOpen, ChevronDown, ChevronRight, Pin, Check, RotateCcw, Trash2 } 
 import { Button } from '@/components/ui/button';
 import { CardContent } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { NoteFolder } from '@/types/noteFolder';
 import { Note } from '@/types/note';
 import { NoteCard } from '@/components/notes/NoteCard';
@@ -70,6 +71,7 @@ export function NoteFolderCard({
   isBulkSelected = false,
   onBulkSelect,
 }: NoteFolderCardProps) {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const folderNotes = notes.filter(note => folder.noteIds.includes(note.id));
 
@@ -149,7 +151,7 @@ export function NoteFolderCard({
                 <p className={`text-xs ${mutedTextColorClass} mb-1 ml-6`}>{highlightText(folder.description, searchQuery)}</p>
               )}
               <p className={`text-xs ${mutedTextColorClass} ml-6`}>
-                {folderNotes.length} notes
+                {folderNotes.length} {t('notes')}
               </p>
             </div>
             <div className="flex items-center gap-1">

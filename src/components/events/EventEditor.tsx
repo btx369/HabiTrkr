@@ -17,6 +17,7 @@ import { useEditorForm } from '@/hooks/useEditorForm';
 import { CustomAlertDialog } from './CustomAlertDialog';
 import { Bell, CalendarClock, CalendarDays, Clock, Hash, MapPin, NotebookPen, NotebookText, Palette } from 'lucide-react';
 import { useToastSettings } from '@/contexts/ToastContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const ICON_COLOR = 'currentColor';
 
@@ -104,6 +105,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
   const [hasEndDateError, setHasEndDateError] = useState(false);
   const [hasTagError, setHasTagError] = useState(false);
   const { toast } = useToastSettings();
+  const { t } = useLanguage();
   
   const initialData = useMemo(() => 
     initialEvent ? {
@@ -249,15 +251,15 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
       <EditorDialog
         isOpen={isOpen}
         onClose={handleClose}
-        title={mode === 'create' ? 'Create Event' : 'Edit Event'}
+        title={mode === 'create' ? t('createEvent') : 'Edit Event'}
         onSave={handleSave}
-        saveLabel={mode === 'create' ? 'Create Event' : 'Save Changes'}
+        saveLabel={mode === 'create' ? t('createEvent') : t('save')}
         saveDisabled={!formData.name.trim()}
       >
         {/* Title */}
         <TitleInput
           id="event-name"
-          label="Title"
+          label={t('title')}
           value={formData.name}
           onChange={(value) => setFormData(prev => ({ ...prev, name: value }))}
           placeholder="e.g., Birthday party"
@@ -286,7 +288,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
               Date and Time
             </Label>
             <div className="flex items-center gap-2">
-              <Label htmlFor="all-day" className="text-sm text-muted-foreground">All Day</Label>
+              <Label htmlFor="all-day" className="text-sm text-muted-foreground">{t('allDay')}</Label>
               <Switch 
                 id="all-day" 
                 checked={formData.isAllDay} 
@@ -338,7 +340,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
                   className="w-full h-10 text-sm bg-muted justify-start gap-2 rounded-md"
                 >
                   <Clock size={16} color={ICON_COLOR} />
-                  {formData.startTime || 'Set time'}
+                  {formData.startTime || t('setTime')}
                 </Button>
               )}
             </div>
@@ -365,7 +367,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
                   className={`w-full h-10 text-sm justify-start gap-2 rounded-md ${hasEndDateError ? 'bg-destructive/20 border-destructive/50' : 'bg-muted'}`}
                 >
                   <Clock size={16} color={ICON_COLOR} />
-                  {formData.endTime || 'Set time'}
+                  {formData.endTime || t('setTime')}
                 </Button>
               )}
             </div>
@@ -387,7 +389,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
           * cause was found.
           */}
         <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-          <Label htmlFor="recurrent" className="text-sm">Recurrent Event</Label>
+          <Label htmlFor="recurrent" className="text-sm">{t('recurrentEvent')}</Label>
           <Switch 
             id="recurrent" 
             checked={formData.isRecurrent} 
@@ -461,7 +463,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
         <div className="space-y-2">
           <Label className="text-sm flex items-center gap-2">
             <Bell size={16} color={ICON_COLOR} />
-            Alert
+            {t('alert')}
           </Label>
           <Select
             value={formData.alertType}
@@ -485,7 +487,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
         {/* Location */}
         <TitleInput
           id="event-location"
-          label="Location"
+          label={t('location')}
           value={formData.location}
           onChange={(value) => setFormData(prev => ({ ...prev, location: value }))}
           placeholder="e.g., Conference Room A"
@@ -497,7 +499,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
         {/* Description */}
         <TitleInput
           id="event-description"
-          label="Description"
+          label={t('description')}
           value={formData.description}
           onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
           placeholder="Add more details about this event..."

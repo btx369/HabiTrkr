@@ -1575,7 +1575,7 @@ export default function Notes() {
               onClick={handleAddButtonClick}
               className="h-10 px-8 text-sm font-medium rounded-full bg-black text-white hover:bg-black/90"
             >
-              Create Folder
+              {t('createFolder')}
               <FolderOpen className="ml-2" size={20} />
             </Button>
           </CardContent>
@@ -1657,7 +1657,7 @@ export default function Notes() {
           {archivedFolders.length > 0 ? renderFolderList(archivedFolders, true) : (
             <Card>
               <CardContent className="text-center py-8">
-                <p className="text-muted-foreground">No archived folders</p>
+                <p className="text-muted-foreground">{t('noArchivedFolders')}</p>
               </CardContent>
             </Card>
           )}
@@ -1683,7 +1683,7 @@ export default function Notes() {
                 onClick={handleAddButtonClick}
                 className="h-10 px-8 text-sm font-medium rounded-full bg-black text-white hover:bg-black/90"
               >
-                Create Note
+                {t('createNote')}
                 <Notebook className="ml-2" size={20} />
               </Button>
             )}
@@ -2045,9 +2045,9 @@ export default function Notes() {
             activeValue={activeTab} 
             values={['all-notes', 'folders', 'archived']}
           >
-            <TabsTrigger value="all-notes">Notes</TabsTrigger>
-            <TabsTrigger value="folders">Folders</TabsTrigger>
-            <TabsTrigger value="archived">Archived</TabsTrigger>
+            <TabsTrigger value="all-notes">{t('tabNotes')}</TabsTrigger>
+            <TabsTrigger value="folders">{t('tabFolders')}</TabsTrigger>
+            <TabsTrigger value="archived">{t('tabArchived')}</TabsTrigger>
           </SlidingTabsList>
           <div className="flex items-center gap-1">
             <Button 

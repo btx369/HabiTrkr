@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ColorPicker } from '@/components/shared/ColorPicker';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export type BulkActionType = 
   | 'all' 
@@ -36,75 +37,82 @@ export type BulkActionType =
 interface BulkAction {
   type: BulkActionType;
   icon: typeof CheckSquare;
+  /**
+   * A translation key, or plain English text when no key covers the label. See
+   * `resolveLabel` and `LABEL_KEYS` for how the two are distinguished.
+   */
   label: string;
 }
 
+/** The labels in the tables below that are translation keys rather than literal text. */
+const LABEL_KEYS = new Set(['all', 'pin', 'share', 'makeACopy', 'color', 'archive', 'delete', 'restore']);
+
 // Action configurations by context
 const NOTES_ACTIONS: BulkAction[] = [
-  { type: 'all', icon: CheckSquare, label: 'All' },
-  { type: 'pin', icon: Pin, label: 'Pin' },
-  { type: 'share', icon: Share, label: 'Share' },
-  { type: 'copy', icon: Copy, label: 'Copy' },
+  { type: 'all', icon: CheckSquare, label: 'all' },
+  { type: 'pin', icon: Pin, label: 'pin' },
+  { type: 'share', icon: Share, label: 'share' },
+  { type: 'copy', icon: Copy, label: 'makeACopy' },
   { type: 'move', icon: FolderInput, label: 'Move' },
-  { type: 'color', icon: Palette, label: 'Color' },
-  { type: 'archive', icon: Archive, label: 'Archive' },
-  { type: 'delete', icon: Trash2, label: 'Delete' },
+  { type: 'color', icon: Palette, label: 'color' },
+  { type: 'archive', icon: Archive, label: 'archive' },
+  { type: 'delete', icon: Trash2, label: 'delete' },
 ];
 
 const EVENTS_ACTIONS: BulkAction[] = [
-  { type: 'all', icon: CheckSquare, label: 'All' },
-  { type: 'share', icon: Share, label: 'Share' },
-  { type: 'copy', icon: Copy, label: 'Copy' },
+  { type: 'all', icon: CheckSquare, label: 'all' },
+  { type: 'share', icon: Share, label: 'share' },
+  { type: 'copy', icon: Copy, label: 'makeACopy' },
   { type: 'move', icon: FolderInput, label: 'Move' },
-  { type: 'color', icon: Palette, label: 'Color' },
-  { type: 'archive', icon: Archive, label: 'Archive' },
-  { type: 'delete', icon: Trash2, label: 'Delete' },
+  { type: 'color', icon: Palette, label: 'color' },
+  { type: 'archive', icon: Archive, label: 'archive' },
+  { type: 'delete', icon: Trash2, label: 'delete' },
 ];
 
 const FOLDERS_ACTIONS: BulkAction[] = [
-  { type: 'all', icon: CheckSquare, label: 'All' },
-  { type: 'pin', icon: Pin, label: 'Pin' },
-  { type: 'color', icon: Palette, label: 'Color' },
-  { type: 'archive', icon: Archive, label: 'Archive' },
-  { type: 'delete', icon: Trash2, label: 'Delete' },
+  { type: 'all', icon: CheckSquare, label: 'all' },
+  { type: 'pin', icon: Pin, label: 'pin' },
+  { type: 'color', icon: Palette, label: 'color' },
+  { type: 'archive', icon: Archive, label: 'archive' },
+  { type: 'delete', icon: Trash2, label: 'delete' },
 ];
 
 const HABITS_ACTIONS: BulkAction[] = [
-  { type: 'all', icon: CheckSquare, label: 'All' },
-  { type: 'pin', icon: Pin, label: 'Pin' },
+  { type: 'all', icon: CheckSquare, label: 'all' },
+  { type: 'pin', icon: Pin, label: 'pin' },
   { type: 'move', icon: FolderInput, label: 'Move' },
-  { type: 'color', icon: Palette, label: 'Color' },
-  { type: 'archive', icon: Archive, label: 'Archive' },
-  { type: 'delete', icon: Trash2, label: 'Delete' },
+  { type: 'color', icon: Palette, label: 'color' },
+  { type: 'archive', icon: Archive, label: 'archive' },
+  { type: 'delete', icon: Trash2, label: 'delete' },
 ];
 
 // Archived sections get separate "All Notes/Events" and "All Folders" buttons
 const ARCHIVED_NOTES_ACTIONS: BulkAction[] = [
   { type: 'allItems', icon: Notebook, label: 'All Notes' },
   { type: 'allFolders', icon: FolderOpen, label: 'All Folders' },
-  { type: 'restore', icon: ArchiveRestore, label: 'Restore' },
-  { type: 'delete', icon: Trash2, label: 'Delete' },
+  { type: 'restore', icon: ArchiveRestore, label: 'restore' },
+  { type: 'delete', icon: Trash2, label: 'delete' },
 ];
 
 const ARCHIVED_EVENTS_ACTIONS: BulkAction[] = [
   { type: 'allItems', icon: CheckSquare, label: 'All Events' },
   { type: 'allFolders', icon: FolderOpen, label: 'All Folders' },
-  { type: 'restore', icon: ArchiveRestore, label: 'Restore' },
-  { type: 'delete', icon: Trash2, label: 'Delete' },
+  { type: 'restore', icon: ArchiveRestore, label: 'restore' },
+  { type: 'delete', icon: Trash2, label: 'delete' },
 ];
 
 const ARCHIVED_HABITS_ACTIONS: BulkAction[] = [
   { type: 'allItems', icon: CheckSquare, label: 'All Habits' },
   { type: 'allFolders', icon: FolderOpen, label: 'All Folders' },
-  { type: 'restore', icon: ArchiveRestore, label: 'Restore' },
-  { type: 'delete', icon: Trash2, label: 'Delete' },
+  { type: 'restore', icon: ArchiveRestore, label: 'restore' },
+  { type: 'delete', icon: Trash2, label: 'delete' },
 ];
 
 // Keep legacy ARCHIVED_ACTIONS for standalone folder archives if needed
 const ARCHIVED_ACTIONS: BulkAction[] = [
-  { type: 'all', icon: CheckSquare, label: 'All' },
-  { type: 'restore', icon: ArchiveRestore, label: 'Restore' },
-  { type: 'delete', icon: Trash2, label: 'Delete' },
+  { type: 'all', icon: CheckSquare, label: 'all' },
+  { type: 'restore', icon: ArchiveRestore, label: 'restore' },
+  { type: 'delete', icon: Trash2, label: 'delete' },
 ];
 
 export type BulkActionContext = 'notes' | 'events' | 'noteFolders' | 'eventFolders' | 'archivedNotes' | 'archivedEvents' | 'archivedFolders' | 'habits' | 'habitFolders' | 'archivedHabits';
@@ -130,6 +138,23 @@ export function BulkActionBar({
 }: BulkActionBarProps) {
   const [colorPopoverOpen, setColorPopoverOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState('#FFFFFF');
+  const { t } = useLanguage();
+
+  /**
+   * Turns an action's label into text.
+   *
+   * The action tables are module level — no hook can run there — so a label is either a
+   * translation KEY or plain English text, and the two have to be told apart. They are
+   * listed explicitly rather than guessed from the shape of the string: every key is
+   * lowerCamelCase and every literal starts with a capital, so a heuristic would work
+   * today and break silently the first time a key or a phrase does not fit that pattern.
+   *
+   * The literals are the phrases that compose a noun with "All" ("All Notes", "All
+   * Events", "All Habits", "All Folders") and "Move", none of which have a key. They stay
+   * in English rather than showing a key name.
+   */
+  const resolveLabel = (label: string): string =>
+    LABEL_KEYS.has(label) ? t(label) : label;
 
   const getActions = (): BulkAction[] => {
     switch (context) {
@@ -204,7 +229,7 @@ export function BulkActionBar({
                     disabled={selectedCount === 0}
                   >
                     <Icon size={20} className="md:w-[22px] md:h-[22px] shrink-0" />
-                    <span className="text-[10px] md:text-xs leading-tight truncate">{action.label}</span>
+                    <span className="text-[10px] md:text-xs leading-tight truncate">{resolveLabel(action.label)}</span>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-3" align="center" side="top">
@@ -236,7 +261,7 @@ export function BulkActionBar({
               ) : (
                 <Icon size={20} className="md:w-[22px] md:h-[22px] shrink-0" />
               )}
-              <span className="text-[10px] md:text-xs leading-tight truncate">{action.label}</span>
+              <span className="text-[10px] md:text-xs leading-tight truncate">{resolveLabel(action.label)}</span>
             </Button>
           );
         })}

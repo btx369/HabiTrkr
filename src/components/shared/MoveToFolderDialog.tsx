@@ -5,6 +5,7 @@ import { EditorDialog } from '@/components/shared/EditorDialog';
 import { FolderCheck, FolderOpen, FolderPlus } from 'lucide-react';
 import { isDefaultColor } from '@/lib/cardColorStyles';
 import { getColoredIconClass } from '@/lib/coloredButtonStyles';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 /**
  * The fields this dialog actually needs from a folder.
@@ -57,19 +58,26 @@ export function MoveToFolderDialog<T extends MovableFolder>({
   itemNoun,
   emptyMessage = 'No folders available',
 }: MoveToFolderDialogProps<T>) {
+  const { t } = useLanguage();
   return (
     <EditorDialog
       isOpen={isOpen}
       onClose={onClose}
-      title="Move to Folder"
+      title={t('moveToFolder')}
       footer={<div />}
     >
       <div className="space-y-3 max-h-[400px] overflow-y-auto">
         {folders.length === 0 ? (
           <div className="text-center py-8">
+            {/*
+              * `emptyMessage` is supplied by the caller and already translated, so it is
+              * used as given. The default below is the one untranslated case and has no key
+              * of its own — "No folders available" is not `noArchivedFolders`, which says
+              * something different.
+              */}
             <p className="text-muted-foreground mb-4">{emptyMessage}</p>
             <Button onClick={onCreateNewFolder} className="bg-black text-white hover:bg-black/90">
-              Create New Folder
+              {t('createFolder')}
               <FolderPlus size={16} className="ml-2" />
             </Button>
           </div>
