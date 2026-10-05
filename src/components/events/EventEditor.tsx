@@ -167,7 +167,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
     
     // Validate tags
     if (hasTagError) {
-      toast.error("Please fix the tag format before saving");
+      toast.error(t('toastPasteFixTag'));
       return;
     }
     
@@ -178,7 +178,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
       
       if (endDateTime < startDateTime) {
         setHasEndDateError(true);
-        toast.error("The End Date can't be before the Start Date");
+        toast.error(t('toastEndBeforeStart'));
         return;
       }
     }

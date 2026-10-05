@@ -3,6 +3,7 @@ import { NoteFolder } from '@/types/noteFolder';
 import { ColorPicker } from '@/components/shared/ColorPicker';
 import { TitleInput } from '@/components/shared/TitleInput';
 import { EditorDialog } from '@/components/shared/EditorDialog';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { NotebookPen, FileText, Palette } from 'lucide-react';
 
 const ICON_COLOR = 'currentColor';
@@ -14,6 +15,7 @@ interface NoteFolderCreatorProps {
 }
 
 export function NoteFolderCreator({ isOpen, onClose, onSave }: NoteFolderCreatorProps) {
+  const { t } = useLanguage();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [color, setColor] = useState('#FFFFFF');
@@ -41,14 +43,14 @@ export function NoteFolderCreator({ isOpen, onClose, onSave }: NoteFolderCreator
     <EditorDialog
       isOpen={isOpen}
       onClose={handleClose}
-      title="Create New Folder"
+      title={t('createNewFolder')}
       onSave={handleSave}
-      saveLabel="Create Folder"
+      saveLabel={t('createFolder')}
       saveDisabled={!name.trim()}
     >
       <TitleInput
         id="folder-name"
-        label="Title"
+        label={t('title')}
         value={name}
         onChange={setName}
         placeholder="Enter folder title..."
@@ -60,7 +62,7 @@ export function NoteFolderCreator({ isOpen, onClose, onSave }: NoteFolderCreator
       
       <TitleInput
         id="folder-description"
-        label="Description"
+        label={t('description')}
         value={description}
         onChange={setDescription}
         placeholder="Enter folder description..."

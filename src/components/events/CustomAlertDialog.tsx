@@ -86,14 +86,14 @@ export function CustomAlertDialog({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Custom Alert</DialogTitle>
+          <DialogTitle>{t('customAlert')}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
           {/* Number input */}
           <div>
             <Label htmlFor="alert-value" className="text-sm">
-              Alert Time
+              {t('alertTime')}
             </Label>
             <Input
               id="alert-value"
@@ -105,13 +105,15 @@ export function CustomAlertDialog({
               className="h-12 text-lg text-center bg-muted mt-2"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Maximum: {currentMax} {t(UNIT_KEYS[unit])}
+              {/* A whole sentence with the value and unit substituted, so each language keeps
+                  its own word order and no "Maximum: " prefix is left in English. */}
+              {t('maximumValue').replace('{value}', `${currentMax} ${t(UNIT_KEYS[unit])}`)}
             </p>
           </div>
 
           {/* Unit selector */}
           <div className="space-y-2">
-            <Label className="text-sm">Time Unit</Label>
+            <Label className="text-sm">{t('timeUnit')}</Label>
             <div className="grid grid-cols-2 gap-2">
               {(Object.keys(UNIT_KEYS) as AlertCustomUnit[]).map((unitOption) => (
                 <Button
@@ -137,7 +139,7 @@ export function CustomAlertDialog({
             className="flex-1"
             disabled={value <= 0}
           >
-            Save Changes
+            {t('save')}
           </Button>
         </div>
       </DialogContent>

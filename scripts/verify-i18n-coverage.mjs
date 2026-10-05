@@ -53,6 +53,17 @@ const SELF_NAMED = new Set(
 );
 const DISTINCT_KEYS = UNIQUE_KEYS.filter((k) => !SELF_NAMED.has(k));
 
+/**
+ * Which languages to check.
+ *
+ * All twelve by default. Opening eighteen surfaces in each is thorough and slow, so
+ * `LANGS=pt,en node scripts/verify-i18n-coverage.mjs` narrows it while iterating: the
+ * translated six share one dictionary layout, so a gap shows up in any of them.
+ */
+const LANGS = process.env.LANGS
+  ? process.env.LANGS.split(',').map((s) => s.trim()).filter(Boolean)
+  : null;
+
 /** The six with translations; the rest fall back to English by design. */
 const TRANSLATED = ['en', 'pt', 'es', 'fr', 'de', 'it'];
 const FALLBACK = ['nl', 'pl', 'tr', 'ja', 'zh', 'ko'];
@@ -194,7 +205,7 @@ try {
     return true;
   })()`);
 
-  const languages = [...TRANSLATED, ...FALLBACK];
+  const languages = LANGS ?? [...TRANSLATED, ...FALLBACK];
   const seenKeysIn = {};
   const englishishIn = {};
   const detailIn = {};
@@ -259,6 +270,21 @@ try {
     { name: 'Note viewer', route: '/notes', open: () => clickExpr(`document.querySelector('[data-note-card] > div')`) },
     { name: 'Note type popup', route: '/notes', open: () => clickExpr(`Array.from(document.querySelectorAll('button')).find(b => b.querySelector('svg.lucide-plus'))`) },
     { name: 'Notes view settings', route: '/notes', open: () => clickExpr(`Array.from(document.querySelectorAll('button')).find(b => b.querySelector('svg.lucide-settings'))`) },
+    // The card's 3-dot menu, and the confirmation behind Delete. The dialogs hold copy that
+    // is nowhere on the page until something opens them, which is exactly where the reported
+    // English was hiding — a check that only reads the main pages cannot see it.
+    { name: 'Note card menu', route: '/notes', open: () => clickExpr(`Array.from(document.querySelectorAll('[data-note-card] button')).find(b => b.getAttribute('aria-haspopup') === 'menu')`) },
+    { name: 'Delete confirmation', route: '/notes', open: async () => {
+      await clickExpr(`Array.from(document.querySelectorAll('[data-note-card] button')).find(b => b.getAttribute('aria-haspopup') === 'menu')`);
+      await sleep(500);
+      return clickExpr(`Array.from(document.querySelectorAll('[role="menuitem"]')).find(m => /delete/i.test(m.textContent || ''))`);
+    } },
+    { name: 'Lock note dialog', route: '/notes', open: async () => {
+      await clickExpr(`Array.from(document.querySelectorAll('[data-note-card] button')).find(b => b.getAttribute('aria-haspopup') === 'menu')`);
+      await sleep(500);
+      return clickExpr(`Array.from(document.querySelectorAll('[role="menuitem"]')).find(m => /^(lock|unlock)/i.test((m.textContent || '').trim()))`);
+    } },
+    { name: 'Notes folders tab', route: '/notes', open: () => clickExpr(`Array.from(document.querySelectorAll('button,[role="tab"]')).find(b => (b.textContent || '').trim() === 'Folders')`) },
     { name: 'Events list', route: '/events' },
     { name: 'Event editor', route: '/events', open: () => clickExpr(`Array.from(document.querySelectorAll('button')).find(b => { const s = b.querySelector('svg'); return s && String(s.getAttribute('class') || '').includes('plus'); })`) },
     { name: 'Events view settings', route: '/events', open: () => clickExpr(`Array.from(document.querySelectorAll('button')).find(b => b.querySelector('svg.lucide-settings'))`) },
@@ -350,10 +376,15 @@ try {
     const tag = TRANSLATED.includes(lang) ? 'translated' : 'falls back';
     console.log(`  ${lang} (${tag}): ${englishishIn[lang]}`);
   }
-  // The translated six must actually differ from English; the fallback six are expected
-  // to match it, which is the honest gap this test records.
-  for (const lang of TRANSLATED.filter((l) => l !== 'en')) {
-    check(`${lang} shows less English than the untranslated languages`, englishishIn[lang] < Math.max(...FALLBACK.map((f) => englishishIn[f])), true);
+  // The translated six must actually differ from English, and the fallback six are expected
+  // to match it — that is the honest gap this test records. The comparison needs both groups
+  // measured, so a filtered run skips it rather than reporting a false failure.
+  if (!LANGS) {
+    for (const lang of TRANSLATED.filter((l) => l !== 'en')) {
+      check(`${lang} shows less English than the untranslated languages`, englishishIn[lang] < Math.max(...FALLBACK.map((f) => englishishIn[f])), true);
+    }
+  } else {
+    console.log(`\n(skipped the translated-vs-fallback comparison: LANGS=${process.env.LANGS} does not measure both groups)`);
   }
 
   const file = path.join(root, 'preview', 'i18n-coverage.txt');

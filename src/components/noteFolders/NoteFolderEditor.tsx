@@ -3,6 +3,7 @@ import { NoteFolder } from '@/types/noteFolder';
 import { FolderEditorFields } from '@/components/shared/FolderEditorFields';
 import { EditorDialog } from '@/components/shared/EditorDialog';
 import { AutoImportSection } from '@/components/shared/AutoImportSection';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useEditorForm } from '@/hooks/useEditorForm';
 
 interface NoteFolderFormData {
@@ -29,6 +30,7 @@ const defaults: NoteFolderFormData = {
 };
 
 export function NoteFolderEditor({ isOpen, onClose, onSave, initialFolder }: NoteFolderEditorProps) {
+  const { t } = useLanguage();
 
   const initialData = useMemo(() => 
     initialFolder ? {
@@ -73,9 +75,9 @@ export function NoteFolderEditor({ isOpen, onClose, onSave, initialFolder }: Not
     <EditorDialog
       isOpen={isOpen}
       onClose={handleClose}
-      title={initialFolder ? 'Edit Folder' : 'Create New Folder'}
+      title={initialFolder ? t('editFolder') : t('createNewFolder')}
       onSave={handleSubmit}
-      saveLabel={initialFolder ? 'Save Changes' : 'Create Folder'}
+      saveLabel={initialFolder ? t('save') : t('createFolder')}
       saveDisabled={!formData.name.trim()}
     >
       <FolderEditorFields

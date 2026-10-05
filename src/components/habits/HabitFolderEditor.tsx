@@ -53,7 +53,7 @@ export function HabitFolderEditor({ isOpen, onClose, onSave, folder }: HabitFold
     <EditorDialog
       isOpen={isOpen}
       onClose={handleClose}
-      title="Edit Folder"
+      title={t('editFolder')}
       onSave={handleSave}
       saveLabel={t('save')}
       saveDisabled={!name.trim()}

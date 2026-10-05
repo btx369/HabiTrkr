@@ -8,6 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export type ConfirmationAction = 'delete' | 'archive' | 'import' | 'mode-change' | 'restore';
 
@@ -43,17 +44,21 @@ export function ConfirmationDialog({
   onCancel,
   action = 'delete',
   confirmLabel,
-  cancelLabel = 'Cancel',
+  cancelLabel,
   hideOverlay = false,
   secondaryAction,
 }: ConfirmationDialogProps) {
+  const { t } = useLanguage();
   const isDelete = action === 'delete';
   const isArchive = action === 'archive';
   const isImport = action === 'import';
   const isModeChange = action === 'mode-change';
   const isRestore = action === 'restore';
-  const isDestructiveAction = isDelete || isArchive;
-  const defaultConfirmLabel = isDelete ? 'Delete' : isImport ? 'Import' : isModeChange ? 'Confirm' : isRestore ? 'Restore All' : 'Archive';
+  const defaultConfirmLabel = isDelete ? t('delete')
+    : isImport ? t('import')
+    : isModeChange ? t('confirm')
+    : isRestore ? t('restoreAll')
+    : t('archive');
 
   const handleCancel = () => {
     onCancel?.();
@@ -78,15 +83,19 @@ export function ConfirmationDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="flex-row gap-2">
-          <AlertDialogCancel 
-            onClick={handleCancel} 
-            className={`flex-1 mt-0 ${
-              isDestructiveAction 
-                ? 'border-destructive text-destructive hover:text-destructive dark:border-border dark:text-foreground dark:hover:text-accent-foreground' 
-                : 'border-primary text-primary hover:text-primary'
-            }`}
+          {/*
+            * Cancel is a plain secondary button, identically in every dialog.
+            *
+            * It used to take the destructive colours whenever the action was delete or
+            * archive, which painted the safe way out in red — the one button on the screen
+            * that cannot do any harm was the one that looked dangerous. The destructive
+            * styling belongs on the confirm button, which already carries it.
+            */}
+          <AlertDialogCancel
+            onClick={handleCancel}
+            className="flex-1 mt-0"
           >
-            {cancelLabel}
+            {cancelLabel ?? t('cancel')}
           </AlertDialogCancel>
           {secondaryAction && (
             <AlertDialogAction

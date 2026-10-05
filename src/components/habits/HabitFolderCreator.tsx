@@ -45,7 +45,7 @@ export function HabitFolderCreator({ isOpen, onClose, onSave }: HabitFolderCreat
     <EditorDialog
       isOpen={isOpen}
       onClose={handleClose}
-      title="Create New Folder"
+      title={t('createNewFolder')}
       onSave={handleSave}
       saveLabel={t('createFolder')}
       saveDisabled={!name.trim()}

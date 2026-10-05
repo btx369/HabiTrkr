@@ -56,7 +56,7 @@ export function MoveToFolderDialog<T extends MovableFolder>({
   currentFolderId,
   getItemCount,
   itemNoun,
-  emptyMessage = 'No folders available',
+  emptyMessage,
 }: MoveToFolderDialogProps<T>) {
   const { t } = useLanguage();
   return (
@@ -71,11 +71,10 @@ export function MoveToFolderDialog<T extends MovableFolder>({
           <div className="text-center py-8">
             {/*
               * `emptyMessage` is supplied by the caller and already translated, so it is
-              * used as given. The default below is the one untranslated case and has no key
-              * of its own — "No folders available" is not `noArchivedFolders`, which says
-              * something different.
+              * used as given. Callers that pass nothing fall back to `noFoldersAvailable` —
+              * not `noArchivedFolders`, which says something different.
               */}
-            <p className="text-muted-foreground mb-4">{emptyMessage}</p>
+            <p className="text-muted-foreground mb-4">{emptyMessage ?? t('noFoldersAvailable')}</p>
             <Button onClick={onCreateNewFolder} className="bg-black text-white hover:bg-black/90">
               {t('createFolder')}
               <FolderPlus size={16} className="ml-2" />
@@ -119,7 +118,7 @@ export function MoveToFolderDialog<T extends MovableFolder>({
             
             <div className="flex justify-center pt-2">
               <Button onClick={onCreateNewFolder} className="bg-black text-white hover:bg-black/90">
-                Create New Folder
+                {t('createNewFolder')}
                 <FolderPlus size={16} className="ml-2" />
               </Button>
             </div>

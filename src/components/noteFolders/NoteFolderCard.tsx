@@ -199,7 +199,7 @@ export function NoteFolderCard({
           <div className="pt-0 pb-2 px-1">
             {folderNotes.length === 0 ? (
               <div className={`text-center py-4 ${mutedTextColorClass} text-sm`}>
-                No notes in this folder yet
+                {t('noNotesInFolderYet')}
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-1">

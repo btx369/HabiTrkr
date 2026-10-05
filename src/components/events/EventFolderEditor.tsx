@@ -2,6 +2,7 @@ import { EventFolder } from '@/types/eventFolder';
 import { FolderEditorFields } from '@/components/shared/FolderEditorFields';
 import { EditorDialog } from '@/components/shared/EditorDialog';
 import { AutoImportSection } from '@/components/shared/AutoImportSection';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useEditorForm } from '@/hooks/useEditorForm';
 
 interface EventFolderFormData {
@@ -32,6 +33,7 @@ interface EventFolderEditorProps {
 }
 
 export function EventFolderEditor({ isOpen, onClose, onSave, folder }: EventFolderEditorProps) {
+  const { t } = useLanguage();
   const { formData, setFormData, resetForm } = useEditorForm<EventFolderFormData>({
     initialData: folder ? {
       name: folder.name,
@@ -65,9 +67,9 @@ export function EventFolderEditor({ isOpen, onClose, onSave, folder }: EventFold
     <EditorDialog
       isOpen={isOpen}
       onClose={handleClose}
-      title="Edit Folder"
+      title={t('editFolder')}
       onSave={handleSave}
-      saveLabel="Save Changes"
+      saveLabel={t('save')}
       saveDisabled={!formData.name.trim()}
     >
       <FolderEditorFields

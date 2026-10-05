@@ -1,6 +1,7 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LucideIcon } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface TitleInputProps {
   id: string;
@@ -19,12 +20,15 @@ export function TitleInput({
   label, 
   value, 
   onChange, 
-  placeholder = "Enter title...",
+  placeholder,
   maxLength = 35,
   required = false,
   icon: Icon,
   iconColor
 }: TitleInputProps) {
+  const { t } = useLanguage();
+  // Defaulted here rather than in the parameter list, which cannot see the hook.
+  const resolvedPlaceholder = placeholder ?? t('placeholderEnterTitle');
   // Calculate warning thresholds based on maxLength
   const warningThreshold = Math.floor(maxLength * 0.85);
   const dangerThreshold = maxLength;
@@ -58,7 +62,7 @@ export function TitleInput({
         id={id}
         value={value}
         onChange={(e) => onChange(e.target.value.slice(0, maxLength))}
-        placeholder={placeholder}
+        placeholder={resolvedPlaceholder}
         maxLength={maxLength}
         required={required}
         className="h-10 text-sm bg-muted"

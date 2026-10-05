@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Lock, Delete } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface PinPadDialogProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface PinPadDialogProps {
 }
 
 export const PinPadDialog = ({ isOpen, onClose, onSubmit, mode, title }: PinPadDialogProps) => {
+  const { t } = useLanguage();
   const [pin, setPin] = useState('');
   const [isShaking, setIsShaking] = useState(false);
   
@@ -67,7 +69,7 @@ export const PinPadDialog = ({ isOpen, onClose, onSubmit, mode, title }: PinPadD
         <DialogHeader>
           <DialogTitle className="text-center flex items-center justify-center gap-2">
             <Lock size={18} />
-            {title || (mode === 'set' ? 'Set PIN Code' : 'Enter PIN Code')}
+            {title || (mode === 'set' ? t('setPinCode') : t('enterPinCode'))}
           </DialogTitle>
         </DialogHeader>
         
@@ -90,13 +92,13 @@ export const PinPadDialog = ({ isOpen, onClose, onSubmit, mode, title }: PinPadD
           
           {mode === 'set' && (
             <p className="text-sm text-muted-foreground text-center">
-              Create a 4-digit PIN to lock this note
+              {t('pinCreateHint')}
             </p>
           )}
           
           {isShaking && mode === 'unlock' && (
             <p className="text-sm text-destructive text-center font-medium">
-              Incorrect PIN
+              {t('pinIncorrect')}
             </p>
           )}
           
@@ -139,14 +141,14 @@ export const PinPadDialog = ({ isOpen, onClose, onSubmit, mode, title }: PinPadD
               className="flex-1 border-primary text-primary hover:text-primary"
               onClick={handleClose}
             >
-              Cancel
+              {t('cancel')}
             </Button>
             <Button
               className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
               onClick={handleSubmit}
               disabled={pin.length !== 4}
             >
-              {mode === 'set' ? 'Set PIN' : 'Unlock'}
+              {mode === 'set' ? t('setPin') : t('unlock')}
             </Button>
           </div>
         </div>

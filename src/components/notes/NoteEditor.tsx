@@ -52,7 +52,7 @@ export function NoteEditor({ note, isOpen, onClose, onSave }: NoteEditorProps) {
 
   const handleSave = () => {
     if (hasTagError) {
-      toast.error("Please fix the tag format before saving");
+      toast.error(t('toastPasteFixTag'));
       return;
     }
     

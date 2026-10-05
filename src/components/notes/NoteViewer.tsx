@@ -116,6 +116,9 @@ export function NoteViewer({
 }: NoteViewerProps) {
   const { toast } = useToastSettings();
   const { t } = useLanguage();
+  // Toast copy is a translated sentence plus a translated entity noun. Both halves are
+  // resolved here so the `{entity}` substitution is written once instead of at every toast.
+  const say = (key: string, entity: string) => t(key).replace('{entity}', t(entity));
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingContent, setIsEditingContent] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
@@ -242,8 +245,8 @@ export function NoteViewer({
   // Handle image actions in gallery
   const handleCopyImageUrl = (imageUrl: string) => {
     navigator.clipboard.writeText(imageUrl);
-    toast.success("Copied", {
-      description: "Image URL copied to clipboard",
+    toast.success(say('toastCopied', 'noteViewerTitle'), {
+      description: t('toastContentCopied'),
     });
   };
 
@@ -293,7 +296,7 @@ export function NoteViewer({
     // Close gallery
     setGalleryOpen(false);
     
-    toast.success("Image deleted permanently!");
+    toast.success(say('toastUpdated', 'noteViewerTitle'));
   };
 
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -1294,7 +1297,7 @@ export function NoteViewer({
                       setEditedDescription('');
                     }, 100);
                     
-                    toast.success("Audio deleted");
+                    toast.success(say('toastUpdated', 'noteViewerTitle'));
                   }}
                   className="text-destructive"
                 >
@@ -1339,7 +1342,7 @@ export function NoteViewer({
                       onSave?.(note.id, { description: updatedDescription });
                       // Update local state so the label appears immediately
                       setEditedDescription(updatedDescription);
-                      toast.success("Note saved");
+                      toast.success(say('toastUpdated', 'noteViewerTitle'));
                       setEditingAudioUrl(null);
                       setEditingAudioText('');
                     }
@@ -1374,7 +1377,7 @@ export function NoteViewer({
                     onSave?.(note.id, { description: updatedDescription });
                     // Update local state so the label appears immediately
                     setEditedDescription(updatedDescription);
-                    toast.success("Note saved");
+                    toast.success(say('toastUpdated', 'noteViewerTitle'));
                     setEditingAudioUrl(null);
                     setEditingAudioText('');
                   }
@@ -2056,7 +2059,7 @@ export function NoteViewer({
               
               if (onSave) {
                 onSave(note.id, updatedNote);
-                toast.success("Converted checklist back to text");
+                toast.success(say('toastUpdated', 'noteViewerTitle'));
               }
               return;
             }
@@ -2113,7 +2116,7 @@ export function NoteViewer({
             
             if (onSave) {
               onSave(note.id, updatedNote);
-              toast.success(`Converted ${lines.length} line${lines.length > 1 ? 's' : ''} to checklist`);
+              toast.success(t('toastItemCount').replace('{count}', String(lines.length)));
             }
           }}
             onRemindMe={() => {/* TODO: Implement remind me functionality */}}

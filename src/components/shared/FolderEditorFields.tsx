@@ -1,5 +1,6 @@
 import { TitleInput } from '@/components/shared/TitleInput';
 import { ColorPicker } from '@/components/shared/ColorPicker';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { NotebookPen, FileText, Palette } from 'lucide-react';
 
 const ICON_COLOR = 'currentColor';
@@ -24,19 +25,23 @@ export function FolderEditorFields({
   onDescriptionChange,
   color,
   onColorChange,
-  namePlaceholder = "Enter folder title...",
-  descriptionPlaceholder = "Enter folder description...",
+  namePlaceholder,
+  descriptionPlaceholder,
   nameMaxLength = 35,
   descriptionMaxLength = 35
 }: FolderEditorFieldsProps) {
+  const { t } = useLanguage();
+  // Defaulted here rather than in the parameter list, which cannot see the hook.
+  const resolvedNamePlaceholder = namePlaceholder ?? t('placeholderFolderTitle');
+  const resolvedDescriptionPlaceholder = descriptionPlaceholder ?? t('placeholderFolderDescription');
   return (
     <>
       <TitleInput
         id="name"
-        label="Title"
+        label={t('title')}
         value={name}
         onChange={onNameChange}
-        placeholder={namePlaceholder}
+        placeholder={resolvedNamePlaceholder}
         maxLength={nameMaxLength}
         required
         icon={NotebookPen}
@@ -45,10 +50,10 @@ export function FolderEditorFields({
       
       <TitleInput
         id="description"
-        label="Description"
+        label={t('description')}
         value={description}
         onChange={onDescriptionChange}
-        placeholder={descriptionPlaceholder}
+        placeholder={resolvedDescriptionPlaceholder}
         maxLength={descriptionMaxLength}
         icon={FileText}
         iconColor={ICON_COLOR}

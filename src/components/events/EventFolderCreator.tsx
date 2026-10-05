@@ -3,6 +3,7 @@ import { EventFolder } from '@/types/eventFolder';
 import { ColorPicker } from '@/components/shared/ColorPicker';
 import { TitleInput } from '@/components/shared/TitleInput';
 import { EditorDialog } from '@/components/shared/EditorDialog';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { NotebookPen, FileText, Palette } from 'lucide-react';
 
 const ICON_COLOR = 'currentColor';
@@ -15,6 +16,7 @@ interface EventFolderCreatorProps {
 }
 
 export function EventFolderCreator({ isOpen, onClose, onSave, eventIdToMove }: EventFolderCreatorProps) {
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -45,14 +47,14 @@ export function EventFolderCreator({ isOpen, onClose, onSave, eventIdToMove }: E
     <EditorDialog
       isOpen={isOpen}
       onClose={handleClose}
-      title="Create New Folder"
+      title={t('createNewFolder')}
       onSave={handleSave}
-      saveLabel="Create Folder"
+      saveLabel={t('createFolder')}
       saveDisabled={!formData.name.trim()}
     >
       <TitleInput
         id="name"
-        label="Title"
+        label={t('title')}
         value={formData.name}
         onChange={(value) => setFormData(prev => ({ ...prev, name: value }))}
         placeholder="Enter folder title..."
@@ -64,7 +66,7 @@ export function EventFolderCreator({ isOpen, onClose, onSave, eventIdToMove }: E
       
       <TitleInput
         id="description"
-        label="Description"
+        label={t('description')}
         value={formData.description}
         onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
         placeholder="Enter folder description..."

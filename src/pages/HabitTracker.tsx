@@ -54,6 +54,11 @@ const DAY_SHORT_KEYS = [
 export default function HabitTracker() {
   const { toast } = useToastSettings();
   const { t } = useLanguage();
+  // Toast copy is a translated sentence plus a translated entity noun. Both halves are
+  // resolved here so the `{entity}` substitution is written once instead of at every toast.
+  const say = (key: string, entity: string) => t(key).replace('{entity}', t(entity));
+  // Folder toasts name the items a folder contains rather than the folder itself.
+  const sayFolder = (key: string) => t(key).replace('{items}', t('habits'));
   const dateLocale = useDateLocale();
   const { weekStartsOn, weekStartDay } = useWeekStart();
   // Weekday labels follow the configured week start.
@@ -262,7 +267,7 @@ export default function HabitTracker() {
     };
     setHabits((prev: Habit[]) => [...prev, newHabit]);
     setIsAddDialogOpen(false);
-    toast.success('Habit added successfully!');
+    toast.success(say('toastAdded', 'habits'));
   };
 
   const handleUpdateHabit = (habitData: Omit<Habit, 'id' | 'createdAt' | 'completedDates' | 'completionCounts'>) => {
@@ -290,7 +295,7 @@ export default function HabitTracker() {
       return updatedHabit;
     }));
     setSelectedHabit(null);
-    toast.success('Habit updated successfully!');
+    toast.success(say('toastUpdated', 'habits'));
   };
 
   const deleteHabit = (habitId: string) => {
@@ -307,7 +312,7 @@ export default function HabitTracker() {
     })));
     setSelectedHabit(null);
     setHabitToDelete(null);
-    toast.success('Habit deleted successfully!');
+    toast.success(say('toastDeleted', 'habits'));
   };
 
   const confirmDeleteHabit = (habitId: string) => setHabitToDelete(habitId);
@@ -338,7 +343,7 @@ export default function HabitTracker() {
     }
     setSelectedHabit(null);
     setHabitToArchive(null);
-    toast.success('Habit archived successfully!');
+    toast.success(say('toastArchived', 'habits'));
   };
 
   const pinHabit = (habitId: string) => {
@@ -375,7 +380,7 @@ export default function HabitTracker() {
         }
       }
     }
-    toast.success('Habit restored successfully!');
+    toast.success(say('toastRestored', 'habits'));
   };
 
   const openHabitDetails = (habit: Habit) => setSelectedHabit(habit);
@@ -390,7 +395,7 @@ export default function HabitTracker() {
     };
     setHabitFolders((prev: HabitFolder[]) => [...prev, newFolder]);
     setIsFolderCreatorOpen(false);
-    toast.success('Folder created successfully!');
+    toast.success(say('toastAdded', 'tabFolders'));
   };
 
   const handleUpdateFolder = (folderData: Partial<HabitFolder>) => {
@@ -400,7 +405,7 @@ export default function HabitTracker() {
     ));
     setSelectedFolder(null);
     setIsFolderEditorOpen(false);
-    toast.success('Folder updated successfully!');
+    toast.success(say('toastUpdated', 'tabFolders'));
   };
 
   const pinFolder = (folderId: string) => {
@@ -437,7 +442,7 @@ export default function HabitTracker() {
     setHabitFolders((prev: HabitFolder[]) => prev.filter(f => f.id !== folderId));
     setArchivedHabitFolders((prev: HabitFolder[]) => prev.filter(f => f.id !== folderId));
     setFolderToDelete(null);
-    toast.success('Folder and its habits deleted!');
+    toast.success(sayFolder('toastFolderAndItemsDeleted'));
   };
 
   const archiveFolder = (folderId: string) => {
@@ -454,14 +459,14 @@ export default function HabitTracker() {
         setHabits((prev: Habit[]) => prev.filter(h => !folderToArchiveData.habitIds.includes(h.id)));
       }
       
-      toast.success('Folder and its habits archived successfully!');
+      toast.success(sayFolder('toastFolderAndItemsArchived'));
     }
     setFolderToArchive(null);
   };
 
   /**
    * Works out how an archived folder should come back, without mutating anything.
-   * `restoreHabits` is false for "Folder Only" and true for "Restore All".
+   * `restoreHabits` is false for the `folderOnly` action and true for `restoreAll`.
    *
    * Returns null when the folder is no longer in the archived list (e.g. a bulk
    * restore already handled it), so callers can bail out safely.
@@ -523,14 +528,14 @@ export default function HabitTracker() {
     const plan = planFolderRestore(folderId, false);
     if (!plan) return;
     applyFolderRestore(plan);
-    toast.success('Folder restored successfully!');
+    toast.success(say('toastRestored', 'tabFolders'));
   };
 
   const restoreHabitFolderWithHabits = (folderId: string) => {
     const plan = planFolderRestore(folderId, true);
     if (!plan) return;
     applyFolderRestore(plan);
-    toast.success('Folder and its habits restored!');
+    toast.success(sayFolder('toastFolderAndItemsRestored'));
   };
 
   // Move to folder
@@ -557,7 +562,7 @@ export default function HabitTracker() {
     
     setIsMoveToFolderOpen(false);
     setHabitToMove(null);
-    toast.success('Habit moved to folder!');
+    toast.success(say('toastUpdated', 'habits'));
   };
 
   // Search and filter
@@ -1168,8 +1173,8 @@ export default function HabitTracker() {
       <ConfirmationDialog
         open={!!habitToDelete}
         onOpenChange={(open) => !open && setHabitToDelete(null)}
-        title="Delete Habit"
-        description="Are you sure you want to permanently delete this habit? This action cannot be undone."
+        title={t('deleteHabit')}
+        description={t('confirmDeleteBody')}
         action="delete"
         onConfirm={() => habitToDelete && deleteHabit(habitToDelete)}
       />
@@ -1177,8 +1182,8 @@ export default function HabitTracker() {
       <ConfirmationDialog
         open={!!habitToArchive}
         onOpenChange={(open) => !open && setHabitToArchive(null)}
-        title="Archive Habit"
-        description="Are you sure you want to archive this habit? You can restore it later from the archived tab."
+        title={t('archiveHabit')}
+        description={t('confirmArchiveTitle')}
         action="archive"
         onConfirm={() => habitToArchive && archiveHabit(habitToArchive)}
       />
@@ -1186,8 +1191,8 @@ export default function HabitTracker() {
       <ConfirmationDialog
         open={!!folderToDelete}
         onOpenChange={(open) => !open && setFolderToDelete(null)}
-        title="Delete Folder"
-        description="Are you sure you want to permanently delete this folder and all its habits? This action cannot be undone."
+        title={t('deleteFolder')}
+        description={t('confirmDeleteBody')}
         action="delete"
         onConfirm={() => folderToDelete && deleteFolder(folderToDelete)}
       />
@@ -1195,8 +1200,8 @@ export default function HabitTracker() {
       <ConfirmationDialog
         open={!!folderToArchive}
         onOpenChange={(open) => !open && setFolderToArchive(null)}
-        title="Archive Folder"
-        description="Are you sure you want to archive this folder and all its habits? You can restore them later from the archived tab."
+        title={t('archiveFolder')}
+        description={t('confirmArchiveTitle')}
         action="archive"
         onConfirm={() => folderToArchive && archiveFolder(folderToArchive)}
       />
@@ -1208,7 +1213,7 @@ export default function HabitTracker() {
           setFolderRestoreDialogOpen(open);
           if (!open) setFolderToRestore(null);
         }}
-        title="Restore Folder"
+        title={t('restoreFolder')}
         description={(() => {
           if (!folderToRestore) return '';
           const folder = archivedHabitFolders.find(f => f.id === folderToRestore);
@@ -1216,16 +1221,16 @@ export default function HabitTracker() {
           const habitIdsAssignedElsewhere = new Set<string>(habitFolders.flatMap(f => f.habitIds));
           const sanitizedHabitIds = folder.habitIds.filter(id => !habitIdsAssignedElsewhere.has(id));
           const count = archivedHabits.filter(h => sanitizedHabitIds.includes(h.id)).length;
-          return `Do you also want to restore the ${count} habit${count !== 1 ? 's' : ''} inside this folder?`;
+          return `${count} ${t('habits')}`;
         })()}
         action="restore"
-        confirmLabel="Restore All"
+        confirmLabel={t('restoreAll')}
         onConfirm={() => {
           if (folderToRestore) restoreHabitFolderWithHabits(folderToRestore);
           setFolderToRestore(null);
         }}
         secondaryAction={{
-          label: 'Folder Only',
+          label: t('folderOnly'),
           onClick: () => {
             if (folderToRestore) restoreHabitFolderOnly(folderToRestore);
             setFolderToRestore(null);

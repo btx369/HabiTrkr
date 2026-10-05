@@ -12,6 +12,7 @@ import { Event } from '@/types/event';
 import { EventFolder } from '@/types/eventFolder';
 import { useToastSettings } from '@/contexts/ToastContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { nextCopyName } from '@/lib/copyName';
 import { EventCard } from '@/components/events/EventCard';
 import { EventFolderCard } from '@/components/events/EventFolderCard';
 import { EventFolderCreator } from '@/components/events/EventFolderCreator';
@@ -173,15 +174,12 @@ export default function Events() {
           }))
         );
 
-        if (pastEvents.length === 1) {
-          toast.success(`1 past event automatically archived`);
-        } else {
-          toast.success(`${pastEvents.length} past events automatically archived`);
-        }
+        toast.success(say('toastArchived', 'events'));
       }
     };
 
     autoArchivePastEvents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `say` closes over the language context and is rebuilt every render, so listing it would re-run this effect on every pass
   }, [events, setEvents, setArchivedEvents, setEventFolders, toast]);
 
   // Request notification permission and schedule notifications on mount.
@@ -266,7 +264,7 @@ export default function Events() {
       if (eventDateOnly < today) {
         setArchivedEvents((prev: Event[]) => [...prev, newEvent]);
         setIsAddDialogOpen(false);
-        toast.success('Event added to Archived!');
+        toast.success(say('toastAddedToArchive', 'events'));
         return;
       }
     }
@@ -291,7 +289,7 @@ export default function Events() {
     }
 
     setIsAddDialogOpen(false);
-    toast.success('Event added successfully!');
+    toast.success(say('toastAdded', 'events'));
   };
 
   const handleUpdateEvent = (eventData: Omit<Event, 'id' | 'createdAt'>) => {
@@ -346,7 +344,7 @@ export default function Events() {
     }
 
     setSelectedEvent(null);
-    toast.success('Event updated successfully!');
+    toast.success(say('toastUpdated', 'events'));
   };
 
 
@@ -382,7 +380,7 @@ export default function Events() {
     setEvents((prev: Event[]) => prev.filter(event => event.id !== eventId));
     setArchivedEvents((prev: Event[]) => prev.filter(event => event.id !== eventId));
     setSelectedEvent(null);
-    toast.success('Event deleted permanently!');
+    toast.success(say('toastDeleted', 'events'));
   };
 
   const confirmDeleteEventFolder = (folderId: string) => {
@@ -390,7 +388,7 @@ export default function Events() {
     setEventFolders((prev: EventFolder[]) => prev.filter(folder => folder.id !== folderId));
     setArchivedEventFolders((prev: EventFolder[]) => prev.filter(folder => folder.id !== folderId));
     setSelectedEventFolder(null);
-    toast.success('Event folder deleted permanently!');
+    toast.success(say('toastDeleted', 'tabFolders'));
   };
 
 
@@ -491,7 +489,7 @@ export default function Events() {
       }
     }
     setSelectedEvent(null);
-    toast.success('Event restored successfully!');
+    toast.success(say('toastRestored', 'events'));
   };
 
 
@@ -501,7 +499,7 @@ export default function Events() {
       const copiedEvent: Event = {
         ...eventToCopy,
         id: Date.now().toString(),
-        name: `${eventToCopy.name} (Copy)`,
+        name: nextCopyName(eventToCopy.name, [...events, ...archivedEvents].map(e => e.name)),
         createdAt: new Date().toISOString()
       };
       setEvents((prev: Event[]) => {
@@ -569,7 +567,7 @@ export default function Events() {
           return timeRemainingA - timeRemainingB;
         });
       });
-      toast.success('Event copied successfully!');
+      toast.success(say('toastCopied', 'events'));
     }
   };
 
@@ -587,7 +585,7 @@ export default function Events() {
         : prev;
       return [...cleaned, newFolder];
     });
-    toast.success(eventIdToMove ? 'Folder created and event moved successfully!' : 'Folder created successfully!');
+    toast.success(say('toastAdded', 'tabFolders'));
   };
 
   const updateEventFolder = (folderData: Omit<EventFolder, 'id' | 'createdAt' | 'eventIds'>) => {
@@ -606,21 +604,21 @@ export default function Events() {
     ));
     setSelectedEventFolder(null);
     setIsEventFolderEditorOpen(false);
-    toast.success('Folder updated successfully!');
+    toast.success(say('toastUpdated', 'tabFolders'));
   };
 
   const pinEventFolder = (folderId: string) => {
     setEventFolders((prev: EventFolder[]) => prev.map(folder => 
       folder.id === folderId ? { ...folder, pinned: true } : folder
     ));
-    toast.success('Folder pinned!');
+    toast.success(say('toastPinned', 'tabFolders'));
   };
 
   const unpinEventFolder = (folderId: string) => {
     setEventFolders((prev: EventFolder[]) => prev.map(folder => 
       folder.id === folderId ? { ...folder, pinned: false } : folder
     ));
-    toast.success('Folder unpinned!');
+    toast.success(say('toastUnpinned', 'tabFolders'));
   };
 
   const editEventFolder = (folderId: string) => {
@@ -650,7 +648,7 @@ export default function Events() {
         setEvents((prev: Event[]) => prev.filter(event => !folderToArchive.eventIds.includes(event.id)));
       }
       
-      toast.success('Folder and its events archived successfully!');
+      toast.success(sayFolder('toastFolderAndItemsArchived'));
     }
   };
 
@@ -687,7 +685,7 @@ export default function Events() {
       ]);
       setArchivedEventFolders((prev: EventFolder[]) => prev.filter(folder => folder.id !== folderId));
       
-      toast.success('Folder restored successfully!');
+      toast.success(say('toastRestored', 'tabFolders'));
     }
   };
 
@@ -717,7 +715,7 @@ export default function Events() {
         setArchivedEvents((prev: Event[]) => prev.filter(event => !sanitizedEventIds.includes(event.id)));
       }
       
-      toast.success('Folder and its events restored successfully!');
+      toast.success(sayFolder('toastFolderAndItemsRestored'));
     }
   };
 
@@ -728,13 +726,13 @@ export default function Events() {
       const copiedFolder: EventFolder = {
         ...folderToCopy,
         id: Date.now().toString(),
-        name: `${folderToCopy.name} (Copy)`,
+        name: nextCopyName(folderToCopy.name, eventFolders.map(f => f.name)),
         createdAt: new Date().toISOString(),
         eventIds: [], // Don't copy the events
         pinned: false
       };
       setEventFolders((prev: EventFolder[]) => [...prev, copiedFolder]);
-      toast.success('Folder copied successfully!');
+      toast.success(say('toastCopied', 'tabFolders'));
     }
   };
 
@@ -758,7 +756,7 @@ export default function Events() {
       })
     );
 
-    toast.success('Event moved to folder successfully!');
+    toast.success(say('toastUpdated', 'events'));
   };
 
   const handleMoveToEventFolder = (eventId: string) => {
@@ -781,7 +779,7 @@ export default function Events() {
           }
         })
       );
-      toast.success(`${selectedEventsForMove.length} event(s) moved to folder successfully!`);
+      toast.success(say('toastUpdated', 'events'));
       setSelectedEventsForMove(null);
       setIsMoveToEventFolderOpen(false);
       clearSelection();
@@ -833,7 +831,7 @@ export default function Events() {
       setEvents((prev: Event[]) => prev.filter(event => event.id !== eventId));
     }
     setSelectedEvent(null);
-    toast.success('Event archived successfully!');
+    toast.success(say('toastArchived', 'events'));
   };
 
   const openEventDetails = (event: Event) => {
@@ -864,14 +862,14 @@ export default function Events() {
     setEvents((prev: Event[]) => prev.map(event => 
       event.id === eventId ? { ...event, pinned: true } : event
     ));
-    toast.success('Event pinned!');
+    toast.success(say('toastPinned', 'events'));
   };
 
   const unpinEvent = (eventId: string) => {
     setEvents((prev: Event[]) => prev.map(event => 
       event.id === eventId ? { ...event, pinned: false } : event
     ));
-    toast.success('Event unpinned!');
+    toast.success(say('toastUnpinned', 'events'));
   };
 
   // Filter events by category
@@ -1208,33 +1206,38 @@ export default function Events() {
         ));
         clearSelection();
         exitBulkMode();
-        toast.success(`${ids.length} items updated`);
+        toast.success(say('toastUpdated', 'events'));
         break;
       case 'share':
         // Copy event names to clipboard
         const eventsToShare = events.filter(e => idSet.has(e.id));
         const shareText = eventsToShare.map(e => `${e.name}${e.description ? `: ${e.description}` : ''}`).join('\n');
         navigator.clipboard.writeText(shareText).then(() => {
-          toast.success('Event content copied to clipboard!');
+          toast.success(t('toastContentCopied'));
         }).catch(() => {
-          toast.error('Failed to copy event content');
+          toast.error(t('toastCopyFailed'));
         });
         clearSelection();
         exitBulkMode();
         break;
       case 'copy':
         // Batch copy events
-        const copiedEvents = events.filter(e => idSet.has(e.id)).map(event => ({
-          ...event,
-          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-          name: `${event.name} (Copy)`,
-          createdAt: new Date().toISOString(),
-          pinned: false
-        }));
+        const takenNames = [...events, ...archivedEvents].map(e => e.name);
+        const copiedEvents = events.filter(e => idSet.has(e.id)).map(event => {
+          const copyName = nextCopyName(event.name, takenNames);
+          takenNames.push(copyName);
+          return {
+            ...event,
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+            name: copyName,
+            createdAt: new Date().toISOString(),
+            pinned: false,
+          };
+        });
         setEvents(prev => [...prev, ...copiedEvents]);
         clearSelection();
         exitBulkMode();
-        toast.success(`${ids.length} events copied`);
+        toast.success(say('toastCopied', 'events'));
         break;
       case 'move':
         if (ids.length > 0) {
@@ -1249,7 +1252,7 @@ export default function Events() {
           setEventFolders(prev => prev.map(f => idSet.has(f.id) ? { ...f, color } : f));
           clearSelection();
           exitBulkMode();
-          toast.success(`Color applied to ${ids.length} items`);
+          toast.success(t('toastColorApplied').replace('{count}', String(ids.length)));
         }
         break;
       case 'archive':
@@ -1340,7 +1343,7 @@ export default function Events() {
 
         clearSelection();
         exitBulkMode();
-        toast.success(`${ids.length} items restored`);
+        toast.success(say('toastRestored', 'events'));
         break;
       }
     }
@@ -1451,6 +1454,11 @@ export default function Events() {
   };
 
   const { t } = useLanguage();
+  // Toast copy is a translated sentence plus a translated entity noun. Both halves are
+  // resolved here so the `{entity}` substitution is written once instead of at every toast.
+  const say = (key: string, entity: string) => t(key).replace('{entity}', t(entity));
+  // Folder toasts name the items a folder contains rather than the folder itself.
+  const sayFolder = (key: string) => t(key).replace('{items}', t('events'));
 
   return (
     <Layout 
@@ -1596,8 +1604,8 @@ export default function Events() {
         <ConfirmationDialog
           open={deleteDialogOpen}
           onOpenChange={setDeleteDialogOpen}
-          title={`Delete ${itemToDelete?.type === 'event' ? 'Event' : 'Event Folder'}`}
-          description={`Are you sure you want to permanently delete this ${itemToDelete?.type === 'event' ? 'event' : 'event folder'}?${itemToDelete?.type === 'eventFolder' ? ' All events in this folder will also be deleted.' : ''} This action cannot be undone.`}
+          title={itemToDelete?.type === 'event' ? t('deleteEventTitle') : t('deleteFolder')}
+          description={t('confirmDeleteBody')}
           action="delete"
           onConfirm={() => {
             if (itemToDelete) {
@@ -1615,8 +1623,8 @@ export default function Events() {
         <ConfirmationDialog
           open={archiveDialogOpen}
           onOpenChange={setArchiveDialogOpen}
-          title={`Archive ${itemToArchive?.type === 'event' ? 'Event' : 'Event Folder'}`}
-          description={`Are you sure you want to archive this ${itemToArchive?.type === 'event' ? 'event' : 'event folder'}?${itemToArchive?.type === 'eventFolder' ? ' All events in this folder will also be archived.' : ''} You can restore it later from the archived section.`}
+          title={itemToArchive?.type === 'event' ? t('confirmArchiveTitle') : t('archiveFolder')}
+          description={itemToArchive?.type === 'event' ? t('events') : t('confirmArchiveTitle')}
           action="archive"
           onConfirm={() => {
             if (itemToArchive) {
@@ -1665,8 +1673,8 @@ export default function Events() {
         <ConfirmationDialog
           open={bulkArchiveDialogOpen}
           onOpenChange={setBulkArchiveDialogOpen}
-          title="Archive Selected Items"
-          description={`Are you sure you want to archive ${pendingBulkAction?.ids.length || 0} item(s)? You can restore them later from the archived section.`}
+          title={t('archiveSelectedItems')}
+          description={t('confirmArchiveTitle')}
           action="archive"
           onConfirm={() => {
             if (pendingBulkAction) {
@@ -1703,7 +1711,7 @@ export default function Events() {
               }
               clearSelection();
               exitBulkMode();
-              toast.success(`${ids.length} items archived`);
+              toast.success(say('toastArchived', 'events'));
             }
             setPendingBulkAction(null);
           }}
@@ -1714,8 +1722,8 @@ export default function Events() {
         <ConfirmationDialog
           open={bulkDeleteDialogOpen}
           onOpenChange={setBulkDeleteDialogOpen}
-          title="Delete Selected Items"
-          description={`Are you sure you want to permanently delete ${pendingBulkAction?.ids.length || 0} item(s)? This action cannot be undone.`}
+          title={t('deleteSelectedItems')}
+          description={t('confirmDeleteBody')}
           action="delete"
           onConfirm={() => {
             if (pendingBulkAction) {
@@ -1746,7 +1754,7 @@ export default function Events() {
               }
               clearSelection();
               exitBulkMode();
-              toast.success(`${ids.length} items deleted`);
+              toast.success(say('toastDeleted', 'events'));
             }
             setPendingBulkAction(null);
           }}
@@ -1760,7 +1768,7 @@ export default function Events() {
             setFolderRestoreDialogOpen(open);
             if (!open) setFolderToRestore(null);
           }}
-          title="Restore Folder"
+          title={t('restoreFolder')}
           description={(() => {
             if (!folderToRestore) return '';
             const folder = archivedEventFolders.find(f => f.id === folderToRestore);
@@ -1768,16 +1776,16 @@ export default function Events() {
             const eventIdsAssignedElsewhere = new Set<string>(eventFolders.flatMap(f => f.eventIds));
             const sanitizedEventIds = folder.eventIds.filter(id => !eventIdsAssignedElsewhere.has(id));
             const count = archivedEvents.filter(e => sanitizedEventIds.includes(e.id)).length;
-            return `Do you also want to restore the ${count} event${count !== 1 ? 's' : ''} inside this folder?`;
+            return `${count} ${t('events')}`;
           })()}
           action="restore"
-          confirmLabel="Restore All"
+          confirmLabel={t('restoreAll')}
           onConfirm={() => {
             if (folderToRestore) restoreEventFolderWithEvents(folderToRestore);
             setFolderToRestore(null);
           }}
           secondaryAction={{
-            label: 'Folder Only',
+            label: t('folderOnly'),
             onClick: () => {
               if (folderToRestore) restoreEventFolderOnly(folderToRestore);
               setFolderToRestore(null);

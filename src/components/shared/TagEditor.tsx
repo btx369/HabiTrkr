@@ -122,21 +122,21 @@ export function TagEditor({
     
     // Check tag limit
     if (tags.length >= TAG_LIMIT) {
-      toast.error(`Maximum ${TAG_LIMIT} tags allowed`);
+      toast.error(t('toastTagLimit').replace('{count}', String(TAG_LIMIT)));
       return;
     }
     
     // Check if valid before adding
     if (!validateInput(tagInput)) {
       setHasError(true);
-      toast.error("Tags must start with # (e.g., #work #project)");
+      toast.error(t('toastTagMustStartWithHash'));
       return;
     }
     
     const newTags = parseTagsFromInput(tagInput);
     if (newTags.length === 0) {
       setHasError(true);
-      toast.error("Tags must start with # (e.g., #work #project)");
+      toast.error(t('toastTagMustStartWithHash'));
       return;
     }
 
@@ -163,7 +163,7 @@ export function TagEditor({
   const handleSuggestionClick = (tag: string) => {
     if (tags.includes(tag)) return;
     if (tags.length >= TAG_LIMIT) {
-      toast.error(`Maximum ${TAG_LIMIT} tags allowed`);
+      toast.error(t('toastTagLimit').replace('{count}', String(TAG_LIMIT)));
       return;
     }
     onTagsChange([...tags, tag]);

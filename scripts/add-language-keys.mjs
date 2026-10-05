@@ -217,6 +217,51 @@ const KEYS = [
   ['placeholderEventDescription', 'Add more details about this event...', 'Adicione mais detalhes a este evento...', 'Añade más detalles sobre este evento...', 'Ajoutez plus de détails sur cet événement...', 'Weitere Details zu diesem Termin hinzufügen...', 'Aggiungi maggiori dettagli su questo evento...'],
   ['placeholderHabitName', 'e.g., Drink 8 glasses of water', 'ex.: Beber 8 copos de água', 'ej.: Beber 8 vasos de agua', 'ex. : Boire 8 verres d’eau', 'z. B. 8 Gläser Wasser trinken', 'es.: Bere 8 bicchieri d’acqua'],
   ['placeholderHabitDescription', 'Add more details about this habit...', 'Adicione mais detalhes a este hábito...', 'Añade más detalles sobre este hábito...', 'Ajoutez plus de détails sur cette habitude...', 'Weitere Details zu dieser Gewohnheit hinzufügen...', 'Aggiungi maggiori dettagli su questa abitudine...'],
+
+  // --- Toasts.
+  //
+  // Each is a whole sentence with `{entity}` and `{count}` placeholders, rather than a verb
+  // key joined to a noun key at the call site. Composing them would force every language
+  // into English word order and into agreeing a past participle with a noun whose gender
+  // differs per language — German alone needs "Termin gelöscht" (masculine) and "Notiz
+  // gelöscht" (feminine), which no single verb form can satisfy.
+  ['toastAdded', '{entity} added', '{entity} adicionado', '{entity} añadido', '{entity} ajouté', '{entity} hinzugefügt', '{entity} aggiunto'],
+  ['toastUpdated', '{entity} updated', '{entity} atualizado', '{entity} actualizado', '{entity} mis à jour', '{entity} aktualisiert', '{entity} aggiornato'],
+  ['toastDeleted', '{entity} deleted', '{entity} eliminado', '{entity} eliminado', '{entity} supprimé', '{entity} gelöscht', '{entity} eliminato'],
+  ['toastArchived', '{entity} archived', '{entity} arquivado', '{entity} archivado', '{entity} archivé', '{entity} archiviert', '{entity} archiviato'],
+  ['toastRestored', '{entity} restored', '{entity} restaurado', '{entity} restaurado', '{entity} restauré', '{entity} wiederhergestellt', '{entity} ripristinato'],
+  ['toastCopied', '{entity} copied', '{entity} duplicado', '{entity} duplicado', '{entity} dupliqué', '{entity} kopiert', '{entity} duplicato'],
+  ['toastPinned', '{entity} pinned', '{entity} fixado', '{entity} fijado', '{entity} épinglé', '{entity} angeheftet', '{entity} fissato'],
+  ['toastUnpinned', '{entity} unpinned', '{entity} desafixado', '{entity} desfijado', '{entity} détaché', '{entity} gelöst', '{entity} rimosso'],
+  ['toastAddedToArchive', '{entity} added to Archived', '{entity} adicionado ao arquivo', '{entity} añadido a Archivados', '{entity} ajouté aux archives', '{entity} zum Archiv hinzugefügt', '{entity} aggiunto all’archivio'],
+  ['toastItemCount', '{count} item(s)', '{count} item(ns)', '{count} elemento(s)', '{count} élément(s)', '{count} Eintrag/Einträge', '{count} elemento/i'],
+  ['toastColorApplied', 'Color applied to {count} item(s)', 'Cor aplicada a {count} item(ns)', 'Color aplicado a {count} elemento(s)', 'Couleur appliquée à {count} élément(s)', 'Farbe auf {count} Eintrag/Einträge angewendet', 'Colore applicato a {count} elemento/i'],
+  ['toastCopyFailed', 'Failed to copy the content', 'Não foi possível copiar o conteúdo', 'No se pudo copiar el contenido', 'Échec de la copie du contenu', 'Inhalt konnte nicht kopiert werden', 'Impossibile copiare il contenuto'],
+  ['toastContentCopied', 'Content copied to the clipboard', 'Conteúdo copiado para a área de transferência', 'Contenido copiado al portapapeles', 'Contenu copié dans le presse-papiers', 'Inhalt in die Zwischenablage kopiert', 'Contenuto copiato negli appunti'],
+  ['toastFolderAndItemsArchived', 'Folder and its {items} archived', 'Pasta e {items} arquivados', 'Carpeta y sus {items} archivados', 'Dossier et ses {items} archivés', 'Ordner und {items} archiviert', 'Cartella e {items} archiviati'],
+  ['toastFolderAndItemsRestored', 'Folder and its {items} restored', 'Pasta e {items} restaurados', 'Carpeta y sus {items} restaurados', 'Dossier et ses {items} restaurés', 'Ordner und {items} wiederhergestellt', 'Cartella e {items} ripristinati'],
+  ['toastFolderAndItemsDeleted', 'Folder and its {items} deleted', 'Pasta e {items} eliminados', 'Carpeta y sus {items} eliminados', 'Dossier et ses {items} supprimés', 'Ordner und {items} gelöscht', 'Cartella e {items} eliminati'],
+  ['toastPasteFixTag', 'Please fix the tag format before saving', 'Corrija o formato das tags antes de guardar', 'Corrige el formato de las etiquetas antes de guardar', 'Corrigez le format des tags avant d’enregistrer', 'Bitte das Tag-Format vor dem Speichern korrigieren', 'Correggi il formato dei tag prima di salvare'],
+  ['toastTagMustStartWithHash', 'Tags must start with # (e.g., #work #project)', 'As tags têm de começar por # (ex.: #trabalho #projeto)', 'Las etiquetas deben empezar por # (ej.: #trabajo #proyecto)', 'Les tags doivent commencer par # (ex. : #travail #projet)', 'Tags müssen mit # beginnen (z. B. #arbeit #projekt)', 'I tag devono iniziare con # (es.: #lavoro #progetto)'],
+  ['toastTagLimit', 'Maximum {count} tags allowed', 'Máximo de {count} tags', 'Máximo {count} etiquetas', 'Maximum {count} tags', 'Maximal {count} Tags', 'Massimo {count} tag'],
+  ['toastEndBeforeStart', 'The end date cannot be before the start date', 'A data de fim não pode ser anterior à de início', 'La fecha de fin no puede ser anterior a la de inicio', 'La date de fin ne peut pas précéder la date de début', 'Das Enddatum darf nicht vor dem Startdatum liegen', 'La data di fine non può precedere quella di inizio'],
+  ['toastCheckedItems', '{count} checked item(s)', '{count} item(ns) marcado(s)', '{count} elemento(s) marcado(s)', '{count} élément(s) coché(s)', '{count} Eintrag/Einträge markiert', '{count} elemento/i selezionato/i'],
+  ['confirm', 'Confirm', 'Confirmar', 'Confirmar', 'Confirmer', 'Bestätigen', 'Conferma'],
+  ['confirmDeleteTitle', 'Delete this item?', 'Eliminar este item?', '¿Eliminar este elemento?', 'Supprimer cet élément ?', 'Diesen Eintrag löschen?', 'Eliminare questo elemento?'],
+  ['confirmArchiveTitle', 'Archive this item?', 'Arquivar este item?', '¿Archivar este elemento?', 'Archiver cet élément ?', 'Diesen Eintrag archivieren?', 'Archiviare questo elemento?'],
+  ['confirmDeleteBody', 'This action cannot be undone.', 'Esta ação não pode ser anulada.', 'Esta acción no se puede deshacer.', 'Cette action est irréversible.', 'Diese Aktion kann nicht rückgängig gemacht werden.', 'Questa azione non può essere annullata.'],
+  ['setPinCode', 'Set PIN Code', 'Definir código PIN', 'Definir código PIN', 'Définir le code PIN', 'PIN-Code festlegen', 'Imposta codice PIN'],
+  ['enterPinCode', 'Enter PIN Code', 'Introduza o código PIN', 'Introduce el código PIN', 'Saisir le code PIN', 'PIN-Code eingeben', 'Inserisci il codice PIN'],
+  ['pinCreateHint', 'Create a 4-digit PIN to lock this note', 'Crie um PIN de 4 dígitos para bloquear esta nota', 'Crea un PIN de 4 dígitos para bloquear esta nota', 'Créez un code PIN à 4 chiffres pour verrouiller cette note', 'Erstelle einen 4-stelligen PIN, um diese Notiz zu sperren', 'Crea un PIN di 4 cifre per bloccare questa nota'],
+  ['pinIncorrect', 'Incorrect PIN', 'PIN incorreto', 'PIN incorrecto', 'Code PIN incorrect', 'Falscher PIN', 'PIN errato'],
+  ['setPin', 'Set PIN', 'Definir PIN', 'Definir PIN', 'Définir le PIN', 'PIN festlegen', 'Imposta PIN'],
+  ['unlock', 'Unlock', 'Desbloquear', 'Desbloquear', 'Déverrouiller', 'Entsperren', 'Sblocca'],
+  ['noNotesInFolderYet', 'No notes in this folder yet', 'Ainda não há notas nesta pasta', 'Aún no hay notas en esta carpeta', 'Aucune note dans ce dossier', 'Noch keine Notizen in diesem Ordner', 'Ancora nessuna nota in questa cartella'],
+  ['placeholderFolderTitle', 'Enter folder title...', 'Introduza o título da pasta...', 'Introduce el título de la carpeta...', 'Saisir le titre du dossier...', 'Ordnertitel eingeben...', 'Inserisci il titolo della cartella...'],
+  ['placeholderFolderDescription', 'Enter folder description...', 'Introduza a descrição da pasta...', 'Introduce la descripción de la carpeta...', 'Saisir la description du dossier...', 'Ordnerbeschreibung eingeben...', 'Inserisci la descrizione della cartella...'],
+  ['placeholderEnterTitle', 'Enter title...', 'Introduza o título...', 'Introduce el título...', 'Saisir le titre...', 'Titel eingeben...', 'Inserisci il titolo...'],
+  ['placeholderAddTagsWork', 'Add tags (e.g., #work #personal)', 'Adicionar tags (ex.: #trabalho #pessoal)', 'Añadir etiquetas (ej.: #trabajo #personal)', 'Ajouter des tags (ex. : #travail #personnel)', 'Tags hinzufügen (z. B. #arbeit #privat)', 'Aggiungi tag (es.: #lavoro #personale)'],
+  ['placeholderAddTagsMeeting', 'Add tags (e.g., #meeting #work)', 'Adicionar tags (ex.: #reuniao #trabalho)', 'Añadir etiquetas (ej.: #reunion #trabajo)', 'Ajouter des tags (ex. : #réunion #travail)', 'Tags hinzufügen (z. B. #meeting #arbeit)', 'Aggiungi tag (es.: #riunione #lavoro)'],
 ];
 
 const COLUMNS = ['en', 'pt', 'es', 'fr', 'de', 'it'];

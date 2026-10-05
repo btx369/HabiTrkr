@@ -28,6 +28,7 @@ import { updateTagUsage } from '@/lib/tagStorage';
 import { autoImportNoteToFolders } from '@/lib/folderAutoImport';
 import { parseSearchExpression, matchesSearchExpression } from '@/lib/tagParser';
 import { extractSearchableText } from '@/lib/noteSearchText';
+import { nextCopyName } from '@/lib/copyName';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { useBulkSelection } from '@/hooks/useBulkSelection';
 import { BulkActionBar, BulkActionType, BulkActionContext } from '@/components/shared/BulkActionBar';
@@ -281,7 +282,7 @@ export default function Notes() {
     
     // Add to notes array immediately
     setNotes((prev: Note[]) => [...prev, newNote]);
-    toast.success('Image note created!');
+    toast.success(say('toastAdded', 'notes'));
     
     // Open in viewer so user can add title/description/more media
     setNoteToView(newNote);
@@ -303,7 +304,7 @@ export default function Notes() {
     
     // Add to notes array immediately (like image notes)
     setNotes((prev: Note[]) => [...prev, newNote]);
-    toast.success('Audio note created!');
+    toast.success(say('toastAdded', 'notes'));
     
     // Open in viewer so user can add title/description/more media
     setNoteToView(newNote);
@@ -319,7 +320,7 @@ export default function Notes() {
       pinned: false
     };
     setNotes((prev: Note[]) => [...prev, newNote]);
-    toast.success('Text note created!');
+    toast.success(say('toastAdded', 'notes'));
     
     // Open the new note in viewer with auto-focus
     setNoteToView(newNote);
@@ -335,7 +336,7 @@ export default function Notes() {
       pinned: false
     };
     setNotes((prev: Note[]) => [...prev, newNote]);
-    toast.success('List note created!');
+    toast.success(say('toastAdded', 'notes'));
     
     // Open the new note in viewer with auto-focus
     setNoteToView(newNote);
@@ -352,7 +353,7 @@ export default function Notes() {
       pinned: false
     };
     setNotes((prev: Note[]) => [...prev, newNote]);
-    toast.success('Image note created!');
+    toast.success(say('toastAdded', 'notes'));
     
     // Open the new note in viewer with auto-focus
     setNoteToView(newNote);
@@ -368,7 +369,7 @@ export default function Notes() {
       createdAt: selectedNote.createdAt
     } : note));
     setSelectedNote(null);
-    toast.success('Note updated successfully!');
+    toast.success(say('toastUpdated', 'noteViewerTitle'));
   };
 
   const updateListNote = (noteData: Omit<ListNote, 'id' | 'createdAt'>) => {
@@ -379,7 +380,7 @@ export default function Notes() {
       createdAt: selectedNote.createdAt
     } : note));
     setSelectedNote(null);
-    toast.success('List note updated successfully!');
+    toast.success(say('toastUpdated', 'noteViewerTitle'));
   };
 
   const deleteNote = (noteId: string) => {
@@ -417,7 +418,7 @@ export default function Notes() {
       setUnlockedNoteIds(prev => prev.filter(id => id !== noteId));
     }
     
-    toast.success('Note deleted permanently!');
+    toast.success(say('toastDeleted', 'noteViewerTitle'));
   };
   
    const confirmArchiveNote = (noteId: string) => {
@@ -461,7 +462,7 @@ export default function Notes() {
      // Re-lock in current session to enforce PIN on archived tab
      setUnlockedNoteIds(prev => prev.filter(id => id !== noteId));
      setSelectedNote(null);
-     toast.success('Note archived successfully!');
+     toast.success(say('toastArchived', 'noteViewerTitle'));
    };
   
    const unarchiveNote = (noteId: string) => {
@@ -499,7 +500,7 @@ export default function Notes() {
      // Re-lock in current session
      setUnlockedNoteIds(prev => prev.filter(id => id !== noteId));
      setSelectedNote(null);
-     toast.success('Note restored successfully!');
+     toast.success(say('toastRestored', 'noteViewerTitle'));
    };
 
   const unarchiveFolder = (folderId: string) => {
@@ -533,7 +534,7 @@ export default function Notes() {
       ]);
       setArchivedFolders((prev: NoteFolder[]) => prev.filter(folder => folder.id !== folderId));
       
-      toast.success('Folder restored successfully!');
+      toast.success(say('toastRestored', 'tabFolders'));
     }
   };
 
@@ -555,7 +556,7 @@ export default function Notes() {
         setArchivedNotes((prev: Note[]) => prev.filter(note => !sanitizedNoteIds.includes(note.id)));
       }
       
-      toast.success('Folder and its notes restored successfully!');
+      toast.success(sayFolder('toastFolderAndItemsRestored'));
     }
   };
 
@@ -704,7 +705,7 @@ export default function Notes() {
         // Close the viewer
         setIsNoteViewerOpen(false);
         setNoteToView(null);
-        toast.success("Empty note deleted");
+        toast.success(say('toastDeleted', 'noteViewerTitle'));
       }
     }
   };
@@ -752,7 +753,7 @@ export default function Notes() {
     if (noteToView?.id === noteId) {
       setNoteToView(prev => prev ? { ...prev, pinned: true } : null);
     }
-    toast.success('Note pinned!');
+    toast.success(say('toastPinned', 'noteViewerTitle'));
   };
 
   const unpinNote = (noteId: string) => {
@@ -763,7 +764,7 @@ export default function Notes() {
     if (noteToView?.id === noteId) {
       setNoteToView(prev => prev ? { ...prev, pinned: false } : null);
     }
-    toast.success('Note unpinned!');
+    toast.success(say('toastUnpinned', 'noteViewerTitle'));
   };
 
   const copyNote = (noteId: string) => {
@@ -772,12 +773,12 @@ export default function Notes() {
       const copiedNote: Note = {
         ...noteToCopy,
         id: Date.now().toString(),
-        name: `${noteToCopy.name} (Copy)`,
+        name: nextCopyName(noteToCopy.name, [...notes, ...archivedNotes].map(n => n.name)),
         createdAt: new Date().toISOString(),
         pinned: false
       };
       setNotes((prev: Note[]) => [...prev, copiedNote]);
-      toast.success('Note copied successfully!');
+      toast.success(say('toastCopied', 'noteViewerTitle'));
     }
   };
 
@@ -804,9 +805,9 @@ export default function Notes() {
       }
       
       navigator.clipboard.writeText(shareText).then(() => {
-        toast.success('Note content copied to clipboard!');
+        toast.success(t('toastContentCopied'));
       }).catch(() => {
-        toast.error('Failed to copy note content');
+        toast.error(t('toastCopyFailed'));
       });
     }
   };
@@ -828,7 +829,7 @@ export default function Notes() {
         : prev;
       return [...cleaned, newFolder];
     });
-    toast.success(noteIdsToMove?.length ? `Folder created and ${noteIdsToMove.length} note(s) moved successfully!` : 'Folder created successfully!');
+    toast.success(say('toastAdded', 'tabFolders'));
   };
 
   const updateFolder = (folderData: Omit<NoteFolder, 'id' | 'createdAt' | 'noteIds' | 'modifiedAt'>) => {
@@ -848,21 +849,21 @@ export default function Notes() {
     ));
     setSelectedFolder(null);
     setIsFolderEditorOpen(false);
-    toast.success('Folder updated successfully!');
+    toast.success(say('toastUpdated', 'tabFolders'));
   };
 
   const pinFolder = (folderId: string) => {
     setFolders((prev: NoteFolder[]) => prev.map(folder =>
       folder.id === folderId ? { ...folder, pinned: true } : folder
     ));
-    toast.success('Folder pinned!');
+    toast.success(say('toastPinned', 'tabFolders'));
   };
 
   const unpinFolder = (folderId: string) => {
     setFolders((prev: NoteFolder[]) => prev.map(folder => 
       folder.id === folderId ? { ...folder, pinned: false } : folder
     ));
-    toast.success('Folder unpinned!');
+    toast.success(say('toastUnpinned', 'tabFolders'));
   };
 
   const editFolder = (folderId: string) => {
@@ -892,7 +893,7 @@ export default function Notes() {
         setNotes((prev: Note[]) => prev.filter(note => !folderToArchive.noteIds.includes(note.id)));
       }
       
-      toast.success('Folder and its notes archived successfully!');
+      toast.success(sayFolder('toastFolderAndItemsArchived'));
     }
   };
 
@@ -916,9 +917,9 @@ export default function Notes() {
       
       const noteCount = notesInFolder.length;
       if (noteCount > 0) {
-        toast.success(`Folder and ${noteCount} note${noteCount === 1 ? '' : 's'} deleted permanently!`);
+        toast.success(sayFolder('toastFolderAndItemsDeleted'));
       } else {
-        toast.success('Folder deleted permanently!');
+        toast.success(say('toastDeleted', 'tabFolders'));
       }
     }
   };
@@ -944,7 +945,7 @@ export default function Notes() {
       })
     );
 
-    toast.success('Note moved to folder successfully!');
+    toast.success(say('toastUpdated', 'noteViewerTitle'));
   };
 
   const handleMoveToFolder = (noteId: string) => {
@@ -976,7 +977,7 @@ export default function Notes() {
           }
         })
       );
-      toast.success(`${selectedNoteForMove.length} note(s) moved to folder successfully!`);
+      toast.success(say('toastUpdated', 'notes'));
       setSelectedNoteForMove(null);
       setIsMoveToFolderOpen(false);
       clearSelection();
@@ -1629,7 +1630,7 @@ export default function Notes() {
     return (
       <div className="space-y-4">
         <div className="space-y-2">
-          <h3 className="text-lg font-medium">Archived Notes</h3>
+          <h3 className="text-lg font-medium">{t('archivedNotes')}</h3>
           {archivedNotes.length > 0 ? renderNoteList(archivedNotes, {
             onEdit: openNoteEditor,
             onUnarchive: unarchiveNote,
@@ -1646,7 +1647,7 @@ export default function Notes() {
           }) : (
             <Card>
               <CardContent className="text-center py-8">
-                <p className="text-muted-foreground">No archived notes</p>
+                <p className="text-muted-foreground">{t('noArchivedNotes')}</p>
               </CardContent>
             </Card>
           )}
@@ -1864,7 +1865,7 @@ export default function Notes() {
         ));
         clearSelection();
         exitBulkMode();
-        toast.success(`${ids.length} items updated`);
+        toast.success(say('toastUpdated', 'notes'));
         break;
         break;
       case 'lock':
@@ -1967,22 +1968,27 @@ export default function Notes() {
 
         clearSelection();
         exitBulkMode();
-        toast.success(`${ids.length} items restored`);
+        toast.success(say('toastRestored', 'notes'));
         break;
       }
       case 'copy':
         // Batch copy notes
-        const copiedNotes = notes.filter(n => idSet.has(n.id)).map(note => ({
-          ...note,
-          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-          name: `${note.name} (Copy)`,
-          createdAt: new Date().toISOString(),
-          pinned: false
-        }));
+        const takenNames = [...notes, ...archivedNotes].map(n => n.name);
+        const copiedNotes = notes.filter(n => idSet.has(n.id)).map(note => {
+          const copyName = nextCopyName(note.name, takenNames);
+          takenNames.push(copyName);
+          return {
+            ...note,
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+            name: copyName,
+            createdAt: new Date().toISOString(),
+            pinned: false,
+          };
+        });
         setNotes(prev => [...prev, ...copiedNotes]);
         clearSelection();
         exitBulkMode();
-        toast.success(`${ids.length} items copied`);
+        toast.success(say('toastCopied', 'notes'));
         break;
       case 'move':
         if (ids.length > 0) {
@@ -1997,13 +2003,18 @@ export default function Notes() {
           setFolders(prev => prev.map(f => idSet.has(f.id) ? { ...f, color } : f));
           clearSelection();
           exitBulkMode();
-          toast.success(`Color applied to ${ids.length} items`);
+          toast.success(t('toastColorApplied').replace('{count}', String(ids.length)));
         }
         break;
     }
   };
 
   const { t } = useLanguage();
+  // Toast copy is a translated sentence plus a translated entity noun. Both halves are
+  // resolved here so the `{entity}` substitution is written once instead of at every toast.
+  const say = (key: string, entity: string) => t(key).replace('{entity}', t(entity));
+  // Folder toasts name the items a folder contains rather than the folder itself.
+  const sayFolder = (key: string) => t(key).replace('{items}', t('notes'));
 
   return (
     <Layout 
@@ -2203,8 +2214,8 @@ export default function Notes() {
       <ConfirmationDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        title={`Delete ${itemToDelete?.type === 'note' ? 'Note' : 'Folder'}`}
-        description={`Are you sure you want to permanently delete this ${itemToDelete?.type}?${itemToDelete?.type === 'folder' ? ' All notes in this folder will also be deleted.' : ''} This action cannot be undone.`}
+        title={itemToDelete?.type === 'note' ? t('deleteNoteTitle') : t('deleteFolder')}
+        description={t('confirmDeleteBody')}
         action="delete"
         onCancel={() => {
           // If cancelling deletion of a locked note, re-lock it by removing from unlocked list
@@ -2232,8 +2243,8 @@ export default function Notes() {
       <ConfirmationDialog
         open={archiveDialogOpen}
         onOpenChange={setArchiveDialogOpen}
-        title={`Archive ${itemToArchive?.type === 'note' ? 'Note' : 'Folder'}`}
-        description={`Are you sure you want to archive this ${itemToArchive?.type}?${itemToArchive?.type === 'folder' ? ' All notes in this folder will also be archived.' : ''} You can restore it later from the archived section.`}
+        title={itemToArchive?.type === 'note' ? t('confirmArchiveTitle') : t('archiveFolder')}
+        description={itemToArchive?.type === 'note' ? t('notes') : t('confirmArchiveTitle')}
         action="archive"
         onConfirm={() => {
           if (itemToArchive) {
@@ -2251,8 +2262,8 @@ export default function Notes() {
       <ConfirmationDialog
         open={bulkArchiveDialogOpen}
         onOpenChange={setBulkArchiveDialogOpen}
-        title="Archive Selected Items"
-        description={`Are you sure you want to archive ${pendingBulkAction?.ids.length || 0} item(s)? You can restore them later from the archived section.`}
+        title={t('archiveSelectedItems')}
+        description={t('confirmArchiveTitle')}
         action="archive"
         onConfirm={() => {
           if (pendingBulkAction) {
@@ -2294,7 +2305,7 @@ export default function Notes() {
             }
             clearSelection();
             exitBulkMode();
-            toast.success(`${ids.length} items archived`);
+            toast.success(say('toastArchived', 'notes'));
           }
           setPendingBulkAction(null);
         }}
@@ -2305,8 +2316,8 @@ export default function Notes() {
       <ConfirmationDialog
         open={bulkDeleteDialogOpen}
         onOpenChange={setBulkDeleteDialogOpen}
-        title="Delete Selected Items"
-        description={`Are you sure you want to permanently delete ${pendingBulkAction?.ids.length || 0} item(s)? This action cannot be undone.`}
+        title={t('deleteSelectedItems')}
+        description={t('confirmDeleteBody')}
         action="delete"
         onConfirm={() => {
           if (pendingBulkAction) {
@@ -2337,7 +2348,7 @@ export default function Notes() {
             }
             clearSelection();
             exitBulkMode();
-            toast.success(`${ids.length} items deleted`);
+            toast.success(say('toastDeleted', 'notes'));
           }
           setPendingBulkAction(null);
         }}
@@ -2351,7 +2362,7 @@ export default function Notes() {
           setFolderRestoreDialogOpen(open);
           if (!open) setFolderToRestore(null);
         }}
-        title="Restore Folder"
+        title={t('restoreFolder')}
         description={(() => {
           if (!folderToRestore) return '';
           const folder = archivedFolders.find(f => f.id === folderToRestore);
@@ -2359,16 +2370,16 @@ export default function Notes() {
           const noteIdsAssignedElsewhere = new Set<string>(folders.flatMap(f => f.noteIds));
           const sanitizedNoteIds = folder.noteIds.filter(id => !noteIdsAssignedElsewhere.has(id));
           const count = archivedNotes.filter(n => sanitizedNoteIds.includes(n.id)).length;
-          return `Do you also want to restore the ${count} note${count !== 1 ? 's' : ''} inside this folder?`;
+          return `${count} ${t('notes')}`;
         })()}
         action="restore"
-        confirmLabel="Restore All"
+        confirmLabel={t('restoreAll')}
         onConfirm={() => {
           if (folderToRestore) restoreFolderWithNotes(folderToRestore);
           setFolderToRestore(null);
         }}
         secondaryAction={{
-          label: 'Folder Only',
+          label: t('folderOnly'),
           onClick: () => {
             if (folderToRestore) restoreFolderOnly(folderToRestore);
             setFolderToRestore(null);

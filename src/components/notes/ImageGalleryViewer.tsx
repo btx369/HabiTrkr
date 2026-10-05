@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronLeft, MoreVertical } from 'lucide-react';
 import { ImageActionMenu } from '@/components/shared/ImageActionMenu';
 import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
   Carousel,
   CarouselContent,
@@ -35,6 +36,7 @@ export function ImageGalleryViewer({
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(initialIndex);
   const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
+  const { t } = useLanguage();
 
   // Set initial slide when dialog opens
   useEffect(() => {
@@ -137,8 +139,8 @@ export function ImageGalleryViewer({
             <ConfirmationDialog
               open={deleteAlertOpen}
               onOpenChange={setDeleteAlertOpen}
-              title="Delete Image"
-              description="Are you sure you want to permanently delete this image? This action cannot be undone."
+              title={t('confirmDeleteTitle')}
+              description={t('confirmDeleteBody')}
               action="delete"
               onConfirm={() => onDelete(images[current])}
             />

@@ -90,6 +90,9 @@ export default function Calendar() {
   
   const { toast } = useToastSettings();
   const { t } = useLanguage();
+  // Toast copy is a translated sentence plus a translated entity noun. Both halves are
+  // resolved here so the `{entity}` substitution is written once instead of at every toast.
+  const say = (key: string, entity: string) => t(key).replace('{entity}', t(entity));
   const dateLocale = useDateLocale();
   const { weekStartsOn, weekStartDay } = useWeekStart();
   // Seven short labels in the user's week-start order; `t()` runs here because the keys
@@ -211,7 +214,7 @@ export default function Calendar() {
       }))
     );
 
-    toast.success(`"${deletingEvent.name}" has been deleted.`);
+    toast.success(say('toastDeleted', 'events'));
 
     setDeletingEvent(null);
   };
@@ -226,7 +229,7 @@ export default function Calendar() {
       )
     );
     
-    toast.success(`"${eventData.name}" has been updated.`);
+    toast.success(say('toastUpdated', 'events'));
     
     setEditingEvent(null);
   };
@@ -527,8 +530,8 @@ export default function Calendar() {
       <ConfirmationDialog
         open={!!deletingEvent}
         onOpenChange={(open) => !open && setDeletingEvent(null)}
-        title="Delete Event"
-        description={`Are you sure you want to delete "${deletingEvent?.name}"? This action cannot be undone.`}
+        title={t('deleteEventTitle')}
+        description={t('confirmDeleteBody')}
         onConfirm={confirmDeleteEvent}
         onCancel={() => setDeletingEvent(null)}
         action="delete"
