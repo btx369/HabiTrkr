@@ -54,7 +54,13 @@ const AlertDialogHeader = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col space-y-2 text-center sm:text-left",
+      /*
+       * Centred at every width, not just on a phone. This carried shadcn's stock
+       * `sm:text-left`, which flipped the text to the left from 640px up — so a
+       * confirmation was centred on a phone and left-aligned on a tablet and a desktop,
+       * which is what was reported. Buttons stay side by side at every width.
+       */
+      "flex flex-col space-y-2 text-center",
       className
     )}
     {...props}
