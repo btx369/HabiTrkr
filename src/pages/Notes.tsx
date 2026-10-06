@@ -3,7 +3,7 @@ import { Plus, X, FolderOpen, Notebook, FileStack } from 'lucide-react';
 import { ViewSettings, ViewType, SortType, SortDirection } from '@/components/notes/ViewSettings';
 import { NoteFolderViewSettings, NoteFolderSortType, NoteFolderSortDirection } from '@/components/noteFolders/NoteFolderViewSettings';
 import { Layout } from '@/components/Layout';
-import { FolderMembershipProvider } from '@/contexts/FolderMembershipContext';
+import { FolderMembershipProvider, collectFiledIds } from '@/contexts/FolderMembershipContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, SlidingTabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -2036,7 +2036,10 @@ export default function Notes() {
   // Folder toasts name the items a folder contains rather than the folder itself.
 
   return (
-    <FolderMembershipProvider ids={[...folders, ...archivedFolders].flatMap((folder) => folder.noteIds)}>
+    <FolderMembershipProvider ids={collectFiledIds(
+      [...folders, ...archivedFolders].map((folder) => ({ id: folder.id, itemIds: folder.noteIds })),
+      archivedNotes,
+    )}>
     <Layout 
       showSearch={true}
       searchQuery={searchQuery}

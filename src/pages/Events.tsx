@@ -3,7 +3,7 @@ import { Plus, FolderOpen, Calendar, FileStack } from 'lucide-react';
 import { EventViewSettings, ViewType, EventSortType, EventSortDirection } from '@/components/events/EventViewSettings';
 import { EventFolderViewSettings, EventFolderSortType, EventFolderSortDirection } from '@/components/events/EventFolderViewSettings';
 import { Layout } from '@/components/Layout';
-import { FolderMembershipProvider } from '@/contexts/FolderMembershipContext';
+import { FolderMembershipProvider, collectFiledIds } from '@/contexts/FolderMembershipContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, SlidingTabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -1479,7 +1479,10 @@ export default function Events() {
   // Folder toasts name the items a folder contains rather than the folder itself.
 
   return (
-    <FolderMembershipProvider ids={[...eventFolders, ...archivedEventFolders].flatMap((folder) => folder.eventIds)}>
+    <FolderMembershipProvider ids={collectFiledIds(
+      [...eventFolders, ...archivedEventFolders].map((folder) => ({ id: folder.id, itemIds: folder.eventIds })),
+      archivedEvents,
+    )}>
     <Layout 
       showSearch={true}
       searchQuery={searchQuery}

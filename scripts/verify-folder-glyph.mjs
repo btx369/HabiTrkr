@@ -10,6 +10,11 @@
  * measured next to the pin it is meant to match and its absence is measured on an otherwise
  * identical card.
  *
+ * The last section archives the filed item through the app's own menu and confirmation, then
+ * looks for the glyph in the Archived tab. Archiving takes the item out of the folder's ids
+ * and records the folder in `originalFolderId`, so this is the case where the glyph used to
+ * vanish — and it is exercised through the real action rather than by seeding the end state.
+ *
  * Usage: node scripts/verify-folder-glyph.mjs
  */
 
@@ -231,10 +236,68 @@ try {
     console.log(`  screenshot: preview/folder-glyph-${filedId}.png`);
   };
 
+  /**
+   * Archives the filed item the way a reader would — its own 3-dot menu, then the
+   * confirmation — and looks for the glyph in the Archived tab.
+   */
+  const runArchive = async (url, filedId, cardAttribute, archivedTab) => {
+    await cdp.go(url);
+    console.log(`\n=== ${url} · archived ===`);
+
+    const menuOpened = await cdp.clickExpr(
+      `document.querySelector('[${cardAttribute}="${filedId}"] button[aria-haspopup="menu"]')`);
+    check(`the ${filedId} menu opened`, menuOpened, true);
+    await sleep(500);
+    const archiveClicked = await cdp.clickExpr(
+      `Array.from(document.querySelectorAll('[role="menuitem"]')).find((m) => (m.textContent || '').trim() === 'Archive')`);
+    check('the Archive item was clicked', archiveClicked, true);
+    await sleep(900);
+    // Archiving asks first, so the confirmation has to be answered.
+    const confirmed = await cdp.clickExpr(
+      `Array.from(document.querySelectorAll('[role="alertdialog"] button')).find((b) => (b.textContent || '').trim() === 'Archive')`);
+    check('the confirmation was accepted', confirmed, true);
+    await sleep(1200);
+    check('the item has left the list', await cdp.eval(
+      `Boolean(document.querySelector('[${cardAttribute}="${filedId}"]'))`), false);
+
+    const tabbed = await cdp.clickExpr(
+      `Array.from(document.querySelectorAll('[role="tab"]')).find((b) => (b.textContent || '').trim() === ${JSON.stringify(archivedTab)})`);
+    check(`the ${archivedTab} tab was clicked`, tabbed, true);
+    await sleep(1100);
+    check(`the ${archivedTab} tab is active`, await cdp.eval(
+      `(document.querySelector('[role="tab"][data-state="active"]') || {}).textContent?.trim() ?? null`), archivedTab);
+
+    const reading = JSON.parse(await cdp.eval(`JSON.stringify(${GLYPH_IN_CARD(filedId)})`));
+    console.log(`  archived card: ${JSON.stringify(reading)}`);
+    check('the archived card is on screen with its folder glyph', reading.glyph, true);
+
+    const shot = await cdp.send('Page.captureScreenshot', { format: 'png' });
+    fs.writeFileSync(path.join(outDir, `folder-glyph-archived-${filedId}.png`), Buffer.from(shot.data, 'base64'));
+    console.log(`  screenshot: preview/folder-glyph-archived-${filedId}.png`);
+  };
+
   await runEntity(BASE + '/notes', 'Folders', 'filed-note', 'loose-note', 'unpinned-filed-note');
   await runEntity(BASE + '/events', 'Folders', 'filed-event', 'loose-event');
   // The habit tracker is the root route: `/habits` matches nothing and renders an empty page.
   await runEntity(BASE + '/', 'Folders', 'filed-habit', 'loose-habit');
+
+  // Each archive is exercised on a freshly seeded state, so the item is still filed.
+  await cdp.eval(`(() => {
+    for (const k of ['notes','archivedNotes','folders','archivedFolders','events','archivedEvents',
+                     'eventFolders','archivedEventFolders','habits','archivedHabits',
+                     'habitFolders','archivedHabitFolders']) localStorage.removeItem(k);
+    localStorage.setItem('notes', ${JSON.stringify(JSON.stringify(NOTES))});
+    localStorage.setItem('folders', ${JSON.stringify(JSON.stringify(NOTE_FOLDERS))});
+    localStorage.setItem('events', ${JSON.stringify(JSON.stringify(EVENTS))});
+    localStorage.setItem('eventFolders', ${JSON.stringify(JSON.stringify(EVENT_FOLDERS))});
+    localStorage.setItem('habits', ${JSON.stringify(JSON.stringify(HABITS))});
+    localStorage.setItem('habitFolders', ${JSON.stringify(JSON.stringify(HABIT_FOLDERS))});
+    return true;
+  })()`);
+
+  await runArchive(BASE + '/notes', 'filed-note', 'data-note-id', 'Archived');
+  await runArchive(BASE + '/events', 'filed-event', 'data-event-id', 'Archived');
+  await runArchive(BASE + '/', 'filed-habit', 'data-habit-id', 'Archived');
 } finally {
   chrome.kill();
   await sleep(200);

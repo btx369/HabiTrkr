@@ -351,6 +351,12 @@ export function ArchivedHabitCard({
   isBulkSelected,
   onBulkSelect,
 }: ArchivedHabitCardProps) {
+  // This card has no icon row of its own, so the folder glyph is placed where the other
+  // cards put their icons: immediately before the actions.
+  const hasColor = !isDefaultColor(habit.color);
+  const iconColorClass = getColoredIconClass(hasColor);
+  const isFiled = useIsFiled(habit.id);
+
   // Bulk selection checkbox component
   const BulkCheckbox = () => (
     <div 
@@ -376,6 +382,7 @@ export function ArchivedHabitCard({
         <div className="flex items-start justify-between">
           <h3 className="text-sm font-medium text-foreground">{highlightText(habit.name, searchQuery)}</h3>
           <div className="flex items-center gap-2">
+            {isFiled && <FolderOpen size={14} className={iconColorClass} />}
             {showBulkCheckbox ? (
               <BulkCheckbox />
             ) : (

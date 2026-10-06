@@ -91,6 +91,19 @@ export function EventCard({
   const mutedTextColorClass = hasColor ? 'text-[#000000]' : 'text-muted-foreground';
   const iconColorClass = getColoredIconClass(hasColor);
   const badgeBorderClass = getColoredBorderClass(hasColor, 100);
+  /*
+   * The outline of the days badge.
+   *
+   * `getColoredBorderClass(hasColor, 100)` asks for `border-[#000000]/100`, and Tailwind
+   * does not generate that class — its `/30` sibling exists in the built stylesheet and the
+   * `/100` one does not. The badge therefore fell back to the shared border, which on a
+   * coloured card is rgb(234, 232, 230): a line that reads as white on a pastel background.
+   * `border-black` is a plain utility and does generate.
+   *
+   * The dark theme keeps the shared border. There the same line is rgb(57, 54, 50) and was
+   * reported as looking right, so only the light theme changes.
+   */
+  const daysBadgeBorderClass = hasColor ? 'border-black dark:border-border' : badgeBorderClass;
   // An event filed in a folder says so on its card, on every list it appears in.
   const isFiled = useIsFiled(event.id);
   
@@ -348,8 +361,14 @@ export function EventCard({
             {daysRemaining !== null && (
               <div className="flex-shrink-0">
                 {daysRemaining > 0 ? (
-                  <Badge variant="outline" className={`text-xs ${badgeBorderClass} ${hasColor ? 'text-[#000000]' : ''}`}>
-                    {countedSentence(t, language, 'daysRemainingBadge', daysRemaining)}
+                  /*
+                   * `{count} days`, not `{count} days remaining`. The badge is already the
+                   * one that shows a countdown, so the word adds nothing on screen, and it
+                   * is the word that has to be translated and pluralised in every language:
+                   * one noun per language instead of a phrase.
+                   */
+                  <Badge variant="outline" className={`text-xs ${daysBadgeBorderClass} ${hasColor ? 'text-[#000000]' : ''}`}>
+                    {countedSentence(t, language, 'daysCount', daysRemaining)}
                   </Badge>
                 ) : daysRemaining === 0 ? (
                   <Badge className="text-xs bg-green-500 text-white">

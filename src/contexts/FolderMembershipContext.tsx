@@ -37,3 +37,32 @@ export function useIsFiled(id: string | undefined): boolean {
   const filed = useContext(FolderMembershipContext);
   return id ? filed.has(id) : false;
 }
+
+/** A folder, reduced to the two things membership needs. */
+export interface FiledFolder {
+  id: string;
+  itemIds: readonly string[];
+}
+
+/**
+ * The ids to publish as filed.
+ *
+ * A folder's own ids cover everything inside it, archived folders included. An item archived
+ * on its own is the case those ids miss: archiving it takes it out of the folder's ids and
+ * records where it came from in `originalFolderId`, which is also where restoring it puts it
+ * back. So an archived item counts as filed while the folder it remembers still exists —
+ * otherwise the glyph disappears from its card the moment the item is archived, which is
+ * exactly what was reported. A folder that has since been deleted is not counted, because
+ * the item would then be remembering somewhere it can no longer go back to.
+ */
+export function collectFiledIds(
+  folders: readonly FiledFolder[],
+  archivedItems: readonly { id: string; originalFolderId?: string }[] = [],
+): string[] {
+  const ids = folders.flatMap((folder) => [...folder.itemIds]);
+  const known = new Set(folders.map((folder) => folder.id));
+  for (const item of archivedItems) {
+    if (item.originalFolderId && known.has(item.originalFolderId)) ids.push(item.id);
+  }
+  return ids;
+}
