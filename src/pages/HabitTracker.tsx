@@ -858,6 +858,16 @@ export default function HabitTracker() {
     return itemDisplayName(t, folder ?? {});
   };
 
+  /*
+   * The habits a folder card lists, already narrowed by the search.
+   *
+   * The folder cards used to be handed the raw arrays, so a search narrowed which folders were
+   * shown but not what was inside them: opening a matching folder listed every habit it holds,
+   * including the ones the search had just excluded from the Habits tab.
+   */
+  const habitsForFolders = filterHabits();
+  const archivedHabitsForFolders = getArchivedHabitsFiltered();
+
   return (
     <FolderMembershipProvider ids={collectFiledIds(
       [...habitFolders, ...archivedHabitFolders].map((folder) => ({ id: folder.id, itemIds: folder.habitIds })),
@@ -1020,7 +1030,7 @@ export default function HabitTracker() {
                   <HabitFolderCard
                     key={folder.id}
                     folder={folder}
-                    habits={habits}
+                    habits={habitsForFolders}
                     weekDays={weekDays}
                     isCompletedForDate={isHabitCompletedForDate}
                     onToggleCompletion={toggleHabitCompletion}
@@ -1096,7 +1106,7 @@ export default function HabitTracker() {
                       <HabitFolderCard
                         key={folder.id}
                         folder={folder}
-                        habits={archivedHabits}
+                        habits={archivedHabitsForFolders}
                         weekDays={weekDays}
                         isCompletedForDate={isHabitCompletedForDate}
                         onToggleCompletion={toggleHabitCompletion}

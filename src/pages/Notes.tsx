@@ -1580,6 +1580,13 @@ export default function Notes() {
 
   const renderFolderList = (folderList: NoteFolder[], isArchived: boolean) => {
     const filteredFolders = filterFolders(folderList);
+    /*
+     * A folder lists the notes it holds, and it is handed a list that has already answered the
+     * search. Without this, a search narrowed which folders were shown but not what was inside
+     * them: opening a folder that matched showed every note in it, including the ones the
+     * search had just excluded everywhere else.
+     */
+    const notesForFolders = filterNotes(isArchived ? archivedNotes : notes);
     const sortedFolders = sortFolders(filteredFolders);
     // Sort: pinned folders first, then by selected sort type
     const finalSortedFolders = sortedFolders.sort((a, b) => {
@@ -1619,7 +1626,7 @@ export default function Notes() {
           <NoteFolderCard
             key={folder.id}
             folder={folder}
-            notes={isArchived ? archivedNotes : notes}
+            notes={notesForFolders}
             searchQuery={searchQuery}
             onToggleListItem={toggleListItem}
             onArchiveNote={confirmArchiveNote}

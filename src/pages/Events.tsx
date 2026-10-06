@@ -1481,7 +1481,12 @@ export default function Events() {
           <EventFolderCard
             key={folder.id}
             folder={folder}
-            events={isArchived ? archivedEvents : getAllEvents()}
+            /*
+             * Archiving an event moves it out of `events`, so an archived folder holds archived
+             * events. `getAllEvents()` is already narrowed by the search; the archived list had
+             * to be narrowed here, or a matching archived folder listed everything inside it.
+             */
+            events={isArchived ? filterEvents(archivedEvents) : getAllEvents()}
             onEdit={!isArchived ? editEventFolder : undefined}
             onArchive={!isArchived ? confirmArchiveEventFolder : undefined}
             onUnarchive={isArchived ? unarchiveEventFolder : undefined}

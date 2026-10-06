@@ -169,7 +169,7 @@ const PAGES = [
       Archived: ['Alpha archived memo', 'Alpha archived bundle'],
     },
     // A query that appears in the folder's contents but nowhere in the folder itself.
-    contents: { query: 'Beta memo', folder: 'Alpha bundle' },
+    contents: { query: 'Beta memo', folder: 'Alpha bundle', match: 'Beta memo' },
   },
   {
     route: '/events',
@@ -180,7 +180,7 @@ const PAGES = [
       Folders: ['Alpha outing'],
       Archived: ['Alpha archived gathering', 'Alpha archived outing'],
     },
-    contents: { query: 'Beta gathering', folder: 'Alpha outing', archivedQuery: 'Beta archived gathering', archivedFolder: 'Alpha archived outing' },
+    contents: { query: 'Beta gathering', folder: 'Alpha outing', match: 'Beta gathering', archivedQuery: 'Beta archived gathering', archivedFolder: 'Alpha archived outing' },
   },
   {
     // The habit tracker is the root route: `/habits` matches nothing and renders an empty page.
@@ -192,7 +192,7 @@ const PAGES = [
       Folders: ['Alpha crate'],
       Archived: ['Alpha archived routine', 'Alpha archived crate'],
     },
-    contents: { query: 'Beta routine', folder: 'Alpha crate' },
+    contents: { query: 'Beta routine', folder: 'Alpha crate', match: 'Beta routine' },
   },
 ];
 
@@ -360,14 +360,32 @@ try {
       console.log(`  visible: ${JSON.stringify(archivedWithContents)}`);
       check('the archived folder holding the match is shown',
         archivedWithContents.includes(page.contents.archivedFolder), true);
+
+      // Its contents are filtered the same way: an archived folder holds archived events.
+      const openedArchived = await cdp.eval(`(() => {
+        const title = Array.from(document.querySelectorAll('h4'))
+          .find((h) => (h.textContent || '').includes(${JSON.stringify(page.contents.archivedFolder)}));
+        if (!title) return false;
+        const r = (title.closest('[data-state]') || title).getBoundingClientRect();
+        return { x: r.left + 60, y: r.top + r.height / 2 };
+      })()`);
+      check('the archived folder could be expanded', Boolean(openedArchived), true);
+      if (openedArchived) {
+        await cdp.clickAt(openedArchived.x, openedArchived.y);
+        await sleep(1000);
+        const nestedArchived = (await cdp.eval(visibleNames(page.names))).map((entry) => entry.name).sort();
+        console.log(`  visible: ${JSON.stringify(nestedArchived)}`);
+        check('only what matched inside the archived folder is listed', nestedArchived,
+          [page.contents.archivedFolder, page.contents.archivedQuery].sort());
+      }
     }
 
     /*
-     * Reported, not asserted: what an expanded folder lists while a search is active. The
-     * notes page is the reference the request points at, so it is measured first and the
-     * other two are printed beside it — a difference here is a difference from Notes.
+     * Inside a folder, too: a folder that matched the search lists only what matched inside it,
+     * not everything it holds. The folder's own name is on screen as its header, so it is part
+     * of the expected set.
      */
-    console.log(`\n=== ${page.route} · inside the matching folder while searching (report) ===`);
+    console.log(`\n=== ${page.route} · inside the matching folder while searching ===`);
     await cdp.eval(openSearch);
     await sleep(600);
     await cdp.eval(setQuery(page.contents.query));
@@ -382,13 +400,26 @@ try {
       const r = (title.closest('[data-state]') || title).getBoundingClientRect();
       return { x: r.left + 60, y: r.top + r.height / 2 };
     })()`);
+    check('the matching folder could be expanded', Boolean(opened), true);
     if (opened) {
       await cdp.clickAt(opened.x, opened.y);
       await sleep(1000);
-      const nested = await cdp.eval(visibleNames(page.names));
-      console.log(`  nested cards visible: ${JSON.stringify(nested.map((entry) => entry.name))}`);
-    } else {
-      console.log('  the folder could not be expanded');
+      const nested = (await cdp.eval(visibleNames(page.names))).map((entry) => entry.name).sort();
+      const expectedNested = [page.contents.folder, page.contents.match].sort();
+      console.log(`  visible: ${JSON.stringify(nested)}`);
+      check('only what matched inside the folder is listed', nested, expectedNested);
+
+      // Clearing the search has to put the rest back: a filtered list must not be sticky.
+      console.log('  clearing the search ...');
+      await cdp.eval(openSearch);
+      await sleep(600);
+      check('the query was cleared', await cdp.eval(setQuery('')), 'ok');
+      await sleep(1200);
+      const restored = (await cdp.eval(visibleNames(page.names))).map((entry) => entry.name).sort();
+      console.log(`  visible: ${JSON.stringify(restored)}`);
+      // With no query the tab lists both folders, and the expanded one lists everything it
+      // holds — so every name that is not in the archive is expected back.
+      check('everything comes back', restored, page.names.filter((name) => !name.includes('archived')).sort());
     }
   }
 } finally {
