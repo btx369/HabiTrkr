@@ -29,6 +29,7 @@ import { autoImportNoteToFolders } from '@/lib/folderAutoImport';
 import { parseSearchExpression, matchesSearchExpression } from '@/lib/tagParser';
 import { extractSearchableText } from '@/lib/noteSearchText';
 import { nextCopyName } from '@/lib/copyName';
+import { countedSentence, folderAndCount } from '@/lib/countedMessage';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { useBulkSelection } from '@/hooks/useBulkSelection';
 import { BulkActionBar, BulkActionType, BulkActionContext } from '@/components/shared/BulkActionBar';
@@ -556,7 +557,7 @@ export default function Notes() {
         setArchivedNotes((prev: Note[]) => prev.filter(note => !sanitizedNoteIds.includes(note.id)));
       }
       
-      toast.success(sayFolder('toastFolderAndItemsRestored'));
+      toast.success(folderAndCount(t, language, 'folderAndCountRestored', 'note', notesToUnarchive.length));
     }
   };
 
@@ -893,7 +894,7 @@ export default function Notes() {
         setNotes((prev: Note[]) => prev.filter(note => !folderToArchive.noteIds.includes(note.id)));
       }
       
-      toast.success(sayFolder('toastFolderAndItemsArchived'));
+      toast.success(folderAndCount(t, language, 'folderAndCountArchived', 'note', notesToArchive.length));
     }
   };
 
@@ -917,7 +918,7 @@ export default function Notes() {
       
       const noteCount = notesInFolder.length;
       if (noteCount > 0) {
-        toast.success(sayFolder('toastFolderAndItemsDeleted'));
+        toast.success(folderAndCount(t, language, 'folderAndCountDeleted', 'note', noteCount));
       } else {
         toast.success(say('toastDeleted', 'tabFolders'));
       }
@@ -1865,7 +1866,7 @@ export default function Notes() {
         ));
         clearSelection();
         exitBulkMode();
-        toast.success(say('toastUpdated', 'notes'));
+        toast.success(countedSentence(t, language, 'bulkUpdated', ids.length));
         break;
         break;
       case 'lock':
@@ -1968,7 +1969,7 @@ export default function Notes() {
 
         clearSelection();
         exitBulkMode();
-        toast.success(say('toastRestored', 'notes'));
+        toast.success(countedSentence(t, language, 'bulkRestored', ids.length));
         break;
       }
       case 'copy':
@@ -1988,7 +1989,7 @@ export default function Notes() {
         setNotes(prev => [...prev, ...copiedNotes]);
         clearSelection();
         exitBulkMode();
-        toast.success(say('toastCopied', 'notes'));
+        toast.success(countedSentence(t, language, 'bulkCopied', copiedNotes.length));
         break;
       case 'move':
         if (ids.length > 0) {
@@ -2009,12 +2010,11 @@ export default function Notes() {
     }
   };
 
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   // Toast copy is a translated sentence plus a translated entity noun. Both halves are
   // resolved here so the `{entity}` substitution is written once instead of at every toast.
   const say = (key: string, entity: string) => t(key).replace('{entity}', t(entity));
   // Folder toasts name the items a folder contains rather than the folder itself.
-  const sayFolder = (key: string) => t(key).replace('{items}', t('notes'));
 
   return (
     <Layout 
@@ -2305,7 +2305,7 @@ export default function Notes() {
             }
             clearSelection();
             exitBulkMode();
-            toast.success(say('toastArchived', 'notes'));
+            toast.success(countedSentence(t, language, 'bulkArchived', ids.length));
           }
           setPendingBulkAction(null);
         }}
@@ -2348,7 +2348,7 @@ export default function Notes() {
             }
             clearSelection();
             exitBulkMode();
-            toast.success(say('toastDeleted', 'notes'));
+            toast.success(countedSentence(t, language, 'bulkDeleted', ids.length));
           }
           setPendingBulkAction(null);
         }}

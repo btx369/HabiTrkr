@@ -20,6 +20,7 @@ import { HabitFolderViewSettings, HabitFolderSortType, HabitFolderSortDirection 
 import { BulkActionBar, BulkActionType, BulkActionContext } from '@/components/shared/BulkActionBar';
 import { useToastSettings } from '@/contexts/ToastContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { countedSentence, folderAndCount } from '@/lib/countedMessage';
 import { useDateLocale } from '@/lib/dateLocale';
 import { useWeekStart, getJsDayFromVisualIndex } from '@/contexts/WeekStartContext';
 import { useScrollDirection } from '@/hooks/useScrollDirection';
@@ -53,12 +54,11 @@ const DAY_SHORT_KEYS = [
 
 export default function HabitTracker() {
   const { toast } = useToastSettings();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   // Toast copy is a translated sentence plus a translated entity noun. Both halves are
   // resolved here so the `{entity}` substitution is written once instead of at every toast.
   const say = (key: string, entity: string) => t(key).replace('{entity}', t(entity));
   // Folder toasts name the items a folder contains rather than the folder itself.
-  const sayFolder = (key: string) => t(key).replace('{items}', t('habits'));
   const dateLocale = useDateLocale();
   const { weekStartsOn, weekStartDay } = useWeekStart();
   // Weekday labels follow the configured week start.
@@ -434,6 +434,7 @@ export default function HabitTracker() {
   const deleteFolder = (folderId: string) => {
     // Delete folder and its habits
     const folder = habitFolders.find(f => f.id === folderId) || archivedHabitFolders.find(f => f.id === folderId);
+    const habitCount = folder?.habitIds.length ?? 0;
     if (folder) {
       // Remove habits in folder
       setHabits((prev: Habit[]) => prev.filter(h => !folder.habitIds.includes(h.id)));
@@ -442,7 +443,7 @@ export default function HabitTracker() {
     setHabitFolders((prev: HabitFolder[]) => prev.filter(f => f.id !== folderId));
     setArchivedHabitFolders((prev: HabitFolder[]) => prev.filter(f => f.id !== folderId));
     setFolderToDelete(null);
-    toast.success(sayFolder('toastFolderAndItemsDeleted'));
+    toast.success(folderAndCount(t, language, 'folderAndCountDeleted', 'habit', habitCount));
   };
 
   const archiveFolder = (folderId: string) => {
@@ -459,7 +460,7 @@ export default function HabitTracker() {
         setHabits((prev: Habit[]) => prev.filter(h => !folderToArchiveData.habitIds.includes(h.id)));
       }
       
-      toast.success(sayFolder('toastFolderAndItemsArchived'));
+      toast.success(folderAndCount(t, language, 'folderAndCountArchived', 'habit', habitsInFolder.length));
     }
     setFolderToArchive(null);
   };
@@ -535,7 +536,7 @@ export default function HabitTracker() {
     const plan = planFolderRestore(folderId, true);
     if (!plan) return;
     applyFolderRestore(plan);
-    toast.success(sayFolder('toastFolderAndItemsRestored'));
+    toast.success(folderAndCount(t, language, 'folderAndCountRestored', 'habit', plan.habitIds.length));
   };
 
   // Move to folder

@@ -262,6 +262,38 @@ const KEYS = [
   ['placeholderEnterTitle', 'Enter title...', 'Introduza o título...', 'Introduce el título...', 'Saisir le titre...', 'Titel eingeben...', 'Inserisci il titolo...'],
   ['placeholderAddTagsWork', 'Add tags (e.g., #work #personal)', 'Adicionar tags (ex.: #trabalho #pessoal)', 'Añadir etiquetas (ej.: #trabajo #personal)', 'Ajouter des tags (ex. : #travail #personnel)', 'Tags hinzufügen (z. B. #arbeit #privat)', 'Aggiungi tag (es.: #lavoro #personale)'],
   ['placeholderAddTagsMeeting', 'Add tags (e.g., #meeting #work)', 'Adicionar tags (ex.: #reuniao #trabalho)', 'Añadir etiquetas (ej.: #reunion #trabajo)', 'Ajouter des tags (ex. : #réunion #travail)', 'Tags hinzufügen (z. B. #meeting #arbeit)', 'Aggiungi tag (es.: #riunione #lavoro)'],
+
+  // --- Counted bulk actions.
+  //
+  // The count is what lets someone notice they archived three folders when they meant to
+  // archive one, so it has to be IN the sentence rather than dropped. Every entry is a
+  // `…One` / `…Many` pair because the number changes more than the noun in most languages:
+  // Portuguese needs "1 nota arquivada" against "2 notas arquivadas", where both the
+  // quantifier and the participle change. English only changes the noun, which is why a
+  // single "{count} items archived" looked sufficient and is not.
+  ['bulkArchivedOne', '{count} item archived', '{count} item arquivado', '{count} elemento archivado', '{count} élément archivé', '{count} Eintrag archiviert', '{count} elemento archiviato'],
+  ['bulkArchivedMany', '{count} items archived', '{count} itens arquivados', '{count} elementos archivados', '{count} éléments archivés', '{count} Einträge archiviert', '{count} elementi archiviati'],
+  ['bulkDeletedOne', '{count} item deleted', '{count} item eliminado', '{count} elemento eliminado', '{count} élément supprimé', '{count} Eintrag gelöscht', '{count} elemento eliminato'],
+  ['bulkDeletedMany', '{count} items deleted', '{count} itens eliminados', '{count} elementos eliminados', '{count} éléments supprimés', '{count} Einträge gelöscht', '{count} elementi eliminati'],
+  ['bulkRestoredOne', '{count} item restored', '{count} item restaurado', '{count} elemento restaurado', '{count} élément restauré', '{count} Eintrag wiederhergestellt', '{count} elemento ripristinato'],
+  ['bulkRestoredMany', '{count} items restored', '{count} itens restaurados', '{count} elementos restaurados', '{count} éléments restaurés', '{count} Einträge wiederhergestellt', '{count} elementi ripristinati'],
+  ['bulkCopiedOne', '{count} item copied', '{count} item duplicado', '{count} elemento duplicado', '{count} élément dupliqué', '{count} Eintrag kopiert', '{count} elemento duplicato'],
+  ['bulkCopiedMany', '{count} items copied', '{count} itens duplicados', '{count} elementos duplicados', '{count} éléments dupliqués', '{count} Einträge kopiert', '{count} elementi duplicati'],
+  ['bulkUpdatedOne', '{count} item updated', '{count} item atualizado', '{count} elemento actualizado', '{count} élément mis à jour', '{count} Eintrag aktualisiert', '{count} elemento aggiornato'],
+  ['bulkUpdatedMany', '{count} items updated', '{count} itens atualizados', '{count} elementos actualizados', '{count} éléments mis à jour', '{count} Einträge aktualisiert', '{count} elementi aggiornati'],
+  ['bulkMovedOne', '{count} item moved to a folder', '{count} item movido para uma pasta', '{count} elemento movido a una carpeta', '{count} élément déplacé vers un dossier', '{count} Eintrag in einen Ordner verschoben', '{count} elemento spostato in una cartella'],
+  ['bulkMovedMany', '{count} items moved to a folder', '{count} itens movidos para uma pasta', '{count} elementos movidos a una carpeta', '{count} éléments déplacés vers un dossier', '{count} Einträge in einen Ordner verschoben', '{count} elementi spostati in una cartella'],
+  ['folderAndCountArchived', 'Folder and {count_label} archived', 'Pasta e {count_label} arquivados', 'Carpeta y {count_label} archivados', 'Dossier et {count_label} archivés', 'Ordner und {count_label} archiviert', 'Cartella e {count_label} archiviati'],
+  ['folderAndCountDeleted', 'Folder and {count_label} deleted', 'Pasta e {count_label} eliminados', 'Carpeta y {count_label} eliminados', 'Dossier et {count_label} supprimés', 'Ordner und {count_label} gelöscht', 'Cartella e {count_label} eliminati'],
+  ['entityNoteOne', 'note', 'nota', 'nota', 'note', 'Notiz', 'nota'],
+  ['entityNoteMany', 'notes', 'notas', 'notas', 'notes', 'Notizen', 'note'],
+  ['entityEventOne', 'event', 'evento', 'evento', 'événement', 'Termin', 'evento'],
+  ['entityEventMany', 'events', 'eventos', 'eventos', 'événements', 'Termine', 'eventi'],
+  ['entityHabitOne', 'habit', 'hábito', 'hábito', 'habitude', 'Gewohnheit', 'abitudine'],
+  ['entityHabitMany', 'habits', 'hábitos', 'hábitos', 'habitudes', 'Gewohnheiten', 'abitudini'],
+  ['entityFolderOne', 'folder', 'pasta', 'carpeta', 'dossier', 'Ordner', 'cartella'],
+  ['entityFolderMany', 'folders', 'pastas', 'carpetas', 'dossiers', 'Ordner', 'cartelle'],
+  ['folderAndCountRestored', 'Folder and {count_label} restored', 'Pasta e {count_label} restaurados', 'Carpeta y {count_label} restaurados', 'Dossier et {count_label} restaurés', 'Ordner und {count_label} wiederhergestellt', 'Cartella e {count_label} ripristinati'],
 ];
 
 const COLUMNS = ['en', 'pt', 'es', 'fr', 'de', 'it'];

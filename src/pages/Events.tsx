@@ -13,6 +13,7 @@ import { EventFolder } from '@/types/eventFolder';
 import { useToastSettings } from '@/contexts/ToastContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { nextCopyName } from '@/lib/copyName';
+import { countedSentence, folderAndCount } from '@/lib/countedMessage';
 import { EventCard } from '@/components/events/EventCard';
 import { EventFolderCard } from '@/components/events/EventFolderCard';
 import { EventFolderCreator } from '@/components/events/EventFolderCreator';
@@ -648,7 +649,7 @@ export default function Events() {
         setEvents((prev: Event[]) => prev.filter(event => !folderToArchive.eventIds.includes(event.id)));
       }
       
-      toast.success(sayFolder('toastFolderAndItemsArchived'));
+      toast.success(folderAndCount(t, language, 'folderAndCountArchived', 'event', eventsToArchive.length));
     }
   };
 
@@ -715,7 +716,7 @@ export default function Events() {
         setArchivedEvents((prev: Event[]) => prev.filter(event => !sanitizedEventIds.includes(event.id)));
       }
       
-      toast.success(sayFolder('toastFolderAndItemsRestored'));
+      toast.success(folderAndCount(t, language, 'folderAndCountRestored', 'event', eventsToUnarchive.length));
     }
   };
 
@@ -1206,7 +1207,7 @@ export default function Events() {
         ));
         clearSelection();
         exitBulkMode();
-        toast.success(say('toastUpdated', 'events'));
+        toast.success(countedSentence(t, language, 'bulkUpdated', ids.length));
         break;
       case 'share':
         // Copy event names to clipboard
@@ -1237,7 +1238,7 @@ export default function Events() {
         setEvents(prev => [...prev, ...copiedEvents]);
         clearSelection();
         exitBulkMode();
-        toast.success(say('toastCopied', 'events'));
+        toast.success(countedSentence(t, language, 'bulkCopied', copiedEvents.length));
         break;
       case 'move':
         if (ids.length > 0) {
@@ -1343,7 +1344,7 @@ export default function Events() {
 
         clearSelection();
         exitBulkMode();
-        toast.success(say('toastRestored', 'events'));
+        toast.success(countedSentence(t, language, 'bulkRestored', ids.length));
         break;
       }
     }
@@ -1453,12 +1454,11 @@ export default function Events() {
     );
   };
 
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   // Toast copy is a translated sentence plus a translated entity noun. Both halves are
   // resolved here so the `{entity}` substitution is written once instead of at every toast.
   const say = (key: string, entity: string) => t(key).replace('{entity}', t(entity));
   // Folder toasts name the items a folder contains rather than the folder itself.
-  const sayFolder = (key: string) => t(key).replace('{items}', t('events'));
 
   return (
     <Layout 
@@ -1711,7 +1711,7 @@ export default function Events() {
               }
               clearSelection();
               exitBulkMode();
-              toast.success(say('toastArchived', 'events'));
+              toast.success(countedSentence(t, language, 'bulkArchived', ids.length));
             }
             setPendingBulkAction(null);
           }}
@@ -1754,7 +1754,7 @@ export default function Events() {
               }
               clearSelection();
               exitBulkMode();
-              toast.success(say('toastDeleted', 'events'));
+              toast.success(countedSentence(t, language, 'bulkDeleted', ids.length));
             }
             setPendingBulkAction(null);
           }}
