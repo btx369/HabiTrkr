@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { 
   Check, 
+  FolderOpen,
   Pin, 
   Lock,
   RotateCcw,
@@ -19,6 +20,7 @@ import { ColoredCard } from '@/components/shared/ColoredCard';
 import { AudioPlayer, MultiAudioPlayer } from '@/components/shared/AudioPlayer';
 import { isDefaultColor } from '@/lib/cardColorStyles';
 import { getColoredIconClass } from '@/lib/coloredButtonStyles';
+import { useIsFiled } from '@/contexts/FolderMembershipContext';
 import { cn } from '@/lib/utils';
 
 interface NoteCardProps {
@@ -46,8 +48,6 @@ interface NoteCardProps {
   isDragged?: boolean;
   isDraggedOver?: boolean;
   isSelected?: boolean;
-  /** Force background even for default colors (useful when rendered inside colored folders) */
-  forceBackground?: boolean;
   onMouseDown?: (e: React.MouseEvent) => void;
   onTouchStart?: (e: React.TouchEvent) => void;
   /** Bulk selection props */
@@ -81,7 +81,6 @@ export function NoteCard({
   isDragged = false, 
   isDraggedOver = false,
   isSelected = false,
-  forceBackground = false,
   onMouseDown,
   onTouchStart,
   showBulkCheckbox = false,
@@ -110,6 +109,8 @@ export function NoteCard({
   const textColorClass = hasColor ? 'text-[#000000]' : 'text-foreground';
   const mutedTextColorClass = hasColor ? 'text-[#000000]/70' : 'text-muted-foreground';
   const iconColorClass = getColoredIconClass(hasColor);
+  // A note filed in a folder says so on its card, on every list it appears in.
+  const isFiled = useIsFiled(note.id);
 
   const getCardHeight = () => {
     switch (viewType) {
@@ -440,7 +441,6 @@ export function NoteCard({
     return (
       <ColoredCard 
         color={note.color}
-        forceBackground={forceBackground}
         className={cn(
           "transition-all select-none relative",
           getCardHeight(),
@@ -467,6 +467,7 @@ export function NoteCard({
             )}
             <div className="flex items-center gap-2 ml-auto flex-shrink-0">
               <div className="flex items-center gap-1">
+                {isFiled && <FolderOpen size={14} className={iconColorClass} />}
                 {note.pinned && <Pin size={14} className={iconColorClass} />}
                 {note.locked && <Lock size={14} className={iconColorClass} />}
               </div>
@@ -531,7 +532,6 @@ export function NoteCard({
   return (
     <ColoredCard 
       color={note.color}
-      forceBackground={forceBackground}
       className={cn(
         "transition-all select-none relative",
         getCardHeight(),
@@ -629,6 +629,7 @@ export function NoteCard({
               </div>
             </div>
             <div className="flex items-center gap-2 ml-auto flex-shrink-0">
+              {isFiled && <FolderOpen size={14} className={iconColorClass} />}
               {note.pinned && <Pin size={14} className={iconColorClass} />}
               {note.locked && <Lock size={14} className={iconColorClass} />}
               {showBulkCheckbox ? (

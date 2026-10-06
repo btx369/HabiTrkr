@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react';
 import { format, isAfter, startOfDay } from 'date-fns';
-import { Pin, RotateCcw, Trash2, Check } from 'lucide-react';
+import { Pin, RotateCcw, Trash2, Check, FolderOpen } from 'lucide-react';
 import { CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import { useWeekStart, getHabitIndexFromVisualIndex } from '@/contexts/WeekStart
 import { isDefaultColor } from '@/lib/cardColorStyles';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getColoredIconClass, getColoredBorderClass } from '@/lib/coloredButtonStyles';
+import { useIsFiled } from '@/contexts/FolderMembershipContext';
 import { cn } from '@/lib/utils';
 
 // Helper to convert hex to rgba for glass effect (matching ColoredCard)
@@ -119,6 +120,8 @@ export function HabitCard({
   const iconColorClass = getColoredIconClass(hasColor);
   const badgeBorderClass = getColoredBorderClass(hasColor, 100);
   const textColorClass = hasColor ? 'text-[#000000]' : 'text-foreground';
+  // A habit filed in a folder says so on its card, on every list it appears in.
+  const isFiled = useIsFiled(habit.id);
   
   // Button styling: habit color background with black border/text when custom color exists
   const coloredButtonStyle: React.CSSProperties = hasColor ? {
@@ -129,7 +132,7 @@ export function HabitCard({
   const coloredButtonClass = hasColor ? 'border hover:opacity-80' : 'border-foreground text-foreground';
 
   return (
-    <ColoredCard color={habit.color}>
+    <ColoredCard color={habit.color} data-habit-id={habit.id}>
       <CardContent className="px-2 py-2">
         <div className="flex items-start gap-3">
           <div 
@@ -141,6 +144,7 @@ export function HabitCard({
             </h3>
           </div>
           <div className="flex items-center gap-1">
+            {isFiled && <FolderOpen size={14} className={iconColorClass} />}
             {habit.pinned && <Pin size={14} className={iconColorClass} />}
             {showBulkCheckbox ? (
               <BulkCheckbox />
@@ -367,7 +371,7 @@ export function ArchivedHabitCard({
   );
 
   return (
-    <ColoredCard color={habit.color}>
+    <ColoredCard color={habit.color} data-habit-id={habit.id}>
       <CardContent className="px-2 py-2">
         <div className="flex items-start justify-between">
           <h3 className="text-sm font-medium text-foreground">{highlightText(habit.name, searchQuery)}</h3>

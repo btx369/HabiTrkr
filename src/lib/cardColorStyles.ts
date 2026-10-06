@@ -10,27 +10,6 @@ export interface CardColorStyles {
 }
 
 /**
- * Returns inline styles for a colored card component.
- * When color is default (#FFFFFF), returns empty styles.
- * Otherwise, applies background color only.
- */
-export function getCardColorStyles(color: string, forceBackground = false): CardColorStyles {
-  if (isDefaultColor(color)) {
-    // When forceBackground is true (e.g., nested cards), apply theme background
-    if (forceBackground) {
-      return {
-        backgroundColor: 'hsl(var(--card))',
-      };
-    }
-    return {};
-  }
-  
-  return {
-    backgroundColor: color,
-  };
-}
-
-/**
  * Returns inline styles with a muted fallback for default colors.
  * Useful for items in dialogs/lists where you want visible styling even for default colors.
  */

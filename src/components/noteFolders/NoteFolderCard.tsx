@@ -223,7 +223,19 @@ export function NoteFolderCard({
                       isDeleted={isDeleted}
                       isArchived={folder.archived && !isDeleted}
                       searchQuery={searchQuery}
-                      forceBackground={hasColor}
+                      /*
+                       * No `forceBackground`. It was passed the folder's colour, and its only
+                       * effect is on a note that has NO colour of its own: it painted that
+                       * note with the translucent --glass-bg, a warm grey that mixed with the
+                       * folder's colour and made the note look dingy as well as see-through.
+                       *
+                       * The folder's colour is still behind the notes, so a plain note here
+                       * still picks some of it up — measured rgb(244, 249, 255) inside a blue
+                       * folder against rgb(254, 254, 254) for the same note on the main list.
+                       * Reported, measured and deliberately left alone; see
+                       * scripts/preview-folder-bleed-options.mjs for the alternatives and
+                       * scripts/verify-nested-note-card.mjs for the numbers.
+                       */
                     />
                   </div>
                 ))}

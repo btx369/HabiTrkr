@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { Plus, ChevronLeft, ChevronRight, Target, FileStack } from 'lucide-react';
 import { format, addWeeks, subWeeks, startOfWeek, addDays, isSameDay, isSameWeek } from 'date-fns';
 import { Layout } from '@/components/Layout';
+import { FolderMembershipProvider } from '@/contexts/FolderMembershipContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, SlidingTabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -858,6 +859,7 @@ export default function HabitTracker() {
   };
 
   return (
+    <FolderMembershipProvider ids={[...habitFolders, ...archivedHabitFolders].flatMap((folder) => folder.habitIds)}>
     <Layout 
       showSearch={true}
       searchQuery={searchQuery}
@@ -1259,5 +1261,6 @@ export default function HabitTracker() {
         }}
       />
     </Layout>
+    </FolderMembershipProvider>
   );
 }

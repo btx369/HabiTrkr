@@ -1,15 +1,13 @@
 import * as React from "react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { getCardColorStyles, getCardColorStylesWithFallback, isDefaultColor } from "@/lib/cardColorStyles";
+import { isDefaultColor } from "@/lib/cardColorStyles";
 import { useTheme } from "@/contexts/ThemeContext";
 
 interface ColoredCardProps extends React.HTMLAttributes<HTMLDivElement> {
   color: string;
   /** Use fallback styling for default colors (useful for dialogs/lists) */
   useFallback?: boolean;
-  /** Force background even for default colors (useful for nested cards inside colored parents) */
-  forceBackground?: boolean;
   children: React.ReactNode;
 }
 
@@ -56,10 +54,10 @@ function getHoverColor(hexColor: string, isDark: boolean): string {
 
 /**
  * A Card wrapper that automatically applies consistent color styling.
- * Uses getCardColorStyles to apply background color and forces black text when color is applied.
+ * Applies the colour as a translucent background and forces black text when a colour is applied.
  */
 export const ColoredCard = React.forwardRef<HTMLDivElement, ColoredCardProps>(
-  ({ color, useFallback = false, forceBackground = false, className, children, ...props }, ref) => {
+  ({ color, useFallback = false, className, children, ...props }, ref) => {
     const hasColor = !isDefaultColor(color);
     const { theme } = useTheme();
     const isDark = theme === 'dark';
@@ -77,11 +75,6 @@ export const ColoredCard = React.forwardRef<HTMLDivElement, ColoredCardProps>(
        */
       '--card-hover-color': 'hsl(var(--hover))',
     } as React.CSSProperties;
-    
-    // For forceBackground (nested cards), use slightly more opaque glass
-    if (forceBackground && !hasColor) {
-      glassStyles.backgroundColor = 'hsl(var(--glass-bg))';
-    }
 
     return (
       <Card
@@ -94,10 +87,15 @@ export const ColoredCard = React.forwardRef<HTMLDivElement, ColoredCardProps>(
            * shrink while being dragged (`scale-105` on the drag ghost) and that is a
            * different thing, driven by its own class at the call site.
            */
-          // Only apply text color overrides when card has a color AND is not using forceBackground
-          hasColor && !forceBackground && "text-[#000000] [&_.text-muted-foreground]:text-[#000000]/70 [&_.text-foreground]:text-[#000000]",
-          // When forceBackground is used, ensure text follows normal theme rules
-          forceBackground && "text-foreground [&_.text-muted-foreground]:text-muted-foreground [&_.text-foreground]:text-foreground",
+          /*
+           * A coloured card paints its own text black, because every note colour in the
+           * palette is a light tint. This used to be conditional on a `forceBackground`
+           * flag, which existed for cards nested inside a coloured folder; that flag only
+           * ever changed which translucent surface a nested card used, so the condition
+           * went with it. Note that a card nested in a coloured folder still composites
+           * over that folder's colour — measured and deliberately kept, see NoteFolderCard.
+           */
+          hasColor && "text-[#000000] [&_.text-muted-foreground]:text-[#000000]/70 [&_.text-foreground]:text-[#000000]",
           className
         )}
         style={glassStyles}

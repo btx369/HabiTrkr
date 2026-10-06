@@ -214,7 +214,7 @@ export function EventFolderCard({
                       isDeleted={isDeleted}
                       isArchived={isArchived}
                       searchQuery={searchQuery}
-                      forceBackground={hasColor}
+                      /* No `forceBackground`: see the note in NoteFolderCard. */
                     />
                   </div>
                 ))}

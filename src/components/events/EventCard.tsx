@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import { Calendar, BellRing, Check, Pin, RotateCcw, Trash2 } from 'lucide-react';
+import { Calendar, BellRing, Check, FolderOpen, Pin, RotateCcw, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +13,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { countedSentence } from '@/lib/countedMessage';
 import { isDefaultColor } from '@/lib/cardColorStyles';
 import { getColoredIconClass, getColoredBorderClass } from '@/lib/coloredButtonStyles';
+import { useIsFiled } from '@/contexts/FolderMembershipContext';
 import { cn } from '@/lib/utils';
 
 
@@ -33,8 +34,6 @@ interface EventCardProps {
   isArchived?: boolean;
   searchQuery?: string;
   viewType?: ViewType;
-  /** Force background even for default colors (useful when rendered inside colored folders) */
-  forceBackground?: boolean;
   /** Bulk selection props */
   showBulkCheckbox?: boolean;
   isBulkSelected?: boolean;
@@ -58,7 +57,6 @@ export function EventCard({
   isArchived = false, 
   searchQuery = '',
   viewType = 'list',
-  forceBackground = false,
   showBulkCheckbox = false,
   isBulkSelected = false,
   onBulkSelect,
@@ -87,13 +85,14 @@ export function EventCard({
     (Date.now() - bulkModeEntryRef.current) < 100;
   
   // Use standardized color helpers
-  // Text and icon colors: black when event has its own color
-  // When forceBackground is true (nested in colored folder) and event has no color, use theme-aware colors
+  // Text and icon colors: black when the event has its own color, theme-aware colors otherwise
   const hasColor = !isDefaultColor(event.color);
   const textColorClass = hasColor ? 'text-[#000000]' : 'text-foreground';
   const mutedTextColorClass = hasColor ? 'text-[#000000]' : 'text-muted-foreground';
   const iconColorClass = getColoredIconClass(hasColor);
   const badgeBorderClass = getColoredBorderClass(hasColor, 100);
+  // An event filed in a folder says so on its card, on every list it appears in.
+  const isFiled = useIsFiled(event.id);
   
   // Recurrence badge styling: use event color if set
   const recurrenceBadgeStyle = hasColor && event.color 
@@ -246,12 +245,12 @@ export function EventCard({
   return (
     <ColoredCard 
       color={event.color}
-      forceBackground={forceBackground}
       className={cn(
         "transition-all cursor-pointer relative",
         getCardHeight()
       )}
       onClick={handleCardClick}
+      data-event-id={event.id}
     >
       <CardHeader className="px-2 py-2">
         <div className="flex items-center justify-between">
@@ -261,6 +260,9 @@ export function EventCard({
             </CardTitle>
           </div>
           <div className="flex items-center gap-1">
+            {isFiled && (
+              <FolderOpen size={14} className={`flex-shrink-0 ${iconColorClass}`} />
+            )}
             {event.pinned && (
               <Pin size={14} className={`flex-shrink-0 ${iconColorClass}`} />
             )}
