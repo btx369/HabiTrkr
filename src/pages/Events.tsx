@@ -859,6 +859,30 @@ export default function Events() {
     return eventList.filter(event => searchInEvent(event, searchQuery));
   };
 
+  /**
+   * A folder answers a search when its own text does, or when anything filed in it does.
+   *
+   * The Folders tab had no folder search at all, so it kept every folder on screen while the
+   * matching text was merely highlighted. The rule here is the one the notes page already
+   * uses, extended to the archived events as well: a folder in the archive holds archived
+   * events, and those are what a search of it has to reach.
+   */
+  const searchInEventFolder = (folder: EventFolder, query: string): boolean => {
+    const searchTerm = query.toLowerCase();
+    if (folder.name.toLowerCase().includes(searchTerm) ||
+        (folder.description?.toLowerCase().includes(searchTerm) || false)) {
+      return true;
+    }
+
+    const folderEvents = [...events, ...archivedEvents].filter(event => folder.eventIds.includes(event.id));
+    return folderEvents.some(event => searchInEvent(event, query));
+  };
+
+  const filterEventFolders = (folderList: EventFolder[]): EventFolder[] => {
+    if (!searchQuery.trim()) return folderList;
+    return folderList.filter(folder => searchInEventFolder(folder, searchQuery));
+  };
+
   // Pin/unpin events
   const pinEvent = (eventId: string) => {
     setEvents((prev: Event[]) => prev.map(event => 
@@ -1370,11 +1394,20 @@ export default function Events() {
 
   // Render event list based on view type
   const renderEventList = (eventList: Event[], emptyMessage: string, isArchived = false) => {
-    if (eventList.length === 0) {
+    /*
+     * Filtering happens here, not at the call sites, so every list that goes through this
+     * renderer answers the search: the Events tab, the archived events, and any list added
+     * later. The notes page is built the same way, which is why all of its tabs filter.
+     */
+    const filteredList = filterEvents(eventList);
+
+    if (filteredList.length === 0) {
       return (
         <Card>
           <CardContent className="text-center py-8">
-            <p className="text-muted-foreground">{emptyMessage}</p>
+            <p className="text-muted-foreground">
+              {searchQuery.trim() ? t('noMatchingEvents') : emptyMessage}
+            </p>
           </CardContent>
         </Card>
       );
@@ -1386,7 +1419,7 @@ export default function Events() {
 
     return (
       <div className={gridClass}>
-        {eventList.map(event => (
+        {filteredList.map(event => (
           <EventCard
             key={event.id}
             event={event}
@@ -1414,7 +1447,10 @@ export default function Events() {
   };
 
   const renderEventFolderList = (folderList: EventFolder[], emptyMessage: string, isArchived = false) => {
-    if (folderList.length === 0) {
+    // Filtered here for the same reason as the event list above.
+    const filteredFolders = filterEventFolders(folderList);
+
+    if (filteredFolders.length === 0) {
       return (
         <Card>
           <CardContent className="text-center py-8">
@@ -1441,7 +1477,7 @@ export default function Events() {
        * beside it just as tall, and they read as if they had all opened together.
        */
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 items-start">
-        {folderList.map(folder => (
+        {filteredFolders.map(folder => (
           <EventFolderCard
             key={folder.id}
             folder={folder}
@@ -1572,7 +1608,12 @@ export default function Events() {
           </div>
           
           <TabsContent value="all-events" className="mt-14 space-y-2">
-            {getAllEvents().length === 0 ? (
+            {/*
+              * Guarded on the events themselves, not on the searched list: `getAllEvents()`
+              * is already narrowed by the query, so guarding on it showed the "Create event"
+              * card whenever a search matched nothing, instead of saying that nothing matched.
+              */}
+            {events.length === 0 ? (
               <Card>
                 <CardContent className="text-center py-8">
                   <Button 

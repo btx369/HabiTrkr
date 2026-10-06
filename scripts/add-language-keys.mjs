@@ -178,6 +178,7 @@ const KEYS = [
   ['archivedNotes', 'Archived Notes', 'Notas arquivadas', 'Notas archivadas', 'Notes archivées', 'Archivierte Notizen', 'Note archiviate'],
   ['noArchivedNotes', 'No archived notes', 'Sem notas arquivadas', 'Sin notas archivadas', 'Aucune note archivée', 'Keine archivierten Notizen', 'Nessuna nota archiviata'],
   ['noMatchingNotes', 'No matching notes found.', 'Nenhuma nota correspondente.', 'No se encontraron notas coincidentes.', 'Aucune note correspondante.', 'Keine passenden Notizen gefunden.', 'Nessuna nota corrispondente.'],
+  ['noMatchingEvents', 'No matching events found.', 'Nenhum evento correspondente.', 'No se encontraron eventos coincidentes.', 'Aucun événement correspondant.', 'Keine passenden Termine gefunden.', 'Nessun evento corrispondente.'],
   ['year', 'Year', 'Ano', 'Año', 'Année', 'Jahr', 'Anno'],
   ['maximum', 'Maximum', 'Máximo', 'Máximo', 'Maximum', 'Maximum', 'Massimo'],
   ['alertTime', 'Alert Time', 'Hora do alerta', 'Hora de la alerta', 'Heure de l’alerte', 'Uhrzeit der Erinnerung', 'Ora dell’avviso'],
