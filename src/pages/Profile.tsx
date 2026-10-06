@@ -508,24 +508,49 @@ function SettingsRow({ icon, label, value, onClick, rightElement, showChevron, l
    * headings (also text-sm) — an inverted hierarchy. Measured against grok.com, whose
    * labels sit at 14px, this was the one screen in the app rendering a full step too big.
    */
-  const content = (
-    <div className="flex items-center justify-between p-4 transition-colors cursor-pointer hover:bg-hover active:bg-muted">
-      <div className="flex items-center gap-3">
-        <span className="text-foreground">{icon}</span>
-        <span className={`text-sm font-medium ${labelClassName || 'text-foreground'}`}>{label}</span>
-      </div>
-      <div className="flex items-center gap-2">
-        {value && <span className="text-muted-foreground text-sm">{value}</span>}
-        {rightElement}
-        {showChevron && <ChevronRight size={18} className="text-muted-foreground" />}
-      </div>
+  const rowClass = 'flex items-center justify-between p-4 transition-colors';
+  const rowHover = 'cursor-pointer hover:bg-hover active:bg-muted';
+  const labelSide = (
+    <div className="flex items-center gap-3">
+      <span className="text-foreground">{icon}</span>
+      <span className={`text-sm font-medium ${labelClassName || 'text-foreground'}`}>{label}</span>
     </div>
   );
+  const valueSide = (
+    <div className="flex items-center gap-2">
+      {value && <span className="text-muted-foreground text-sm">{value}</span>}
+      {/*
+        * The control keeps its clicks to itself. A tap on the switch is meant to change the
+        * setting once, and without this the row's own click handler would run on the same
+        * tap and set the same value a second time.
+        */}
+      {rightElement && <span onClick={(event) => event.stopPropagation()}>{rightElement}</span>}
+      {showChevron && <ChevronRight size={18} className="text-muted-foreground" />}
+    </div>
+  );
+
+  /*
+   * A row that ends in a control is a container, not a button.
+   *
+   * It used to be a `<button>` in every case, which put the Theme and Notifications switches
+   * — themselves buttons — inside a button. A button inside a button is invalid HTML, React
+   * reported it on every visit to this screen, and the two handlers ran off the same click,
+   * setting the value twice. The row is still clickable, so tapping the label works as
+   * before, and the switch remains the keyboard-reachable control for those two settings.
+   */
+  if (rightElement) {
+    return (
+      <div className={`${rowClass} ${onClick ? rowHover : ''}`} onClick={onClick}>
+        {labelSide}
+        {valueSide}
+      </div>
+    );
+  }
 
   if (onClick) {
     // text-sm on the button itself, not just inside it: the wrapper was still computing to
     // the 16px body size, which is what a text measurement of the row reports.
-    return <button onClick={onClick} className="w-full text-left text-sm focus:outline-none">{content}</button>;
+    return <button onClick={onClick} className={`w-full text-left text-sm focus:outline-none ${rowClass} ${rowHover}`}>{labelSide}{valueSide}</button>;
   }
-  return content;
+  return <div className={rowClass}>{labelSide}{valueSide}</div>;
 }
