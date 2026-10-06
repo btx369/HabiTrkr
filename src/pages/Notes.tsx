@@ -1644,6 +1644,9 @@ export default function Notes() {
             onArchiveFolder={!isArchived ? () => confirmArchiveFolder(folder.id) : undefined}
             onDeleteFolder={() => deleteFolder(folder.id)}
             onRestoreFolder={isArchived ? () => unarchiveFolder(folder.id) : undefined}
+            // Restoring a note from inside an archived folder. Without it the nested card's
+            // restore button was drawn but did nothing.
+            onRestoreNote={isArchived ? unarchiveNote : undefined}
             showBulkCheckbox={isBulkMode}
             isBulkSelected={selectedItems.has(folder.id)}
             onBulkSelect={toggleItem}

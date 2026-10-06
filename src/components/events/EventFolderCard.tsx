@@ -24,6 +24,13 @@ interface EventFolderCardProps {
   onPin?: (folderId: string) => void;
   onUnpin?: (folderId: string) => void;
   onRestore?: (folderId: string) => void;
+  /*
+   * Restoring an event that lives in an archived folder. The nested card draws its restore
+   * button because the folder marks it as archived, but nothing was wired to it, so it did
+   * nothing: only restoring the whole folder or restoring the event from the archived list
+   * worked. The habits page passed its equivalent, which is why that one worked.
+   */
+  onRestoreEvent?: (eventId: string) => void;
   isArchived?: boolean;
   isDeleted?: boolean;
   searchQuery?: string;
@@ -55,6 +62,7 @@ export function EventFolderCard({
   onPin, 
   onUnpin, 
   onRestore,
+  onRestoreEvent,
   isArchived = false,
   isDeleted = false,
   searchQuery = '',
@@ -208,6 +216,7 @@ export function EventFolderCard({
                       onClick={() => onEditEvent?.(event)}
                       onEdit={() => onEditEvent?.(event)}
                       onArchive={() => onArchiveEvent?.(event.id)}
+                      onUnarchive={onRestoreEvent ? () => onRestoreEvent(event.id) : undefined}
                       onDelete={() => onDeleteEvent?.(event.id)}
                       onCopy={() => onCopyEvent?.(event.id)}
                       onMoveToFolder={() => onMoveEventToFolder?.(event.id)}

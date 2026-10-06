@@ -38,6 +38,16 @@ interface NoteFolderCardProps {
   onArchiveFolder?: (folderId: string) => void;
   onDeleteFolder: (folderId: string) => void;
   onRestoreFolder?: (folderId: string) => void;
+  /*
+   * Restoring a note that lives in an archived folder.
+   *
+   * The nested card has always drawn its restore button — the folder marks it as archived, and
+   * an archived card shows restore and delete instead of the menu — but nothing was wired to
+   * it here, so the button did nothing at all. The only ways out were restoring the whole
+   * folder or restoring the note from the archived list above. The habits page passed its
+   * equivalent handler, which is why only that one worked.
+   */
+  onRestoreNote?: (noteId: string) => void;
   isDeleted?: boolean;
   searchQuery?: string;
   /** Bulk selection props */
@@ -65,6 +75,7 @@ export function NoteFolderCard({
   onArchiveFolder,
   onDeleteFolder,
   onRestoreFolder,
+  onRestoreNote,
   isDeleted = false,
   searchQuery = '',
   showBulkCheckbox = false,
@@ -211,6 +222,7 @@ export function NoteFolderCard({
                       onEdit={() => onOpenNote(note)}
                       onToggleListItem={onToggleListItem}
                       onArchive={onArchiveNote}
+                      onUnarchive={onRestoreNote}
                       onDelete={onDeleteNote}
                       onPin={onPinNote}
                       onUnpin={onUnpinNote}

@@ -78,13 +78,19 @@ export default {
 				/*
 				 * Scrim for the floating bottom navigation. Separate from the surface tokens
 				 * because that capsule stays dark in both themes; the normal tokens invert.
+				 *
+				 * `foreground` is the text and icons drawn ON that scrim, which the bulk action
+				 * bar shares. It used `primary-foreground`, which is white in the light theme
+				 * and near-black in the dark one — so in the dark theme the labels were black
+				 * on the black bar and could not be read.
 				 */
 				nav: {
 					DEFAULT: 'hsl(var(--nav-bg))',
 					border: 'hsl(var(--nav-border))',
 					active: 'hsl(var(--nav-active))',
 					icon: 'hsl(var(--nav-icon))',
-					'icon-hover': 'hsl(var(--nav-icon-hover))'
+					'icon-hover': 'hsl(var(--nav-icon-hover))',
+					foreground: 'hsl(var(--nav-foreground))'
 				},
 				popover: {
 					DEFAULT: 'hsl(var(--popover))',

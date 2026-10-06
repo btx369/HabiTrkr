@@ -245,7 +245,7 @@ export function BulkActionBar({
               <PopoverTrigger asChild>
                   <Button
                     variant="ghostStatic"
-                    className="flex flex-1 flex-col items-center justify-center h-11 md:h-14 min-w-0 px-1 md:px-2 gap-0 text-primary-foreground hover:text-primary-foreground hover:bg-primary-foreground/20 data-[state=open]:bg-primary-foreground/20"
+                    className="flex flex-1 flex-col items-center justify-center h-11 md:h-14 min-w-0 px-1 md:px-2 gap-0 text-nav-foreground hover:text-nav-foreground hover:bg-nav-foreground/20 data-[state=open]:bg-nav-foreground/20"
                     disabled={selectedCount === 0}
                   >
                     <Icon size={20} className="md:w-[22px] md:h-[22px] shrink-0" />
@@ -271,7 +271,7 @@ export function BulkActionBar({
                 "flex flex-1 flex-col items-center justify-center h-11 md:h-14 min-w-0 px-1 md:px-2 gap-0",
                 action.type === 'delete'
                   ? "text-destructive hover:text-destructive hover:bg-destructive/20" 
-                  : "text-primary-foreground hover:text-primary-foreground hover:bg-primary-foreground/20 data-[state=open]:bg-primary-foreground/20"
+                  : "text-nav-foreground hover:text-nav-foreground hover:bg-nav-foreground/20 data-[state=open]:bg-nav-foreground/20"
               )}
               onClick={() => onAction(action.type)}
               disabled={!isSelectionAction && selectedCount === 0}

@@ -1490,6 +1490,9 @@ export default function Events() {
             onEdit={!isArchived ? editEventFolder : undefined}
             onArchive={!isArchived ? confirmArchiveEventFolder : undefined}
             onUnarchive={isArchived ? unarchiveEventFolder : undefined}
+            // Restoring an event from inside an archived folder. Without it the nested card's
+            // restore button was drawn but did nothing.
+            onRestoreEvent={isArchived ? unarchiveEvent : undefined}
             onDelete={deleteEventFolder}
             onPin={!isArchived ? pinEventFolder : undefined}
             onUnpin={!isArchived ? unpinEventFolder : undefined}

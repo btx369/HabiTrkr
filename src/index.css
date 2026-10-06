@@ -149,6 +149,12 @@ All colors MUST be HSL.
     --nav-active: 0 0% 13%;
     --nav-icon: 0 0% 45%;
     --nav-icon-hover: 0 0% 75%;
+    /*
+     * Text and icons drawn on that scrim. The bulk action bar sits on it too, and it used
+     * `--primary-foreground`, which inverts: white in the light theme, near-black in the dark
+     * one, which left its labels black on a black bar.
+     */
+    --nav-foreground: 0 0% 99%;
   }
 
   /*
