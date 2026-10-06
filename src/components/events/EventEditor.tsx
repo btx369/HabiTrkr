@@ -281,7 +281,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
       <EditorDialog
         isOpen={isOpen}
         onClose={handleClose}
-        title={mode === 'create' ? t('createEvent') : 'Edit Event'}
+        title={mode === 'create' ? t('createEvent') : t('editEvent')}
         onSave={handleSave}
         saveLabel={mode === 'create' ? t('createEvent') : t('save')}
         saveDisabled={!formData.name.trim()}

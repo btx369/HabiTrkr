@@ -13,7 +13,7 @@ import { EventFolder } from '@/types/eventFolder';
 import { useToastSettings } from '@/contexts/ToastContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { nextCopyName } from '@/lib/copyName';
-import { countedSentence, folderAndCount } from '@/lib/countedMessage';
+import { countedSentence, folderAndCount, itemDisplayName, namedSentence } from '@/lib/countedMessage';
 import { EventCard } from '@/components/events/EventCard';
 import { EventFolderCard } from '@/components/events/EventFolderCard';
 import { EventFolderCreator } from '@/components/events/EventFolderCreator';
@@ -1145,6 +1145,23 @@ export default function Events() {
     return filterEvents(events).map(e => e.id);
   };
 
+  /**
+   * What to call an item in a confirmation dialog.
+   *
+   * The dialog state holds only a type and an id, so the item is looked up here. Archived
+   * collections are searched too, because the same dialogs are reached from the Archived
+   * tab. `itemDisplayName` supplies the opening words of the body when there is no title.
+   */
+  const displayNameOf = (item: { type: 'event' | 'eventFolder'; id: string } | null): string => {
+    if (!item) return t('untitledItem');
+    if (item.type === 'event') {
+      const found = events.find(e => e.id === item.id) ?? archivedEvents.find(e => e.id === item.id);
+      return itemDisplayName(t, found ?? {});
+    }
+    const found = eventFolders.find(f => f.id === item.id) ?? archivedEventFolders.find(f => f.id === item.id);
+    return itemDisplayName(t, found ?? {});
+  };
+
   // Handle bulk actions
   const handleBulkAction = (action: BulkActionType, color?: string) => {
     const ids = Array.from(selectedItems);
@@ -1601,11 +1618,17 @@ export default function Events() {
         </Tabs>
 
         {/* Delete Confirmation Dialog */}
+        {/*
+          * The title names the item. "Delete this item?" gave no clue which one, and this
+          * dialog offers no other: the heading reads the same whether one event is being
+          * deleted or a folder with a dozen inside it. `itemDisplayName` falls back to the
+          * opening words of the body, which is what a nameless note needs.
+          */}
         <ConfirmationDialog
           open={deleteDialogOpen}
           onOpenChange={setDeleteDialogOpen}
-          title={itemToDelete?.type === 'event' ? t('deleteEventTitle') : t('deleteFolder')}
-          description={t('confirmDeleteBody')}
+          title={namedSentence(t, 'confirmDeleteNamed', displayNameOf(itemToDelete))}
+          description={namedSentence(t, 'confirmDeleteNamedBody', displayNameOf(itemToDelete))}
           action="delete"
           onConfirm={() => {
             if (itemToDelete) {
@@ -1623,8 +1646,8 @@ export default function Events() {
         <ConfirmationDialog
           open={archiveDialogOpen}
           onOpenChange={setArchiveDialogOpen}
-          title={itemToArchive?.type === 'event' ? t('confirmArchiveTitle') : t('archiveFolder')}
-          description={itemToArchive?.type === 'event' ? t('events') : t('confirmArchiveTitle')}
+          title={namedSentence(t, 'confirmArchiveNamed', displayNameOf(itemToArchive))}
+          description={namedSentence(t, 'confirmArchiveNamedBody', displayNameOf(itemToArchive))}
           action="archive"
           onConfirm={() => {
             if (itemToArchive) {

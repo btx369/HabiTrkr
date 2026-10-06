@@ -78,3 +78,44 @@ export function folderAndCount(
   const label = countedNoun(t, language, kind, count);
   return t(baseKey).replace('{count_label}', label);
 }
+
+/** How many words of a note's body stand in for a missing title. */
+const NAME_FROM_BODY_WORDS = 3;
+
+/**
+ * What to call an item in a confirmation dialog.
+ *
+ * A dialog reading "Delete this item?" tells the user nothing about which item they are
+ * about to lose, and these dialogs offer no other clue: the heading says "Delete Note"
+ * whether one note is selected or a whole folder of them.
+ *
+ * Events and habits always have a name. A note need not — its title is optional and notes
+ * are created with an empty one — so for a nameless note the opening words of its body are
+ * used instead. That is the only case where something has to be derived, and the body is the
+ * note's own content, so it identifies the note rather than guessing at it.
+ */
+export function itemDisplayName(
+  t: (key: string) => string,
+  item: { name?: string | null; description?: string | null },
+): string {
+  const name = (item.name ?? '').trim();
+  if (name !== '') return name;
+
+  const body = (item.description ?? '').replace(/\s+/g, ' ').trim();
+  if (body === '') return t('untitledItem');
+
+  const words = body.split(' ');
+  const opening = words.slice(0, NAME_FROM_BODY_WORDS).join(' ');
+  // An ellipsis marks this as a fragment, so a three-word note is not mistaken for a title
+  // that simply happens to be three words long.
+  return words.length > NAME_FROM_BODY_WORDS ? `${opening}…` : opening;
+}
+
+/** Fills `{name}` in a confirmation sentence that names the item. */
+export function namedSentence(
+  t: (key: string) => string,
+  baseKey: 'confirmDeleteNamed' | 'confirmArchiveNamed' | 'confirmDeleteNamedBody' | 'confirmArchiveNamedBody',
+  name: string,
+): string {
+  return t(baseKey).replace('{name}', name);
+}

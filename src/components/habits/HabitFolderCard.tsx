@@ -195,7 +195,7 @@ export function HabitFolderCard({
           <div className="pt-0 pb-2 px-1">
             {folderHabits.length === 0 ? (
               <div className={`text-center py-4 ${mutedTextColorClass} text-sm`}>
-                No habits in this folder yet
+                {t('noHabitsInFolder')}
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-1">

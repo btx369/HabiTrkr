@@ -283,6 +283,26 @@ const KEYS = [
   ['bulkUpdatedMany', '{count} items updated', '{count} itens atualizados', '{count} elementos actualizados', '{count} éléments mis à jour', '{count} Einträge aktualisiert', '{count} elementi aggiornati'],
   ['bulkMovedOne', '{count} item moved to a folder', '{count} item movido para uma pasta', '{count} elemento movido a una carpeta', '{count} élément déplacé vers un dossier', '{count} Eintrag in einen Ordner verschoben', '{count} elemento spostato in una cartella'],
   ['bulkMovedMany', '{count} items moved to a folder', '{count} itens movidos para uma pasta', '{count} elementos movidos a una carpeta', '{count} éléments déplacés vers un dossier', '{count} Einträge in einen Ordner verschoben', '{count} elementi spostati in una cartella'],
+
+  // --- Named confirmations and the remaining badges.
+  //
+  // The confirmations said only "Delete this item?" with the noun, so a user could not tell
+  // which item they were about to lose. The name is back in the sentence, with `{name}`
+  // substituted by the title — or, for a note that has none, by its opening words.
+  //
+  // `%Q%` is the quote character. Written literally it would nest inside the string that
+  // holds this list, which `sync-language-keys.mjs` parses; the marker is substituted on the
+  // way into the dictionary.
+  ['confirmDeleteNamed', 'Delete %Q%{name}%Q%?', 'Eliminar %Q%{name}%Q%?', '¿Eliminar %Q%{name}%Q%?', 'Supprimer %Q%{name}%Q% ?', '%Q%{name}%Q% löschen?', 'Eliminare %Q%{name}%Q%?'],
+  ['confirmArchiveNamed', 'Archive %Q%{name}%Q%?', 'Arquivar %Q%{name}%Q%?', '¿Archivar %Q%{name}%Q%?', 'Archiver %Q%{name}%Q% ?', '%Q%{name}%Q% archivieren?', 'Archiviare %Q%{name}%Q%?'],
+  ['confirmDeleteNamedBody', '%Q%{name}%Q% will be deleted. This cannot be undone.', '%Q%{name}%Q% será eliminado. Isto não pode ser anulado.', '%Q%{name}%Q% se eliminará. Esto no se puede deshacer.', '%Q%{name}%Q% sera supprimé. Action irréversible.', '%Q%{name}%Q% wird gelöscht. Das kann nicht rückgängig gemacht werden.', '%Q%{name}%Q% sarà eliminato. L’azione non può essere annullata.'],
+  ['confirmArchiveNamedBody', '%Q%{name}%Q% will be moved to the archive. You can restore it later.', '%Q%{name}%Q% será movido para o arquivo. Pode restaurá-lo mais tarde.', '%Q%{name}%Q% se moverá al archivo. Podrás restaurarlo después.', '%Q%{name}%Q% sera déplacé vers les archives. Vous pourrez le restaurer plus tard.', '%Q%{name}%Q% wird ins Archiv verschoben. Du kannst es später wiederherstellen.', '%Q%{name}%Q% sarà spostato nell’archivio. Potrai ripristinarlo in seguito.'],
+  ['untitledItem', 'Untitled', 'Sem título', 'Sin título', 'Sans titre', 'Ohne Titel', 'Senza titolo'],
+  ['daysRemainingBadgeOne', '{count} day remaining', '{count} dia restante', '{count} día restante', '{count} jour restant', '{count} Tag verbleibend', '{count} giorno rimanente'],
+  ['daysRemainingBadgeMany', '{count} days remaining', '{count} dias restantes', '{count} días restantes', '{count} jours restants', '{count} Tage verbleibend', '{count} giorni rimanenti'],
+  ['daysAgoBadgeOne', '{count} day ago', '{count} dia atrás', '{count} día atrás', 'il y a {count} jour', 'vor {count} Tag', '{count} giorno fa'],
+  ['daysAgoBadgeMany', '{count} days ago', '{count} dias atrás', '{count} días atrás', 'il y a {count} jours', 'vor {count} Tagen', '{count} giorni fa'],
+  ['noEventsInFolder', 'No events in this folder yet', 'Ainda não há eventos nesta pasta', 'Aún no hay eventos en esta carpeta', 'Aucun événement dans ce dossier', 'Noch keine Termine in diesem Ordner', 'Ancora nessun evento in questa cartella'],
   ['folderAndCountArchived', 'Folder and {count_label} archived', 'Pasta e {count_label} arquivados', 'Carpeta y {count_label} archivados', 'Dossier et {count_label} archivés', 'Ordner und {count_label} archiviert', 'Cartella e {count_label} archiviati'],
   ['folderAndCountDeleted', 'Folder and {count_label} deleted', 'Pasta e {count_label} eliminados', 'Carpeta y {count_label} eliminados', 'Dossier et {count_label} supprimés', 'Ordner und {count_label} gelöscht', 'Cartella e {count_label} eliminati'],
   ['entityNoteOne', 'note', 'nota', 'nota', 'note', 'Notiz', 'nota'],

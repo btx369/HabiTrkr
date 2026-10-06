@@ -10,6 +10,7 @@ import { ItemActionMenu } from '@/components/shared/ItemActionMenu';
 import { highlightText } from '@/lib/textHighlight';
 import { ColoredCard } from '@/components/shared/ColoredCard';
 import { isDefaultColor } from '@/lib/cardColorStyles';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { getColoredIconClass } from '@/lib/coloredButtonStyles';
 import { cn } from '@/lib/utils';
 
@@ -66,6 +67,7 @@ export function EventFolderCard({
   isBulkSelected = false,
   onBulkSelect,
 }: EventFolderCardProps) {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const folderEvents = events.filter(event => folder.eventIds.includes(event.id));
 
@@ -195,7 +197,7 @@ export function EventFolderCard({
           <CardContent className="pt-0 pb-2.5 px-1">
             {folderEvents.length === 0 ? (
               <div className={`text-center py-4 ${mutedTextColorClass} text-sm`}>
-                No events in this folder yet
+                {t('noEventsInFolder')}
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-1">

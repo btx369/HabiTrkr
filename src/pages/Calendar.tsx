@@ -299,12 +299,19 @@ export default function Calendar() {
           </Tabs>
           
           {showTodayButton && (
-            <span 
-              className="text-sm font-bold text-foreground cursor-pointer" 
+            /*
+             * A Button, not a span with `cursor-pointer`. As a span it was not focusable
+             * from the keyboard and had no hover feedback at all, so nothing marked it as
+             * clickable. `hover:bg-hover` is the same veil every other control uses.
+             */
+            <Button
+              variant="ghostStatic"
+              size="sm"
               onClick={goToToday}
+              className="h-8 px-3 text-sm font-bold text-foreground rounded-full hover:bg-hover hover:text-foreground"
             >
-              Today
-            </span>
+              {t('today')}
+            </Button>
           )}
           </div>
 

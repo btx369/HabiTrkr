@@ -10,6 +10,7 @@ import { ItemActionMenu } from '@/components/shared/ItemActionMenu';
 import { ColoredCard } from '@/components/shared/ColoredCard';
 import { useWeekStart, getOrderedDayNameKeys, getVisualIndexFromJsDay } from '@/contexts/WeekStartContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { countedSentence } from '@/lib/countedMessage';
 import { isDefaultColor } from '@/lib/cardColorStyles';
 import { getColoredIconClass, getColoredBorderClass } from '@/lib/coloredButtonStyles';
 import { cn } from '@/lib/utils';
@@ -63,7 +64,7 @@ export function EventCard({
   onBulkSelect,
 }: EventCardProps) {
   const { weekStartDay } = useWeekStart();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   // Short translated day names in week-start order: the function returns translation KEYS,
   // because a hook cannot run in the provider.
   const orderedDayNames = getOrderedDayNameKeys(weekStartDay).map((key) => t(key));
@@ -346,7 +347,7 @@ export function EventCard({
               <div className="flex-shrink-0">
                 {daysRemaining > 0 ? (
                   <Badge variant="outline" className={`text-xs ${badgeBorderClass} ${hasColor ? 'text-[#000000]' : ''}`}>
-                    {daysRemaining} day{daysRemaining !== 1 ? 's' : ''} remaining
+                    {countedSentence(t, language, 'daysRemainingBadge', daysRemaining)}
                   </Badge>
                 ) : daysRemaining === 0 ? (
                   <Badge className="text-xs bg-green-500 text-white">
@@ -354,7 +355,7 @@ export function EventCard({
                   </Badge>
                 ) : (
                   <Badge variant="secondary" className="text-xs">
-                    {Math.abs(daysRemaining)} day{Math.abs(daysRemaining) !== 1 ? 's' : ''} ago
+                    {countedSentence(t, language, 'daysAgoBadge', Math.abs(daysRemaining))}
                   </Badge>
                 )}
               </div>

@@ -55,7 +55,12 @@ for (const line of lines) {
     if (missing.length) {
       const indent = /^(\s+)/.exec(line)[1] + '  ';
       out.push(`${indent}// Added by scripts/sync-language-keys.mjs.`);
-      for (const entry of missing) out.push(`${indent}'${entry[0]}': ${JSON.stringify(entry[col + 1]).replace(/"/g, "'")},`);
+      for (const entry of missing) {
+        // `%Q%` stands in for the quote character. Written literally it would nest inside
+        // the source list, which this script parses with JSON.parse and cannot cope with.
+        const value = JSON.stringify(entry[col + 1]).replace(/"/g, "'").replaceAll('%Q%', '"');
+        out.push(`${indent}'${entry[0]}': ${value},`);
+      }
       added[current] = missing.length;
     }
     out.push(line);

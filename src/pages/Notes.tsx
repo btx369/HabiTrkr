@@ -29,7 +29,7 @@ import { autoImportNoteToFolders } from '@/lib/folderAutoImport';
 import { parseSearchExpression, matchesSearchExpression } from '@/lib/tagParser';
 import { extractSearchableText } from '@/lib/noteSearchText';
 import { nextCopyName } from '@/lib/copyName';
-import { countedSentence, folderAndCount } from '@/lib/countedMessage';
+import { countedSentence, folderAndCount, itemDisplayName, namedSentence } from '@/lib/countedMessage';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { useBulkSelection } from '@/hooks/useBulkSelection';
 import { BulkActionBar, BulkActionType, BulkActionContext } from '@/components/shared/BulkActionBar';
@@ -1559,6 +1559,24 @@ export default function Notes() {
     }
   };
 
+  /**
+   * What to call an item in a confirmation dialog.
+   *
+   * The dialog state holds only a type and an id, so the item is looked up here. Archived
+   * collections are searched too, because the same dialogs are reached from the Archived
+   * tab. `itemDisplayName` supplies the opening words of the body when a note has no title,
+   * which is the normal state for a new note.
+   */
+  const displayNameOf = (item: { type: 'note' | 'folder'; id: string } | null): string => {
+    if (!item) return t('untitledItem');
+    if (item.type === 'note') {
+      const found = notes.find(n => n.id === item.id) ?? archivedNotes.find(n => n.id === item.id);
+      return itemDisplayName(t, found ?? {});
+    }
+    const found = folders.find(f => f.id === item.id) ?? archivedFolders.find(f => f.id === item.id);
+    return itemDisplayName(t, found ?? {});
+  };
+
   const renderFolderList = (folderList: NoteFolder[], isArchived: boolean) => {
     const filteredFolders = filterFolders(folderList);
     const sortedFolders = sortFolders(filteredFolders);
@@ -2211,11 +2229,16 @@ export default function Notes() {
       />
 
       {/* Delete Confirmation Dialog */}
+      {/*
+        * The title names the item. A note's title is optional, so a nameless one is
+        * identified by the opening words of its body — otherwise the dialog would say only
+        * "Delete Note" and give no way to tell which note was about to go.
+        */}
       <ConfirmationDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        title={itemToDelete?.type === 'note' ? t('deleteNoteTitle') : t('deleteFolder')}
-        description={t('confirmDeleteBody')}
+        title={namedSentence(t, 'confirmDeleteNamed', displayNameOf(itemToDelete))}
+        description={namedSentence(t, 'confirmDeleteNamedBody', displayNameOf(itemToDelete))}
         action="delete"
         onCancel={() => {
           // If cancelling deletion of a locked note, re-lock it by removing from unlocked list
@@ -2243,8 +2266,8 @@ export default function Notes() {
       <ConfirmationDialog
         open={archiveDialogOpen}
         onOpenChange={setArchiveDialogOpen}
-        title={itemToArchive?.type === 'note' ? t('confirmArchiveTitle') : t('archiveFolder')}
-        description={itemToArchive?.type === 'note' ? t('notes') : t('confirmArchiveTitle')}
+        title={namedSentence(t, 'confirmArchiveNamed', displayNameOf(itemToArchive))}
+        description={namedSentence(t, 'confirmArchiveNamedBody', displayNameOf(itemToArchive))}
         action="archive"
         onConfirm={() => {
           if (itemToArchive) {

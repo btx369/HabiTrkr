@@ -20,7 +20,7 @@ import { HabitFolderViewSettings, HabitFolderSortType, HabitFolderSortDirection 
 import { BulkActionBar, BulkActionType, BulkActionContext } from '@/components/shared/BulkActionBar';
 import { useToastSettings } from '@/contexts/ToastContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { countedSentence, folderAndCount } from '@/lib/countedMessage';
+import { countedSentence, folderAndCount, itemDisplayName, namedSentence } from '@/lib/countedMessage';
 import { useDateLocale } from '@/lib/dateLocale';
 import { useWeekStart, getJsDayFromVisualIndex } from '@/contexts/WeekStartContext';
 import { useScrollDirection } from '@/hooks/useScrollDirection';
@@ -841,6 +841,22 @@ export default function HabitTracker() {
     }
   };
 
+  /**
+   * What to call an item in a confirmation dialog.
+   *
+   * The dialog state holds only an id, so the item is looked up here; the archived
+   * collections are searched too because the same dialogs are reached from the Archived tab.
+   * Habits always have a name, so `itemDisplayName` only has to fall back for the case where
+   * the id no longer resolves.
+   */
+  const displayNameOf = (id: string | null): string => {
+    if (!id) return t('untitledItem');
+    const habit = habits.find(h => h.id === id) ?? archivedHabits.find(h => h.id === id);
+    if (habit) return itemDisplayName(t, habit);
+    const folder = habitFolders.find(f => f.id === id) ?? archivedHabitFolders.find(f => f.id === id);
+    return itemDisplayName(t, folder ?? {});
+  };
+
   return (
     <Layout 
       showSearch={true}
@@ -861,12 +877,16 @@ export default function HabitTracker() {
             </SlidingTabsList>
             <div className="flex items-center gap-1">
               {showTodayButton && activeTab === 'habits' && (
-                <span 
-                  className="text-sm font-bold text-foreground cursor-pointer" 
+                /* A Button rather than a span: the span was not keyboard focusable and had
+                   no hover feedback, so nothing marked it as clickable. */
+                <Button
+                  variant="ghostStatic"
+                  size="sm"
                   onClick={() => setCurrentWeek(new Date())}
+                  className="h-8 px-3 text-sm font-bold text-foreground rounded-full hover:bg-hover hover:text-foreground"
                 >
-                  Today
-                </span>
+                  {t('today')}
+                </Button>
               )}
               <Button 
                 variant="ghostStatic" 
@@ -1174,8 +1194,8 @@ export default function HabitTracker() {
       <ConfirmationDialog
         open={!!habitToDelete}
         onOpenChange={(open) => !open && setHabitToDelete(null)}
-        title={t('deleteHabit')}
-        description={t('confirmDeleteBody')}
+        title={namedSentence(t, 'confirmDeleteNamed', displayNameOf(habitToDelete))}
+        description={namedSentence(t, 'confirmDeleteNamedBody', displayNameOf(habitToDelete))}
         action="delete"
         onConfirm={() => habitToDelete && deleteHabit(habitToDelete)}
       />
@@ -1183,8 +1203,8 @@ export default function HabitTracker() {
       <ConfirmationDialog
         open={!!habitToArchive}
         onOpenChange={(open) => !open && setHabitToArchive(null)}
-        title={t('archiveHabit')}
-        description={t('confirmArchiveTitle')}
+        title={namedSentence(t, 'confirmArchiveNamed', displayNameOf(habitToArchive))}
+        description={namedSentence(t, 'confirmArchiveNamedBody', displayNameOf(habitToArchive))}
         action="archive"
         onConfirm={() => habitToArchive && archiveHabit(habitToArchive)}
       />
@@ -1192,8 +1212,8 @@ export default function HabitTracker() {
       <ConfirmationDialog
         open={!!folderToDelete}
         onOpenChange={(open) => !open && setFolderToDelete(null)}
-        title={t('deleteFolder')}
-        description={t('confirmDeleteBody')}
+        title={namedSentence(t, 'confirmDeleteNamed', displayNameOf(folderToDelete))}
+        description={namedSentence(t, 'confirmDeleteNamedBody', displayNameOf(folderToDelete))}
         action="delete"
         onConfirm={() => folderToDelete && deleteFolder(folderToDelete)}
       />
@@ -1201,8 +1221,8 @@ export default function HabitTracker() {
       <ConfirmationDialog
         open={!!folderToArchive}
         onOpenChange={(open) => !open && setFolderToArchive(null)}
-        title={t('archiveFolder')}
-        description={t('confirmArchiveTitle')}
+        title={namedSentence(t, 'confirmArchiveNamed', displayNameOf(folderToArchive))}
+        description={namedSentence(t, 'confirmArchiveNamedBody', displayNameOf(folderToArchive))}
         action="archive"
         onConfirm={() => folderToArchive && archiveFolder(folderToArchive)}
       />

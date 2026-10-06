@@ -11,6 +11,7 @@ import { getTodayKey, toDateKey } from '@/lib/dateUtils';
 import { Habit } from '@/types/habit';
 import { useWeekStart, getHabitIndexFromVisualIndex } from '@/contexts/WeekStartContext';
 import { isDefaultColor } from '@/lib/cardColorStyles';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { getColoredIconClass, getColoredBorderClass } from '@/lib/coloredButtonStyles';
 import { cn } from '@/lib/utils';
 
@@ -113,6 +114,7 @@ export function HabitCard({
   const hasReachedDailyLimit = habit.useTimesPerDay ? todayCount >= timesPerDay : isCompletedToday;
 
   // Use standardized color helpers
+  const { t } = useLanguage();
   const hasColor = !isDefaultColor(habit.color);
   const iconColorClass = getColoredIconClass(hasColor);
   const badgeBorderClass = getColoredBorderClass(hasColor, 100);
@@ -159,7 +161,7 @@ export function HabitCard({
         {habit.useUnlimitedTimes ? (
           <>
             <div className="mt-3 flex items-center justify-between">
-              <Badge variant="outline" className={`${badgeBorderClass} ${hasColor ? 'text-[#000000]' : ''}`}>{todayCount} times today</Badge>
+              <Badge variant="outline" className={`${badgeBorderClass} ${hasColor ? 'text-[#000000]' : ''}`}>{t('timesToday').replace('{count}', String(todayCount))}</Badge>
               <div className="flex gap-2">
                 {todayCount > 0 && (
                 <Button size="icon" variant="outline" className={`rounded-full h-8 w-8 ${coloredButtonClass}`} style={coloredButtonStyle} onClick={() => onUndoCompletion(habit.id)}>
@@ -212,11 +214,11 @@ export function HabitCard({
             <div className="mt-3 flex items-center justify-between">
               <div className="flex flex-col gap-1">
                 <Badge variant={weeklyCompletions >= (habit.numberOfDaysPerWeek || 1) ? "default" : "outline"} className={weeklyCompletions >= (habit.numberOfDaysPerWeek || 1) ? '' : `${badgeBorderClass} ${hasColor ? 'text-[#000000]' : ''}`}>
-                  {weeklyCompletions}/{habit.numberOfDaysPerWeek || 1} days this week
+                  {t('daysThisWeek').replace('{done}', String(weeklyCompletions)).replace('{total}', String(habit.numberOfDaysPerWeek || 1))}
                 </Badge>
                 {habit.useTimesPerDay && (
                   <Badge variant={hasReachedDailyLimit ? "default" : "outline"} className={`text-xs ${hasReachedDailyLimit ? '' : `${badgeBorderClass} ${hasColor ? 'text-[#000000]' : ''}`}`}>
-                    {todayCount}/{timesPerDay} times today
+                    {t('timesTodayOf').replace('{done}', String(todayCount)).replace('{total}', String(timesPerDay))}
                   </Badge>
                 )}
               </div>
@@ -234,7 +236,7 @@ export function HabitCard({
                   onClick={() => onMarkDone(habit.id)}
                   disabled={hasReachedDailyLimit}
                 >
-                  {hasReachedDailyLimit ? 'Done' : habit.useTimesPerDay ? `+1` : 'Mark Done'}
+                  {hasReachedDailyLimit ? t('done') : habit.useTimesPerDay ? `+1` : t('markDone')}
                 </Button>
               </div>
             </div>
