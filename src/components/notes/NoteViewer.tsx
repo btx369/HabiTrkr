@@ -119,6 +119,30 @@ export function NoteViewer({
   // Toast copy is a translated sentence plus a translated entity noun. Both halves are
   // resolved here so the `{entity}` substitution is written once instead of at every toast.
   const say = (key: string, entity: string) => t(key).replace('{entity}', t(entity));
+
+  /*
+   * An archived note is read-only.
+   *
+   * Opening one used to allow editing, and saving it created a *second* note in the active
+   * list: the page looked for the note among the active ones only, did not find it, and took
+   * that to mean it was new — so typing in an archived note left a copy of it on the notes
+   * screen and the archived original untouched. Editing an archived note is now refused here as
+   * well as in the page, and the only way to change one is to restore it first.
+   *
+   * `archived` is set by the page when it opens a note from the archive; the stored notes do not
+   * carry the flag.
+   */
+  const readOnly = Boolean(note?.archived);
+
+  /**
+   * The single door every write from this viewer goes through, so an archived note cannot be
+   * edited by a path that forgot to check.
+   */
+  const saveIfEditable = (updates: Partial<Note>, noteId: string | undefined = note?.id) => {
+    if (readOnly || !noteId) return;
+    onSave?.(noteId, updates);
+  };
+
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingContent, setIsEditingContent] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
@@ -268,7 +292,7 @@ export function NoteViewer({
   };
 
   const handleDeleteImage = (imageUrl: string) => {
-    if (!note) return;
+    if (readOnly || !note) return;
     
     // For image notes, prevent deletion of the main image
     if (note.type === 'image' && imageUrl === note.imageUrl) {
@@ -291,7 +315,7 @@ export function NoteViewer({
     }
     
     // Save immediately
-    onSave?.(note.id, { description: updatedDescription });
+    saveIfEditable({ description: updatedDescription });
     
     // Close gallery
     setGalleryOpen(false);
@@ -609,11 +633,14 @@ export function NoteViewer({
   };
 
   const startEditingTitle = () => {
+    if (readOnly) return;
     setEditedTitle(note.name || '');
     setIsEditingTitle(true);
   };
 
   const startEditingContent = (event?: React.MouseEvent, itemId?: string) => {
+    if (readOnly) return;
+
     if (note.type === 'text') {
       setEditedDescription(note.description || '');
     } else if (note.type === 'audio' || note.type === 'image') {
@@ -660,14 +687,15 @@ export function NoteViewer({
    * interaction, so no debounce is needed.
    */
   const saveTitle = () => {
+    if (readOnly) return;
     if (onSave && editedTitle.trim() !== note.name) {
-      onSave(note.id, { name: editedTitle.trim() });
+      saveIfEditable({ name: editedTitle.trim() });
     }
     setIsEditingTitle(false);
   };
 
   const saveContent = () => {
-    if (!onSave) return;
+    if (readOnly || !onSave) return;
     
     
     // Check if there's any meaningful content
@@ -691,7 +719,7 @@ export function NoteViewer({
     
     // Only save if there's content or if this is an existing note
     if (hasContent || !isNewNote) {
-      onSave(note.id, updatedNote);
+      saveIfEditable(updatedNote);
     }
     
     setIsEditingContent(false);
@@ -1289,7 +1317,7 @@ export function NoteViewer({
                       setIsEditingContent(true);
                     }
                     
-                    onSave?.(note.id, { description: updatedDescription });
+                    saveIfEditable({ description: updatedDescription });
                     
                     // Reset editing state after a brief delay to allow the save to complete
                     setTimeout(() => {
@@ -1339,7 +1367,7 @@ export function NoteViewer({
                         setEditedDescription(updatedDescription);
                       }
                       
-                      onSave?.(note.id, { description: updatedDescription });
+                      saveIfEditable({ description: updatedDescription });
                       // Update local state so the label appears immediately
                       setEditedDescription(updatedDescription);
                       toast.success(say('toastUpdated', 'noteViewerTitle'));
@@ -1374,7 +1402,7 @@ export function NoteViewer({
                       setEditedDescription(updatedDescription);
                     }
                     
-                    onSave?.(note.id, { description: updatedDescription });
+                    saveIfEditable({ description: updatedDescription });
                     // Update local state so the label appears immediately
                     setEditedDescription(updatedDescription);
                     toast.success(say('toastUpdated', 'noteViewerTitle'));
@@ -1521,7 +1549,7 @@ export function NoteViewer({
                               const updatedDesc = removeAudioFromContent(listDescription, audioItem.content);
                               setEditedDescription(updatedDesc);
                               const updatedNote = { ...note, description: updatedDesc } as ListNote;
-                              if (onSave) onSave(note.id, updatedNote);
+                              if (onSave) saveIfEditable(updatedNote);
                             }}>
                               <Trash2 size={14} className="mr-2" />
                               Delete note
@@ -1937,11 +1965,15 @@ export function NoteViewer({
                * prompt is needed most.
                */
               <DialogTitle
-                  className={`group flex items-center gap-1.5 text-lg font-medium truncate cursor-pointer px-2 py-1 rounded-full ${hasColor ? iconButtonStyles.className : 'hover:bg-hover hover:text-foreground'}`}
-                  onClick={startEditingTitle}
+                  className={`group flex items-center gap-1.5 text-lg font-medium truncate px-2 py-1 rounded-full ${readOnly ? '' : 'cursor-pointer'} ${hasColor ? iconButtonStyles.className : readOnly ? '' : 'hover:bg-hover hover:text-foreground'}`}
+                  onClick={readOnly ? undefined : startEditingTitle}
                 >
                   {note.name ? (
                     highlightText(note.name, searchQuery)
+                  ) : readOnly ? (
+                    // No "Add a title" prompt on an archived note: it would invite a write that
+                    // cannot happen.
+                    <span className="text-muted-foreground/70 italic font-normal">{t('untitledItem')}</span>
                   ) : (
                     <>
                       <span className="text-muted-foreground/70 italic font-normal">Add a title</span>
@@ -1956,6 +1988,13 @@ export function NoteViewer({
               {note.locked && <Lock size={16} className={iconColorClass} />}
             </div>
           </div>
+          {/*
+            * Says why nothing here can be typed into. Without it an archived note simply ignores
+            * taps, which reads as the app being broken rather than as the note being locked.
+            */}
+          {readOnly && (
+            <p className="px-2 pb-1 text-xs text-muted-foreground">{t('archivedReadOnly')}</p>
+          )}
           <div className="flex items-center gap-2 flex-shrink-0">
             <ItemActionMenu
               isPinned={note.pinned}
@@ -1964,7 +2003,7 @@ export function NoteViewer({
               isLocked={note.locked}
               onPin={onPin ? () => onPin(note.id) : undefined}
               onUnpin={onUnpin ? () => onUnpin(note.id) : undefined}
-              onEdit={() => setIsColorEditorOpen(true)}
+              onEdit={readOnly ? undefined : () => setIsColorEditorOpen(true)}
               onArchive={onArchive ? () => onArchive(note.id) : undefined}
               onDelete={onDelete ? () => onDelete(note.id) : undefined}
               onRestore={onUnarchive ? () => onUnarchive(note.id) : undefined}
@@ -1994,7 +2033,12 @@ export function NoteViewer({
           </div>
         </ScrollArea>
         
-        {/* Bottom Dock - contains formatting bar and action bar with permanent separator */}
+        {/*
+          * The dock holds nothing but ways to change the note — add a photo, a recording, a
+          * tick box, tags, a reminder, formatting — so an archived note does not show it at
+          * all. Restore and delete stay available in the header menu.
+          */}
+        {!readOnly && (
         <div className={`flex-shrink-0 border-t ${borderClass}`}>
           {/* Text Formatting Bar - only for text/audio/image notes when editing */}
           {note.type !== 'list' && isEditingContent && showFormattingBar && (
@@ -2007,7 +2051,7 @@ export function NoteViewer({
           )}
           <NoteActionBar
             note={note}
-            onSave={onSave || (() => {})}
+            onSave={(noteId, updates) => saveIfEditable(updates, noteId)}
             onTakePhoto={() => {
               // Blur any focused button to prevent space key from triggering it
               (document.activeElement as HTMLElement)?.blur();
@@ -2058,7 +2102,7 @@ export function NoteViewer({
               delete (updatedNote as any).items;
               
               if (onSave) {
-                onSave(note.id, updatedNote);
+                saveIfEditable(updatedNote);
                 toast.success(say('toastUpdated', 'noteViewerTitle'));
               }
               return;
@@ -2115,7 +2159,7 @@ export function NoteViewer({
             delete updatedNote.imageUrl;
             
             if (onSave) {
-              onSave(note.id, updatedNote);
+              saveIfEditable(updatedNote);
               toast.success(t('toastItemCount').replace('{count}', String(lines.length)));
             }
           }}
@@ -2146,6 +2190,7 @@ export function NoteViewer({
             isTextNote={note.type !== 'list'}
           />
         </div>
+        )}
 
         {/* Popups inside DialogContent to prevent closing the note */}
         <AudioRecorderPopup
@@ -2166,7 +2211,7 @@ export function NoteViewer({
               setEditedDescription(newDesc);
               
               // Save the audio to the note immediately
-              onSave?.(note.id, { description: newDesc });
+              saveIfEditable({ description: newDesc });
               
               if (!isEditingContent) {
                 setIsEditingContent(true);
@@ -2199,7 +2244,7 @@ export function NoteViewer({
               setEditedDescription(newDesc);
               
               // Save the image to the note immediately
-              onSave?.(note.id, { description: newDesc });
+              saveIfEditable({ description: newDesc });
               
               if (!isEditingContent) {
                 setIsEditingContent(true);
@@ -2221,7 +2266,7 @@ export function NoteViewer({
         note={note}
         isOpen={isColorEditorOpen}
         onClose={() => setIsColorEditorOpen(false)}
-        onSave={onSave || (() => {})}
+        onSave={(noteId, updates) => saveIfEditable(updates, noteId)}
       />
 
       <input

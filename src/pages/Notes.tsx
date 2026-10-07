@@ -494,6 +494,13 @@ export default function Notes() {
        
        setNotes((prev: Note[]) => [...prev, restoredNote]);
        setArchivedNotes((prev: Note[]) => prev.filter(note => note.id !== noteId));
+       /*
+        * If this note is the one open in the viewer, the viewer has to be told. It holds its own
+        * copy, which still carries `archived: true`, and that flag is what makes a note
+        * read-only — so restoring from the viewer's own menu left it read-only until it was
+        * closed and opened again.
+        */
+       setNoteToView(prev => (prev && prev.id === noteId ? { ...restoredNote } : prev));
        
        // If the note had an original folder, restore association
        if (originalFolderId) {
@@ -588,6 +595,19 @@ export default function Notes() {
   };
 
   const saveNoteFromViewer = (noteId: string, updates: Partial<Note>) => {
+    /*
+     * An archived note cannot be written to. This is the guard that actually holds: the viewer
+     * refuses to offer editing, but everything that reaches storage goes through here.
+     *
+     * It also fixes what this function used to do with an archived note. It looked for the note
+     * among the ACTIVE notes only, and not finding it there took that to mean the note was new —
+     * so editing an archived note appended a copy of it to the notes list, and the archived
+     * original stayed as it was. Typing in an archived note left a new note behind.
+     */
+    if (archivedNotes.some(note => note.id === noteId)) {
+      toast.error(t('archivedReadOnly'));
+      return;
+    }
     
     // Track tag usage if tags are being updated
     if (updates.tags !== undefined) {

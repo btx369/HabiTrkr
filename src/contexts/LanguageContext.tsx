@@ -235,6 +235,7 @@ const translations = {
     'todayExclaim': 'Today!',
     // Added by scripts/sync-language-keys.mjs.
     'archivedNotes': 'Archived Notes',
+    'archivedReadOnly': 'Archived — restore it to make changes.',
     'noArchivedNotes': 'No archived notes',
     'noMatchingNotes': 'No matching notes found.',
     'noMatchingEvents': 'No matching events found.',
@@ -565,6 +566,7 @@ const translations = {
     'todayExclaim': 'Hoje!',
     // Added by scripts/sync-language-keys.mjs.
     'archivedNotes': 'Notas arquivadas',
+    'archivedReadOnly': 'Arquivado — restaure para poder alterar.',
     'noArchivedNotes': 'Sem notas arquivadas',
     'noMatchingNotes': 'Nenhuma nota correspondente.',
     'noMatchingEvents': 'Nenhum evento correspondente.',
@@ -895,6 +897,7 @@ const translations = {
     'todayExclaim': '¡Hoy!',
     // Added by scripts/sync-language-keys.mjs.
     'archivedNotes': 'Notas archivadas',
+    'archivedReadOnly': 'Archivado: restáuralo para poder cambiar.',
     'noArchivedNotes': 'Sin notas archivadas',
     'noMatchingNotes': 'No se encontraron notas coincidentes.',
     'noMatchingEvents': 'No se encontraron eventos coincidentes.',
@@ -1225,6 +1228,7 @@ const translations = {
     'todayExclaim': 'Aujourd’hui !',
     // Added by scripts/sync-language-keys.mjs.
     'archivedNotes': 'Notes archivées',
+    'archivedReadOnly': 'Archivé — restaurez-le pour le modifier.',
     'noArchivedNotes': 'Aucune note archivée',
     'noMatchingNotes': 'Aucune note correspondante.',
     'noMatchingEvents': 'Aucun événement correspondant.',
@@ -1555,6 +1559,7 @@ const translations = {
     'todayExclaim': 'Heute!',
     // Added by scripts/sync-language-keys.mjs.
     'archivedNotes': 'Archivierte Notizen',
+    'archivedReadOnly': 'Archiviert — zum Ändern wiederherstellen.',
     'noArchivedNotes': 'Keine archivierten Notizen',
     'noMatchingNotes': 'Keine passenden Notizen gefunden.',
     'noMatchingEvents': 'Keine passenden Termine gefunden.',
@@ -1885,6 +1890,7 @@ const translations = {
     'todayExclaim': 'Oggi!',
     // Added by scripts/sync-language-keys.mjs.
     'archivedNotes': 'Note archiviate',
+    'archivedReadOnly': 'Archiviato: ripristinalo per modificarlo.',
     'noArchivedNotes': 'Nessuna nota archiviata',
     'noMatchingNotes': 'Nessuna nota corrispondente.',
     'noMatchingEvents': 'Nessun evento corrispondente.',
