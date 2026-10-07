@@ -16,12 +16,14 @@ import { HabitFolderCard } from '@/components/habits/HabitFolderCard';
 import { HabitFolderCreator } from '@/components/habits/HabitFolderCreator';
 import { HabitFolderEditor } from '@/components/habits/HabitFolderEditor';
 import { MoveToFolderDialog } from '@/components/shared/MoveToFolderDialog';
+import { FolderActionDialog } from '@/components/shared/FolderActionDialog';
+import { useFolderActions } from '@/hooks/useFolderActions';
 import { HabitViewSettings, HabitSortType, HabitSortDirection } from '@/components/habits/HabitViewSettings';
 import { HabitFolderViewSettings, HabitFolderSortType, HabitFolderSortDirection } from '@/components/habits/HabitFolderViewSettings';
 import { BulkActionBar, BulkActionType, BulkActionContext } from '@/components/shared/BulkActionBar';
 import { useToastSettings } from '@/contexts/ToastContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { countedSentence, folderAndCount, itemDisplayName, namedSentence } from '@/lib/countedMessage';
+import { countedSentence, itemDisplayName, namedSentence } from '@/lib/countedMessage';
 import { useDateLocale } from '@/lib/dateLocale';
 import { useWeekStart, getJsDayFromVisualIndex } from '@/contexts/WeekStartContext';
 import { useScrollDirection } from '@/hooks/useScrollDirection';
@@ -83,10 +85,6 @@ export default function HabitTracker() {
   const [selectedHabit, setSelectedHabit] = useState<Habit | null>(null);
   const [habitToDelete, setHabitToDelete] = useState<string | null>(null);
   const [habitToArchive, setHabitToArchive] = useState<string | null>(null);
-  const [folderToDelete, setFolderToDelete] = useState<string | null>(null);
-  const [folderToArchive, setFolderToArchive] = useState<string | null>(null);
-  const [folderRestoreDialogOpen, setFolderRestoreDialogOpen] = useState(false);
-  const [folderToRestore, setFolderToRestore] = useState<string | null>(null);
   
   // Folder dialogs
   const [isFolderCreatorOpen, setIsFolderCreatorOpen] = useState(false);
@@ -129,10 +127,32 @@ export default function HabitTracker() {
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const showTodayButton = !isSameWeek(currentWeek, new Date(), { weekStartsOn });
 
+  /*
+   * Archiving, deleting and restoring a folder is shared with the notes and events pages — see
+   * `useFolderActions`. This page had the part the others were missing (a folder that asked
+   * what to do with its habits), and the same code is now the one all three use.
+   */
+  const folderActions = useFolderActions<Habit, HabitFolder>({
+    itemKind: 'habit',
+    itemIdsOf: (folder) => folder.habitIds,
+    withItemIds: (folder, habitIds) => ({ ...folder, habitIds }),
+    items: habits,
+    setItems: setHabits,
+    archivedItems: archivedHabits,
+    setArchivedItems: setArchivedHabits,
+    folders: habitFolders,
+    setFolders: setHabitFolders,
+    archivedFolders: archivedHabitFolders,
+    setArchivedFolders: setArchivedHabitFolders,
+    // Habits carry the flag themselves; the notes and events pages move items between two
+    // lists and leave it alone.
+    markItem: (habit, archived) => ({ ...habit, archived }),
+  });
+
   // Check if any dialog is open - blocks swipe navigation
   const isAnyDialogOpen = isAddDialogOpen || !!selectedHabit || !!habitToDelete || 
-    !!habitToArchive || !!folderToDelete || !!folderToArchive || 
-    isFolderCreatorOpen || isFolderEditorOpen || isMoveToFolderOpen || folderRestoreDialogOpen;
+    !!habitToArchive || folderActions.dialog.open ||
+    isFolderCreatorOpen || isFolderEditorOpen || isMoveToFolderOpen;
 
   // Tab swipe navigation
   const handleSwipeLeft = useCallback(() => {
@@ -444,116 +464,6 @@ export default function HabitTracker() {
     }
   };
 
-  const confirmDeleteFolder = (folderId: string) => setFolderToDelete(folderId);
-  const confirmArchiveFolder = (folderId: string) => setFolderToArchive(folderId);
-
-  const deleteFolder = (folderId: string) => {
-    // Delete folder and its habits
-    const folder = habitFolders.find(f => f.id === folderId) || archivedHabitFolders.find(f => f.id === folderId);
-    const habitCount = folder?.habitIds.length ?? 0;
-    if (folder) {
-      // Remove habits in folder
-      setHabits((prev: Habit[]) => prev.filter(h => !folder.habitIds.includes(h.id)));
-      setArchivedHabits((prev: Habit[]) => prev.filter(h => !folder.habitIds.includes(h.id)));
-    }
-    setHabitFolders((prev: HabitFolder[]) => prev.filter(f => f.id !== folderId));
-    setArchivedHabitFolders((prev: HabitFolder[]) => prev.filter(f => f.id !== folderId));
-    setFolderToDelete(null);
-    toast.success(folderAndCount(t, language, 'folderAndCountDeleted', 'habit', habitCount));
-  };
-
-  const archiveFolder = (folderId: string) => {
-    const folderToArchiveData = habitFolders.find(f => f.id === folderId);
-    if (folderToArchiveData) {
-      // Archive folder (habitIds stay in folder - same as Notes)
-      setArchivedHabitFolders((prev: HabitFolder[]) => [...prev, { ...folderToArchiveData, archived: true }]);
-      setHabitFolders((prev: HabitFolder[]) => prev.filter(f => f.id !== folderId));
-      
-      // Archive all habits in the folder - NO originalFolderId (folder has habitIds)
-      const habitsInFolder = habits.filter(h => folderToArchiveData.habitIds.includes(h.id));
-      if (habitsInFolder.length > 0) {
-        setArchivedHabits((prev: Habit[]) => [...prev, ...habitsInFolder.map(h => ({ ...h, archived: true }))]);
-        setHabits((prev: Habit[]) => prev.filter(h => !folderToArchiveData.habitIds.includes(h.id)));
-      }
-      
-      toast.success(folderAndCount(t, language, 'folderAndCountArchived', 'habit', habitsInFolder.length));
-    }
-    setFolderToArchive(null);
-  };
-
-  /**
-   * Works out how an archived folder should come back, without mutating anything.
-   * `restoreHabits` is false for the `folderOnly` action and true for `restoreAll`.
-   *
-   * Returns null when the folder is no longer in the archived list (e.g. a bulk
-   * restore already handled it), so callers can bail out safely.
-   */
-  const planFolderRestore = (
-    folderId: string,
-    restoreHabits: boolean,
-  ): { folder: HabitFolder; habitIds: string[]; habitsToRestore: Habit[] } | null => {
-    const folder = archivedHabitFolders.find(f => f.id === folderId);
-    if (!folder) return null;
-
-    // A habit already living in a non-archived folder must not be claimed twice.
-    const habitIdsAssignedElsewhere = new Set<string>(habitFolders.flatMap(f => f.habitIds));
-    const habitIds = folder.habitIds.filter(id => !habitIdsAssignedElsewhere.has(id));
-    const habitsToRestore = restoreHabits
-      ? archivedHabits.filter(h => habitIds.includes(h.id))
-      : [];
-
-    return { folder, habitIds, habitsToRestore };
-  };
-
-  const applyFolderRestore = (plan: { folder: HabitFolder; habitIds: string[]; habitsToRestore: Habit[] }) => {
-    const { folder, habitIds, habitsToRestore } = plan;
-    const restoredIds = habitsToRestore.map(h => h.id);
-
-    setHabitFolders((prev: HabitFolder[]) => {
-      // The folder may already have been restored by an earlier call in a bulk run.
-      if (prev.some(f => f.id === folder.id)) return prev;
-      return [...prev, { ...folder, archived: false, habitIds }];
-    });
-    setArchivedHabitFolders((prev: HabitFolder[]) => prev.filter(f => f.id !== folder.id));
-
-    if (habitsToRestore.length > 0) {
-      setHabits((prev: Habit[]) => {
-        const existingIds = new Set(prev.map(h => h.id));
-        return [...prev, ...habitsToRestore.filter(h => !existingIds.has(h.id)).map(h => ({ ...h, archived: false }))];
-      });
-      setArchivedHabits((prev: Habit[]) => prev.filter(h => !restoredIds.includes(h.id)));
-    }
-  };
-
-  const unarchiveFolder = (folderId: string) => {
-    const folderToUnarchiveData = archivedHabitFolders.find(f => f.id === folderId);
-    if (!folderToUnarchiveData) return;
-
-    const habitIdsAssignedElsewhere = new Set<string>(habitFolders.flatMap(f => f.habitIds));
-    const sanitizedHabitIds = folderToUnarchiveData.habitIds.filter(id => !habitIdsAssignedElsewhere.has(id));
-    const archivedHabitsInFolder = archivedHabits.filter(h => sanitizedHabitIds.includes(h.id));
-
-    if (archivedHabitsInFolder.length === 0) {
-      restoreHabitFolderOnly(folderId);
-    } else {
-      setFolderToRestore(folderId);
-      setFolderRestoreDialogOpen(true);
-    }
-  };
-
-  const restoreHabitFolderOnly = (folderId: string) => {
-    const plan = planFolderRestore(folderId, false);
-    if (!plan) return;
-    applyFolderRestore(plan);
-    toast.success(say('toastRestored', 'tabFolders'));
-  };
-
-  const restoreHabitFolderWithHabits = (folderId: string) => {
-    const plan = planFolderRestore(folderId, true);
-    if (!plan) return;
-    applyFolderRestore(plan);
-    toast.success(folderAndCount(t, language, 'folderAndCountRestored', 'habit', plan.habitIds.length));
-  };
 
   // Move to folder
   const openMoveToFolder = (habitId: string) => {
@@ -781,7 +691,7 @@ export default function HabitTracker() {
           // Archive only folders (and their contained habits)
           items.forEach(id => {
             if (habitFolders.find(f => f.id === id)) {
-              archiveFolder(id);
+              folderActions.applyFolderAction('archive', 'withItems', id);
             }
           });
         }
@@ -795,7 +705,7 @@ export default function HabitTracker() {
           const folderIds = items.filter(id => archivedHabitFolders.find(f => f.id === id));
           const habitIds = items.filter(id => archivedHabits.find(h => h.id === id));
           
-          folderIds.forEach(id => unarchiveFolder(id));
+          folderIds.forEach(id => folderActions.applyFolderAction('restore', 'withItems', id));
           habitIds.forEach(id => {
             // Only restore habits that aren't in a folder being restored (they get restored with folder)
             const isInRestoringFolder = archivedHabitFolders.some(f => 
@@ -816,13 +726,13 @@ export default function HabitTracker() {
           });
         } else if (activeTab === 'folders') {
           items.forEach(id => {
-            if (habitFolders.find(f => f.id === id)) deleteFolder(id);
+            if (habitFolders.find(f => f.id === id)) folderActions.applyFolderAction('delete', 'withItems', id);
           });
         } else if (activeTab === 'archived') {
           // Delete both habits and folders in archived tab
           items.forEach(id => {
             if (archivedHabits.find(h => h.id === id)) deleteHabit(id);
-            if (archivedHabitFolders.find(f => f.id === id)) deleteFolder(id);
+            if (archivedHabitFolders.find(f => f.id === id)) folderActions.applyFolderAction('delete', 'withItems', id);
           });
         }
         exitBulkMode();
@@ -1059,8 +969,8 @@ export default function HabitTracker() {
                     onPinFolder={pinFolder}
                     onUnpinFolder={unpinFolder}
                     onEditFolder={editFolder}
-                    onArchiveFolder={confirmArchiveFolder}
-                    onDeleteFolder={confirmDeleteFolder}
+                    onArchiveFolder={folderActions.requestArchive}
+                    onDeleteFolder={folderActions.requestDelete}
                     searchQuery={searchQuery}
                     showBulkCheckbox={isBulkMode}
                     isBulkSelected={selectedItems.has(folder.id)}
@@ -1136,9 +1046,9 @@ export default function HabitTracker() {
                         onPinFolder={pinFolder}
                         onUnpinFolder={unpinFolder}
                         onEditFolder={editFolder}
-                        onArchiveFolder={confirmArchiveFolder}
-                        onDeleteFolder={confirmDeleteFolder}
-                        onRestoreFolder={unarchiveFolder}
+                        onArchiveFolder={folderActions.requestArchive}
+                        onDeleteFolder={folderActions.requestDelete}
+                        onRestoreFolder={folderActions.requestRestore}
                         searchQuery={searchQuery}
                         showBulkCheckbox={isBulkMode}
                         isBulkSelected={selectedItems.has(folder.id)}
@@ -1241,55 +1151,8 @@ export default function HabitTracker() {
         onConfirm={() => habitToArchive && archiveHabit(habitToArchive)}
       />
 
-      <ConfirmationDialog
-        open={!!folderToDelete}
-        onOpenChange={(open) => !open && setFolderToDelete(null)}
-        title={namedSentence(t, 'confirmDeleteNamed', displayNameOf(folderToDelete))}
-        description={namedSentence(t, 'confirmDeleteNamedBody', displayNameOf(folderToDelete))}
-        action="delete"
-        onConfirm={() => folderToDelete && deleteFolder(folderToDelete)}
-      />
-
-      <ConfirmationDialog
-        open={!!folderToArchive}
-        onOpenChange={(open) => !open && setFolderToArchive(null)}
-        title={namedSentence(t, 'confirmArchiveNamed', displayNameOf(folderToArchive))}
-        description={namedSentence(t, 'confirmArchiveNamedBody', displayNameOf(folderToArchive))}
-        action="archive"
-        onConfirm={() => folderToArchive && archiveFolder(folderToArchive)}
-      />
-
-      {/* Folder Restore Confirmation Dialog */}
-      <ConfirmationDialog
-        open={folderRestoreDialogOpen}
-        onOpenChange={(open) => {
-          setFolderRestoreDialogOpen(open);
-          if (!open) setFolderToRestore(null);
-        }}
-        title={t('restoreFolder')}
-        description={(() => {
-          if (!folderToRestore) return '';
-          const folder = archivedHabitFolders.find(f => f.id === folderToRestore);
-          if (!folder) return '';
-          const habitIdsAssignedElsewhere = new Set<string>(habitFolders.flatMap(f => f.habitIds));
-          const sanitizedHabitIds = folder.habitIds.filter(id => !habitIdsAssignedElsewhere.has(id));
-          const count = archivedHabits.filter(h => sanitizedHabitIds.includes(h.id)).length;
-          return `${count} ${t('habits')}`;
-        })()}
-        action="restore"
-        confirmLabel={t('restoreAll')}
-        onConfirm={() => {
-          if (folderToRestore) restoreHabitFolderWithHabits(folderToRestore);
-          setFolderToRestore(null);
-        }}
-        secondaryAction={{
-          label: t('folderOnly'),
-          onClick: () => {
-            if (folderToRestore) restoreHabitFolderOnly(folderToRestore);
-            setFolderToRestore(null);
-          }
-        }}
-      />
+      {/* One dialog for archiving, deleting and restoring a folder, shared with the other pages. */}
+      <FolderActionDialog {...folderActions.dialog} itemKind="habit" />
     </Layout>
     </FolderMembershipProvider>
   );

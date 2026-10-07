@@ -186,6 +186,8 @@ const KEYS = [
   ['customAlert', 'Custom Alert', 'Alerta personalizado', 'Alerta personalizada', 'Alerte personnalisée', 'Benutzerdefinierte Erinnerung', 'Avviso personalizzato'],
   ['noEventsThisDay', 'No events for this day', 'Sem eventos neste dia', 'Sin eventos este día', 'Aucun événement ce jour-là', 'Keine Termine an diesem Tag', 'Nessun evento in questo giorno'],
   ['restoreAll', 'Restore All', 'Restaurar tudo', 'Restaurar todo', 'Tout restaurer', 'Alle wiederherstellen', 'Ripristina tutto'],
+  ['archiveAll', 'Archive All', 'Arquivar tudo', 'Archivar todo', 'Tout archiver', 'Alle archivieren', 'Archivia tutto'],
+  ['deleteAll', 'Delete All', 'Eliminar tudo', 'Eliminar todo', 'Tout supprimer', 'Alle löschen', 'Elimina tutto'],
   ['folderOnly', 'Folder Only', 'Apenas a pasta', 'Solo la carpeta', 'Dossier uniquement', 'Nur der Ordner', 'Solo la cartella'],
   ['restoreFolder', 'Restore Folder', 'Restaurar pasta', 'Restaurar carpeta', 'Restaurer le dossier', 'Ordner wiederherstellen', 'Ripristina cartella'],
   ['deleteHabit', 'Delete Habit', 'Eliminar hábito', 'Eliminar hábito', 'Supprimer l’habitude', 'Gewohnheit löschen', 'Elimina abitudine'],

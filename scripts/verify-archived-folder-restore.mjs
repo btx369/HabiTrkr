@@ -164,7 +164,12 @@ try {
         `JSON.stringify(Array.from(document.querySelectorAll('[role="menuitem"]')).map((m) => (m.textContent || '').trim()))`));
     }
     await sleep(900);
-    const confirmed = await cdp.clickText('[role="alertdialog"] button', 'Archive');
+    /*
+     * The folder dialog asks what to do with the items as well: "Archive All" takes them into
+     * the archive with the folder, which is the state this check wants, and "Folder Only" would
+     * leave them active.
+     */
+    const confirmed = await cdp.clickText('[role="alertdialog"] button', 'Archive All');
     check('the confirmation was accepted', confirmed, true);
     await sleep(1200);
   };

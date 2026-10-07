@@ -8,13 +8,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, SlidingTabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
+import { FolderActionDialog } from '@/components/shared/FolderActionDialog';
+import { useFolderActions } from '@/hooks/useFolderActions';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { Event } from '@/types/event';
 import { EventFolder } from '@/types/eventFolder';
 import { useToastSettings } from '@/contexts/ToastContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { nextCopyName } from '@/lib/copyName';
-import { countedSentence, folderAndCount, itemDisplayName, namedSentence } from '@/lib/countedMessage';
+import { countedSentence, itemDisplayName, namedSentence } from '@/lib/countedMessage';
 import { EventCard } from '@/components/events/EventCard';
 import { EventFolderCard } from '@/components/events/EventFolderCard';
 import { EventFolderCreator } from '@/components/events/EventFolderCreator';
@@ -61,6 +63,34 @@ export default function Events() {
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{type: 'event' | 'eventFolder', id: string} | null>(null);
   const [itemToArchive, setItemToArchive] = useState<{type: 'event' | 'eventFolder', id: string} | null>(null);
+
+  /*
+   * Archiving, deleting and restoring a folder is shared with the notes and habits pages — see
+   * `useFolderActions`. This page had drifted furthest: deleting a folder here deleted the
+   * folder alone and left its events in place, without saying so, while the notes page deleted
+   * the events' equivalents with it.
+   */
+  const folderActions = useFolderActions<Event, EventFolder>({
+    itemKind: 'event',
+    itemIdsOf: (folder) => folder.eventIds,
+    withItemIds: (folder, eventIds) => ({ ...folder, eventIds }),
+    items: events,
+    setItems: setEvents,
+    archivedItems: archivedEvents,
+    setArchivedItems: setArchivedEvents,
+    folders: eventFolders,
+    setFolders: setEventFolders,
+    archivedFolders: archivedEventFolders,
+    setArchivedFolders: setArchivedEventFolders,
+    // An event archived on its own remembers the folder it came from; once it is back in the
+    // list that memory is what the archived folder's own ids are for, so it is dropped.
+    markItem: (event, archived) => {
+      if (archived) return event;
+      const { originalFolderId, ...restored } = event;
+      return restored;
+    },
+  });
+
   const [isEventFolderCreatorOpen, setIsEventFolderCreatorOpen] = useState(false);
   const [isEventFolderEditorOpen, setIsEventFolderEditorOpen] = useState(false);
   const [isMoveToEventFolderOpen, setIsMoveToEventFolderOpen] = useState(false);
@@ -89,8 +119,6 @@ export default function Events() {
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [bulkArchiveDialogOpen, setBulkArchiveDialogOpen] = useState(false);
   const [pendingBulkAction, setPendingBulkAction] = useState<{ ids: string[], action: 'archive' | 'delete' } | null>(null);
-  const [folderRestoreDialogOpen, setFolderRestoreDialogOpen] = useState(false);
-  const [folderToRestore, setFolderToRestore] = useState<string | null>(null);
 
   // Bulk selection hook
   const {
@@ -110,7 +138,7 @@ export default function Events() {
   // Check if any dialog/editor is open - blocks swipe navigation
   const isAnyDialogOpen = isAddDialogOpen || !!selectedEvent || isEventFolderCreatorOpen || 
     isEventFolderEditorOpen || isMoveToEventFolderOpen || deleteDialogOpen || archiveDialogOpen ||
-    bulkDeleteDialogOpen || bulkArchiveDialogOpen || folderRestoreDialogOpen;
+    bulkDeleteDialogOpen || bulkArchiveDialogOpen || folderActions.dialog.open;
 
   // Tab swipe navigation
   const handleSwipeLeft = useCallback(() => {
@@ -385,14 +413,6 @@ export default function Events() {
     toast.success(say('toastDeleted', 'events'));
   };
 
-  const confirmDeleteEventFolder = (folderId: string) => {
-    // Permanently delete from all lists
-    setEventFolders((prev: EventFolder[]) => prev.filter(folder => folder.id !== folderId));
-    setArchivedEventFolders((prev: EventFolder[]) => prev.filter(folder => folder.id !== folderId));
-    setSelectedEventFolder(null);
-    toast.success(say('toastDeleted', 'tabFolders'));
-  };
-
 
   const unarchiveEvent = (eventId: string) => {
     const eventToUnarchive = archivedEvents.find(event => event.id === eventId);
@@ -631,95 +651,6 @@ export default function Events() {
     }
   };
 
-  const confirmArchiveEventFolder = (folderId: string) => {
-    setItemToArchive({ type: 'eventFolder', id: folderId });
-    setArchiveDialogOpen(true);
-  };
-
-  const performArchiveEventFolder = (folderId: string) => {
-    const folderToArchive = eventFolders.find(folder => folder.id === folderId);
-    if (folderToArchive) {
-      // Archive the folder
-      setArchivedEventFolders((prev: EventFolder[]) => [...prev, { ...folderToArchive, archived: true }]);
-      setEventFolders((prev: EventFolder[]) => prev.filter(folder => folder.id !== folderId));
-      
-      // Archive all events in this folder
-      const eventsToArchive = events.filter(event => folderToArchive.eventIds.includes(event.id));
-      if (eventsToArchive.length > 0) {
-        setArchivedEvents((prev: Event[]) => [...prev, ...eventsToArchive]);
-        setEvents((prev: Event[]) => prev.filter(event => !folderToArchive.eventIds.includes(event.id)));
-      }
-      
-      toast.success(folderAndCount(t, language, 'folderAndCountArchived', 'event', eventsToArchive.length));
-    }
-  };
-
-  const deleteEventFolder = (folderId: string) => {
-    setItemToDelete({ type: 'eventFolder', id: folderId });
-    setDeleteDialogOpen(true);
-  };
-
-  const unarchiveEventFolder = (folderId: string) => {
-    const folderToUnarchive = archivedEventFolders.find(folder => folder.id === folderId);
-    if (folderToUnarchive) {
-      const eventIdsAssignedElsewhere = new Set<string>(eventFolders.flatMap(f => f.eventIds));
-      const sanitizedEventIds = folderToUnarchive.eventIds.filter(id => !eventIdsAssignedElsewhere.has(id));
-      const archivedEventsInFolder = archivedEvents.filter(event => sanitizedEventIds.includes(event.id));
-      
-      if (archivedEventsInFolder.length === 0) {
-        restoreEventFolderOnly(folderId);
-      } else {
-        setFolderToRestore(folderId);
-        setFolderRestoreDialogOpen(true);
-      }
-    }
-  };
-
-  const restoreEventFolderOnly = (folderId: string) => {
-    const folderToUnarchive = archivedEventFolders.find(folder => folder.id === folderId);
-    if (folderToUnarchive) {
-      const eventIdsAssignedElsewhere = new Set<string>(eventFolders.flatMap(f => f.eventIds));
-      const sanitizedEventIds = folderToUnarchive.eventIds.filter(id => !eventIdsAssignedElsewhere.has(id));
-
-      setEventFolders((prev: EventFolder[]) => [
-        ...prev,
-        { ...folderToUnarchive, archived: false, eventIds: sanitizedEventIds }
-      ]);
-      setArchivedEventFolders((prev: EventFolder[]) => prev.filter(folder => folder.id !== folderId));
-      
-      toast.success(say('toastRestored', 'tabFolders'));
-    }
-  };
-
-  const restoreEventFolderWithEvents = (folderId: string) => {
-    const folderToUnarchive = archivedEventFolders.find(folder => folder.id === folderId);
-    if (folderToUnarchive) {
-      const eventIdsAssignedElsewhere = new Set<string>(eventFolders.flatMap(f => f.eventIds));
-      const sanitizedEventIds = folderToUnarchive.eventIds.filter(id => !eventIdsAssignedElsewhere.has(id));
-
-      setEventFolders((prev: EventFolder[]) => [
-        ...prev,
-        { ...folderToUnarchive, archived: false, eventIds: sanitizedEventIds }
-      ]);
-      setArchivedEventFolders((prev: EventFolder[]) => prev.filter(folder => folder.id !== folderId));
-      
-      const eventsToUnarchive = archivedEvents.filter(event => sanitizedEventIds.includes(event.id));
-      if (eventsToUnarchive.length > 0) {
-        const restoredEvents = eventsToUnarchive.map(e => {
-          const { originalFolderId, ...restored } = e;
-          return restored;
-        });
-        
-        setEvents((prev: Event[]) => {
-          const newEvents = [...prev, ...restoredEvents];
-          return newEvents.sort((a, b) => calculateTimeRemaining(a) - calculateTimeRemaining(b));
-        });
-        setArchivedEvents((prev: Event[]) => prev.filter(event => !sanitizedEventIds.includes(event.id)));
-      }
-      
-      toast.success(folderAndCount(t, language, 'folderAndCountRestored', 'event', eventsToUnarchive.length));
-    }
-  };
 
 
   const copyEventFolder = (folderId: string) => {
@@ -1488,12 +1419,12 @@ export default function Events() {
              */
             events={isArchived ? filterEvents(archivedEvents) : getAllEvents()}
             onEdit={!isArchived ? editEventFolder : undefined}
-            onArchive={!isArchived ? confirmArchiveEventFolder : undefined}
-            onUnarchive={isArchived ? unarchiveEventFolder : undefined}
+            onArchive={!isArchived ? folderActions.requestArchive : undefined}
+            onUnarchive={isArchived ? folderActions.requestRestore : undefined}
             // Restoring an event from inside an archived folder. Without it the nested card's
             // restore button was drawn but did nothing.
             onRestoreEvent={isArchived ? unarchiveEvent : undefined}
-            onDelete={deleteEventFolder}
+            onDelete={folderActions.requestDelete}
             onPin={!isArchived ? pinEventFolder : undefined}
             onUnpin={!isArchived ? unpinEventFolder : undefined}
             isArchived={isArchived}
@@ -1685,13 +1616,7 @@ export default function Events() {
           description={namedSentence(t, 'confirmDeleteNamedBody', displayNameOf(itemToDelete))}
           action="delete"
           onConfirm={() => {
-            if (itemToDelete) {
-              if (itemToDelete.type === 'event') {
-                confirmDeleteEvent(itemToDelete.id);
-              } else {
-                confirmDeleteEventFolder(itemToDelete.id);
-              }
-            }
+            if (itemToDelete) confirmDeleteEvent(itemToDelete.id);
             setItemToDelete(null);
           }}
         />
@@ -1704,13 +1629,7 @@ export default function Events() {
           description={namedSentence(t, 'confirmArchiveNamedBody', displayNameOf(itemToArchive))}
           action="archive"
           onConfirm={() => {
-            if (itemToArchive) {
-              if (itemToArchive.type === 'event') {
-                performArchiveEvent(itemToArchive.id);
-              } else {
-                performArchiveEventFolder(itemToArchive.id);
-              }
-            }
+            if (itemToArchive) performArchiveEvent(itemToArchive.id);
             setItemToArchive(null);
           }}
         />
@@ -1838,37 +1757,8 @@ export default function Events() {
           onCancel={() => setPendingBulkAction(null)}
         />
 
-        {/* Folder Restore Confirmation Dialog */}
-        <ConfirmationDialog
-          open={folderRestoreDialogOpen}
-          onOpenChange={(open) => {
-            setFolderRestoreDialogOpen(open);
-            if (!open) setFolderToRestore(null);
-          }}
-          title={t('restoreFolder')}
-          description={(() => {
-            if (!folderToRestore) return '';
-            const folder = archivedEventFolders.find(f => f.id === folderToRestore);
-            if (!folder) return '';
-            const eventIdsAssignedElsewhere = new Set<string>(eventFolders.flatMap(f => f.eventIds));
-            const sanitizedEventIds = folder.eventIds.filter(id => !eventIdsAssignedElsewhere.has(id));
-            const count = archivedEvents.filter(e => sanitizedEventIds.includes(e.id)).length;
-            return `${count} ${t('events')}`;
-          })()}
-          action="restore"
-          confirmLabel={t('restoreAll')}
-          onConfirm={() => {
-            if (folderToRestore) restoreEventFolderWithEvents(folderToRestore);
-            setFolderToRestore(null);
-          }}
-          secondaryAction={{
-            label: t('folderOnly'),
-            onClick: () => {
-              if (folderToRestore) restoreEventFolderOnly(folderToRestore);
-              setFolderToRestore(null);
-            }
-          }}
-        />
+        {/* The folder dialog, shared with the notes and habits pages. */}
+        <FolderActionDialog {...folderActions.dialog} itemKind="event" />
 
         <BulkActionBar
           context={getBulkContext()}

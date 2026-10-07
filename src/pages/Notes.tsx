@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, SlidingTabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
+import { FolderActionDialog } from '@/components/shared/FolderActionDialog';
+import { useFolderActions } from '@/hooks/useFolderActions';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { Note, NoteType, TextNote, ListNote, AudioNote, ImageNote } from '@/types/note';
 import { NoteFolder } from '@/types/noteFolder';
@@ -30,7 +32,7 @@ import { autoImportNoteToFolders } from '@/lib/folderAutoImport';
 import { parseSearchExpression, matchesSearchExpression } from '@/lib/tagParser';
 import { extractSearchableText } from '@/lib/noteSearchText';
 import { nextCopyName } from '@/lib/copyName';
-import { countedSentence, folderAndCount, itemDisplayName, namedSentence } from '@/lib/countedMessage';
+import { countedSentence, itemDisplayName, namedSentence } from '@/lib/countedMessage';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { useBulkSelection } from '@/hooks/useBulkSelection';
 import { BulkActionBar, BulkActionType, BulkActionContext } from '@/components/shared/BulkActionBar';
@@ -65,13 +67,30 @@ export default function Notes() {
   const [isNewNote, setIsNewNote] = useState<boolean>(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<{type: 'note' | 'folder', id: string} | null>(null);
-  const [itemToArchive, setItemToArchive] = useState<{type: 'note' | 'folder', id: string} | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<{type: 'note', id: string} | null>(null);
+  const [itemToArchive, setItemToArchive] = useState<{type: 'note', id: string} | null>(null);
+
+  /*
+   * Archiving, deleting and restoring a folder is shared with the events and habits pages —
+   * see `useFolderActions`. Each of the three used to carry its own copy of these, which is how
+   * they drifted apart.
+   */
+  const folderActions = useFolderActions<Note, NoteFolder>({
+    itemKind: 'note',
+    itemIdsOf: (folder) => folder.noteIds,
+    withItemIds: (folder, noteIds) => ({ ...folder, noteIds }),
+    items: notes,
+    setItems: setNotes,
+    archivedItems: archivedNotes,
+    setArchivedItems: setArchivedNotes,
+    folders,
+    setFolders,
+    archivedFolders,
+    setArchivedFolders,
+  });
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [bulkArchiveDialogOpen, setBulkArchiveDialogOpen] = useState(false);
   const [pendingBulkAction, setPendingBulkAction] = useState<{ ids: string[], action: 'archive' | 'delete' } | null>(null);
-  const [folderRestoreDialogOpen, setFolderRestoreDialogOpen] = useState(false);
-  const [folderToRestore, setFolderToRestore] = useState<string | null>(null);
   const [isNoteColorEditorOpen, setIsNoteColorEditorOpen] = useState(false);
   const [noteToEditColor, setNoteToEditColor] = useState<Note | null>(null);
   const [formData, setFormData] = useState({
@@ -149,7 +168,7 @@ export default function Notes() {
   const isAnyDialogOpen = isNoteViewerOpen || isFolderCreatorOpen || isFolderEditorOpen || 
     isMoveToFolderOpen || showNoteTypePopup || showImageCapturePopup || showAudioRecorderPopup ||
     deleteDialogOpen || archiveDialogOpen || showPinPad || isNoteColorEditorOpen ||
-    bulkDeleteDialogOpen || bulkArchiveDialogOpen || folderRestoreDialogOpen;
+    bulkDeleteDialogOpen || bulkArchiveDialogOpen || folderActions.dialog.open;
 
   // Tab swipe navigation
   const handleSwipeLeft = useCallback(() => {
@@ -505,62 +524,9 @@ export default function Notes() {
      toast.success(say('toastRestored', 'noteViewerTitle'));
    };
 
-  const unarchiveFolder = (folderId: string) => {
-    const folderToUnarchive = archivedFolders.find(folder => folder.id === folderId);
-    if (folderToUnarchive) {
-      // Check how many archived notes are in this folder
-      const noteIdsAssignedElsewhere = new Set<string>(folders.flatMap(f => f.noteIds));
-      const sanitizedNoteIds = folderToUnarchive.noteIds.filter(id => !noteIdsAssignedElsewhere.has(id));
-      const archivedNotesInFolder = archivedNotes.filter(note => sanitizedNoteIds.includes(note.id));
-      
-      if (archivedNotesInFolder.length === 0) {
-        // No archived notes inside — restore folder immediately
-        restoreFolderOnly(folderId);
-      } else {
-        // Has archived notes — ask user
-        setFolderToRestore(folderId);
-        setFolderRestoreDialogOpen(true);
-      }
-    }
-  };
+  // Restoring an archived folder is shared too: `useFolderActions` asks the same question the
+  // habits page asks, and goes straight ahead when the folder holds nothing to bring back.
 
-  const restoreFolderOnly = (folderId: string) => {
-    const folderToUnarchive = archivedFolders.find(folder => folder.id === folderId);
-    if (folderToUnarchive) {
-      const noteIdsAssignedElsewhere = new Set<string>(folders.flatMap(f => f.noteIds));
-      const sanitizedNoteIds = folderToUnarchive.noteIds.filter(id => !noteIdsAssignedElsewhere.has(id));
-
-      setFolders((prev: NoteFolder[]) => [
-        ...prev,
-        { ...folderToUnarchive, archived: false, noteIds: sanitizedNoteIds }
-      ]);
-      setArchivedFolders((prev: NoteFolder[]) => prev.filter(folder => folder.id !== folderId));
-      
-      toast.success(say('toastRestored', 'tabFolders'));
-    }
-  };
-
-  const restoreFolderWithNotes = (folderId: string) => {
-    const folderToUnarchive = archivedFolders.find(folder => folder.id === folderId);
-    if (folderToUnarchive) {
-      const noteIdsAssignedElsewhere = new Set<string>(folders.flatMap(f => f.noteIds));
-      const sanitizedNoteIds = folderToUnarchive.noteIds.filter(id => !noteIdsAssignedElsewhere.has(id));
-
-      setFolders((prev: NoteFolder[]) => [
-        ...prev,
-        { ...folderToUnarchive, archived: false, noteIds: sanitizedNoteIds }
-      ]);
-      setArchivedFolders((prev: NoteFolder[]) => prev.filter(folder => folder.id !== folderId));
-      
-      const notesToUnarchive = archivedNotes.filter(note => sanitizedNoteIds.includes(note.id));
-      if (notesToUnarchive.length > 0) {
-        setNotes((prev: Note[]) => [...prev, ...notesToUnarchive]);
-        setArchivedNotes((prev: Note[]) => prev.filter(note => !sanitizedNoteIds.includes(note.id)));
-      }
-      
-      toast.success(folderAndCount(t, language, 'folderAndCountRestored', 'note', notesToUnarchive.length));
-    }
-  };
 
   const toggleListItem = (noteId: string, itemId: string) => {
     setNotes((prev: Note[]) => prev.map(note => {
@@ -876,55 +842,6 @@ export default function Notes() {
     }
   };
 
-  const confirmArchiveFolder = (folderId: string) => {
-    setItemToArchive({ type: 'folder', id: folderId });
-    setArchiveDialogOpen(true);
-  };
-
-  const archiveFolder = (folderId: string) => {
-    const folderToArchive = folders.find(folder => folder.id === folderId);
-    if (folderToArchive) {
-      // Archive the folder
-      setArchivedFolders((prev: NoteFolder[]) => [...prev, { ...folderToArchive, archived: true }]);
-      setFolders((prev: NoteFolder[]) => prev.filter(folder => folder.id !== folderId));
-      
-      // Archive all notes in this folder
-      const notesToArchive = notes.filter(note => folderToArchive.noteIds.includes(note.id));
-      if (notesToArchive.length > 0) {
-        setArchivedNotes((prev: Note[]) => [...prev, ...notesToArchive]);
-        setNotes((prev: Note[]) => prev.filter(note => !folderToArchive.noteIds.includes(note.id)));
-      }
-      
-      toast.success(folderAndCount(t, language, 'folderAndCountArchived', 'note', notesToArchive.length));
-    }
-  };
-
-  const deleteFolder = (folderId: string) => {
-    setItemToDelete({ type: 'folder', id: folderId });
-    setDeleteDialogOpen(true);
-  };
-
-  const confirmDeleteFolder = (folderId: string) => {
-    const folderToDelete = folders.find(folder => folder.id === folderId) || 
-                          archivedFolders.find(folder => folder.id === folderId);
-    if (folderToDelete) {
-      // Get all notes from this folder
-      const notesInFolder = [...notes, ...archivedNotes].filter(note => folderToDelete.noteIds.includes(note.id));
-      
-      // Remove folder and its notes from all lists
-      setFolders((prev: NoteFolder[]) => prev.filter(folder => folder.id !== folderId));
-      setArchivedFolders((prev: NoteFolder[]) => prev.filter(folder => folder.id !== folderId));
-      setNotes((prev: Note[]) => prev.filter(note => !folderToDelete.noteIds.includes(note.id)));
-      setArchivedNotes((prev: Note[]) => prev.filter(note => !folderToDelete.noteIds.includes(note.id)));
-      
-      const noteCount = notesInFolder.length;
-      if (noteCount > 0) {
-        toast.success(folderAndCount(t, language, 'folderAndCountDeleted', 'note', noteCount));
-      } else {
-        toast.success(say('toastDeleted', 'tabFolders'));
-      }
-    }
-  };
 
   const moveNoteToFolder = (noteId: string, folderId: string) => {
     // Remove note from all folders and add to selected folder in a single update
@@ -1641,9 +1558,9 @@ export default function Notes() {
             onPinFolder={() => pinFolder(folder.id)}
             onUnpinFolder={() => unpinFolder(folder.id)}
             onEditFolder={() => editFolder(folder.id)}
-            onArchiveFolder={!isArchived ? () => confirmArchiveFolder(folder.id) : undefined}
-            onDeleteFolder={() => deleteFolder(folder.id)}
-            onRestoreFolder={isArchived ? () => unarchiveFolder(folder.id) : undefined}
+            onArchiveFolder={!isArchived ? folderActions.requestArchive : undefined}
+            onDeleteFolder={folderActions.requestDelete}
+            onRestoreFolder={isArchived ? folderActions.requestRestore : undefined}
             // Restoring a note from inside an archived folder. Without it the nested card's
             // restore button was drawn but did nothing.
             onRestoreNote={isArchived ? unarchiveNote : undefined}
@@ -2266,13 +2183,7 @@ export default function Notes() {
           setItemToDelete(null);
         }}
         onConfirm={() => {
-          if (itemToDelete) {
-            if (itemToDelete.type === 'note') {
-              confirmDeleteNote(itemToDelete.id);
-            } else {
-              confirmDeleteFolder(itemToDelete.id);
-            }
-          }
+          if (itemToDelete) confirmDeleteNote(itemToDelete.id);
           setItemToDelete(null);
         }}
       />
@@ -2285,13 +2196,7 @@ export default function Notes() {
         description={namedSentence(t, 'confirmArchiveNamedBody', displayNameOf(itemToArchive))}
         action="archive"
         onConfirm={() => {
-          if (itemToArchive) {
-            if (itemToArchive.type === 'note') {
-              performArchiveNote(itemToArchive.id);
-            } else {
-              archiveFolder(itemToArchive.id);
-            }
-          }
+          if (itemToArchive) performArchiveNote(itemToArchive.id);
           setItemToArchive(null);
         }}
       />
@@ -2393,37 +2298,12 @@ export default function Notes() {
         onCancel={() => setPendingBulkAction(null)}
       />
 
-      {/* Folder Restore Confirmation Dialog */}
-      <ConfirmationDialog
-        open={folderRestoreDialogOpen}
-        onOpenChange={(open) => {
-          setFolderRestoreDialogOpen(open);
-          if (!open) setFolderToRestore(null);
-        }}
-        title={t('restoreFolder')}
-        description={(() => {
-          if (!folderToRestore) return '';
-          const folder = archivedFolders.find(f => f.id === folderToRestore);
-          if (!folder) return '';
-          const noteIdsAssignedElsewhere = new Set<string>(folders.flatMap(f => f.noteIds));
-          const sanitizedNoteIds = folder.noteIds.filter(id => !noteIdsAssignedElsewhere.has(id));
-          const count = archivedNotes.filter(n => sanitizedNoteIds.includes(n.id)).length;
-          return `${count} ${t('notes')}`;
-        })()}
-        action="restore"
-        confirmLabel={t('restoreAll')}
-        onConfirm={() => {
-          if (folderToRestore) restoreFolderWithNotes(folderToRestore);
-          setFolderToRestore(null);
-        }}
-        secondaryAction={{
-          label: t('folderOnly'),
-          onClick: () => {
-            if (folderToRestore) restoreFolderOnly(folderToRestore);
-            setFolderToRestore(null);
-          }
-        }}
-      />
+      {/*
+        * One dialog for archiving, deleting and restoring a folder, shared with the events and
+        * habits pages. It asks the same three questions everywhere: Cancel, Folder Only, or the
+        * action on everything the folder holds.
+        */}
+      <FolderActionDialog {...folderActions.dialog} itemKind="note" />
 
       <NoteEditor
         note={noteToEditColor}
