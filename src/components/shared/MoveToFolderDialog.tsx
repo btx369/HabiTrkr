@@ -64,25 +64,46 @@ export function MoveToFolderDialog<T extends MovableFolder>({
       isOpen={isOpen}
       onClose={onClose}
       title={t('moveToFolder')}
-      footer={<div />}
+      /*
+       * The list carries a visible scrollbar. Scrollbars are hidden everywhere else in the app,
+       * and this is the one list where that costs the reader something: a dialog showing four
+       * folders and a clean bottom edge gives no reason to suspect there are six, and picking
+       * one of them is the entire point of the screen.
+       */
+      scrollClassName="scroll-thin"
+      /*
+       * The create button lives in the dialog's footer, so it stays put while the list moves. It
+       * used to sit at the end of the list itself, which put it below the fold as soon as there
+       * were more folders than fitted.
+       */
+      footer={
+        <div className="flex justify-center w-full pt-4">
+          <Button onClick={onCreateNewFolder} className="bg-black text-white hover:bg-black/90">
+            {t('createNewFolder')}
+            <FolderPlus size={16} className="ml-2" />
+          </Button>
+        </div>
+      }
     >
-      <div className="space-y-3 max-h-[400px] overflow-y-auto">
+      {/*
+       * Only this list scrolls, and the dialog's own middle region does it — the title above and
+       * the button below stay where they are. The list used to be capped at 400px with a second
+       * scrollbar of its own, which scrolled the panel in two places and only kept the button
+       * outside the scrolling area by accident.
+       */}
+      <div className="space-y-3 pb-1">
         {folders.length === 0 ? (
-          <div className="text-center py-8">
-            {/*
-              * `emptyMessage` is supplied by the caller and already translated, so it is
-              * used as given. Callers that pass nothing fall back to `noFoldersAvailable` —
-              * not `noArchivedFolders`, which says something different.
-              */}
-            <p className="text-muted-foreground mb-4">{emptyMessage ?? t('noFoldersAvailable')}</p>
-            <Button onClick={onCreateNewFolder} className="bg-black text-white hover:bg-black/90">
-              {t('createFolder')}
-              <FolderPlus size={16} className="ml-2" />
-            </Button>
-          </div>
+          /*
+           * `emptyMessage` is supplied by the caller and already translated, so it is used as
+           * given. Callers that pass nothing fall back to `noFoldersAvailable` — not
+           * `noArchivedFolders`, which says something different.
+           *
+           * No button here: the footer's create button is always on screen, and a second one
+           * said the same thing twice.
+           */
+          <p className="text-center py-8 text-muted-foreground">{emptyMessage ?? t('noFoldersAvailable')}</p>
         ) : (
-          <>
-            {folders.map((folder) => {
+          folders.map((folder) => {
               const isCurrentFolder = folder.id === currentFolderId;
               const hasColor = folder.color && !isDefaultColor(folder.color);
               const iconColor = getColoredIconClass(!!hasColor);
@@ -114,15 +135,7 @@ export function MoveToFolderDialog<T extends MovableFolder>({
                   </CardContent>
                 </ColoredCard>
               );
-            })}
-            
-            <div className="flex justify-center pt-2">
-              <Button onClick={onCreateNewFolder} className="bg-black text-white hover:bg-black/90">
-                {t('createNewFolder')}
-                <FolderPlus size={16} className="ml-2" />
-              </Button>
-            </div>
-          </>
+            })
         )}
       </div>
     </EditorDialog>

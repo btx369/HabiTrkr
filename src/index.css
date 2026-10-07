@@ -296,3 +296,39 @@ audio::-moz-media-controls {
 .no-scrollbar:focus-visible {
   outline: none;
 }
+
+/*
+ * A thin, visible scrollbar, for the few places where "there is more below" has to be obvious
+ * rather than tidy.
+ *
+ * Scrollbars are hidden globally above, which is the right default for this UI — but it also
+ * hides the only hint that a list continues past the edge of a panel. The folder list in the
+ * Move to folder dialog is the case that needs the hint: a reader who sees four folders and a
+ * clean edge has no reason to think there are six.
+ *
+ * `scrollbar-color` is what actually paints it in Chrome: since version 121, setting
+ * `scrollbar-width` makes Chrome use its own thin scrollbar and ignore `::-webkit-scrollbar`
+ * entirely, so the pseudo-element rules below only cover Safari and older engines. Without the
+ * colour, Chrome's native bar is drawn in the light system grey and looks wrong on the dark
+ * theme.
+ */
+.scroll-thin {
+  scrollbar-width: thin; /* Firefox, and Chrome 121+ */
+  scrollbar-color: hsl(var(--muted-foreground) / 0.35) transparent;
+  -ms-overflow-style: auto; /* IE and Edge */
+}
+.scroll-thin::-webkit-scrollbar {
+  display: block;
+  width: 6px;
+  height: 6px;
+}
+.scroll-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scroll-thin::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground) / 0.35);
+  border-radius: 9999px;
+}
+.scroll-thin::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--muted-foreground) / 0.6);
+}

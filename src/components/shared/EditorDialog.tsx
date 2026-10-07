@@ -30,6 +30,13 @@ interface EditorDialogProps {
   hideCloseButton?: boolean;
   // Force full-screen dialog mode (no drawer on mobile)
   fullScreenOnly?: boolean;
+  /**
+   * Extra classes for the scrolling middle region — the area between the title and the footer.
+   *
+   * It exists for `scroll-thin`, which puts a visible scrollbar on a list whose length is not
+   * otherwise apparent. Off by default, so every other dialog keeps the clean edge.
+   */
+  scrollClassName?: string;
 }
 
 export function EditorDialog({
@@ -45,6 +52,7 @@ export function EditorDialog({
   saveDisabled = false,
   hideCloseButton = true,
   fullScreenOnly = false,
+  scrollClassName,
 }: EditorDialogProps) {
   const { t } = useLanguage();
   const handleCancel = onCancel || onClose;
@@ -110,7 +118,12 @@ export function EditorDialog({
             <DialogTitle className="text-center">{title}</DialogTitle>
           </DialogHeader>
           
-          <div className="space-y-6 overflow-y-auto flex-1 px-4 sm:px-6">
+          {/*
+            * `min-h-0` is what lets this region actually scroll: a flex item's default minimum
+            * height is its content, so without it the middle grows past the dialog and the
+            * footer is pushed off the bottom instead of staying put.
+            */}
+          <div className={`space-y-6 overflow-y-auto flex-1 min-h-0 px-4 sm:px-6 ${scrollClassName ?? ''}`}>
             {children}
           </div>
           
@@ -134,7 +147,12 @@ export function EditorDialog({
           <ResponsiveDialogTitle className="text-center">{title}</ResponsiveDialogTitle>
         </ResponsiveDialogHeader>
         
-        <div className="space-y-6 overflow-y-auto px-4 sm:px-6">
+        {/*
+          * `min-h-0` for the same reason as in the full-screen branch: the middle region has to
+          * be allowed to shrink, or a long list pushes the footer out of the dialog instead of
+          * scrolling inside it.
+          */}
+        <div className={`space-y-6 overflow-y-auto flex-1 min-h-0 px-4 sm:px-6 ${scrollClassName ?? ''}`}>
           {children}
         </div>
         
