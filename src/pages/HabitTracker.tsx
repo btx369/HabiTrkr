@@ -387,15 +387,30 @@ export default function HabitTracker() {
   const openHabitDetails = (habit: Habit) => setSelectedHabit(habit);
 
   // Folder CRUD operations
+  /*
+   * A folder created from the Move to folder dialog takes the habit that was being moved with
+   * it, and that habit leaves whatever folder it was in — a habit belongs to one folder.
+   *
+   * Without this the folder was created empty and the habit stayed where it was: the move
+   * dialog closed, a folder appeared in the list, and the habit was not in it. Notes and events
+   * both seed the new folder with the item being moved (`addFolder(folderData, ids)` and
+   * `addEventFolder(folderData, id)`); this one took no such argument.
+   */
   const handleCreateFolder = (folderData: Omit<HabitFolder, 'id' | 'createdAt' | 'habitIds'>) => {
     const newFolder: HabitFolder = {
+      ...folderData,
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
-      habitIds: [],
-      ...folderData
+      habitIds: habitToMove ? [habitToMove] : []
     };
-    setHabitFolders((prev: HabitFolder[]) => [...prev, newFolder]);
+    setHabitFolders((prev: HabitFolder[]) => {
+      const cleaned = habitToMove
+        ? prev.map(folder => ({ ...folder, habitIds: folder.habitIds.filter(id => id !== habitToMove) }))
+        : prev;
+      return [...cleaned, newFolder];
+    });
     setIsFolderCreatorOpen(false);
+    setHabitToMove(null);
     toast.success(say('toastAdded', 'tabFolders'));
   };
 
@@ -1184,7 +1199,9 @@ export default function HabitTracker() {
 
       <HabitFolderCreator
         isOpen={isFolderCreatorOpen}
-        onClose={() => setIsFolderCreatorOpen(false)}
+        // Closing without saving drops the pending move as well: otherwise the habit stays
+        // queued and the next folder created from the Folders tab, for no reason, swallows it.
+        onClose={() => { setIsFolderCreatorOpen(false); setHabitToMove(null); }}
         onSave={handleCreateFolder}
       />
 
