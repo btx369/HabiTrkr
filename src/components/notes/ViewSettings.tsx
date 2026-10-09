@@ -1,4 +1,4 @@
-import { Settings, ChevronUp, ChevronDown } from 'lucide-react';
+import { Settings, ChevronUp, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -22,6 +22,7 @@ interface ViewSettingsProps {
   viewType: ViewType;
   sortType: SortType;
   sortDirection: SortDirection;
+  customReorderingEnabled: boolean;
   onViewTypeChange: (viewType: ViewType) => void;
   onSortTypeChange: (sortType: SortType) => void;
   onSortDirectionChange: (direction: SortDirection) => void;
@@ -31,6 +32,7 @@ export function ViewSettings({
   viewType,
   sortType,
   sortDirection,
+  customReorderingEnabled,
   onViewTypeChange,
   onSortTypeChange,
   onSortDirectionChange
@@ -92,9 +94,9 @@ export function ViewSettings({
             if (isViewType(value)) onViewTypeChange(value);
           }}
         >
-          <DropdownMenuRadioItem value="x3">{t('viewX3')}</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="x2">{t('viewX2')}</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="list">{t('viewList')}</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="x3" onSelect={(event) => event.preventDefault()}>{t('viewX3')}</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="x2" onSelect={(event) => event.preventDefault()}>{t('viewX2')}</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="list" onSelect={(event) => event.preventDefault()}>{t('viewList')}</DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
         
         <DropdownMenuSeparator />
@@ -103,17 +105,14 @@ export function ViewSettings({
         {(['title', 'dateCreated', 'dateModified'] as const).map((type) => (
           <DropdownMenuItem
             key={type}
+            onSelect={(event) => event.preventDefault()}
             onClick={() => handleSortClick(type)}
             className="flex items-center gap-2 cursor-pointer"
           >
             <div className="w-4 h-4 flex items-center justify-center">
               {sortType === type && (
                 <>
-                  {sortDirection === 'asc' ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
+                  <ChevronUp className={`h-4 w-4 transition-transform duration-200 ${sortDirection === 'desc' ? 'rotate-180' : ''}`} />
                 </>
               )}
             </div>
@@ -121,12 +120,13 @@ export function ViewSettings({
           </DropdownMenuItem>
         ))}
         <DropdownMenuItem
+          onSelect={(event) => event.preventDefault()}
           onClick={() => handleSortClick('custom')}
           className="flex items-center gap-2 cursor-pointer"
         >
           <div className="w-4 h-4 flex items-center justify-center">
-            {sortType === 'custom' && (
-              <span className="h-2 w-2 rounded-full bg-primary" />
+            {sortType === 'custom' && customReorderingEnabled && (
+              <GripVertical className="h-4 w-4" />
             )}
           </div>
           <span>{t('custom')}</span>

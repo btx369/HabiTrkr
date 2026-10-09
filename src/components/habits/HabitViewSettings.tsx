@@ -1,4 +1,4 @@
-import { Settings, ChevronUp, ChevronDown } from 'lucide-react';
+import { Settings, ChevronUp, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -9,12 +9,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-export type HabitSortType = 'name' | 'dateCreated' | 'dateModified' | 'completionRate';
+export type HabitSortType = 'name' | 'dateCreated' | 'dateModified' | 'custom';
 export type HabitSortDirection = 'asc' | 'desc';
 
 interface HabitViewSettingsProps {
   sortType: HabitSortType;
   sortDirection: HabitSortDirection;
+  customReorderingEnabled: boolean;
   onSortTypeChange: (sortType: HabitSortType) => void;
   onSortDirectionChange: (direction: HabitSortDirection) => void;
 }
@@ -22,6 +23,7 @@ interface HabitViewSettingsProps {
 export function HabitViewSettings({
   sortType,
   sortDirection,
+  customReorderingEnabled,
   onSortTypeChange,
   onSortDirectionChange
 }: HabitViewSettingsProps) {
@@ -33,12 +35,17 @@ export function HabitViewSettings({
       name: t('title'),
       dateCreated: t('dateCreated'),
       dateModified: t('dateModified'),
-      completionRate: t('completionRate')
+      custom: t('custom')
     };
     return labels[type];
   };
 
   const handleSortClick = (newSortType: HabitSortType) => {
+    if (newSortType === 'custom') {
+      onSortTypeChange(newSortType);
+      return;
+    }
+
     if (sortType === newSortType) {
       // Toggle direction if same sort type
       onSortDirectionChange(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -62,21 +69,18 @@ export function HabitViewSettings({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48 bg-background border border-border">
         <DropdownMenuLabel>{t('sortBy')}</DropdownMenuLabel>
-        {(['name', 'dateCreated', 'dateModified', 'completionRate'] as const).map((type) => (
+        {(['name', 'dateCreated', 'dateModified', 'custom'] as const).map((type) => (
           <DropdownMenuItem
             key={type}
+            onSelect={(event) => event.preventDefault()}
             onClick={() => handleSortClick(type)}
             className="flex items-center gap-2 cursor-pointer"
           >
             <div className="w-4 h-4 flex items-center justify-center">
               {sortType === type && (
-                <>
-                  {sortDirection === 'asc' ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                </>
+                type === 'custom'
+                  ? (customReorderingEnabled ? <GripVertical className="h-4 w-4" /> : null)
+                  : <ChevronUp className={`h-4 w-4 transition-transform duration-200 ${sortDirection === 'desc' ? 'rotate-180' : ''}`} />
               )}
             </div>
             <span>{getSortLabel(type)}</span>

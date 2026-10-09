@@ -1,6 +1,8 @@
-import { createContext, useContext, ReactNode, useMemo } from 'react';
+import { createContext, useContext, ReactNode, useMemo, useRef } from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { toast as sonnerToast } from 'sonner';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { takePendingUndo } from '@/lib/undoManager';
 
 interface ToastContextType {
   toastsEnabled: boolean;
@@ -12,6 +14,8 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toastsEnabled, setToastsEnabled] = useLocalStorage('toasts-enabled', true);
+  const { t } = useLanguage();
+  const lastUndoToastId = useRef<string | number | undefined>(undefined);
 
   // Create a wrapped toast object that respects the enabled setting
   // Using useMemo to ensure the toast object is recreated when toastsEnabled changes
@@ -23,8 +27,29 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
     return Object.assign(wrappedToast, {
       success: (message: string | ReactNode, data?: Parameters<typeof sonnerToast.success>[1]) => {
+        const undo = takePendingUndo();
+        if (lastUndoToastId.current !== undefined) {
+          sonnerToast.dismiss(lastUndoToastId.current);
+          lastUndoToastId.current = undefined;
+        }
         if (!toastsEnabled) return;
-        return sonnerToast.success(message, data);
+
+        const options = undo && !data?.action
+          ? {
+              ...data,
+              action: {
+                label: t('undo'),
+                onClick: () => {
+                  undo();
+                  lastUndoToastId.current = undefined;
+                  sonnerToast.success(t('actionUndone'));
+                },
+              },
+            }
+          : data;
+        const toastId = sonnerToast.success(message, options);
+        if (undo) lastUndoToastId.current = toastId;
+        return toastId;
       },
       error: (message: string | ReactNode, data?: Parameters<typeof sonnerToast.error>[1]) => {
         if (!toastsEnabled) return;
@@ -45,7 +70,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       dismiss: sonnerToast.dismiss,
       promise: sonnerToast.promise,
     }) as typeof sonnerToast;
-  }, [toastsEnabled]);
+  }, [toastsEnabled, t]);
 
   return (
     <ToastContext.Provider value={{ toastsEnabled, setToastsEnabled, toast }}>

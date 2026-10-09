@@ -1,4 +1,4 @@
-import { MoreVertical, Pin, PinOff, Edit3, Archive, Trash2, ArchiveRestore, Lock, Copy, Share2, FolderOpen } from 'lucide-react';
+import { MoreVertical, Pin, PinOff, Edit3, Archive, Trash2, ArchiveRestore, Lock, Copy, Share2, FolderInput } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -95,7 +95,7 @@ export function ItemActionMenu({
           <MoreVertical size={iconSize} className={iconColorClass} />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="bg-background border border-border">
+      <DropdownMenuContent align="end" className="w-max min-w-0 bg-background border border-border">
         {isDeleted ? (
           <>
             {onRestore && (
@@ -176,13 +176,13 @@ export function ItemActionMenu({
             {onCopy && (
               <DropdownMenuItem onClick={(e) => handleAction(onCopy, e)}>
                 <Copy size={14} className="mr-2" />
-                {t('makeACopy')}
+                {t('copy')}
               </DropdownMenuItem>
             )}
             {onMoveToFolder && (
               <DropdownMenuItem onClick={(e) => handleAction(onMoveToFolder, e)}>
-                <FolderOpen size={14} className="mr-2" />
-                {t('moveToFolder')}
+                <FolderInput size={14} className="mr-2" />
+                {t('move')}
               </DropdownMenuItem>
             )}
             {onArchive && (

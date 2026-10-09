@@ -11,13 +11,14 @@
  *
  *   `withItems`  — the folder takes its items with it. Archived together, deleted together,
  *                  restored together.
- *   `folderOnly` — the folder moves on its own and its items stay exactly where they are:
- *                  archiving a folder leaves its items active and unfiled, deleting one leaves
- *                  them active, restoring one leaves them in the archive.
+ *   `folderOnly` — only the folder moves: archiving leaves items active while preserving their
+ *                  ids on the archived folder, deleting leaves them active and unfiled, and
+ *                  restoring the folder leaves its items in the archive.
  *
- * `folderOnly` clearing the folder's ids is what "unfiled" means here: the items are listed by
- * the page whether or not a folder holds them, so releasing them costs nothing and a folder
- * that claimed items it no longer lists would be lying about its own contents.
+ * An archived folder keeps its ids so the relationship can be restored later. The folder
+ * membership context ignores archived folders, so those active items do not show as filed
+ * until their folder is restored. Deleting a folder clears its ids because the relationship
+ * can no longer be restored.
  */
 
 export type FolderActionKind = 'archive' | 'delete' | 'restore';
@@ -57,7 +58,7 @@ export function planFolderAction({
     // An item already in the archive is not archived twice; the pages add only what is active.
     return scope === 'withItems'
       ? { affectedItemIds: ids, folderItemIds: ids }
-      : { affectedItemIds: [], folderItemIds: [] };
+      : { affectedItemIds: [], folderItemIds: ids };
   }
 
   if (kind === 'delete') {

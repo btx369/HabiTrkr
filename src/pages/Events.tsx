@@ -119,6 +119,11 @@ export default function Events() {
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [bulkArchiveDialogOpen, setBulkArchiveDialogOpen] = useState(false);
   const [pendingBulkAction, setPendingBulkAction] = useState<{ ids: string[], action: 'archive' | 'delete' } | null>(null);
+  const [pendingBulkFolderAction, setPendingBulkFolderAction] = useState<{
+    kind: 'archive' | 'delete';
+    folderIds: string[];
+    selectedItemIds: string[];
+  } | null>(null);
 
   // Bulk selection hook
   const {
@@ -594,16 +599,17 @@ export default function Events() {
   };
 
   // Event folder management functions
-  const addEventFolder = (folderData: Omit<EventFolder, 'id' | 'createdAt' | 'eventIds'>, eventIdToMove?: string) => {
+  const addEventFolder = (folderData: Omit<EventFolder, 'id' | 'createdAt' | 'eventIds'>, eventIdsToMove?: string[]) => {
     const newFolder: EventFolder = {
       ...folderData,
       id: Date.now().toString(),
       createdAt: new Date().toISOString(),
-      eventIds: eventIdToMove ? [eventIdToMove] : []
+      eventIds: eventIdsToMove || []
     };
     setEventFolders((prev: EventFolder[]) => {
-      const cleaned = eventIdToMove
-        ? prev.map(f => ({ ...f, eventIds: f.eventIds.filter(id => id !== eventIdToMove) }))
+      const idsToMove = new Set(eventIdsToMove || []);
+      const cleaned = idsToMove.size > 0
+        ? prev.map(f => ({ ...f, eventIds: f.eventIds.filter(id => !idsToMove.has(id)) }))
         : prev;
       return [...cleaned, newFolder];
     });
@@ -715,8 +721,6 @@ export default function Events() {
       toast.success(say('toastUpdated', 'events'));
       setSelectedEventsForMove(null);
       setIsMoveToEventFolderOpen(false);
-      clearSelection();
-      exitBulkMode();
       return;
     }
     
@@ -731,7 +735,16 @@ export default function Events() {
   const handleCreateEventFolderFromDialog = () => {
     setIsMoveToEventFolderOpen(false);
     setIsEventFolderCreatorOpen(true);
-    // Note: selectedEventForMove will be used when folder is created
+  };
+
+  const handleSaveEventFolder = (folderData: Omit<EventFolder, 'id' | 'createdAt' | 'eventIds'>, eventIdsToMove?: string[]) => {
+    addEventFolder(folderData, eventIdsToMove);
+    if (eventIdsToMove?.length) {
+      clearSelection();
+      exitBulkMode();
+    }
+    setSelectedEventForMove(null);
+    setSelectedEventsForMove(null);
   };
 
 
@@ -1118,6 +1131,39 @@ export default function Events() {
     return itemDisplayName(t, found ?? {});
   };
 
+  const finishBulkFolderAction = (
+    pending: NonNullable<typeof pendingBulkFolderAction>,
+    scope: 'folderOnly' | 'withItems',
+  ) => {
+    folderActions.applyBulkFolderAction(pending.kind, scope, pending.folderIds);
+    if (pending.kind === 'delete' && pending.selectedItemIds.length > 0 && activeTab === 'archived') {
+      const selectedIds = new Set(pending.selectedItemIds);
+      setArchivedEvents(prev => prev.filter(event => !selectedIds.has(event.id)));
+    }
+    clearSelection();
+    exitBulkMode();
+    setPendingBulkFolderAction(null);
+  };
+
+  const requestBulkFolderAction = (kind: 'archive' | 'delete', ids: string[]): boolean => {
+    if (activeTab !== 'folders' && activeTab !== 'archived') return false;
+    const folderCollection = activeTab === 'archived' ? archivedEventFolders : eventFolders;
+    const folderIds = ids.filter(id => folderCollection.some(folder => folder.id === id));
+    if (folderIds.length === 0) return false;
+
+    const folderIdSet = new Set(folderIds);
+    const selectedItemIds = ids.filter(id => !folderIdSet.has(id));
+    const selectedFolders = folderCollection.filter(folder => folderIdSet.has(folder.id));
+    const itemCount = new Set(selectedFolders.flatMap(folder => folder.eventIds)).size;
+    const pending = { kind, folderIds, selectedItemIds };
+    if (itemCount === 0) {
+      finishBulkFolderAction(pending, 'withItems');
+    } else {
+      setPendingBulkFolderAction(pending);
+    }
+    return true;
+  };
+
   // Handle bulk actions
   const handleBulkAction = (action: BulkActionType, color?: string) => {
     const ids = Array.from(selectedItems);
@@ -1230,11 +1276,13 @@ export default function Events() {
         }
         break;
       case 'archive':
+        if (requestBulkFolderAction('archive', ids)) break;
         // Show confirmation dialog for bulk archive
         setPendingBulkAction({ ids, action: 'archive' });
         setBulkArchiveDialogOpen(true);
         break;
       case 'delete':
+        if (requestBulkFolderAction('delete', ids)) break;
         // Show confirmation dialog for bulk delete
         setPendingBulkAction({ ids, action: 'delete' });
         setBulkDeleteDialogOpen(true);
@@ -1455,7 +1503,7 @@ export default function Events() {
 
   return (
     <FolderMembershipProvider ids={collectFiledIds(
-      [...eventFolders, ...archivedEventFolders].map((folder) => ({ id: folder.id, itemIds: folder.eventIds })),
+      eventFolders.map((folder) => ({ id: folder.id, itemIds: folder.eventIds })),
       archivedEvents,
     )}>
     <Layout 
@@ -1638,9 +1686,10 @@ export default function Events() {
           onClose={() => {
             setIsEventFolderCreatorOpen(false);
             setSelectedEventForMove(null);
+            setSelectedEventsForMove(null);
           }}
-          onSave={addEventFolder}
-          eventIdToMove={selectedEventForMove}
+          onSave={handleSaveEventFolder}
+          eventIdsToMove={selectedEventsForMove ?? (selectedEventForMove ? [selectedEventForMove] : undefined)}
         />
 
         <EventFolderEditor
@@ -1659,8 +1708,10 @@ export default function Events() {
           }}
           folders={eventFolders}
           onSelectFolder={handleEventFolderSelect}
+          onMoveComplete={() => { clearSelection(); exitBulkMode(); }}
           onCreateNewFolder={handleCreateEventFolderFromDialog}
-          currentFolderId={selectedEventForMove ? eventFolders.find(f => f.eventIds.includes(selectedEventForMove))?.id : undefined}
+          itemIdsToMove={selectedEventsForMove ?? (selectedEventForMove ? [selectedEventForMove] : [])}
+          getFolderItemIds={(folder) => folder.eventIds}
           getItemCount={(folder) => folder.eventIds.length}
           itemNoun={t('events')}
         />
@@ -1759,6 +1810,21 @@ export default function Events() {
 
         {/* The folder dialog, shared with the notes and habits pages. */}
         <FolderActionDialog {...folderActions.dialog} itemKind="event" />
+        <FolderActionDialog
+          open={Boolean(pendingBulkFolderAction)}
+          kind={pendingBulkFolderAction?.kind ?? 'archive'}
+          folderName=""
+          itemCount={pendingBulkFolderAction
+            ? new Set([...eventFolders, ...archivedEventFolders]
+                .filter(folder => pendingBulkFolderAction.folderIds.includes(folder.id))
+                .flatMap(folder => folder.eventIds)).size
+            : 0}
+          itemKind="event"
+          bulk
+          onFolderOnly={() => pendingBulkFolderAction && finishBulkFolderAction(pendingBulkFolderAction, 'folderOnly')}
+          onAll={() => pendingBulkFolderAction && finishBulkFolderAction(pendingBulkFolderAction, 'withItems')}
+          onOpenChange={(open) => !open && setPendingBulkFolderAction(null)}
+        />
 
         <BulkActionBar
           context={getBulkContext()}
@@ -1768,6 +1834,7 @@ export default function Events() {
           isAllFoldersSelected={isAllArchivedEventFoldersSelected}
           selectedCount={selectedItems.size}
           onAction={handleBulkAction}
+          onClearSelection={clearSelection}
         />
       </div>
     </Layout>

@@ -190,9 +190,9 @@ export function CalendarDayView({
   const dayNumber = format(currentDate, 'd');
 
   return (
-    <div className="flex flex-col bg-[hsl(var(--surface-card))] backdrop-blur-[12px] rounded-[20px] border border-[hsl(var(--glass-border))] overflow-hidden">
+    <div className="flex flex-col bg-[hsl(var(--surface-card))] backdrop-blur-[12px] rounded-[20px] border border-border shadow-[var(--surface-shadow)]">
       {/* Header with day info and all-day events */}
-      <div className="flex border-b-2 border-black dark:border-white">
+      <div className="sticky top-[11.5rem] z-30 flex rounded-t-[20px] bg-[hsl(var(--item-card-surface))] border-b-2 border-black dark:border-white">
         {/* Day label */}
         <div className="w-16 flex-shrink-0 p-2 text-center border-r border-border">
           <span className="text-sm text-muted-foreground">{dayOfWeek}</span>
@@ -208,22 +208,25 @@ export function CalendarDayView({
         <div className="flex-1 p-2 min-h-[60px]">
           {allDayEvents.length > 0 ? (
             <div className="space-y-1">
-              {allDayEvents.map(event => (
-                <div
-                  key={event.id}
-                  className="rounded-md px-3 py-1.5 text-sm font-medium cursor-pointer hover:opacity-90 transition-opacity flex items-center gap-2"
-                  style={getCardColorStylesWithFallback(event.color)}
-                  onClick={() => onViewEvent(event)}
-                >
-                  {event.isAllDay && (
-                    <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
-                      <Clock size={12} />
-                      All-Day
-                    </span>
-                  )}
-                  <span className="truncate">{event.name}</span>
-                </div>
-              ))}
+              {allDayEvents.map(event => {
+                const hasColor = event.color && event.color !== '#FFFFFF';
+                return (
+                  <div
+                    key={event.id}
+                    className={`rounded-md border ${hasColor ? 'border-black/10 dark:border-black/10' : 'border-border'} shadow-[var(--surface-shadow)] px-3 py-1.5 text-sm font-medium cursor-pointer hover:opacity-90 transition-opacity flex items-center gap-2`}
+                    style={getCardColorStylesWithFallback(event.color)}
+                    onClick={() => onViewEvent(event)}
+                  >
+                    {event.isAllDay && (
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                        <Clock size={12} />
+                        All-Day
+                      </span>
+                    )}
+                    <span className="truncate">{event.name}</span>
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div className="text-sm text-muted-foreground">No all-day events</div>
@@ -242,11 +245,15 @@ export function CalendarDayView({
               style={{ top: hour * HOUR_HEIGHT, height: HOUR_HEIGHT }}
             >
               {/* Hour label - skip 00:00 as it would be cut off */}
-              <div className="w-16 flex-shrink-0 pr-2 text-right text-sm text-muted-foreground -mt-2">
-                {hour > 0 ? format(new Date().setHours(hour, 0, 0, 0), 'HH:mm') : ''}
+              <div className="relative w-16 flex-shrink-0 border-r border-border bg-muted/30 pr-2 text-right text-sm text-muted-foreground">
+                {hour > 0 && (
+                  <span className="block -translate-y-1/2 leading-5">
+                    {format(new Date().setHours(hour, 0, 0, 0), 'HH:mm')}
+                  </span>
+                )}
               </div>
               {/* Empty cell for events */}
-              <div className="flex-1 border-l border-border/30" />
+              <div className="flex-1" />
             </div>
           ))}
 
@@ -274,11 +281,12 @@ export function CalendarDayView({
               const columnInfo = eventColumns.get(event.id) || { column: 0, totalColumns: 1 };
               const widthPercent = 100 / columnInfo.totalColumns;
               const leftPercent = (columnInfo.column / columnInfo.totalColumns) * 100;
+              const hasColor = event.color && event.color !== '#FFFFFF';
 
               return (
                 <div
                   key={event.id}
-                  className="absolute rounded-md px-2 py-1 cursor-pointer hover:opacity-90 transition-opacity overflow-hidden"
+                  className={`absolute rounded-md border ${hasColor ? 'border-black/10 dark:border-black/10' : 'border-border'} shadow-[var(--surface-shadow)] px-2 py-1 cursor-pointer hover:opacity-90 transition-opacity overflow-hidden`}
                   style={{
                     top: position.top,
                     height: position.height,

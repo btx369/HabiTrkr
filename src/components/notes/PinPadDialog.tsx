@@ -65,27 +65,26 @@ export const PinPadDialog = ({ isOpen, onClose, onSubmit, mode, title }: PinPadD
   
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="w-80 max-w-none">
-        <DialogHeader>
-          <DialogTitle className="text-center flex items-center justify-center gap-2">
-            <Lock size={18} />
+      <DialogContent className="w-[calc(100vw-12px)] max-w-[380px] gap-0 rounded-[28px] border-border/70 bg-popover p-6 shadow-xl">
+        <DialogHeader className="items-center space-y-3 pt-1">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-muted text-foreground">
+            <Lock size={20} strokeWidth={2} />
+          </div>
+          <DialogTitle className="text-center text-lg font-semibold tracking-tight">
             {title || (mode === 'set' ? t('setPinCode') : t('enterPinCode'))}
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-6 py-4">
+        <div className="space-y-4 pt-5">
           {/* PIN Display */}
-          <div className={`flex justify-center gap-2 ${isShaking ? 'animate-shake' : ''}`}>
+          <div className={`flex justify-center gap-3 py-1 ${isShaking ? 'animate-shake' : ''}`} aria-label={`${pin.length} of 4 digits entered`}>
             {[0, 1, 2, 3].map(index => (
               <div
                 key={index}
-                className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${
-                  isShaking ? 'border-destructive' : 'border-primary'
+                className={`flex h-4 w-4 items-center justify-center rounded-full transition-all duration-200 ${
+                  isShaking ? 'bg-destructive/15 ring-2 ring-destructive/70' : pin[index] ? 'bg-primary ring-2 ring-primary/20' : 'border-2 border-muted-foreground/35'
                 }`}
               >
-                {pin[index] && (
-                  <div className={`w-2 h-2 rounded-full ${isShaking ? 'bg-destructive' : 'bg-foreground'}`} />
-                )}
               </div>
             ))}
           </div>
@@ -103,50 +102,53 @@ export const PinPadDialog = ({ isOpen, onClose, onSubmit, mode, title }: PinPadD
           )}
           
           {/* Number Pad */}
-          <div className="grid grid-cols-3 gap-3 max-w-48 mx-auto">
+          <div className="mx-auto grid w-full max-w-[320px] grid-cols-3 gap-2.5">
             {numbers.slice(0, 9).map(number => (
               <Button
                 key={number}
-                variant="outline"
-                size="lg"
-                className="h-12 w-12 text-lg font-medium border-primary rounded-full"
+                variant="ghost"
+                className="h-12 w-full rounded-2xl border border-border bg-muted text-lg font-medium text-foreground hover:border-border hover:bg-hover active:bg-hover"
                 onClick={() => handleNumberClick(number)}
+                type="button"
               >
                 {number}
               </Button>
             ))}
-            <div /> {/* Empty space */}
+            <div aria-hidden="true" />
             <Button
-              variant="outline"
-              size="lg"
-              className="h-12 w-12 text-lg font-medium border-primary rounded-full"
+              variant="ghost"
+              className="h-12 w-full rounded-2xl border border-border bg-muted text-lg font-medium text-foreground hover:border-border hover:bg-hover active:bg-hover"
               onClick={() => handleNumberClick('0')}
+              type="button"
             >
               0
             </Button>
             <Button
-              variant="outline"
-              size="lg"
-              className="h-12 w-12 border-primary rounded-full"
+              variant="ghost"
+              className="h-12 w-full rounded-2xl border border-border bg-muted text-foreground hover:border-border hover:bg-hover active:bg-hover"
               onClick={handleDelete}
+              aria-label="Delete last digit"
+              type="button"
             >
               <Delete size={16} />
             </Button>
           </div>
           
           {/* Submit Button */}
-          <div className="flex gap-3">
+          <div className="flex gap-3 pt-1">
             <Button
               variant="outline"
-              className="flex-1 border-primary text-primary hover:text-primary"
+              className="h-11 flex-1 border-border text-foreground hover:bg-hover"
               onClick={handleClose}
+              type="button"
             >
               {t('cancel')}
             </Button>
             <Button
-              className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
+              className="h-11 flex-1 bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-muted-foreground/70 disabled:text-primary-foreground disabled:opacity-100"
               onClick={handleSubmit}
               disabled={pin.length !== 4}
+              type="button"
             >
               {mode === 'set' ? t('setPin') : t('unlock')}
             </Button>

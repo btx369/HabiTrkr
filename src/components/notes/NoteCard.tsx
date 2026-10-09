@@ -48,8 +48,11 @@ interface NoteCardProps {
   isDragged?: boolean;
   isDraggedOver?: boolean;
   isSelected?: boolean;
-  onMouseDown?: (e: React.MouseEvent) => void;
   onTouchStart?: (e: React.TouchEvent) => void;
+  onDragStart?: (event: React.DragEvent<HTMLDivElement>) => void;
+  onDragOver?: (event: React.DragEvent<HTMLDivElement>) => void;
+  onDrop?: (event: React.DragEvent<HTMLDivElement>) => void;
+  onDragEnd?: () => void;
   /** Bulk selection props */
   showBulkCheckbox?: boolean;
   isBulkSelected?: boolean;
@@ -81,8 +84,11 @@ export function NoteCard({
   isDragged = false, 
   isDraggedOver = false,
   isSelected = false,
-  onMouseDown,
   onTouchStart,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
   showBulkCheckbox = false,
   isBulkSelected = false,
   onBulkSelect,
@@ -451,8 +457,12 @@ export function NoteCard({
         )}
         onClick={handleCardClick}
         data-note-id={note.id}
-        onMouseDown={draggable ? onMouseDown : undefined}
         onTouchStart={draggable ? onTouchStart : undefined}
+        draggable={draggable}
+        onDragStart={draggable ? onDragStart : undefined}
+        onDragOver={draggable ? onDragOver : undefined}
+        onDrop={draggable ? onDrop : undefined}
+        onDragEnd={draggable ? onDragEnd : undefined}
       >
         <CardContent className="py-2 px-2 h-full flex flex-col">
           {/* Title and actions share one row, matching list view. They used to be
@@ -542,8 +552,12 @@ export function NoteCard({
       )}
       onClick={handleCardClick}
       data-note-id={note.id}
-      onMouseDown={draggable ? onMouseDown : undefined}
       onTouchStart={draggable ? onTouchStart : undefined}
+      draggable={draggable}
+      onDragStart={draggable ? onDragStart : undefined}
+      onDragOver={draggable ? onDragOver : undefined}
+      onDrop={draggable ? onDrop : undefined}
+      onDragEnd={draggable ? onDragEnd : undefined}
     >
       <CardContent className={`px-2 py-2 h-full ${viewType !== 'list' ? 'flex flex-col' : ''}`}>
         {viewType === 'x2' ? (

@@ -25,6 +25,8 @@ All colors MUST be HSL.
 
     --card: 0 0% 100%;
     --card-foreground: 0 0% 2%;
+    --item-card-surface: 0 0% 100%;
+    --surface-shadow: 0 4px 12px rgba(15, 13, 10, 0.12);
 
     /*
      * Card surface, opaque. The cards used to hardcode a cool blue-grey wash
@@ -175,6 +177,8 @@ All colors MUST be HSL.
 
     --card: 30 7% 14%;
     --card-foreground: 0 0% 99%;
+    --item-card-surface: 30 7% 21%;
+    --surface-shadow: 0 6px 18px rgba(0, 0, 0, 0.42);
 
     /* Same token, dark value. Matches the raised surface Grok uses. */
     --surface-card: 30 7% 14% / 0.85;

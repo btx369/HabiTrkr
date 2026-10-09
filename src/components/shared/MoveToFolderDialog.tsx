@@ -27,8 +27,10 @@ interface MoveToFolderDialogProps<T extends MovableFolder> {
   onClose: () => void;
   folders: T[];
   onSelectFolder: (folderId: string) => void;
+  onMoveComplete?: () => void;
   onCreateNewFolder: () => void;
-  currentFolderId?: string;
+  itemIdsToMove: string[];
+  getFolderItemIds: (folder: T) => string[];
   /**
    * How many items the folder holds, and what to call them. Notes, events and habits each
    * keep their ids under a different key, so the caller supplies the count rather than this
@@ -52,8 +54,10 @@ export function MoveToFolderDialog<T extends MovableFolder>({
   onClose,
   folders,
   onSelectFolder,
+  onMoveComplete,
   onCreateNewFolder,
-  currentFolderId,
+  itemIdsToMove,
+  getFolderItemIds,
   getItemCount,
   itemNoun,
   emptyMessage,
@@ -77,7 +81,7 @@ export function MoveToFolderDialog<T extends MovableFolder>({
        * were more folders than fitted.
        */
       footer={
-        <div className="flex justify-center w-full pt-4">
+        <div className="flex justify-center w-full pt-3">
           <Button onClick={onCreateNewFolder} className="bg-black text-white hover:bg-black/90">
             {t('createNewFolder')}
             <FolderPlus size={16} className="ml-2" />
@@ -104,7 +108,8 @@ export function MoveToFolderDialog<T extends MovableFolder>({
           <p className="text-center py-8 text-muted-foreground">{emptyMessage ?? t('noFoldersAvailable')}</p>
         ) : (
           folders.map((folder) => {
-              const isCurrentFolder = folder.id === currentFolderId;
+              const folderItemIds = new Set(getFolderItemIds(folder));
+              const isCurrentFolder = itemIdsToMove.length > 0 && itemIdsToMove.every(id => folderItemIds.has(id));
               const hasColor = folder.color && !isDefaultColor(folder.color);
               const iconColor = getColoredIconClass(!!hasColor);
               return (
@@ -113,7 +118,12 @@ export function MoveToFolderDialog<T extends MovableFolder>({
                   color={folder.color}
                   useFallback
                   className={`transition-all ${isCurrentFolder ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
-                  onClick={() => !isCurrentFolder && onSelectFolder(folder.id)}
+                  onClick={() => {
+                    if (isCurrentFolder) return;
+                    onSelectFolder(folder.id);
+                    onMoveComplete?.();
+                    onClose();
+                  }}
                 >
                   <CardContent className="p-3">
                     <div className="flex items-center gap-3">

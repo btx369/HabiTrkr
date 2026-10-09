@@ -15,7 +15,7 @@ const TabsList = React.forwardRef<
       "inline-flex h-10 items-center justify-center rounded-full p-1 text-muted-foreground",
       "bg-[hsl(var(--surface-card))]",
       "backdrop-blur-[12px]",
-      "border border-[hsl(var(--glass-border))]",
+      "border border-foreground/10",
       "shadow-[0_4px_16px_rgba(0,0,0,0.08)]",
       className
     )}
@@ -59,7 +59,7 @@ const SlidingTabsList = React.forwardRef<
         "relative inline-flex h-10 items-center justify-center rounded-full p-1 text-muted-foreground",
         "bg-[hsl(var(--surface-card))]",
         "backdrop-blur-[12px]",
-        "border border-[hsl(var(--glass-border))]",
+        "border border-foreground/10",
         "shadow-[0_4px_16px_rgba(0,0,0,0.08)]",
         className
       )}

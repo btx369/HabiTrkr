@@ -47,7 +47,7 @@ export function HabitFolderCreator({ isOpen, onClose, onSave }: HabitFolderCreat
       onClose={handleClose}
       title={t('createNewFolder')}
       onSave={handleSave}
-      saveLabel={t('createFolder')}
+      saveLabel={t('save')}
       saveDisabled={!name.trim()}
     >
       <TitleInput
@@ -78,6 +78,7 @@ export function HabitFolderCreator({ isOpen, onClose, onSave }: HabitFolderCreat
         onColorChange={setColor}
         icon={Palette}
         iconColor={ICON_COLOR}
+        singleRow
       />
     </EditorDialog>
   );

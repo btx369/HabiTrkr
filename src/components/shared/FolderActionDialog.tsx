@@ -11,6 +11,7 @@ interface FolderActionDialogProps {
   /** How many items the folder action would take with it. */
   itemCount: number;
   itemKind: EntityKind;
+  bulk?: boolean;
   onFolderOnly: () => void;
   onAll: () => void;
   onOpenChange: (open: boolean) => void;
@@ -34,13 +35,18 @@ export function FolderActionDialog({
   folderName,
   itemCount,
   itemKind,
+  bulk = false,
   onFolderOnly,
   onAll,
   onOpenChange,
 }: FolderActionDialogProps) {
   const { t, language } = useLanguage();
 
-  const title = kind === 'restore'
+  const title = bulk && kind === 'delete'
+    ? t('deleteSelectedItems')
+    : bulk && kind === 'archive'
+      ? t('archiveSelectedItems')
+      : kind === 'restore'
     ? t('restoreFolder')
     : namedSentence(t, kind === 'delete' ? 'confirmDeleteNamed' : 'confirmArchiveNamed', folderName);
 

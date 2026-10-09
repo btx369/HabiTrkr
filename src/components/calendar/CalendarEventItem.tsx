@@ -42,13 +42,14 @@ export function CalendarEventItem({
 
   // Use standardized color helpers for consistent styling
   const hasColor = !isDefaultColor(event.color);
+  const eventBorderClass = hasColor ? 'border-black/10 dark:border-black/10' : 'border-border';
   const badgeBorderClass = getColoredBorderClass(hasColor, 100);
   const textColorClass = hasColor ? 'text-[#000000]' : 'text-foreground';
   const mutedTextClass = hasColor ? 'text-[#000000]/70' : 'text-muted-foreground';
 
   return (
     <div 
-      className={`flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 px-2.5 py-2 rounded-md ${onClick ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''}`}
+      className={`flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 px-2.5 py-2 rounded-md border ${eventBorderClass} shadow-[var(--surface-shadow)] ${onClick ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''}`}
       style={getCardColorStylesWithFallback(event.color)}
       onClick={onClick}
       role={onClick ? 'button' : undefined}

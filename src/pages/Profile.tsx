@@ -202,6 +202,7 @@ export default function Profile() {
   };
 
   const bgColor = 'hsl(var(--background))';
+  const profilePanelClass = 'bg-card border border-border shadow-[var(--surface-shadow)] rounded-[20px]';
 
   return (
     <div 
@@ -214,7 +215,7 @@ export default function Profile() {
       {/* Content */}
       <div className="px-2 pb-8 space-y-6">
         {/* Profile Card */}
-        <div className="bg-[hsl(var(--glass-bg))] backdrop-blur-xl border border-[hsl(var(--glass-border))] rounded-[20px] p-6">
+        <div className={`${profilePanelClass} p-6`}>
           <div className="flex items-center gap-4">
             <div className="relative">
               <button
@@ -273,13 +274,13 @@ export default function Profile() {
         {/* Account Section */}
         <div>
           <h3 className="text-sm font-medium text-muted-foreground mb-2 px-2">{t('account')}</h3>
-          <div className="bg-[hsl(var(--glass-bg))] backdrop-blur-xl border border-[hsl(var(--glass-border))] rounded-[20px] overflow-hidden">
+          <div className={`${profilePanelClass} overflow-hidden`}>
             <SettingsRow
               icon={<Shield size={20} />}
               label={t('security')}
               onClick={handleComingSoon}
             />
-            <div className="h-px bg-border/50 mx-4" />
+            <div className="h-px bg-border mx-4" />
             <SettingsRow
               icon={<Tag size={20} />}
               label={t('tags')}
@@ -291,7 +292,7 @@ export default function Profile() {
         {/* Preferences Section */}
         <div>
           <h3 className="text-sm font-medium text-muted-foreground mb-2 px-2">{t('preferences')}</h3>
-          <div className="bg-[hsl(var(--glass-bg))] backdrop-blur-xl border border-[hsl(var(--glass-border))] rounded-[20px] overflow-hidden">
+          <div className={`${profilePanelClass} overflow-hidden`}>
             <SettingsRow
               icon={theme === 'dark' ? <Moon size={20} /> : <Sun size={20} />}
               label={t('theme')}
@@ -301,10 +302,12 @@ export default function Profile() {
                 <Switch 
                   checked={theme === 'dark'} 
                   onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+                  className="border-foreground/70 data-[state=unchecked]:bg-card data-[state=unchecked]:border-foreground/70 dark:data-[state=unchecked]:bg-muted [&_[data-state=unchecked]]:bg-foreground"
+                  thumbClassName="data-[state=unchecked]:translate-x-0.5"
                 />
               }
             />
-            <div className="h-px bg-border/50 mx-4" />
+            <div className="h-px bg-border mx-4" />
             <SettingsRow
               icon={toastsEnabled ? <Bell size={20} /> : <BellOff size={20} />}
               label={t('notifications')}
@@ -314,10 +317,12 @@ export default function Profile() {
                 <Switch 
                   checked={toastsEnabled} 
                   onCheckedChange={setToastsEnabled}
+                  className="border-foreground/70 data-[state=unchecked]:bg-card data-[state=unchecked]:border-foreground/70 dark:data-[state=unchecked]:bg-muted [&_[data-state=unchecked]]:bg-foreground"
+                  thumbClassName="data-[state=unchecked]:translate-x-0.5"
                 />
               }
             />
-            <div className="h-px bg-border/50 mx-4" />
+            <div className="h-px bg-border mx-4" />
             <SettingsRow
               icon={<Globe size={20} />}
               label={t('language')}
@@ -325,7 +330,7 @@ export default function Profile() {
               onClick={() => setLanguageDialogOpen(true)}
               showChevron
             />
-            <div className="h-px bg-border/50 mx-4" />
+            <div className="h-px bg-border mx-4" />
             <SettingsRow
               icon={<Calendar size={20} />}
               label={t('weekStartsOn')}
@@ -381,7 +386,7 @@ export default function Profile() {
                 </div>
               </DialogContent>
             </Dialog>
-            <div className="h-px bg-border/50 mx-4" />
+            <div className="h-px bg-border mx-4" />
             {/* Stacked on phones: the label plus two buttons do not fit on one row at
                 390px, which previously pushed the Import button past the card edge. */}
             <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -395,7 +400,7 @@ export default function Profile() {
                 <Button 
                   variant="default" 
                   size="sm"
-                  className="bg-black text-white hover:bg-black/90 rounded-full" 
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full"
                   onClick={handleExport}
                 >
                   <Download className="h-4 w-4 mr-1" /> {t('exportBackup')}
@@ -403,7 +408,7 @@ export default function Profile() {
                 <Button 
                   variant="default" 
                   size="sm"
-                  className="bg-black text-white hover:bg-black/90 rounded-full" 
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full"
                   onClick={handleImportClick}
                 >
                   <Upload className="h-4 w-4 mr-1" /> {t('importBackup')}
@@ -423,25 +428,25 @@ export default function Profile() {
         {/* Support Section */}
         <div>
           <h3 className="text-sm font-medium text-muted-foreground mb-2 px-2">{t('support')}</h3>
-          <div className="bg-[hsl(var(--glass-bg))] backdrop-blur-xl border border-[hsl(var(--glass-border))] rounded-[20px] overflow-hidden">
+          <div className={`${profilePanelClass} overflow-hidden`}>
             <SettingsRow
               icon={<MessageSquare size={20} />}
               label={t('feedback')}
               onClick={handleComingSoon}
             />
-            <div className="h-px bg-border/50 mx-4" />
+            <div className="h-px bg-border mx-4" />
             <SettingsRow
               icon={<HelpCircle size={20} />}
               label={t('helpAbout')}
               onClick={handleComingSoon}
             />
-            <div className="h-px bg-border/50 mx-4" />
+            <div className="h-px bg-border mx-4" />
             <SettingsRow
               icon={<FileText size={20} />}
               label={t('termsOfService')}
               onClick={handleComingSoon}
             />
-            <div className="h-px bg-border/50 mx-4" />
+            <div className="h-px bg-border mx-4" />
             <SettingsRow
               icon={<Lock size={20} />}
               label={t('privacyPolicy')}
@@ -453,13 +458,13 @@ export default function Profile() {
         {/* Danger Zone Section */}
         <div>
           <h3 className="text-sm font-medium text-muted-foreground mb-2 px-2">{t('dangerZone')}</h3>
-          <div className="bg-[hsl(var(--glass-bg))] backdrop-blur-xl border border-[hsl(var(--glass-border))] rounded-[20px] overflow-hidden">
+          <div className={`${profilePanelClass} overflow-hidden`}>
             <SettingsRow
               icon={<LogOut size={20} />}
               label={t('logOut')}
               onClick={handleComingSoon}
             />
-            <div className="h-px bg-border/50 mx-4" />
+            <div className="h-px bg-border mx-4" />
             <SettingsRow
               icon={<Trash2 size={20} className="text-destructive" />}
               label={t('deleteAccount')}

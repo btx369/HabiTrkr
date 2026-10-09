@@ -64,6 +64,7 @@ export function FolderEditorFields({
         onColorChange={onColorChange}
         icon={Palette}
         iconColor={ICON_COLOR}
+        singleRow
       />
     </>
   );

@@ -3,10 +3,14 @@ import * as SwitchPrimitives from "@radix-ui/react-switch"
 
 import { cn } from "@/lib/utils"
 
+type SwitchProps = React.ComponentPropsWithoutRef<typeof SwitchPrimitives.Root> & {
+  thumbClassName?: string;
+};
+
 const Switch = React.forwardRef<
   React.ElementRef<typeof SwitchPrimitives.Root>,
-  React.ComponentPropsWithoutRef<typeof SwitchPrimitives.Root>
->(({ className, ...props }, ref) => (
+  SwitchProps
+>(({ className, thumbClassName, ...props }, ref) => (
   <SwitchPrimitives.Root
     /*
      * ON is a solid near-black fill in light mode and near-white in dark, both from
@@ -41,7 +45,8 @@ const Switch = React.forwardRef<
       */}
     <SwitchPrimitives.Thumb
       className={cn(
-        "pointer-events-none block h-4 w-4 rounded-full bg-primary-foreground shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0"
+        "pointer-events-none block h-4 w-4 rounded-full bg-primary-foreground shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0",
+        thumbClassName
       )}
     />
   </SwitchPrimitives.Root>

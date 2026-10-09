@@ -9,6 +9,7 @@ interface ColorPickerProps {
   label?: string;
   icon?: LucideIcon;
   iconColor?: string;
+  singleRow?: boolean;
 }
 
 export function ColorPicker({ 
@@ -16,7 +17,8 @@ export function ColorPicker({
   onColorChange, 
   label,
   icon: Icon,
-  iconColor
+  iconColor,
+  singleRow = false
 }: ColorPickerProps) {
   const { t } = useLanguage();
   // Defaulted here rather than in the parameter list: a default value cannot see the hook,
@@ -28,11 +30,13 @@ export function ColorPicker({
         {Icon && <Icon size={16} color={iconColor} />}
         {resolvedLabel}
       </Label>
-      <div className="grid grid-cols-6 gap-3 mt-3 p-1 justify-items-center">
+      <div className={singleRow
+        ? 'flex w-full flex-nowrap justify-start gap-1 mt-3 p-1 md:justify-between md:gap-0 md:px-1'
+        : 'grid grid-cols-6 gap-3 mt-3 p-1 justify-items-center'}>
         <button
           type="button"
           onClick={() => onColorChange('#FFFFFF')}
-          className={`w-8 h-8 rounded-full border-2 flex items-center justify-center bg-white transition-all ${
+          className={`${singleRow ? 'w-6 h-6' : 'w-8 h-8'} rounded-full border-2 flex items-center justify-center bg-white transition-all ${
             selectedColor === '#FFFFFF' || selectedColor === ''
               ? 'border-foreground scale-110' 
               : 'border-border'
@@ -44,7 +48,7 @@ export function ColorPicker({
           <button
             key={color}
             type="button"
-            className={`w-8 h-8 rounded-full border-2 transition-all ${
+            className={`${singleRow ? 'w-6 h-6' : 'w-8 h-8'} rounded-full border-2 transition-all ${
               selectedColor === color 
                 ? 'border-foreground scale-110' 
                 : 'border-border'

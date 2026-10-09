@@ -45,7 +45,7 @@ export function NoteFolderCreator({ isOpen, onClose, onSave }: NoteFolderCreator
       onClose={handleClose}
       title={t('createNewFolder')}
       onSave={handleSave}
-      saveLabel={t('createFolder')}
+      saveLabel={t('save')}
       saveDisabled={!name.trim()}
     >
       <TitleInput
@@ -76,6 +76,7 @@ export function NoteFolderCreator({ isOpen, onClose, onSave }: NoteFolderCreator
         onColorChange={setColor}
         icon={Palette}
         iconColor={ICON_COLOR}
+        singleRow
       />
     </EditorDialog>
   );

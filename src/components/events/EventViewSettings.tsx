@@ -1,4 +1,4 @@
-import { Settings, ChevronUp, ChevronDown } from 'lucide-react';
+import { Settings, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -83,9 +83,9 @@ export function EventViewSettings({
             if (isViewType(value)) onViewTypeChange(value);
           }}
         >
-          <DropdownMenuRadioItem value="x3">{t('viewX3')}</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="x2">{t('viewX2')}</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="list">{t('viewList')}</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="x3" onSelect={(event) => event.preventDefault()}>{t('viewX3')}</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="x2" onSelect={(event) => event.preventDefault()}>{t('viewX2')}</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="list" onSelect={(event) => event.preventDefault()}>{t('viewList')}</DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
         
         <DropdownMenuSeparator />
@@ -94,17 +94,14 @@ export function EventViewSettings({
         {(['title', 'dateCreated', 'dateModified', 'daysRemaining'] as const).map((type) => (
           <DropdownMenuItem
             key={type}
+            onSelect={(event) => event.preventDefault()}
             onClick={() => handleSortClick(type)}
             className="flex items-center gap-2 cursor-pointer"
           >
             <div className="w-4 h-4 flex items-center justify-center">
               {sortType === type && (
                 <>
-                  {sortDirection === 'asc' ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
+                  <ChevronUp className={`h-4 w-4 transition-transform duration-200 ${sortDirection === 'desc' ? 'rotate-180' : ''}`} />
                 </>
               )}
             </div>

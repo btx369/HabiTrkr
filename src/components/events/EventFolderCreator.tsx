@@ -11,11 +11,11 @@ const ICON_COLOR = 'currentColor';
 interface EventFolderCreatorProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (folderData: Omit<EventFolder, 'id' | 'createdAt' | 'eventIds'>, eventIdToMove?: string) => void;
-  eventIdToMove?: string | null;
+  onSave: (folderData: Omit<EventFolder, 'id' | 'createdAt' | 'eventIds'>, eventIdsToMove?: string[]) => void;
+  eventIdsToMove?: string[];
 }
 
-export function EventFolderCreator({ isOpen, onClose, onSave, eventIdToMove }: EventFolderCreatorProps) {
+export function EventFolderCreator({ isOpen, onClose, onSave, eventIdsToMove }: EventFolderCreatorProps) {
   const { t } = useLanguage();
   const [formData, setFormData] = useState({
     name: '',
@@ -28,7 +28,7 @@ export function EventFolderCreator({ isOpen, onClose, onSave, eventIdToMove }: E
   const handleSave = () => {
     if (!formData.name.trim()) return;
     
-    onSave(formData, eventIdToMove || undefined);
+    onSave(formData, eventIdsToMove);
     handleClose();
   };
 
@@ -49,7 +49,7 @@ export function EventFolderCreator({ isOpen, onClose, onSave, eventIdToMove }: E
       onClose={handleClose}
       title={t('createNewFolder')}
       onSave={handleSave}
-      saveLabel={t('createFolder')}
+      saveLabel={t('save')}
       saveDisabled={!formData.name.trim()}
     >
       <TitleInput
@@ -80,6 +80,7 @@ export function EventFolderCreator({ isOpen, onClose, onSave, eventIdToMove }: E
         onColorChange={(color) => setFormData(prev => ({ ...prev, color }))}
         icon={Palette}
         iconColor={ICON_COLOR}
+        singleRow
       />
     </EditorDialog>
   );

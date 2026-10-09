@@ -119,6 +119,7 @@ export function NoteEditor({ note, isOpen, onClose, onSave }: NoteEditorProps) {
         onColorChange={(color) => updateField('color', color)}
         icon={Palette}
         iconColor={ICON_COLOR}
+        singleRow
       />
     </EditorDialog>
   );

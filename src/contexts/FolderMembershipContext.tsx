@@ -47,13 +47,12 @@ export interface FiledFolder {
 /**
  * The ids to publish as filed.
  *
- * A folder's own ids cover everything inside it, archived folders included. An item archived
- * on its own is the case those ids miss: archiving it takes it out of the folder's ids and
- * records where it came from in `originalFolderId`, which is also where restoring it puts it
- * back. So an archived item counts as filed while the folder it remembers still exists —
- * otherwise the glyph disappears from its card the moment the item is archived, which is
- * exactly what was reported. A folder that has since been deleted is not counted, because
- * the item would then be remembering somewhere it can no longer go back to.
+ * `folders` contains active folders only, so items in an archived folder do not show a folder
+ * glyph until that folder is restored. An item archived on its own is the case those ids miss:
+ * archiving it takes it out of the active folder's ids and records where it came from in
+ * `originalFolderId`, which is also where restoring it puts it back. So an archived item counts
+ * as filed while its original folder is still active. A folder that has since been deleted or
+ * archived is not counted.
  */
 export function collectFiledIds(
   folders: readonly FiledFolder[],

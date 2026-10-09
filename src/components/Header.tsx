@@ -135,7 +135,7 @@ export const Header = ({ showSearch = false, searchQuery = '', onSearchChange, p
                 value={searchQuery}
                 onChange={(value) => onSearchChange?.(value)}
                 placeholder={t('search')}
-                inputClassName="pl-10 pr-10 rounded-full bg-[hsl(var(--glass-bg))] backdrop-blur-xl border border-[hsl(var(--glass-border))]"
+                inputClassName="pl-10 pr-10 rounded-full bg-[hsl(var(--glass-bg))] backdrop-blur-xl border border-foreground/10"
                 autoFocus
               />
               <Button

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { toast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useToastSettings } from '@/contexts/ToastContext';
 import { folderAndCount, itemDisplayName, type EntityKind } from '@/lib/countedMessage';
 import {
   planFolderAction,
@@ -87,6 +87,7 @@ export function useFolderActions<I extends ItemWithId, F extends FolderWithIds>(
   markItem = (item) => item,
 }: FolderActionsConfig<I, F>) {
   const { t, language } = useLanguage();
+  const { toast } = useToastSettings();
   const [pending, setPending] = useState<{ kind: FolderActionKind; folderId: string } | null>(null);
 
   const folderById = (folderId: string): F | undefined =>
@@ -107,7 +108,7 @@ export function useFolderActions<I extends ItemWithId, F extends FolderWithIds>(
   };
 
   /** Applies an action to the page's own state. The only per-page part is which setters. */
-  const apply = (kind: FolderActionKind, scope: FolderActionScope, folderId: string) => {
+  const apply = (kind: FolderActionKind, scope: FolderActionScope, folderId: string, notify = true) => {
     const folder = folderById(folderId);
     if (!folder) return;
 
@@ -154,16 +155,38 @@ export function useFolderActions<I extends ItemWithId, F extends FolderWithIds>(
       }
     }
 
-    const count = plan.affectedItemIds.length;
-    toast.success(count > 0
-      ? folderAndCount(t, language, toastKey[kind], itemKind, count)
+    if (notify) {
+      const count = plan.affectedItemIds.length;
+      toast.success(count > 0
+        ? folderAndCount(t, language, toastKey[kind], itemKind, count)
+        : t(plainToastKey[kind]).replace('{entity}', t('tabFolders')));
+    }
+  };
+
+  const applyBulk = (kind: FolderActionKind, scope: FolderActionScope, folderIds: string[]) => {
+    const uniqueFolderIds = [...new Set(folderIds)];
+    const selectedFolders = uniqueFolderIds.map(folderById).filter((folder): folder is F => Boolean(folder));
+    if (selectedFolders.length === 0) return;
+
+    const selectedItemIds = new Set(scope === 'withItems'
+      ? selectedFolders.flatMap(itemIdsOf)
+      : []);
+    const itemCount = kind === 'archive'
+      ? new Set(items.filter((item) => selectedItemIds.has(item.id)).map((item) => item.id)).size
+      : kind === 'delete'
+        ? new Set([...items, ...archivedItems].filter((item) => selectedItemIds.has(item.id)).map((item) => item.id)).size
+        : new Set(archivedItems.filter((item) => selectedItemIds.has(item.id)).map((item) => item.id)).size;
+
+    uniqueFolderIds.forEach((folderId) => apply(kind, scope, folderId, false));
+    toast.success(itemCount > 0
+      ? folderAndCount(t, language, toastKey[kind], itemKind, itemCount)
       : t(plainToastKey[kind]).replace('{entity}', t('tabFolders')));
   };
 
   /**
    * Opens the question, or goes straight ahead when there is nothing to choose.
    *
-   * `folderOnly` and `withItems` differ only in what happens to the items, so a folder with
+   * `folderOnly` and `withItems` differ only in whether items are acted on, so a folder with
    * none of them has one possible outcome and does not need a dialog.
    */
   const request = (kind: FolderActionKind, folderId: string, scopeWhenEmpty: FolderActionScope) => {
@@ -225,6 +248,8 @@ export function useFolderActions<I extends ItemWithId, F extends FolderWithIds>(
      * everything they are about and must not open a dialog per folder as they run.
      */
     applyFolderAction: apply,
+    /** Apply a folder action to a selection and show one combined toast. */
+    applyBulkFolderAction: applyBulk,
     /** Props for `<FolderActionDialog />`, spread at the page's root. */
     dialog,
   };

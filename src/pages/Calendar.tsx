@@ -245,7 +245,7 @@ export default function Calendar() {
     } else {
       return format(currentDate, 'MMMM yyyy', { locale: dateLocale });
     }
-  }, [currentDate, viewMode, weekStartsOn]);
+  }, [currentDate, viewMode, weekStartsOn, dateLocale]);
 
   // Weekly view data
   const weekStart = startOfWeek(currentDate, { weekStartsOn });
@@ -416,19 +416,26 @@ export default function Calendar() {
         {viewMode === 'monthly' && (
           <div className="space-y-2 mt-2">
             {/* Calendar Grid */}
-            <Card>
-              <CardContent className="px-2 py-2">
+            <Card className="overflow-hidden">
+              <CardContent className="p-0">
                 {/* Week day headers */}
-                <div className="grid grid-cols-7 gap-1 mb-2">
+                <div className="grid grid-cols-7 border-b">
                   {orderedDayNames.map((day, index) => (
-                    <div key={index} className="text-center text-sm font-medium text-muted-foreground p-2">
+                    <div key={index} className="border-r last:border-r-0 py-2 text-center text-sm font-medium text-muted-foreground">
                       {day}
                     </div>
                   ))}
                 </div>
                 
                 {/* Calendar days */}
-                <div className="grid grid-cols-7 gap-1">
+                <div
+                  className="grid grid-cols-7"
+                  style={{
+                    gridTemplateRows: `repeat(${calendarDays.length / 7}, minmax(0, 1fr))`,
+                    height: 'calc(100dvh - 19rem)',
+                    minHeight: '18rem',
+                  }}
+                >
                   {calendarDays.map(day => {
                     const dayEvents = filterEvents(getEventsForDate(day));
                     const hasEvents = dayEvents.length > 0;
@@ -441,15 +448,19 @@ export default function Calendar() {
                         onClick={() => setSelectedDate(day)}
                         onMouseDown={(e) => e.currentTarget.blur()}
                         className={cn(
-                          "aspect-square p-2 text-sm rounded-full transition-all relative",
-                          "focus:outline-none focus:ring-2 focus:ring-primary",
+                          "relative flex min-h-0 items-start justify-start border-b border-r p-2 text-sm text-left transition-colors last:border-r-0",
+                          "focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
                           isCurrentMonth ? "text-foreground" : "text-muted-foreground",
-                          isToday(day) && "bg-black text-white font-bold",
-                          isSelected && !isToday(day) && "bg-muted ring-2 ring-primary",
+                          isToday(day) && "font-bold",
+                          isSelected && !isToday(day) && "bg-muted",
                           
                         )}
                       >
-                        <span>{format(day, 'd')}</span>
+                        <span className={cn(
+                          "flex size-7 shrink-0 items-center justify-center rounded-full",
+                          isToday(day) && "bg-black text-white",
+                          isSelected && !isToday(day) && "ring-2 ring-primary",
+                        )}>{format(day, 'd')}</span>
                         {hasEvents && (
                           <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 flex gap-0.5">
                             {dayEvents.slice(0, 3).map((event, idx) => {

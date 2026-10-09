@@ -193,7 +193,7 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
       onClose={handleClose}
       title={mode === 'create' ? t('createHabit') : 'Edit Habit'}
       onSave={handleSave}
-      saveLabel={mode === 'create' ? t('createHabit') : t('save')}
+      saveLabel={t('save')}
       saveDisabled={!formData.name.trim()}
     >
       <TitleInput
@@ -226,6 +226,7 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
         onColorChange={(color) => setFormData(prev => ({ ...prev, color }))}
         icon={Palette}
         iconColor={ICON_COLOR}
+        singleRow
       />
       
       <div>

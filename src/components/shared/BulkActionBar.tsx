@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { 
-  CheckSquare, 
-  Square, 
+  CheckCheck,
   Pin, 
   Lock, 
-  Share, 
+  Share2,
   Copy, 
   FolderInput, 
   Palette, 
@@ -12,7 +11,8 @@ import {
   Trash2,
   ArchiveRestore,
   Notebook,
-  FolderOpen
+  FolderOpen,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -36,7 +36,7 @@ export type BulkActionType =
 
 interface BulkAction {
   type: BulkActionType;
-  icon: typeof CheckSquare;
+  icon: typeof CheckCheck;
   /**
    * A translation key — every label in the tables below is one — or plain English text if a
    * label is ever added without a key. See `resolveLabel` and `LABEL_KEYS` for how the two
@@ -55,6 +55,7 @@ const LABEL_KEYS = new Set([
   'all',
   'pin',
   'share',
+  'copy',
   'makeACopy',
   'move',
   'color',
@@ -69,10 +70,10 @@ const LABEL_KEYS = new Set([
 
 // Action configurations by context
 const NOTES_ACTIONS: BulkAction[] = [
-  { type: 'all', icon: CheckSquare, label: 'all' },
+  { type: 'all', icon: CheckCheck, label: 'all' },
   { type: 'pin', icon: Pin, label: 'pin' },
-  { type: 'share', icon: Share, label: 'share' },
-  { type: 'copy', icon: Copy, label: 'makeACopy' },
+  { type: 'share', icon: Share2, label: 'share' },
+  { type: 'copy', icon: Copy, label: 'copy' },
   { type: 'move', icon: FolderInput, label: 'move' },
   { type: 'color', icon: Palette, label: 'color' },
   { type: 'archive', icon: Archive, label: 'archive' },
@@ -80,9 +81,9 @@ const NOTES_ACTIONS: BulkAction[] = [
 ];
 
 const EVENTS_ACTIONS: BulkAction[] = [
-  { type: 'all', icon: CheckSquare, label: 'all' },
-  { type: 'share', icon: Share, label: 'share' },
-  { type: 'copy', icon: Copy, label: 'makeACopy' },
+  { type: 'all', icon: CheckCheck, label: 'all' },
+  { type: 'share', icon: Share2, label: 'share' },
+  { type: 'copy', icon: Copy, label: 'copy' },
   { type: 'move', icon: FolderInput, label: 'move' },
   { type: 'color', icon: Palette, label: 'color' },
   { type: 'archive', icon: Archive, label: 'archive' },
@@ -90,7 +91,7 @@ const EVENTS_ACTIONS: BulkAction[] = [
 ];
 
 const FOLDERS_ACTIONS: BulkAction[] = [
-  { type: 'all', icon: CheckSquare, label: 'all' },
+  { type: 'all', icon: CheckCheck, label: 'all' },
   { type: 'pin', icon: Pin, label: 'pin' },
   { type: 'color', icon: Palette, label: 'color' },
   { type: 'archive', icon: Archive, label: 'archive' },
@@ -98,7 +99,7 @@ const FOLDERS_ACTIONS: BulkAction[] = [
 ];
 
 const HABITS_ACTIONS: BulkAction[] = [
-  { type: 'all', icon: CheckSquare, label: 'all' },
+  { type: 'all', icon: CheckCheck, label: 'all' },
   { type: 'pin', icon: Pin, label: 'pin' },
   { type: 'move', icon: FolderInput, label: 'move' },
   { type: 'color', icon: Palette, label: 'color' },
@@ -115,14 +116,14 @@ const ARCHIVED_NOTES_ACTIONS: BulkAction[] = [
 ];
 
 const ARCHIVED_EVENTS_ACTIONS: BulkAction[] = [
-  { type: 'allItems', icon: CheckSquare, label: 'allEvents' },
+  { type: 'allItems', icon: CheckCheck, label: 'allEvents' },
   { type: 'allFolders', icon: FolderOpen, label: 'allFolders' },
   { type: 'restore', icon: ArchiveRestore, label: 'restore' },
   { type: 'delete', icon: Trash2, label: 'delete' },
 ];
 
 const ARCHIVED_HABITS_ACTIONS: BulkAction[] = [
-  { type: 'allItems', icon: CheckSquare, label: 'allHabits' },
+  { type: 'allItems', icon: CheckCheck, label: 'allHabits' },
   { type: 'allFolders', icon: FolderOpen, label: 'allFolders' },
   { type: 'restore', icon: ArchiveRestore, label: 'restore' },
   { type: 'delete', icon: Trash2, label: 'delete' },
@@ -130,7 +131,7 @@ const ARCHIVED_HABITS_ACTIONS: BulkAction[] = [
 
 // Keep legacy ARCHIVED_ACTIONS for standalone folder archives if needed
 const ARCHIVED_ACTIONS: BulkAction[] = [
-  { type: 'all', icon: CheckSquare, label: 'all' },
+  { type: 'all', icon: CheckCheck, label: 'all' },
   { type: 'restore', icon: ArchiveRestore, label: 'restore' },
   { type: 'delete', icon: Trash2, label: 'delete' },
 ];
@@ -145,6 +146,7 @@ interface BulkActionBarProps {
   isAllFoldersSelected?: boolean;  // For folders only in archived view
   selectedCount: number;
   onAction: (action: BulkActionType, color?: string) => void;
+  onClearSelection: () => void;
 }
 
 export function BulkActionBar({
@@ -155,6 +157,7 @@ export function BulkActionBar({
   isAllFoldersSelected = false,
   selectedCount,
   onAction,
+  onClearSelection,
 }: BulkActionBarProps) {
   const [colorPopoverOpen, setColorPopoverOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState('#FFFFFF');
@@ -223,18 +226,30 @@ export function BulkActionBar({
     }
   };
 
+  if (!isVisible) return null;
+
   return (
     <div 
       className={cn(
-        "fixed bottom-[72px] left-0 right-0 z-40 bg-nav border-t border-nav-border",
-        "transform transition-transform duration-300",
-        isVisible ? "translate-y-0" : "translate-y-[calc(100%+72px)] pointer-events-none"
+        "fixed bottom-[88px] left-1/2 z-40 -translate-x-1/2"
       )}
-      style={{
-        transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
-      }}
     >
-      <div className="flex items-center justify-center w-full px-2 md:px-4 py-3">
+      <div className="flex w-max max-w-[calc(100vw-16px)] items-center justify-center gap-2 rounded-full border border-nav-border bg-nav p-2">
+        {selectedCount > 0 ? (
+          <Button
+            variant="ghostStatic"
+            onClick={onClearSelection}
+            aria-label={t('clearSelection')}
+            className="flex h-11 min-w-[44px] items-center justify-center gap-1 px-1.5 text-nav-foreground transition-all duration-300 ease-out hover:bg-white/10 hover:text-nav-foreground"
+          >
+            <X size={15} />
+            <span className="text-xs font-medium">{selectedCount}</span>
+          </Button>
+        ) : (
+          <div className="flex h-11 min-w-[68px] items-center justify-center px-2 text-[10px] font-medium text-nav-foreground">
+            {t('selectItems')}
+          </div>
+        )}
         {actions.map((action) => {
           const Icon = action.icon;
           const isSelectionAction = action.type === 'all' || action.type === 'allItems' || action.type === 'allFolders';
@@ -245,11 +260,11 @@ export function BulkActionBar({
               <PopoverTrigger asChild>
                   <Button
                     variant="ghostStatic"
-                    className="flex flex-1 flex-col items-center justify-center h-11 md:h-14 min-w-0 px-1 md:px-2 gap-0 text-nav-foreground hover:text-nav-foreground hover:bg-nav-foreground/20 data-[state=open]:bg-nav-foreground/20"
+                    className="flex h-11 min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0 px-0.5 text-nav-foreground transition-all duration-300 ease-out hover:bg-white/10 hover:text-nav-foreground data-[state=open]:bg-white/10 md:min-w-[48px] md:basis-auto md:px-2"
                     disabled={selectedCount === 0}
                   >
-                    <Icon size={20} className="md:w-[22px] md:h-[22px] shrink-0" />
-                    <span className="text-[10px] md:text-xs leading-tight truncate">{resolveLabel(action.label)}</span>
+                    <Icon size={18} className="shrink-0 md:h-[22px] md:w-[22px]" />
+                    <span className="whitespace-nowrap text-[9px] leading-tight md:text-xs">{resolveLabel(action.label)}</span>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-3" align="center" side="top">
@@ -268,20 +283,18 @@ export function BulkActionBar({
               key={action.type}
               variant="ghost"
               className={cn(
-                "flex flex-1 flex-col items-center justify-center h-11 md:h-14 min-w-0 px-1 md:px-2 gap-0",
+                "flex h-11 min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0 px-0.5 transition-all duration-300 ease-out md:min-w-[48px] md:basis-auto md:px-2",
+                isSelectionAction && isActionSelected(action.type) && "bg-nav-active hover:bg-nav-active",
                 action.type === 'delete'
-                  ? "text-destructive hover:text-destructive hover:bg-destructive/20" 
-                  : "text-nav-foreground hover:text-nav-foreground hover:bg-nav-foreground/20 data-[state=open]:bg-nav-foreground/20"
+                  ? "text-destructive hover:text-destructive hover:bg-white/10"
+                  : "text-nav-foreground hover:text-nav-foreground hover:bg-white/10 data-[state=open]:bg-white/10"
               )}
               onClick={() => onAction(action.type)}
               disabled={!isSelectionAction && selectedCount === 0}
+              aria-pressed={isSelectionAction ? isActionSelected(action.type) : undefined}
             >
-              {isSelectionAction ? (
-                isActionSelected(action.type) ? <CheckSquare size={20} className="md:w-[22px] md:h-[22px] shrink-0" /> : <Square size={20} className="md:w-[22px] md:h-[22px] shrink-0" />
-              ) : (
-                <Icon size={20} className="md:w-[22px] md:h-[22px] shrink-0" />
-              )}
-              <span className="text-[10px] md:text-xs leading-tight truncate">{resolveLabel(action.label)}</span>
+              <Icon size={18} className="shrink-0 md:h-[22px] md:w-[22px]" />
+              <span className="whitespace-nowrap text-[9px] leading-tight md:text-xs">{resolveLabel(action.label)}</span>
             </Button>
           );
         })}

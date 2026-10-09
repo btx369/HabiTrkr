@@ -77,7 +77,7 @@ export function NoteFolderEditor({ isOpen, onClose, onSave, initialFolder }: Not
       onClose={handleClose}
       title={initialFolder ? t('editFolder') : t('createNewFolder')}
       onSave={handleSubmit}
-      saveLabel={initialFolder ? t('save') : t('createFolder')}
+      saveLabel={t('save')}
       saveDisabled={!formData.name.trim()}
     >
       <FolderEditorFields

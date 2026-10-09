@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react';
 import { format, isAfter, startOfDay } from 'date-fns';
-import { Pin, RotateCcw, Trash2, Check, FolderOpen } from 'lucide-react';
+import { Pin, RotateCcw, Trash2, Check, FolderOpen, GripVertical } from 'lucide-react';
 import { CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -42,6 +42,12 @@ interface HabitCardProps {
   showBulkCheckbox?: boolean;
   isBulkSelected?: boolean;
   onBulkSelect?: (id: string) => void;
+  isDragEnabled?: boolean;
+  isDragged?: boolean;
+  onDragStart?: (id: string, event: React.DragEvent<HTMLDivElement>) => void;
+  onDragOver?: (id: string, event: React.DragEvent<HTMLDivElement>) => void;
+  onDrop?: (event: React.DragEvent<HTMLDivElement>) => void;
+  onDragEnd?: () => void;
 }
 
 export function HabitCard({
@@ -61,6 +67,12 @@ export function HabitCard({
   showBulkCheckbox,
   isBulkSelected,
   onBulkSelect,
+  isDragEnabled = false,
+  isDragged = false,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
 }: HabitCardProps) {
   const { weekStartDay } = useWeekStart();
   const isCompletedToday = isCompletedForDate(habit, new Date());
@@ -80,6 +92,15 @@ export function HabitCard({
 
   const shouldAnimateCheckbox = bulkModeEntryRef.current !== null && 
     (Date.now() - bulkModeEntryRef.current) < 100;
+
+  const handleCardAction = (event: React.MouseEvent, action: () => void) => {
+    event.stopPropagation();
+    if (showBulkCheckbox) {
+      onBulkSelect?.(habit.id);
+      return;
+    }
+    action();
+  };
 
   // Bulk selection checkbox component
   const BulkCheckbox = () => (
@@ -132,12 +153,25 @@ export function HabitCard({
   const coloredButtonClass = hasColor ? 'border hover:opacity-80' : 'border-foreground text-foreground';
 
   return (
-    <ColoredCard color={habit.color} data-habit-id={habit.id}>
+    <ColoredCard
+      color={habit.color}
+      data-habit-id={habit.id}
+      draggable={isDragEnabled && !showBulkCheckbox}
+      onDragStart={(event) => onDragStart?.(habit.id, event)}
+      onDragOver={(event) => onDragOver?.(habit.id, event)}
+      onDrop={onDrop}
+      onDragEnd={onDragEnd}
+      className={cn(showBulkCheckbox && 'cursor-pointer', isDragEnabled && !showBulkCheckbox && 'cursor-grab active:cursor-grabbing', isDragged && 'opacity-50')}
+      onClick={() => showBulkCheckbox && onBulkSelect?.(habit.id)}
+    >
       <CardContent className="px-2 py-2">
         <div className="flex items-start gap-3">
+          {isDragEnabled && !showBulkCheckbox && (
+            <GripVertical data-habit-drag-handle className="mt-0.5 h-5 w-5 shrink-0 cursor-grab touch-none text-muted-foreground active:cursor-grabbing" aria-label="Reorder habit" />
+          )}
           <div 
             className="flex-1 cursor-pointer"
-            onClick={() => onEdit(habit)}
+            onClick={(event) => handleCardAction(event, () => onEdit(habit))}
           >
             <h3 className={`text-left text-sm font-medium leading-tight line-clamp-2 ${textColorClass}`}>
               {highlightText(habit.name, searchQuery)}
@@ -168,11 +202,11 @@ export function HabitCard({
               <Badge variant="outline" className={`${badgeBorderClass} ${hasColor ? 'text-[#000000]' : ''}`}>{t('timesToday').replace('{count}', String(todayCount))}</Badge>
               <div className="flex gap-2">
                 {todayCount > 0 && (
-                <Button size="icon" variant="outline" className={`rounded-full h-8 w-8 ${coloredButtonClass}`} style={coloredButtonStyle} onClick={() => onUndoCompletion(habit.id)}>
+                <Button size="icon" variant="outline" className={`rounded-full h-8 w-8 ${coloredButtonClass}`} style={coloredButtonStyle} onClick={(event) => handleCardAction(event, () => onUndoCompletion(habit.id))}>
                     <RotateCcw size={14} />
                   </Button>
                 )}
-                <Button size="icon" variant="outline" className={`rounded-full h-8 w-8 ${coloredButtonClass}`} style={coloredButtonStyle} onClick={() => onMarkUnlimitedDone(habit.id)}>
+                <Button size="icon" variant="outline" className={`rounded-full h-8 w-8 ${coloredButtonClass}`} style={coloredButtonStyle} onClick={(event) => handleCardAction(event, () => onMarkUnlimitedDone(habit.id))}>
                   +1
                 </Button>
               </div>
@@ -228,7 +262,7 @@ export function HabitCard({
               </div>
               <div className="flex gap-2">
                 {(habit.useTimesPerDay ? todayCount > 0 : isCompletedToday) && (
-                <Button size="icon" variant="outline" className={`rounded-full h-8 w-8 ${coloredButtonClass}`} style={coloredButtonStyle} onClick={() => onUndoCompletion(habit.id)}>
+                <Button size="icon" variant="outline" className={`rounded-full h-8 w-8 ${coloredButtonClass}`} style={coloredButtonStyle} onClick={(event) => handleCardAction(event, () => onUndoCompletion(habit.id))}>
                     <RotateCcw size={14} />
                   </Button>
                 )}
@@ -237,8 +271,8 @@ export function HabitCard({
                   variant={hasReachedDailyLimit ? "default" : "outline"}
                   className={`rounded-full ${hasReachedDailyLimit ? '' : coloredButtonClass}`}
                   style={hasReachedDailyLimit ? {} : coloredButtonStyle}
-                  onClick={() => onMarkDone(habit.id)}
-                  disabled={hasReachedDailyLimit}
+                  onClick={(event) => handleCardAction(event, () => onMarkDone(habit.id))}
+                  disabled={!showBulkCheckbox && hasReachedDailyLimit}
                 >
                   {hasReachedDailyLimit ? t('done') : habit.useTimesPerDay ? `+1` : t('markDone')}
                 </Button>
@@ -302,14 +336,19 @@ export function HabitCard({
               return (
                 <button
                   key={date.toISOString()}
-                onClick={() => {
-                  if (!isActive) return;
-                  // Prevent marking future days as complete
-                  const today = startOfDay(new Date());
-                  if (isAfter(startOfDay(date), today)) return;
-                  onToggleCompletion(habit.id, date);
-                }}
-                  disabled={!isActive}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    if (showBulkCheckbox) {
+                      onBulkSelect?.(habit.id);
+                      return;
+                    }
+                    if (!isActive) return;
+                    // Prevent marking future days as complete
+                    const today = startOfDay(new Date());
+                    if (isAfter(startOfDay(date), today)) return;
+                    onToggleCompletion(habit.id, date);
+                  }}
+                  disabled={!isActive && !showBulkCheckbox}
                   style={dayStyle}
                   className={`w-full aspect-square rounded-full text-xs flex items-center justify-center transition-colors backdrop-blur-sm ${
                     hasColor 
@@ -340,6 +379,12 @@ interface ArchivedHabitCardProps {
   showBulkCheckbox?: boolean;
   isBulkSelected?: boolean;
   onBulkSelect?: (id: string) => void;
+  isDragEnabled?: boolean;
+  isDragged?: boolean;
+  onDragStart?: (id: string, event: React.DragEvent<HTMLDivElement>) => void;
+  onDragOver?: (id: string, event: React.DragEvent<HTMLDivElement>) => void;
+  onDrop?: (event: React.DragEvent<HTMLDivElement>) => void;
+  onDragEnd?: () => void;
 }
 
 export function ArchivedHabitCard({
@@ -350,6 +395,12 @@ export function ArchivedHabitCard({
   showBulkCheckbox,
   isBulkSelected,
   onBulkSelect,
+  isDragEnabled = false,
+  isDragged = false,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
 }: ArchivedHabitCardProps) {
   // This card has no icon row of its own, so the folder glyph is placed where the other
   // cards put their icons: immediately before the actions.
@@ -377,10 +428,25 @@ export function ArchivedHabitCard({
   );
 
   return (
-    <ColoredCard color={habit.color} data-habit-id={habit.id}>
+    <ColoredCard
+      color={habit.color}
+      data-habit-id={habit.id}
+      draggable={isDragEnabled && !showBulkCheckbox}
+      onDragStart={(event) => onDragStart?.(habit.id, event)}
+      onDragOver={(event) => onDragOver?.(habit.id, event)}
+      onDrop={onDrop}
+      onDragEnd={onDragEnd}
+      className={cn(showBulkCheckbox && 'cursor-pointer', isDragEnabled && !showBulkCheckbox && 'cursor-grab active:cursor-grabbing', isDragged && 'opacity-50')}
+      onClick={() => showBulkCheckbox && onBulkSelect?.(habit.id)}
+    >
       <CardContent className="px-2 py-2">
         <div className="flex items-start justify-between">
-          <h3 className="text-sm font-medium text-foreground">{highlightText(habit.name, searchQuery)}</h3>
+          <div className="flex min-w-0 items-start gap-2">
+            {isDragEnabled && !showBulkCheckbox && (
+              <GripVertical data-habit-drag-handle className="mt-0.5 h-5 w-5 shrink-0 cursor-grab touch-none text-muted-foreground active:cursor-grabbing" aria-label="Reorder habit" />
+            )}
+            <h3 className="text-sm font-medium text-foreground">{highlightText(habit.name, searchQuery)}</h3>
+          </div>
           <div className="flex items-center gap-2">
             {isFiled && <FolderOpen size={14} className={iconColorClass} />}
             {showBulkCheckbox ? (

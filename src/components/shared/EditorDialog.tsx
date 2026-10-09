@@ -56,13 +56,14 @@ export function EditorDialog({
 }: EditorDialogProps) {
   const { t } = useLanguage();
   const handleCancel = onCancel || onClose;
+  const resolvedScrollClassName = scrollClassName ?? 'scroll-thin';
 
   const renderFooter = () => {
     if (footer) return footer;
     if (!onSave) return null;
     
     return (
-      <div className="flex gap-2 pt-4 w-full">
+      <div className="flex w-full justify-end gap-2 pt-3">
         {/*
          * Cancel reads the theme tokens rather than hardcoding `border-black` in light and a
          * transparent border in dark, which is what it did before — the border vanished in
@@ -78,7 +79,7 @@ export function EditorDialog({
         <Button 
           variant="outline" 
           onClick={handleCancel} 
-          className="flex-1 h-10 text-sm text-foreground"
+          className="h-10 flex-1 text-sm text-foreground md:w-[88px] md:flex-none"
         >
           {/*
             * `cancelLabel` is optional so the default can be translated: a default
@@ -98,7 +99,7 @@ export function EditorDialog({
         <Button 
           onClick={onSave} 
           disabled={saveDisabled} 
-          className="flex-1 h-10 text-sm bg-primary text-primary-foreground hover:bg-primary/90"
+          className="h-10 flex-1 text-sm bg-primary text-primary-foreground hover:bg-primary/90 md:w-[80px] md:flex-none"
         >
           {saveLabel}
         </Button>
@@ -112,7 +113,7 @@ export function EditorDialog({
       <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
         <DialogContent 
           hideCloseButton={hideCloseButton} 
-          className="w-full max-w-none h-[calc(100vh-7rem)] max-h-none m-0 rounded-none sm:max-w-lg sm:h-auto sm:max-h-[90vh] sm:m-6 sm:rounded-lg flex flex-col"
+          className="w-full max-w-none h-[calc(100vh-7rem)] max-h-none m-0 rounded-none sm:w-[calc(100vw-12px)] sm:max-w-2xl sm:h-auto sm:max-h-[90vh] sm:m-6 sm:rounded-lg flex flex-col"
         >
           <DialogHeader className="text-center">
             <DialogTitle className="text-center">{title}</DialogTitle>
@@ -123,12 +124,12 @@ export function EditorDialog({
             * height is its content, so without it the middle grows past the dialog and the
             * footer is pushed off the bottom instead of staying put.
             */}
-          <div className={`space-y-6 overflow-y-auto flex-1 min-h-0 px-4 sm:px-6 ${scrollClassName ?? ''}`}>
+          <div className={`space-y-6 overflow-x-hidden overflow-y-auto flex-1 min-h-0 px-4 sm:px-6 ${resolvedScrollClassName}`}>
             {children}
           </div>
           
           {(footer || onSave) && (
-            <div className="px-4 sm:px-6 pb-6 sm:pb-0">
+            <div className="px-4 sm:px-6 pb-4 sm:pb-0">
               {renderFooter()}
             </div>
           )}
@@ -141,7 +142,7 @@ export function EditorDialog({
     <ResponsiveDialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <ResponsiveDialogContent 
         hideCloseButton={hideCloseButton}
-        className="sm:max-w-lg flex flex-col max-h-[100dvh] sm:max-h-[85vh] sm:h-auto"
+        className="flex w-full flex-col max-h-[100dvh] md:w-[calc(100vw-12px)] md:max-w-[384px] md:max-h-[85vh] md:h-auto md:p-4"
       >
         <ResponsiveDialogHeader className="text-center">
           <ResponsiveDialogTitle className="text-center">{title}</ResponsiveDialogTitle>
@@ -152,12 +153,12 @@ export function EditorDialog({
           * be allowed to shrink, or a long list pushes the footer out of the dialog instead of
           * scrolling inside it.
           */}
-        <div className={`space-y-6 overflow-y-auto flex-1 min-h-0 px-4 sm:px-6 ${scrollClassName ?? ''}`}>
+        <div className={`space-y-6 overflow-x-hidden overflow-y-auto flex-1 min-h-0 px-4 sm:px-6 md:px-0 ${resolvedScrollClassName}`}>
           {children}
         </div>
         
         {(footer || onSave) && (
-          <ResponsiveDialogFooter className="px-4 sm:px-6 pb-6 sm:pb-0">
+          <ResponsiveDialogFooter className="px-4 sm:px-6 pt-0 pb-3 sm:pb-0 md:px-0 md:pb-0">
             {renderFooter()}
           </ResponsiveDialogFooter>
         )}

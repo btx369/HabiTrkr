@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Plus, ChevronLeft, ChevronRight, Target, FileStack } from 'lucide-react';
 import { format, addWeeks, subWeeks, startOfWeek, addDays, isSameDay, isSameWeek } from 'date-fns';
 import { Layout } from '@/components/Layout';
@@ -92,6 +92,12 @@ export default function HabitTracker() {
   const [selectedFolder, setSelectedFolder] = useState<HabitFolder | null>(null);
   const [isMoveToFolderOpen, setIsMoveToFolderOpen] = useState(false);
   const [habitToMove, setHabitToMove] = useState<string | null>(null);
+  const [habitsToMove, setHabitsToMove] = useState<string[] | null>(null);
+  const [pendingBulkFolderAction, setPendingBulkFolderAction] = useState<{
+    kind: 'archive' | 'delete';
+    folderIds: string[];
+    selectedItemIds: string[];
+  } | null>(null);
   
   // Calendar state
   const [currentWeek, setCurrentWeek] = useState(new Date());
@@ -99,6 +105,8 @@ export default function HabitTracker() {
   // Sort settings for habits tab
   const [habitsSortType, setHabitsSortType] = useLocalStorage<HabitSortType>('habitsSortType', 'name');
   const [habitsSortDirection, setHabitsSortDirection] = useLocalStorage<HabitSortDirection>('habitsSortDirection', 'asc');
+  const [habitsCustomOrder, setHabitsCustomOrder] = useLocalStorage<string[]>('habitsCustomOrder', []);
+  const [habitsReorderingEnabled, setHabitsReorderingEnabled] = useState(false);
   
   // Sort settings for folders tab
   const [habitFoldersSortType, setHabitFoldersSortType] = useLocalStorage<HabitFolderSortType>('habitFoldersSortType', 'name');
@@ -107,6 +115,21 @@ export default function HabitTracker() {
   // Sort settings for archived tab
   const [archivedHabitsSortType, setArchivedHabitsSortType] = useLocalStorage<HabitSortType>('archivedHabitsSortType', 'name');
   const [archivedHabitsSortDirection, setArchivedHabitsSortDirection] = useLocalStorage<HabitSortDirection>('archivedHabitsSortDirection', 'asc');
+  const [archivedHabitsCustomOrder, setArchivedHabitsCustomOrder] = useLocalStorage<string[]>('archivedHabitsCustomOrder', []);
+  const [archivedHabitsReorderingEnabled, setArchivedHabitsReorderingEnabled] = useState(false);
+  const [draggedHabitId, setDraggedHabitId] = useState<string | null>(null);
+  const [habitDragPreviewOrder, setHabitDragPreviewOrder] = useState<string[]>([]);
+  const draggedHabitIdRef = useRef<string | null>(null);
+  const habitDragPreviewRef = useRef<string[]>([]);
+  const touchDragSessionRef = useRef<{
+    habitId: string;
+    startX: number;
+    startY: number;
+    items: string[];
+    timer: ReturnType<typeof setTimeout>;
+    active: boolean;
+  } | null>(null);
+  const suppressHabitClickRef = useRef(false);
   const [searchQuery, setSearchQuery] = useState('');
   
   // Bulk selection
@@ -319,7 +342,7 @@ export default function HabitTracker() {
     toast.success(say('toastUpdated', 'habits'));
   };
 
-  const deleteHabit = (habitId: string) => {
+  const deleteHabit = (habitId: string, showToast = true) => {
     setHabits((prev: Habit[]) => prev.filter(habit => habit.id !== habitId));
     setArchivedHabits((prev: Habit[]) => prev.filter(habit => habit.id !== habitId));
     // Remove from any folders
@@ -333,13 +356,13 @@ export default function HabitTracker() {
     })));
     setSelectedHabit(null);
     setHabitToDelete(null);
-    toast.success(say('toastDeleted', 'habits'));
+    if (showToast) toast.success(say('toastDeleted', 'habits'));
   };
 
   const confirmDeleteHabit = (habitId: string) => setHabitToDelete(habitId);
   const confirmArchiveHabit = (habitId: string) => setHabitToArchive(habitId);
 
-  const archiveHabit = (habitId: string) => {
+  const archiveHabit = (habitId: string, showToast = true) => {
     const habitToArchiveData = habits.find(h => h.id === habitId);
     if (habitToArchiveData) {
       // Store original folder ID before archiving
@@ -364,7 +387,7 @@ export default function HabitTracker() {
     }
     setSelectedHabit(null);
     setHabitToArchive(null);
-    toast.success(say('toastArchived', 'habits'));
+    if (showToast) toast.success(say('toastArchived', 'habits'));
   };
 
   const pinHabit = (habitId: string) => {
@@ -373,7 +396,7 @@ export default function HabitTracker() {
     ));
   };
 
-  const unarchiveHabit = (habitId: string) => {
+  const unarchiveHabit = (habitId: string, showToast = true) => {
     const habitToUnarchive = archivedHabits.find(h => h.id === habitId);
     if (habitToUnarchive) {
       const { originalFolderId, ...restoredHabit } = habitToUnarchive;
@@ -401,36 +424,34 @@ export default function HabitTracker() {
         }
       }
     }
-    toast.success(say('toastRestored', 'habits'));
+    if (showToast) toast.success(say('toastRestored', 'habits'));
   };
 
   const openHabitDetails = (habit: Habit) => setSelectedHabit(habit);
 
   // Folder CRUD operations
-  /*
-   * A folder created from the Move to folder dialog takes the habit that was being moved with
-   * it, and that habit leaves whatever folder it was in — a habit belongs to one folder.
-   *
-   * Without this the folder was created empty and the habit stayed where it was: the move
-   * dialog closed, a folder appeared in the list, and the habit was not in it. Notes and events
-   * both seed the new folder with the item being moved (`addFolder(folderData, ids)` and
-   * `addEventFolder(folderData, id)`); this one took no such argument.
-   */
   const handleCreateFolder = (folderData: Omit<HabitFolder, 'id' | 'createdAt' | 'habitIds'>) => {
+    const idsToMove = habitsToMove ?? (habitToMove ? [habitToMove] : []);
+    const idsSet = new Set(idsToMove);
     const newFolder: HabitFolder = {
       ...folderData,
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
-      habitIds: habitToMove ? [habitToMove] : []
+      habitIds: idsToMove
     };
     setHabitFolders((prev: HabitFolder[]) => {
-      const cleaned = habitToMove
-        ? prev.map(folder => ({ ...folder, habitIds: folder.habitIds.filter(id => id !== habitToMove) }))
+      const cleaned = idsSet.size > 0
+        ? prev.map(folder => ({ ...folder, habitIds: folder.habitIds.filter(id => !idsSet.has(id)) }))
         : prev;
       return [...cleaned, newFolder];
     });
     setIsFolderCreatorOpen(false);
     setHabitToMove(null);
+    setHabitsToMove(null);
+    if (idsToMove.length > 0) {
+      clearSelection();
+      exitBulkMode();
+    }
     toast.success(say('toastAdded', 'tabFolders'));
   };
 
@@ -472,6 +493,20 @@ export default function HabitTracker() {
   };
 
   const handleMoveToFolder = (folderId: string) => {
+    if (habitsToMove?.length) {
+      const idsSet = new Set(habitsToMove);
+      setHabitFolders((prev: HabitFolder[]) => prev.map(folder => ({
+        ...folder,
+        habitIds: folder.id === folderId
+          ? [...folder.habitIds.filter(id => !idsSet.has(id)), ...habitsToMove]
+          : folder.habitIds.filter(id => !idsSet.has(id)),
+      })));
+      setIsMoveToFolderOpen(false);
+      setHabitsToMove(null);
+      toast.success(say('toastUpdated', 'habits'));
+      return;
+    }
+
     if (!habitToMove) return;
     
     // Remove from any existing folder
@@ -489,6 +524,7 @@ export default function HabitTracker() {
     
     setIsMoveToFolderOpen(false);
     setHabitToMove(null);
+        setHabitsToMove(null);
     toast.success(say('toastUpdated', 'habits'));
   };
 
@@ -520,9 +556,15 @@ export default function HabitTracker() {
         case 'dateModified':
           comparison = new Date(a.modifiedAt || a.createdAt).getTime() - new Date(b.modifiedAt || b.createdAt).getTime();
           break;
-        case 'completionRate':
-          comparison = a.completedDates.length - b.completedDates.length;
+        case 'custom': {
+          const aIndex = habitsCustomOrder.indexOf(a.id);
+          const bIndex = habitsCustomOrder.indexOf(b.id);
+          comparison = aIndex === -1 && bIndex === -1 ? 0
+            : aIndex === -1 ? 1
+            : bIndex === -1 ? -1
+            : aIndex - bIndex;
           break;
+        }
       }
       return habitsSortDirection === 'asc' ? comparison : -comparison;    });
     
@@ -604,9 +646,15 @@ export default function HabitTracker() {
         case 'dateModified':
           comparison = new Date(a.modifiedAt || a.createdAt).getTime() - new Date(b.modifiedAt || b.createdAt).getTime();
           break;
-        case 'completionRate':
-          comparison = a.completedDates.length - b.completedDates.length;
+        case 'custom': {
+          const aIndex = archivedHabitsCustomOrder.indexOf(a.id);
+          const bIndex = archivedHabitsCustomOrder.indexOf(b.id);
+          comparison = aIndex === -1 && bIndex === -1 ? 0
+            : aIndex === -1 ? 1
+            : bIndex === -1 ? -1
+            : aIndex - bIndex;
           break;
+        }
       }
       return archivedHabitsSortDirection === 'asc' ? comparison : -comparison;
     });
@@ -622,6 +670,215 @@ export default function HabitTracker() {
       );
     }
     return archived;
+  };
+
+  const mergeVisibleHabitOrder = (storedOrder: string[], visibleOrder: string[], allIds: string[]) => {
+    const fullOrder = [...new Set([...storedOrder, ...allIds])];
+    const visibleIds = new Set(visibleOrder);
+    let nextVisibleIndex = 0;
+    return fullOrder.map((id) => visibleIds.has(id) ? visibleOrder[nextVisibleIndex++] : id);
+  };
+
+  const handleHabitsSortTypeChange = (sortType: HabitSortType) => {
+    if (sortType === 'custom' && habitsSortType !== 'custom') {
+      const visibleOrder = filterHabits().map((habit) => habit.id);
+      setHabitsCustomOrder((stored) => mergeVisibleHabitOrder(stored, visibleOrder, habits.map((habit) => habit.id)));
+      setHabitsReorderingEnabled(true);
+    } else if (sortType === 'custom') {
+      setHabitsReorderingEnabled(enabled => !enabled);
+      return;
+    } else {
+      setHabitsReorderingEnabled(false);
+    }
+    setHabitsSortType(sortType);
+  };
+
+  const handleArchivedHabitsSortTypeChange = (sortType: HabitSortType) => {
+    if (sortType === 'custom' && archivedHabitsSortType !== 'custom') {
+      const visibleOrder = getArchivedHabitsFiltered().map((habit) => habit.id);
+      setArchivedHabitsCustomOrder((stored) => mergeVisibleHabitOrder(stored, visibleOrder, archivedHabits.map((habit) => habit.id)));
+      setArchivedHabitsReorderingEnabled(true);
+    } else if (sortType === 'custom') {
+      setArchivedHabitsReorderingEnabled(enabled => !enabled);
+      return;
+    } else {
+      setArchivedHabitsReorderingEnabled(false);
+    }
+    setArchivedHabitsSortType(sortType);
+  };
+
+  const persistHabitDragOrder = (order: string[]) => {
+    if (activeTab === 'archived') {
+      setArchivedHabitsCustomOrder((stored) => mergeVisibleHabitOrder(stored, order, archivedHabits.map((habit) => habit.id)));
+    } else {
+      setHabitsCustomOrder((stored) => mergeVisibleHabitOrder(stored, order, habits.map((habit) => habit.id)));
+    }
+    setDraggedHabitId(null);
+    setHabitDragPreviewOrder([]);
+    draggedHabitIdRef.current = null;
+    habitDragPreviewRef.current = [];
+  };
+
+  const handleHabitDragStart = (habitId: string, event: React.DragEvent<HTMLDivElement>) => {
+    const visibleItems = activeTab === 'archived' ? getArchivedHabitsFiltered() : filterHabits();
+    setDraggedHabitId(habitId);
+    draggedHabitIdRef.current = habitId;
+    const order = visibleItems.map((habit) => habit.id);
+    setHabitDragPreviewOrder(order);
+    habitDragPreviewRef.current = order;
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', habitId);
+  };
+
+  const handleHabitDragOver = (targetId: string, event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    const draggedId = draggedHabitIdRef.current;
+    if (!draggedId || draggedId === targetId) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const beforeTarget = event.clientY < rect.top + rect.height / 2 || (
+      Math.abs(event.clientY - (rect.top + rect.height / 2)) < rect.height * 0.2 &&
+      event.clientX < rect.left + rect.width / 2
+    );
+    updateHabitDragPreview(draggedId, targetId, beforeTarget);
+  };
+
+  const handleHabitDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    if (habitDragPreviewRef.current.length > 0) persistHabitDragOrder(habitDragPreviewRef.current);
+  };
+
+  const handleHabitDragEnd = () => {
+    if (draggedHabitIdRef.current && habitDragPreviewRef.current.length > 0) {
+      persistHabitDragOrder(habitDragPreviewRef.current);
+    } else {
+      setDraggedHabitId(null);
+      setHabitDragPreviewOrder([]);
+      draggedHabitIdRef.current = null;
+      habitDragPreviewRef.current = [];
+    }
+  };
+
+  const moveHabitInOrder = (order: string[], draggedId: string, targetId: string, beforeTarget: boolean) => {
+    const fromIndex = order.indexOf(draggedId);
+    const targetIndex = order.indexOf(targetId);
+    if (fromIndex < 0 || targetIndex < 0) return order;
+
+    const next = [...order];
+    next.splice(fromIndex, 1);
+    let insertIndex = targetIndex + (beforeTarget ? 0 : 1);
+    if (fromIndex < insertIndex) insertIndex -= 1;
+    next.splice(insertIndex, 0, draggedId);
+    if (next.every((id, index) => id === order[index])) return order;
+    return next;
+  };
+
+  const updateHabitDragPreview = (draggedId: string, targetId: string, beforeTarget: boolean) => {
+    const currentOrder = habitDragPreviewRef.current;
+    const nextOrder = moveHabitInOrder(currentOrder, draggedId, targetId, beforeTarget);
+    if (nextOrder === currentOrder) return;
+    habitDragPreviewRef.current = nextOrder;
+    setHabitDragPreviewOrder(nextOrder);
+  };
+
+  const reorderForDragPreview = (items: Habit[]) => {
+    if (!draggedHabitId || habitDragPreviewOrder.length === 0) return items;
+    const orderIndex = new Map(habitDragPreviewOrder.map((id, index) => [id, index]));
+    return [...items].sort((a, b) => (orderIndex.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (orderIndex.get(b.id) ?? Number.MAX_SAFE_INTEGER));
+  };
+
+  const handleHabitPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === 'mouse' || isBulkMode || draggedHabitId) return;
+    const target = event.target as HTMLElement;
+    if (!target.closest('[data-habit-drag-handle]')) return;
+    const card = target.closest('[data-habit-id]');
+    const habitId = card?.getAttribute('data-habit-id');
+    if (!habitId) return;
+
+    const visibleItems = activeTab === 'archived' ? getArchivedHabitsFiltered() : filterHabits();
+    const visibleIds = visibleItems.map((habit) => habit.id);
+    if (!visibleIds.includes(habitId)) return;
+
+    const timer = setTimeout(() => {
+      const session = touchDragSessionRef.current;
+      if (!session) return;
+      session.active = true;
+      setDraggedHabitId(session.habitId);
+      draggedHabitIdRef.current = session.habitId;
+      setHabitDragPreviewOrder(session.items);
+      habitDragPreviewRef.current = session.items;
+      document.body.style.overflow = 'hidden';
+      document.body.style.overscrollBehavior = 'none';
+    }, 350);
+
+    touchDragSessionRef.current = {
+      habitId,
+      startX: event.clientX,
+      startY: event.clientY,
+      items: visibleIds,
+      timer,
+      active: false,
+    };
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch {
+      // Pointer capture is not available in every embedded browser.
+    }
+  };
+
+  const handleHabitPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const session = touchDragSessionRef.current;
+    if (!session) return;
+
+    if (!session.active) {
+      const movedX = Math.abs(event.clientX - session.startX);
+      const movedY = Math.abs(event.clientY - session.startY);
+      if (movedX > 12 || movedY > 12) {
+        clearTimeout(session.timer);
+        touchDragSessionRef.current = null;
+      }
+      return;
+    }
+
+    event.preventDefault();
+    const hoveredCard = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-habit-id]');
+    const targetId = hoveredCard?.getAttribute('data-habit-id');
+    if (!targetId || targetId === session.habitId) return;
+    const targetRect = hoveredCard?.getBoundingClientRect();
+    if (!targetRect) return;
+    const beforeTarget = event.clientY < targetRect.top + targetRect.height / 2 || (
+      Math.abs(event.clientY - (targetRect.top + targetRect.height / 2)) < targetRect.height * 0.2 &&
+      event.clientX < targetRect.left + targetRect.width / 2
+    );
+    updateHabitDragPreview(session.habitId, targetId, beforeTarget);
+  };
+
+  const finishHabitPointerDrag = (commit: boolean) => {
+    const session = touchDragSessionRef.current;
+    if (!session) return;
+    clearTimeout(session.timer);
+    touchDragSessionRef.current = null;
+    document.body.style.overflow = '';
+    document.body.style.overscrollBehavior = '';
+
+    if (session.active && commit && habitDragPreviewRef.current.length > 0) {
+      persistHabitDragOrder(habitDragPreviewRef.current);
+      suppressHabitClickRef.current = true;
+      setTimeout(() => { suppressHabitClickRef.current = false; }, 0);
+    } else {
+      setDraggedHabitId(null);
+      setHabitDragPreviewOrder([]);
+      draggedHabitIdRef.current = null;
+      habitDragPreviewRef.current = [];
+    }
+  };
+
+  const handleHabitPointerUp = () => finishHabitPointerDrag(true);
+  const handleHabitPointerCancel = () => finishHabitPointerDrag(false);
+  const handleHabitGridClickCapture = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!suppressHabitClickRef.current) return;
+    event.preventDefault();
+    event.stopPropagation();
   };
 
   // Bulk actions
@@ -648,6 +905,39 @@ export default function HabitTracker() {
     }
   };
 
+  const finishBulkFolderAction = (
+    pending: NonNullable<typeof pendingBulkFolderAction>,
+    scope: 'folderOnly' | 'withItems',
+  ) => {
+    folderActions.applyBulkFolderAction(pending.kind, scope, pending.folderIds);
+    if (pending.kind === 'delete' && pending.selectedItemIds.length > 0 && activeTab === 'archived') {
+      const selectedIds = new Set(pending.selectedItemIds);
+      setArchivedHabits(prev => prev.filter(habit => !selectedIds.has(habit.id)));
+    }
+    clearSelection();
+    exitBulkMode();
+    setPendingBulkFolderAction(null);
+  };
+
+  const requestBulkFolderAction = (kind: 'archive' | 'delete', ids: string[]): boolean => {
+    if (activeTab !== 'folders' && activeTab !== 'archived') return false;
+    const folderCollection = activeTab === 'archived' ? archivedHabitFolders : habitFolders;
+    const folderIds = ids.filter(id => folderCollection.some(folder => folder.id === id));
+    if (folderIds.length === 0) return false;
+
+    const folderIdSet = new Set(folderIds);
+    const selectedItemIds = ids.filter(id => !folderIdSet.has(id));
+    const selectedFolders = folderCollection.filter(folder => folderIdSet.has(folder.id));
+    const itemCount = new Set(selectedFolders.flatMap(folder => folder.habitIds)).size;
+    const pending = { kind, folderIds, selectedItemIds };
+    if (itemCount === 0) {
+      finishBulkFolderAction(pending, 'withItems');
+    } else {
+      setPendingBulkFolderAction(pending);
+    }
+    return true;
+  };
+
   const handleBulkAction = (action: BulkActionType, color?: string) => {
     const items = Array.from(selectedItems);
     
@@ -668,25 +958,36 @@ export default function HabitTracker() {
       case 'pin':
         // Tab-aware: pin based on current tab
         if (activeTab === 'habits') {
-          items.forEach(id => {
-            if (habits.find(h => h.id === id)) pinHabit(id);
-          });
+          const habitIds = items.filter(id => habits.some(habit => habit.id === id));
+          if (habitIds.length > 0) {
+            const habitIdSet = new Set(habitIds);
+            setHabits(prev => prev.map(habit =>
+              habitIdSet.has(habit.id) ? { ...habit, pinned: !habit.pinned } : habit
+            ));
+            toast.success(countedSentence(t, language, 'bulkUpdated', habitIds.length));
+          }
         } else if (activeTab === 'folders') {
-          items.forEach(id => {
-            if (habitFolders.find(f => f.id === id)) pinFolder(id);
-          });
+          const folderIds = items.filter(id => habitFolders.some(folder => folder.id === id));
+          const folderIdSet = new Set(folderIds);
+          setHabitFolders(prev => prev.map(folder =>
+            folderIdSet.has(folder.id) ? { ...folder, pinned: !folder.pinned } : folder
+          ));
+          if (folderIds.length > 0) {
+            toast.success(countedSentence(t, language, 'bulkUpdated', folderIds.length));
+          }
         }
         exitBulkMode();
         break;
       case 'archive':
+        if (requestBulkFolderAction('archive', items)) break;
         // Tab-aware archive: only archive items of the current tab type
         if (activeTab === 'habits') {
           // Archive only habits, remove them from any folders
-          items.forEach(id => {
-            if (habits.find(h => h.id === id)) {
-              archiveHabit(id);
-            }
-          });
+          const habitIds = items.filter(id => habits.some(h => h.id === id));
+          habitIds.forEach(id => archiveHabit(id, false));
+          if (habitIds.length > 0) {
+            toast.success(countedSentence(t, language, 'bulkArchived', habitIds.length));
+          }
         } else if (activeTab === 'folders') {
           // Archive only folders (and their contained habits)
           items.forEach(id => {
@@ -706,32 +1007,40 @@ export default function HabitTracker() {
           const habitIds = items.filter(id => archivedHabits.find(h => h.id === id));
           
           folderIds.forEach(id => folderActions.applyFolderAction('restore', 'withItems', id));
-          habitIds.forEach(id => {
+          const standaloneHabitIds = habitIds.filter(id => {
             // Only restore habits that aren't in a folder being restored (they get restored with folder)
-            const isInRestoringFolder = archivedHabitFolders.some(f => 
+            return !archivedHabitFolders.some(f =>
               folderIds.includes(f.id) && f.habitIds.includes(id)
             );
-            if (!isInRestoringFolder) {
-              unarchiveHabit(id);
-            }
           });
+          standaloneHabitIds.forEach(id => unarchiveHabit(id, false));
+          if (standaloneHabitIds.length > 0) {
+            toast.success(countedSentence(t, language, 'bulkRestored', standaloneHabitIds.length));
+          }
         }
         exitBulkMode();
         break;
       case 'delete':
+        if (requestBulkFolderAction('delete', items)) break;
         // Tab-aware delete
         if (activeTab === 'habits') {
-          items.forEach(id => {
-            if (habits.find(h => h.id === id)) deleteHabit(id);
-          });
+          const habitIds = items.filter(id => habits.some(h => h.id === id));
+          habitIds.forEach(id => deleteHabit(id, false));
+          if (habitIds.length > 0) {
+            toast.success(countedSentence(t, language, 'bulkDeleted', habitIds.length));
+          }
         } else if (activeTab === 'folders') {
           items.forEach(id => {
             if (habitFolders.find(f => f.id === id)) folderActions.applyFolderAction('delete', 'withItems', id);
           });
         } else if (activeTab === 'archived') {
           // Delete both habits and folders in archived tab
+          const habitIds = items.filter(id => archivedHabits.some(h => h.id === id));
+          habitIds.forEach(id => deleteHabit(id, false));
+          if (habitIds.length > 0) {
+            toast.success(countedSentence(t, language, 'bulkDeleted', habitIds.length));
+          }
           items.forEach(id => {
-            if (archivedHabits.find(h => h.id === id)) deleteHabit(id);
             if (archivedHabitFolders.find(f => f.id === id)) folderActions.applyFolderAction('delete', 'withItems', id);
           });
         }
@@ -740,20 +1049,32 @@ export default function HabitTracker() {
       case 'color':
         if (color) {
           if (activeTab === 'habits') {
-            items.forEach(id => {
-              setHabits((prev: Habit[]) => prev.map(h => h.id === id ? { ...h, color } : h));
-            });
+            const habitIds = items.filter(id => habits.some(habit => habit.id === id));
+            if (habitIds.length > 0) {
+              const habitIdSet = new Set(habitIds);
+              setHabits(prev => prev.map(habit =>
+                habitIdSet.has(habit.id) ? { ...habit, color } : habit
+              ));
+              toast.success(t('toastColorApplied').replace('{count}', String(habitIds.length)));
+            }
           } else if (activeTab === 'folders') {
-            items.forEach(id => {
-              setHabitFolders((prev: HabitFolder[]) => prev.map(f => f.id === id ? { ...f, color } : f));
-            });
+            const folderIds = items.filter(id => habitFolders.some(folder => folder.id === id));
+            const folderIdSet = new Set(folderIds);
+            setHabitFolders(prev => prev.map(folder =>
+              folderIdSet.has(folder.id) ? { ...folder, color } : folder
+            ));
+            if (folderIds.length > 0) {
+              toast.success(t('toastColorApplied').replace('{count}', String(folderIds.length)));
+            }
           }
         }
         exitBulkMode();
         break;
       case 'move':
-        if (items.length === 1 && activeTab === 'habits') {
-          openMoveToFolder(items[0]);
+        if (items.length > 0 && activeTab === 'habits') {
+          setHabitsToMove(items);
+          setHabitToMove(null);
+          setIsMoveToFolderOpen(true);
         }
         break;
     }
@@ -795,7 +1116,7 @@ export default function HabitTracker() {
 
   return (
     <FolderMembershipProvider ids={collectFiledIds(
-      [...habitFolders, ...archivedHabitFolders].map((folder) => ({ id: folder.id, itemIds: folder.habitIds })),
+      habitFolders.map((folder) => ({ id: folder.id, itemIds: folder.habitIds })),
       archivedHabits,
     )}>
     <Layout 
@@ -807,7 +1128,7 @@ export default function HabitTracker() {
       shieldHeight={activeTab === 'habits' ? '16.5rem' : '7.25rem'}
     >
       <div {...swipeHandlers}>
-        <Tabs value={activeTab} onValueChange={(tab) => { setActiveTab(tab); exitBulkMode(); }}>
+        <Tabs value={activeTab} onValueChange={(tab) => { finishHabitPointerDrag(false); setActiveTab(tab); exitBulkMode(); setDraggedHabitId(null); setHabitDragPreviewOrder([]); habitDragPreviewRef.current = []; }}>
           <div className="fixed top-16 left-0 right-0 z-40 px-2">
             <div className="flex items-start justify-between py-2">
             <SlidingTabsList activeValue={activeTab} values={['habits', 'folders', 'archived']}>
@@ -849,14 +1170,16 @@ export default function HabitTracker() {
                 <HabitViewSettings
                   sortType={archivedHabitsSortType}
                   sortDirection={archivedHabitsSortDirection}
-                  onSortTypeChange={setArchivedHabitsSortType}
+                  customReorderingEnabled={archivedHabitsReorderingEnabled}
+                  onSortTypeChange={handleArchivedHabitsSortTypeChange}
                   onSortDirectionChange={setArchivedHabitsSortDirection}
                 />
               ) : (
                 <HabitViewSettings
                   sortType={habitsSortType}
                   sortDirection={habitsSortDirection}
-                  onSortTypeChange={setHabitsSortType}
+                  customReorderingEnabled={habitsReorderingEnabled}
+                  onSortTypeChange={handleHabitsSortTypeChange}
                   onSortDirectionChange={setHabitsSortDirection}
                 />
               )}
@@ -865,7 +1188,7 @@ export default function HabitTracker() {
 
             {/* Calendar Navigation - only visible on habits tab */}
             {activeTab === 'habits' && (
-              <div className="rounded-[20px] bg-[hsl(var(--surface-card))] backdrop-blur-[12px] border border-[hsl(var(--glass-border))] shadow-[0_8px_32px_rgba(0,0,0,0.1)] px-2 py-2 mb-2">
+              <div className="rounded-[20px] bg-[hsl(var(--surface-card))] backdrop-blur-[12px] border border-foreground/10 shadow-[0_8px_32px_rgba(0,0,0,0.1)] px-2 py-2 mb-2">
                 <div className="flex items-center justify-between mb-2">
                   <Button variant="ghost" size="icon" className="text-foreground hover:bg-hover hover:text-foreground rounded-full [&_svg]:!size-5" onClick={() => setCurrentWeek(subWeeks(currentWeek, 1))}>
                     <ChevronLeft size={24} />
@@ -909,8 +1232,15 @@ export default function HabitTracker() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                {filterHabits().map(habit => (
+              <div
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2"
+                onPointerDown={handleHabitPointerDown}
+                onPointerMove={handleHabitPointerMove}
+                onPointerUp={handleHabitPointerUp}
+                onPointerCancel={handleHabitPointerCancel}
+                onClickCapture={handleHabitGridClickCapture}
+              >
+                {reorderForDragPreview(filterHabits()).map(habit => (
                   <HabitCard
                     key={habit.id}
                     habit={habit}
@@ -929,6 +1259,12 @@ export default function HabitTracker() {
                     showBulkCheckbox={isBulkMode}
                     isBulkSelected={selectedItems.has(habit.id)}
                     onBulkSelect={toggleItem}
+                    isDragEnabled={habitsReorderingEnabled && !isBulkMode}
+                    isDragged={draggedHabitId === habit.id}
+                    onDragStart={handleHabitDragStart}
+                    onDragOver={handleHabitDragOver}
+                    onDrop={handleHabitDrop}
+                    onDragEnd={handleHabitDragEnd}
                   />
                 ))}
               </div>
@@ -993,8 +1329,15 @@ export default function HabitTracker() {
                     </CardContent>
                   </Card>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                    {getArchivedHabitsFiltered().map(habit => (
+                  <div
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2"
+                    onPointerDown={handleHabitPointerDown}
+                    onPointerMove={handleHabitPointerMove}
+                    onPointerUp={handleHabitPointerUp}
+                    onPointerCancel={handleHabitPointerCancel}
+                    onClickCapture={handleHabitGridClickCapture}
+                  >
+                    {reorderForDragPreview(getArchivedHabitsFiltered()).map(habit => (
                       <ArchivedHabitCard
                         key={habit.id}
                         habit={habit}
@@ -1004,6 +1347,12 @@ export default function HabitTracker() {
                         showBulkCheckbox={isBulkMode}
                         isBulkSelected={selectedItems.has(habit.id)}
                         onBulkSelect={toggleItem}
+                        isDragEnabled={archivedHabitsReorderingEnabled && !isBulkMode}
+                        isDragged={draggedHabitId === habit.id}
+                        onDragStart={handleHabitDragStart}
+                        onDragOver={handleHabitDragOver}
+                        onDrop={handleHabitDrop}
+                        onDragEnd={handleHabitDragEnd}
                       />
                     ))}
                   </div>
@@ -1089,6 +1438,7 @@ export default function HabitTracker() {
         isAllFoldersSelected={activeTab === 'archived' ? isAllSelected(getArchivedFolders().map(f => f.id)) : false}
         selectedCount={selectedItems.size}
         onAction={handleBulkAction}
+        onClearSelection={clearSelection}
       />
 
       {/* Dialogs */}
@@ -1111,7 +1461,7 @@ export default function HabitTracker() {
         isOpen={isFolderCreatorOpen}
         // Closing without saving drops the pending move as well: otherwise the habit stays
         // queued and the next folder created from the Folders tab, for no reason, swallows it.
-        onClose={() => { setIsFolderCreatorOpen(false); setHabitToMove(null); }}
+        onClose={() => { setIsFolderCreatorOpen(false); setHabitToMove(null); setHabitsToMove(null); }}
         onSave={handleCreateFolder}
       />
 
@@ -1124,11 +1474,13 @@ export default function HabitTracker() {
 
       <MoveToFolderDialog
         isOpen={isMoveToFolderOpen}
-        onClose={() => { setIsMoveToFolderOpen(false); setHabitToMove(null); }}
+        onClose={() => { setIsMoveToFolderOpen(false); setHabitToMove(null); setHabitsToMove(null); }}
         folders={habitFolders}
         onSelectFolder={handleMoveToFolder}
+        onMoveComplete={() => { clearSelection(); exitBulkMode(); }}
         onCreateNewFolder={() => { setIsMoveToFolderOpen(false); setIsFolderCreatorOpen(true); }}
-        currentFolderId={habitToMove ? habitFolders.find(f => f.habitIds.includes(habitToMove))?.id : undefined}
+        itemIdsToMove={habitsToMove ?? (habitToMove ? [habitToMove] : [])}
+        getFolderItemIds={(folder) => folder.habitIds}
         getItemCount={(folder) => folder.habitIds.length}
         itemNoun={t('habits')}
       />
@@ -1153,6 +1505,21 @@ export default function HabitTracker() {
 
       {/* One dialog for archiving, deleting and restoring a folder, shared with the other pages. */}
       <FolderActionDialog {...folderActions.dialog} itemKind="habit" />
+      <FolderActionDialog
+        open={Boolean(pendingBulkFolderAction)}
+        kind={pendingBulkFolderAction?.kind ?? 'archive'}
+        folderName=""
+        itemCount={pendingBulkFolderAction
+          ? new Set([...habitFolders, ...archivedHabitFolders]
+              .filter(folder => pendingBulkFolderAction.folderIds.includes(folder.id))
+              .flatMap(folder => folder.habitIds)).size
+          : 0}
+        itemKind="habit"
+        bulk
+        onFolderOnly={() => pendingBulkFolderAction && finishBulkFolderAction(pendingBulkFolderAction, 'folderOnly')}
+        onAll={() => pendingBulkFolderAction && finishBulkFolderAction(pendingBulkFolderAction, 'withItems')}
+        onOpenChange={(open) => !open && setPendingBulkFolderAction(null)}
+      />
     </Layout>
     </FolderMembershipProvider>
   );

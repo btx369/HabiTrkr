@@ -283,7 +283,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
         onClose={handleClose}
         title={mode === 'create' ? t('createEvent') : t('editEvent')}
         onSave={handleSave}
-        saveLabel={mode === 'create' ? t('createEvent') : t('save')}
+        saveLabel={t('save')}
         saveDisabled={!formData.name.trim()}
       >
         {/* Title */}
@@ -555,6 +555,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
           onColorChange={(color) => setFormData(prev => ({ ...prev, color }))}
           icon={Palette}
           iconColor={ICON_COLOR}
+          singleRow
         />
       </EditorDialog>
 

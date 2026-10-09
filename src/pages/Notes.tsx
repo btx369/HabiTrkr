@@ -91,6 +91,11 @@ export default function Notes() {
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   const [bulkArchiveDialogOpen, setBulkArchiveDialogOpen] = useState(false);
   const [pendingBulkAction, setPendingBulkAction] = useState<{ ids: string[], action: 'archive' | 'delete' } | null>(null);
+  const [pendingBulkFolderAction, setPendingBulkFolderAction] = useState<{
+    kind: 'archive' | 'delete';
+    folderIds: string[];
+    selectedItemIds: string[];
+  } | null>(null);
   const [isNoteColorEditorOpen, setIsNoteColorEditorOpen] = useState(false);
   const [noteToEditColor, setNoteToEditColor] = useState<Note | null>(null);
   const [formData, setFormData] = useState({
@@ -128,7 +133,14 @@ export default function Notes() {
   const setSortDirection = activeTab === 'archived' ? setArchivedNotesSortDirection : setAllNotesSortDirection;
   const [folderSortType, setFolderSortType] = useLocalStorage<NoteFolderSortType>('foldersSortType', 'name');
   const [folderSortDirection, setFolderSortDirection] = useLocalStorage<NoteFolderSortDirection>('foldersSortDirection', 'asc');
-  const [customOrder, setCustomOrder] = useLocalStorage<string[]>('notesCustomOrder', []);
+  const [activeNotesCustomOrder, setActiveNotesCustomOrder] = useLocalStorage<string[]>('notesCustomOrder', []);
+  const [archivedNotesCustomOrder, setArchivedNotesCustomOrder] = useLocalStorage<string[]>('archivedNotesCustomOrder', []);
+  const customOrder = activeTab === 'archived' ? archivedNotesCustomOrder : activeNotesCustomOrder;
+  const setCustomOrder = activeTab === 'archived' ? setArchivedNotesCustomOrder : setActiveNotesCustomOrder;
+  const [allNotesReorderingEnabled, setAllNotesReorderingEnabled] = useState(false);
+  const [archivedNotesReorderingEnabled, setArchivedNotesReorderingEnabled] = useState(false);
+  const customReorderingEnabled = activeTab === 'archived' ? archivedNotesReorderingEnabled : allNotesReorderingEnabled;
+  const setCustomReorderingEnabled = activeTab === 'archived' ? setArchivedNotesReorderingEnabled : setAllNotesReorderingEnabled;
   const [draggedNote, setDraggedNote] = useState<string | null>(null);
   const [draggedOverNote, setDraggedOverNote] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -137,7 +149,12 @@ export default function Notes() {
   const [autoScrollInterval, setAutoScrollInterval] = useState<ReturnType<typeof setTimeout> | null>(null);
   const [isNoteSelected, setIsNoteSelected] = useState<string | null>(null); // For visual feedback
   const [dragPreviewOrder, setDragPreviewOrder] = useState<string[]>([]); // For live reordering preview
+  const dragPreviewOrderRef = useRef<string[]>([]);
   const [dragInsertIndex, setDragInsertIndex] = useState<number>(-1); // Index where note will be inserted
+  const draggedNoteRef = useRef<string | null>(null);
+  const dragInsertIndexRef = useRef(-1);
+  const dragItemsRef = useRef<Note[]>([]);
+  const dragContainerRef = useRef<HTMLElement | null>(null);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pressStartPosRef = useRef<{ x: number; y: number } | null>(null);
   const pendingNoteIdRef = useRef<string | null>(null);
@@ -207,9 +224,9 @@ export default function Notes() {
     };
   }, [autoScrollInterval]);
 
-  // Prevent pull-to-refresh globally when in custom sort mode
+  // Prevent pull-to-refresh while custom reordering is active
   useEffect(() => {
-    if (sortType === 'custom') {
+    if (customReorderingEnabled) {
       // Prevent pull-to-refresh on the whole document
       document.body.style.overscrollBehavior = 'none';
       document.documentElement.style.overscrollBehavior = 'none';
@@ -234,7 +251,7 @@ export default function Notes() {
         document.removeEventListener('touchmove', preventRefresh);
       };
     }
-  }, [sortType]);
+  }, [customReorderingEnabled]);
 
   const handleTypeSelect = (type: NoteType) => {
     setShowNoteTypePopup(false);
@@ -919,8 +936,6 @@ export default function Notes() {
       toast.success(say('toastUpdated', 'notes'));
       setSelectedNoteForMove(null);
       setIsMoveToFolderOpen(false);
-      clearSelection();
-      exitBulkMode();
     }
   };
 
@@ -1179,6 +1194,19 @@ export default function Notes() {
     }
   };
 
+  const handleNotesSortTypeChange = (nextSortType: SortType) => {
+    if (nextSortType === 'custom') {
+      if (sortType === 'custom') {
+        setCustomReorderingEnabled(enabled => !enabled);
+        return;
+      }
+      setCustomReorderingEnabled(true);
+    } else {
+      setCustomReorderingEnabled(false);
+    }
+    setSortType(nextSortType);
+  };
+
   // Auto-scroll functionality
   const checkAutoScroll = (clientY: number) => {
     const scrollThreshold = 100; // pixels from edge to trigger scroll
@@ -1223,19 +1251,11 @@ export default function Notes() {
   // Drag and drop handlers - supporting both mouse and touch with real-time reordering
   const handleDragStart = (
     noteId: string,
-    e?: React.MouseEvent | React.TouchEvent,
-    startPos?: { x: number; y: number }
+    startPos: { x: number; y: number },
+    orderedItems: Note[] = []
   ) => {
-    if (e) {
-      e.preventDefault();
-      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-      setDragStartPos({ x: clientX, y: clientY });
-      setCurrentDragPos({ x: clientX, y: clientY });
-    } else if (startPos) {
-      setDragStartPos(startPos);
-      setCurrentDragPos(startPos);
-    }
+    setDragStartPos(startPos);
+    setCurrentDragPos(startPos);
     
     // Lock page scrolling and prevent pull-to-refresh
     document.body.style.overflow = 'hidden';
@@ -1244,9 +1264,12 @@ export default function Notes() {
     document.documentElement.style.overscrollBehavior = 'none';
     
     setDraggedNote(noteId);
+    draggedNoteRef.current = noteId;
+    dragItemsRef.current = orderedItems;
     setIsDragging(true);
     setIsNoteSelected(null); // Clear selection visual when dragging starts
     setDragInsertIndex(-1); // Reset insert index
+    dragInsertIndexRef.current = -1;
 
     // Add global mouse/touch move listeners for real-time tracking
      const handleMove = (e: MouseEvent | TouchEvent) => {
@@ -1257,8 +1280,8 @@ export default function Notes() {
       checkAutoScroll(clientY);
       
       // Calculate insertion index based on cursor position
-      const currentNotes = sortType === 'custom' ? sortNotes(notes) : notes;
-      const noteElements = document.querySelectorAll('[data-note-id]');
+      const currentNotes = orderedItems;
+      const noteElements = dragContainerRef.current?.querySelectorAll('[data-note-id]') ?? [];
       let insertIndex = -1;
       
       // Find where to insert based on Y position for list view or both X,Y for grid views
@@ -1267,12 +1290,12 @@ export default function Notes() {
         for (let i = 0; i < noteElements.length; i++) {
           const element = noteElements[i] as HTMLElement;
           const rect = element.getBoundingClientRect();
-          const noteId = element.getAttribute('data-note-id');
+          const noteElementId = element.getAttribute('data-note-id');
           
-          if (noteId === noteId) continue; // Skip the dragged note
+          if (noteElementId === noteId) continue; // Skip the dragged note
           
           if (clientY < rect.top + rect.height / 2) {
-            insertIndex = currentNotes.findIndex(n => n.id === noteId);
+            insertIndex = currentNotes.findIndex(n => n.id === noteElementId);
             break;
           }
         }
@@ -1305,6 +1328,7 @@ export default function Notes() {
       }
       
       setDragInsertIndex(insertIndex);
+      dragInsertIndexRef.current = insertIndex;
     };
 
     const handleEnd = () => {
@@ -1323,19 +1347,21 @@ export default function Notes() {
 
 
   const commitDragOperation = () => {
-    if (draggedNote && dragInsertIndex >= 0) {
-      const currentNotes = sortType === 'custom' ? sortNotes(notes) : notes;
-      const draggedIndex = currentNotes.findIndex(n => n.id === draggedNote);
+    const noteId = draggedNoteRef.current;
+    const currentNotes = dragItemsRef.current;
+    const insertIndex = dragInsertIndexRef.current;
+    if (noteId && insertIndex >= 0) {
+      const draggedIndex = currentNotes.findIndex(n => n.id === noteId);
       
-      if (draggedIndex !== -1 && draggedIndex !== dragInsertIndex) {
-        const newOrder = [...currentNotes.map(n => n.id)];
+      if (draggedIndex !== -1 && draggedIndex !== insertIndex) {
+        const newVisibleOrder = [...currentNotes.map(n => n.id)];
         // Remove dragged item
-        newOrder.splice(draggedIndex, 1);
+        newVisibleOrder.splice(draggedIndex, 1);
         // Insert at new position (adjust index if we removed an item before the insertion point)
-        const adjustedInsertIndex = dragInsertIndex > draggedIndex ? dragInsertIndex - 1 : dragInsertIndex;
-        newOrder.splice(adjustedInsertIndex, 0, draggedNote);
-        
-        setCustomOrder(newOrder);
+        const adjustedInsertIndex = insertIndex > draggedIndex ? insertIndex - 1 : insertIndex;
+        newVisibleOrder.splice(adjustedInsertIndex, 0, noteId);
+
+        persistCustomNoteOrder(newVisibleOrder);
         
         // Switch to custom sort if not already selected
         if (sortType !== 'custom') {
@@ -1346,6 +1372,77 @@ export default function Notes() {
     }
     
     handleDragEnd();
+  };
+
+  const persistCustomNoteOrder = (visibleOrder: string[]) => {
+    const allNotesInCollection = activeTab === 'archived' ? archivedNotes : notes;
+    const defaultOrder = sortNotes(allNotesInCollection).map((note) => note.id);
+    setCustomOrder((storedOrder) => {
+      const fullOrder = [...new Set([...storedOrder, ...defaultOrder])];
+      const visibleIds = new Set(visibleOrder);
+      let nextVisibleIndex = 0;
+      return fullOrder.map((id) => visibleIds.has(id) ? visibleOrder[nextVisibleIndex++] : id);
+    });
+  };
+
+  const handleNativeNoteDragStart = (noteId: string, orderedItems: Note[], event: React.DragEvent<HTMLDivElement>) => {
+    const order = orderedItems.map((note) => note.id);
+    draggedNoteRef.current = noteId;
+    dragItemsRef.current = orderedItems;
+    dragPreviewOrderRef.current = order;
+    setDraggedNote(noteId);
+    setDragPreviewOrder(order);
+    setIsDragging(true);
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', noteId);
+  };
+
+  const handleNativeNoteDragOver = (targetId: string, event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    const draggedId = draggedNoteRef.current;
+    if (!draggedId || draggedId === targetId) return;
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const beforeTarget = effectiveViewType === 'list'
+      ? event.clientY < rect.top + rect.height / 2
+      : event.clientY < rect.top + rect.height / 2 || (
+        Math.abs(event.clientY - (rect.top + rect.height / 2)) < rect.height * 0.2 &&
+        event.clientX < rect.left + rect.width / 2
+      );
+
+    setDragPreviewOrder((currentOrder) => {
+      const fromIndex = currentOrder.indexOf(draggedId);
+      const targetIndex = currentOrder.indexOf(targetId);
+      if (fromIndex < 0 || targetIndex < 0) return currentOrder;
+
+      const next = [...currentOrder];
+      next.splice(fromIndex, 1);
+      let insertIndex = targetIndex + (beforeTarget ? 0 : 1);
+      if (fromIndex < insertIndex) insertIndex -= 1;
+      next.splice(insertIndex, 0, draggedId);
+      dragPreviewOrderRef.current = next;
+      return next;
+    });
+    setDraggedOverNote(targetId);
+  };
+
+  const finishNativeNoteDrag = (commit: boolean) => {
+    const initialOrder = dragItemsRef.current.map((note) => note.id);
+    const nextOrder = dragPreviewOrderRef.current;
+    if (commit && nextOrder.length > 0 && nextOrder.some((id, index) => id !== initialOrder[index])) {
+      persistCustomNoteOrder(nextOrder);
+    }
+    handleDragEnd();
+  };
+
+  const handleNativeNoteDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    finishNativeNoteDrag(true);
+  };
+
+  const handleNativeNoteDragEnd = () => {
+    if (draggedNoteRef.current) finishNativeNoteDrag(true);
   };
 
   const handleDragEnd = () => {
@@ -1368,7 +1465,12 @@ export default function Notes() {
     setCurrentDragPos(null);
     setIsNoteSelected(null);
     setDragPreviewOrder([]);
+    dragPreviewOrderRef.current = [];
     setDragInsertIndex(-1);
+    draggedNoteRef.current = null;
+    dragInsertIndexRef.current = -1;
+    dragItemsRef.current = [];
+    dragContainerRef.current = null;
   };
   
   // Long-press helpers
@@ -1385,7 +1487,7 @@ export default function Notes() {
     noteId: string,
     startX: number,
     startY: number,
-    source: 'mouse' | 'touch'
+    orderedItems: Note[]
   ) => {
     // Reset and store starting state
     clearLongPressTimer();
@@ -1395,9 +1497,6 @@ export default function Notes() {
     // Cleanup listeners helper
     const cleanup = () => {
       clearLongPressTimer();
-      document.removeEventListener('mousemove', onMouseMove as any);
-      document.removeEventListener('mouseup', onMouseUp as any);
-      document.removeEventListener('mouseleave', onMouseUp as any);
       document.removeEventListener('touchmove', onTouchMove as any);
       document.removeEventListener('touchend', onTouchEnd as any);
       document.removeEventListener('touchcancel', onTouchEnd as any);
@@ -1410,7 +1509,7 @@ export default function Notes() {
       setIsNoteSelected(noteId);
       // Small delay before starting drag for visual feedback
       setTimeout(() => {
-        handleDragStart(noteId, undefined, pos);
+        handleDragStart(noteId, pos, orderedItems);
       }, 100);
       if ('vibrate' in navigator) {
         // Haptic feedback is optional and unsupported in several browsers (and absent
@@ -1421,15 +1520,6 @@ export default function Notes() {
 
     longPressTimerRef.current = setTimeout(trigger, LONG_PRESS_DELAY);
 
-    function onMouseMove(ev: MouseEvent) {
-      if (!pressStartPosRef.current) return;
-      const dx = Math.abs(ev.clientX - pressStartPosRef.current.x);
-      const dy = Math.abs(ev.clientY - pressStartPosRef.current.y);
-      if (dx > LONG_PRESS_MOVE_THRESHOLD || dy > LONG_PRESS_MOVE_THRESHOLD) {
-        cleanup();
-      }
-    }
-    function onMouseUp() { cleanup(); }
     function onTouchMove(ev: TouchEvent) {
       if (!pressStartPosRef.current) return;
       const t = ev.touches[0];
@@ -1442,29 +1532,18 @@ export default function Notes() {
     }
     function onTouchEnd() { cleanup(); }
 
-    if (source === 'mouse') {
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp, { once: true });
-      document.addEventListener('mouseleave', onMouseUp, { once: true });
-    } else {
-      document.addEventListener('touchmove', onTouchMove, { passive: true });
-      document.addEventListener('touchend', onTouchEnd, { once: true });
-      document.addEventListener('touchcancel', onTouchEnd, { once: true });
-    }
-  };
-
-  // Mouse event handlers
-  const handleMouseDown = (noteId: string, e: React.MouseEvent) => {
-    if (sortType !== 'custom') return;
-    startLongPress(noteId, e.clientX, e.clientY, 'mouse');
+    document.addEventListener('touchmove', onTouchMove, { passive: true });
+    document.addEventListener('touchend', onTouchEnd, { once: true });
+    document.addEventListener('touchcancel', onTouchEnd, { once: true });
   };
 
   // Touch event handlers
-  const handleTouchStart = (noteId: string, e: React.TouchEvent) => {
-    if (sortType !== 'custom') return;
+  const handleTouchStart = (noteId: string, e: React.TouchEvent, orderedItems: Note[]) => {
+    if (!customReorderingEnabled) return;
     const touch = e.touches[0];
     if (!touch) return;
-    startLongPress(noteId, touch.clientX, touch.clientY, 'touch');
+    dragContainerRef.current = e.currentTarget.closest('[data-note-sortable-list]') as HTMLElement | null;
+    startLongPress(noteId, touch.clientX, touch.clientY, orderedItems);
   };
 
   const getGridClassName = () => {
@@ -1639,6 +1718,18 @@ export default function Notes() {
     const sortedNotes = sortNotes(filteredNotes);
     const pinnedNotes = sortedNotes.filter(note => note.pinned);
     const unpinnedNotes = sortedNotes.filter(note => !note.pinned);
+    const baseOrder = [...pinnedNotes, ...unpinnedNotes];
+    const previewIndexes = new Map(dragPreviewOrder.map((id, index) => [id, index]));
+    const displayedNotes = dragPreviewOrder.length > 0
+      ? [...baseOrder].sort((a, b) => {
+        const aIndex = previewIndexes.get(a.id);
+        const bIndex = previewIndexes.get(b.id);
+        if (aIndex === undefined && bIndex === undefined) return 0;
+        if (aIndex === undefined) return 1;
+        if (bIndex === undefined) return -1;
+        return aIndex - bIndex;
+      })
+      : baseOrder;
 
     if (filteredNotes.length === 0) {
       return (
@@ -1661,9 +1752,9 @@ export default function Notes() {
     }
 
     return (
-      <div className={getGridClassName()}>
-        {[...pinnedNotes, ...unpinnedNotes].map((note: Note, index: number) => {
-          const draggedIndex = draggedNote ? [...pinnedNotes, ...unpinnedNotes].findIndex(n => n.id === draggedNote) : -1;
+      <div className={getGridClassName()} data-note-sortable-list>
+        {displayedNotes.map((note: Note, index: number, orderedNotes: Note[]) => {
+          const draggedIndex = draggedNote ? orderedNotes.findIndex(n => n.id === draggedNote) : -1;
           
           // Calculate transform for gap effect
           let gapTransform = '';
@@ -1725,12 +1816,15 @@ export default function Notes() {
                 isArchived={options.isArchived}
                 searchQuery={searchQuery}
                 viewType={effectiveViewType}
-                draggable={sortType === 'custom' && !isBulkMode}
+                draggable={customReorderingEnabled && !isBulkMode}
                 isDragged={draggedNote === note.id}
                 isDraggedOver={draggedOverNote === note.id}
                 isSelected={isNoteSelected === note.id}
-                onMouseDown={(e) => handleMouseDown(note.id, e)}
-                onTouchStart={(e) => handleTouchStart(note.id, e)}
+                onTouchStart={(e) => handleTouchStart(note.id, e, orderedNotes)}
+                onDragStart={(event) => handleNativeNoteDragStart(note.id, orderedNotes, event)}
+                onDragOver={(event) => handleNativeNoteDragOver(note.id, event)}
+                onDrop={handleNativeNoteDrop}
+                onDragEnd={handleNativeNoteDragEnd}
                 showBulkCheckbox={isBulkMode}
                 isBulkSelected={selectedItems.has(note.id)}
                 onBulkSelect={toggleItem}
@@ -1768,6 +1862,39 @@ export default function Notes() {
       return folders.map(f => f.id);
     }
     return filterNotes(notes).map(n => n.id);
+  };
+
+  const finishBulkFolderAction = (
+    pending: NonNullable<typeof pendingBulkFolderAction>,
+    scope: 'folderOnly' | 'withItems',
+  ) => {
+    folderActions.applyBulkFolderAction(pending.kind, scope, pending.folderIds);
+    if (pending.kind === 'delete' && pending.selectedItemIds.length > 0 && activeTab === 'archived') {
+      const selectedIds = new Set(pending.selectedItemIds);
+      setArchivedNotes(prev => prev.filter(note => !selectedIds.has(note.id)));
+    }
+    clearSelection();
+    exitBulkMode();
+    setPendingBulkFolderAction(null);
+  };
+
+  const requestBulkFolderAction = (kind: 'archive' | 'delete', ids: string[]): boolean => {
+    if (activeTab !== 'folders' && activeTab !== 'archived') return false;
+    const folderCollection = activeTab === 'archived' ? archivedFolders : folders;
+    const folderIds = ids.filter(id => folderCollection.some(folder => folder.id === id));
+    if (folderIds.length === 0) return false;
+
+    const folderIdSet = new Set(folderIds);
+    const selectedItemIds = ids.filter(id => !folderIdSet.has(id));
+    const selectedFolders = folderCollection.filter(folderId => folderIdSet.has(folderId.id));
+    const itemCount = new Set(selectedFolders.flatMap(folder => folder.noteIds)).size;
+    const pending = { kind, folderIds, selectedItemIds };
+    if (itemCount === 0) {
+      finishBulkFolderAction(pending, 'withItems');
+    } else {
+      setPendingBulkFolderAction(pending);
+    }
+    return true;
   };
 
   // Handle bulk actions
@@ -1847,11 +1974,13 @@ export default function Notes() {
         });
         break;
       case 'archive':
+        if (requestBulkFolderAction('archive', ids)) break;
         // Show confirmation dialog for bulk archive
         setPendingBulkAction({ ids, action: 'archive' });
         setBulkArchiveDialogOpen(true);
         break;
       case 'delete':
+        if (requestBulkFolderAction('delete', ids)) break;
         // Show confirmation dialog for bulk delete
         setPendingBulkAction({ ids, action: 'delete' });
         setBulkDeleteDialogOpen(true);
@@ -1984,7 +2113,7 @@ export default function Notes() {
 
   return (
     <FolderMembershipProvider ids={collectFiledIds(
-      [...folders, ...archivedFolders].map((folder) => ({ id: folder.id, itemIds: folder.noteIds })),
+      folders.map((folder) => ({ id: folder.id, itemIds: folder.noteIds })),
       archivedNotes,
     )}>
     <Layout 
@@ -2054,7 +2183,8 @@ export default function Notes() {
                 sortType={sortType}
                 sortDirection={sortDirection}
                 onViewTypeChange={setViewType}
-                onSortTypeChange={setSortType}
+                customReorderingEnabled={customReorderingEnabled}
+                onSortTypeChange={handleNotesSortTypeChange}
                 onSortDirectionChange={setSortDirection}
               />
             )}
@@ -2115,6 +2245,10 @@ export default function Notes() {
         }}
         onSave={(folderData) => {
           addFolder(folderData, selectedNoteForMove || undefined);
+          if (selectedNoteForMove?.length) {
+            clearSelection();
+            exitBulkMode();
+          }
           setSelectedNoteForMove(null);
           setIsFolderCreatorOpen(false);
         }}
@@ -2174,8 +2308,10 @@ export default function Notes() {
         }}
         folders={folders}
         onSelectFolder={handleFolderSelect}
+        onMoveComplete={() => { clearSelection(); exitBulkMode(); }}
         onCreateNewFolder={handleCreateFolderFromDialog}
-        currentFolderId={selectedNoteForMove?.length === 1 ? folders.find(f => f.noteIds.includes(selectedNoteForMove[0]))?.id : undefined}
+        itemIdsToMove={selectedNoteForMove ?? []}
+        getFolderItemIds={(folder) => folder.noteIds}
         getItemCount={(folder) => folder.noteIds.length}
         itemNoun={t('notes')}
       />
@@ -2324,6 +2460,21 @@ export default function Notes() {
         * action on everything the folder holds.
         */}
       <FolderActionDialog {...folderActions.dialog} itemKind="note" />
+      <FolderActionDialog
+        open={Boolean(pendingBulkFolderAction)}
+        kind={pendingBulkFolderAction?.kind ?? 'archive'}
+        folderName=""
+        itemCount={pendingBulkFolderAction
+          ? new Set([...folders, ...archivedFolders]
+              .filter(folder => pendingBulkFolderAction.folderIds.includes(folder.id))
+              .flatMap(folder => folder.noteIds)).size
+          : 0}
+        itemKind="note"
+        bulk
+        onFolderOnly={() => pendingBulkFolderAction && finishBulkFolderAction(pendingBulkFolderAction, 'folderOnly')}
+        onAll={() => pendingBulkFolderAction && finishBulkFolderAction(pendingBulkFolderAction, 'withItems')}
+        onOpenChange={(open) => !open && setPendingBulkFolderAction(null)}
+      />
 
       <NoteEditor
         note={noteToEditColor}
@@ -2343,6 +2494,7 @@ export default function Notes() {
         isAllFoldersSelected={isAllArchivedFoldersSelected}
         selectedCount={selectedItems.size}
         onAction={handleBulkAction}
+        onClearSelection={clearSelection}
       />
       </div>
     </Layout>

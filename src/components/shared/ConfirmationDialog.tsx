@@ -54,6 +54,7 @@ export function ConfirmationDialog({
   const isImport = action === 'import';
   const isModeChange = action === 'mode-change';
   const isRestore = action === 'restore';
+  const compactDestructive = isDelete || isArchive;
   const defaultConfirmLabel = isDelete ? t('delete')
     : isImport ? t('import')
     : isModeChange ? t('confirm')
@@ -77,12 +78,21 @@ export function ConfirmationDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent hideOverlay={hideOverlay}>
-        <AlertDialogHeader>
+      <AlertDialogContent
+        hideOverlay={hideOverlay}
+        className={compactDestructive
+          ? 'w-[calc(100vw-2rem)] max-w-[320px] gap-0 rounded-3xl bg-popover p-0 shadow-xl'
+          : undefined}
+      >
+        <AlertDialogHeader className={compactDestructive ? 'px-6 pt-6 pb-5' : undefined}>
           <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
+          <AlertDialogDescription className={compactDestructive ? 'whitespace-pre-line' : undefined}>
+            {description}
+          </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter className="flex-row gap-2">
+        <AlertDialogFooter className={compactDestructive
+          ? 'flex-row gap-2 border-t border-border px-4 py-3'
+          : 'flex-row gap-2'}>
           {/*
             * Cancel is a plain secondary button, identically in every dialog.
             *
@@ -93,24 +103,24 @@ export function ConfirmationDialog({
             */}
           <AlertDialogCancel
             onClick={handleCancel}
-            className="flex-1 mt-0"
+            className={`mt-0 h-10 flex-1 rounded-full ${compactDestructive ? 'min-w-0' : ''}`}
           >
             {cancelLabel ?? t('cancel')}
           </AlertDialogCancel>
           {secondaryAction && (
             <AlertDialogAction
               onClick={handleSecondaryAction}
-              className="flex-1 bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border"
+              className="h-10 min-w-0 flex-1 rounded-full border border-border bg-secondary text-secondary-foreground hover:bg-secondary/80"
             >
               {secondaryAction.label}
             </AlertDialogAction>
           )}
           <AlertDialogAction
             onClick={handleConfirm}
-            className={`flex-1 ${
+            className={`h-10 flex-1 rounded-full ${compactDestructive ? 'min-w-0' : ''} ${
               isImport || isModeChange || isRestore
                 ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                : 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                : 'bg-destructive text-destructive-foreground transition-none hover:bg-destructive active:bg-destructive focus:bg-destructive focus-visible:bg-destructive hover:shadow-none active:shadow-none'
             }`}
           >
             {confirmLabel || defaultConfirmLabel}

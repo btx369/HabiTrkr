@@ -62,7 +62,7 @@ export const ColoredCard = React.forwardRef<HTMLDivElement, ColoredCardProps>(
     const { theme } = useTheme();
     const isDark = theme === 'dark';
 
-    // For glass effect: use solid semi-transparent color at 75% opacity
+    // Personal colors stay softly blended; the default surface follows the explicit item-card token.
     const glassStyles: React.CSSProperties = hasColor ? {
       backgroundColor: hexToRgba(color, 0.75),
       '--card-hover-color': getHoverColor(color, isDark),
@@ -73,6 +73,7 @@ export const ColoredCard = React.forwardRef<HTMLDivElement, ColoredCardProps>(
        * hover using it is all but invisible — which is why the 3-dot menu on a
        * default-coloured note appeared to turn white while a coloured note was fine.
        */
+      backgroundColor: 'hsl(var(--item-card-surface))',
       '--card-hover-color': 'hsl(var(--hover))',
     } as React.CSSProperties;
 
@@ -80,6 +81,7 @@ export const ColoredCard = React.forwardRef<HTMLDivElement, ColoredCardProps>(
       <Card
         ref={ref}
         className={cn(
+          hasColor && "border-black/10",
           /*
            * No tap or click animation. This carried `transition-transform duration-150`
            * for a "subtle scale on tap" that no longer exists — the scale itself was

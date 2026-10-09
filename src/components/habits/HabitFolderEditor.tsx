@@ -86,6 +86,7 @@ export function HabitFolderEditor({ isOpen, onClose, onSave, folder }: HabitFold
         onColorChange={setColor}
         icon={Palette}
         iconColor={ICON_COLOR}
+        singleRow
       />
     </EditorDialog>
   );
