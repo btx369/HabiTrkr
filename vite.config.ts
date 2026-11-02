@@ -3,7 +3,18 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 
 // https://vitejs.dev/config/
+// GitHub Pages serves the site from /HabiTrkr/, so that build (and only that one)
+// gets a base path and a CSP meta tag; Pages cannot send headers, unlike _headers on
+// Netlify/Cloudflare. The Android build keeps "/" and no meta CSP, since Capacitor
+// injects its bridge script into the page.
+const githubPages = process.env.GITHUB_PAGES === "true";
+
+const PAGES_CSP =
+  "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; " +
+  "media-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'";
+
 export default defineConfig({
+  base: githubPages ? "/HabiTrkr/" : "/",
   server: {
     port: 8080,
     watch: {
@@ -29,7 +40,18 @@ export default defineConfig({
       ],
     },
   },
-  plugins: [react()],
+  plugins: [
+    react(),
+    githubPages && {
+      name: "pages-csp",
+      apply: "build" as const,
+      transformIndexHtml: (html: string) =>
+        html.replace(
+          '<meta charset="UTF-8" />',
+          `<meta charset="UTF-8" />\n    <meta http-equiv="Content-Security-Policy" content="${PAGES_CSP}" />`
+        ),
+    },
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

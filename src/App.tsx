@@ -47,7 +47,8 @@ const App = () => (
             <TooltipProvider>
               <Toaster />
               <Sonner />
-              <BrowserRouter>
+              {/* BASE_URL is "/" normally and "/HabiTrkr/" on GitHub Pages (see vite.config.ts). */}
+              <BrowserRouter basename={import.meta.env.BASE_URL}>
                 <Suspense fallback={<RouteFallback />}>
                   <Routes>
                     <Route path="/" element={<HabitTracker />} />

@@ -177,7 +177,7 @@ export const scheduleEventNotification = async (event: Event): Promise<void> => 
       const timeoutId = setTimeout(() => {
         new Notification(event.name, {
           body,
-          icon: '/favicon.ico',
+          icon: `${import.meta.env.BASE_URL}favicon.ico`,
           tag: event.id,
           requireInteraction: true
         });

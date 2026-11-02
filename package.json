@@ -12,7 +12,8 @@
     "preview": "vite preview",
     "cap:sync": "npm run build && cap sync",
     "cap:android": "npm run build && cap sync android && cap open android",
-    "test": "vitest run"
+    "test": "vitest run",
+    "deploy:pages": "node scripts/deploy-pages.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.2",
