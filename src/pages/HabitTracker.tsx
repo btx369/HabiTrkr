@@ -19,6 +19,7 @@ import { MoveToFolderDialog } from '@/components/shared/MoveToFolderDialog';
 import { FolderActionDialog } from '@/components/shared/FolderActionDialog';
 import { useFolderActions } from '@/hooks/useFolderActions';
 import { HabitViewSettings, HabitSortType, HabitSortDirection } from '@/components/habits/HabitViewSettings';
+import type { ViewType } from '@/types/view';
 import { HabitFolderViewSettings, HabitFolderSortType, HabitFolderSortDirection } from '@/components/habits/HabitFolderViewSettings';
 import { BulkActionBar, BulkActionType, BulkActionContext } from '@/components/shared/BulkActionBar';
 import { useToastSettings } from '@/contexts/ToastContext';
@@ -103,6 +104,8 @@ export default function HabitTracker() {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   
   // Sort settings for habits tab
+  const [allHabitsViewType, setAllHabitsViewType] = useLocalStorage<ViewType>('habitsAllViewType', 'list');
+  const [archivedHabitsViewType, setArchivedHabitsViewType] = useLocalStorage<ViewType>('habitsArchivedViewType', 'list');
   const [habitsSortType, setHabitsSortType] = useLocalStorage<HabitSortType>('habitsSortType', 'name');
   const [habitsSortDirection, setHabitsSortDirection] = useLocalStorage<HabitSortDirection>('habitsSortDirection', 'asc');
   const [habitsCustomOrder, setHabitsCustomOrder] = useLocalStorage<string[]>('habitsCustomOrder', []);
@@ -1125,7 +1128,7 @@ export default function HabitTracker() {
       onSearchChange={setSearchQuery}
       pageTitle={t('habits')}
       isBulkMode={isBulkMode}
-      shieldHeight={activeTab === 'habits' ? '16.5rem' : '7.25rem'}
+      shieldHeight={activeTab === 'habits' ? '14rem' : '7.25rem'}
     >
       <div {...swipeHandlers}>
         <Tabs value={activeTab} onValueChange={(tab) => { finishHabitPointerDrag(false); setActiveTab(tab); exitBulkMode(); setDraggedHabitId(null); setHabitDragPreviewOrder([]); habitDragPreviewRef.current = []; }}>
@@ -1168,17 +1171,21 @@ export default function HabitTracker() {
                 />
               ) : activeTab === 'archived' ? (
                 <HabitViewSettings
+                  viewType={archivedHabitsViewType}
                   sortType={archivedHabitsSortType}
                   sortDirection={archivedHabitsSortDirection}
                   customReorderingEnabled={archivedHabitsReorderingEnabled}
+                  onViewTypeChange={setArchivedHabitsViewType}
                   onSortTypeChange={handleArchivedHabitsSortTypeChange}
                   onSortDirectionChange={setArchivedHabitsSortDirection}
                 />
               ) : (
                 <HabitViewSettings
+                  viewType={allHabitsViewType}
                   sortType={habitsSortType}
                   sortDirection={habitsSortDirection}
                   customReorderingEnabled={habitsReorderingEnabled}
+                  onViewTypeChange={setAllHabitsViewType}
                   onSortTypeChange={handleHabitsSortTypeChange}
                   onSortDirectionChange={setHabitsSortDirection}
                 />
@@ -1188,26 +1195,26 @@ export default function HabitTracker() {
 
             {/* Calendar Navigation - only visible on habits tab */}
             {activeTab === 'habits' && (
-              <div className="rounded-[20px] bg-[hsl(var(--surface-card))] backdrop-blur-[12px] border border-foreground/10 shadow-[0_8px_32px_rgba(0,0,0,0.1)] px-2 py-2 mb-2">
-                <div className="flex items-center justify-between mb-2">
-                  <Button variant="ghost" size="icon" className="text-foreground hover:bg-hover hover:text-foreground rounded-full [&_svg]:!size-5" onClick={() => setCurrentWeek(subWeeks(currentWeek, 1))}>
+              <div className="rounded-2xl bg-[hsl(var(--surface-card))] backdrop-blur-[12px] border border-foreground/10 shadow-[0_8px_32px_rgba(0,0,0,0.1)] px-1.5 py-1 mb-1">
+                <div className="flex items-center justify-between mb-0.5">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground hover:bg-hover hover:text-foreground rounded-full [&_svg]:!size-4" onClick={() => setCurrentWeek(subWeeks(currentWeek, 1))}>
                     <ChevronLeft size={24} />
                   </Button>
-                  <h3 className="font-medium">
+                  <h3 className="text-sm font-medium">
                     {format(weekStart, 'MMM d', { locale: dateLocale })} - {format(addDays(weekStart, 6), 'MMM d, yyyy', { locale: dateLocale })}
                   </h3>
-                  <Button variant="ghost" size="icon" className="text-foreground hover:bg-hover hover:text-foreground rounded-full [&_svg]:!size-5" onClick={() => setCurrentWeek(addWeeks(currentWeek, 1))}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground hover:bg-hover hover:text-foreground rounded-full [&_svg]:!size-4" onClick={() => setCurrentWeek(addWeeks(currentWeek, 1))}>
                     <ChevronRight size={24} />
                   </Button>
                 </div>
                 
-                <div className="grid grid-cols-7 gap-2 text-center">
+                <div className="grid grid-cols-7 gap-1 text-center">
                   {orderedDayNames.map((day, index) => {
                     const isToday = isSameDay(weekDays[index], new Date());
                     return (
-                      <div key={`${day}-${index}`} className="text-sm font-medium text-muted-foreground p-2">
+                      <div key={`${day}-${index}`} className="text-xs font-medium text-muted-foreground p-1">
                         {day}
-                        <div className={`text-lg font-bold mt-1 w-9 h-9 flex items-center justify-center mx-auto rounded-full ${isToday ? 'bg-black text-white' : 'text-foreground'}`}>
+                        <div className={`text-base font-bold mt-0.5 w-7 h-7 flex items-center justify-center mx-auto rounded-full ${isToday ? 'bg-black text-white' : 'text-foreground'}`}>
                           {format(weekDays[index], 'd')}
                         </div>
                       </div>
@@ -1218,7 +1225,7 @@ export default function HabitTracker() {
             )}
           </div>
 
-          <TabsContent value="habits" className={activeTab === 'habits' ? 'mt-[13rem]' : 'mt-14'}>
+          <TabsContent value="habits" className={activeTab === 'habits' ? 'mt-[11rem]' : 'mt-14'}>
             {habits.length === 0 && habitFolders.length === 0 ? (
               <Card>
                 <CardContent className="text-center py-8">
@@ -1233,7 +1240,7 @@ export default function HabitTracker() {
               </Card>
             ) : (
               <div
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2"
+                className={`${allHabitsViewType === 'x3' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : allHabitsViewType === 'x2' ? 'grid grid-cols-1 md:grid-cols-2' : 'grid grid-cols-1'} gap-2`}
                 onPointerDown={handleHabitPointerDown}
                 onPointerMove={handleHabitPointerMove}
                 onPointerUp={handleHabitPointerUp}
@@ -1244,6 +1251,7 @@ export default function HabitTracker() {
                   <HabitCard
                     key={habit.id}
                     habit={habit}
+                    viewType={allHabitsViewType}
                     weekDays={weekDays}
                     isCompletedForDate={isHabitCompletedForDate}
                     onToggleCompletion={toggleHabitCompletion}
@@ -1330,7 +1338,7 @@ export default function HabitTracker() {
                   </Card>
                 ) : (
                   <div
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2"
+                    className={`${archivedHabitsViewType === 'x3' ? 'grid grid-cols-3' : archivedHabitsViewType === 'x2' ? 'grid grid-cols-2' : 'grid grid-cols-1'} gap-2`}
                     onPointerDown={handleHabitPointerDown}
                     onPointerMove={handleHabitPointerMove}
                     onPointerUp={handleHabitPointerUp}

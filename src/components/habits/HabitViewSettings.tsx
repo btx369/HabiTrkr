@@ -4,26 +4,34 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
   DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { isViewType, type ViewType } from '@/types/view';
 
 export type HabitSortType = 'name' | 'dateCreated' | 'dateModified' | 'custom';
 export type HabitSortDirection = 'asc' | 'desc';
 
 interface HabitViewSettingsProps {
+  viewType: ViewType;
   sortType: HabitSortType;
   sortDirection: HabitSortDirection;
   customReorderingEnabled: boolean;
+  onViewTypeChange: (viewType: ViewType) => void;
   onSortTypeChange: (sortType: HabitSortType) => void;
   onSortDirectionChange: (direction: HabitSortDirection) => void;
 }
 
 export function HabitViewSettings({
+  viewType,
   sortType,
   sortDirection,
   customReorderingEnabled,
+  onViewTypeChange,
   onSortTypeChange,
   onSortDirectionChange
 }: HabitViewSettingsProps) {
@@ -68,6 +76,18 @@ export function HabitViewSettings({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48 bg-background border border-border">
+        <DropdownMenuLabel>{t('view')}</DropdownMenuLabel>
+        <DropdownMenuRadioGroup
+          value={viewType}
+          onValueChange={(value) => {
+            if (isViewType(value)) onViewTypeChange(value);
+          }}
+        >
+          <DropdownMenuRadioItem value="x3" onSelect={(event) => event.preventDefault()}>{t('viewX3')}</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="x2" onSelect={(event) => event.preventDefault()}>{t('viewX2')}</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="list" onSelect={(event) => event.preventDefault()}>{t('viewList')}</DropdownMenuRadioItem>
+        </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
         <DropdownMenuLabel>{t('sortBy')}</DropdownMenuLabel>
         {(['name', 'dateCreated', 'dateModified', 'custom'] as const).map((type) => (
           <DropdownMenuItem

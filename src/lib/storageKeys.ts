@@ -51,12 +51,14 @@ export const RENAMED_KEYS: ReadonlyArray<{ old: string; current: string }> = [
   { old: 'habitVault.repairedDateRanges', current: REPAIRED_DATE_RANGES_KEY },
 ];
 
-/** The four places a Notes/Events view mode is stored. */
+/** The places a Notes/Events/Habits view mode is stored. */
 export const VIEW_TYPE_KEYS: readonly string[] = [
   'notesAllViewType',
   'notesArchivedViewType',
   'eventsAllViewType',
   'eventsArchivedViewType',
+  'habitsAllViewType',
+  'habitsArchivedViewType',
 ];
 
 /**

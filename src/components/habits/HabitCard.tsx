@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react';
 import { format, isAfter, startOfDay } from 'date-fns';
-import { Pin, RotateCcw, Trash2, Check, FolderOpen, GripVertical } from 'lucide-react';
+import { RotateCcw, Trash2, Check, FolderOpen, GripVertical } from 'lucide-react';
 import { CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { getColoredIconClass, getColoredBorderClass } from '@/lib/coloredButtonStyles';
 import { useIsFiled } from '@/contexts/FolderMembershipContext';
 import { cn } from '@/lib/utils';
+import type { ViewType } from '@/types/view';
 
 // Helper to convert hex to rgba for glass effect (matching ColoredCard)
 const hexToRgba = (hexColor: string, alpha: number): string => {
@@ -27,6 +28,7 @@ const hexToRgba = (hexColor: string, alpha: number): string => {
 
 interface HabitCardProps {
   habit: Habit;
+  viewType?: ViewType;
   weekDays: Date[];
   isCompletedForDate: (habit: Habit, date: Date) => boolean;
   onToggleCompletion: (habitId: string, date: Date) => void;
@@ -52,6 +54,7 @@ interface HabitCardProps {
 
 export function HabitCard({
   habit,
+  viewType = 'list',
   weekDays,
   isCompletedForDate,
   onToggleCompletion,
@@ -152,6 +155,9 @@ export function HabitCard({
   } : {};
   const coloredButtonClass = hasColor ? 'border hover:opacity-80' : 'border-foreground text-foreground';
 
+  const dayButtonSize = viewType === 'x3' ? 'h-5 w-5 text-[9px]' : 'h-7 w-7 text-xs';
+  const today = startOfDay(new Date());
+
   return (
     <ColoredCard
       color={habit.color}
@@ -161,211 +167,177 @@ export function HabitCard({
       onDragOver={(event) => onDragOver?.(habit.id, event)}
       onDrop={onDrop}
       onDragEnd={onDragEnd}
-      className={cn(showBulkCheckbox && 'cursor-pointer', isDragEnabled && !showBulkCheckbox && 'cursor-grab active:cursor-grabbing', isDragged && 'opacity-50')}
+      className={cn('rounded-2xl', showBulkCheckbox && 'cursor-pointer', isDragEnabled && !showBulkCheckbox && 'cursor-grab active:cursor-grabbing', isDragged && 'opacity-50')}
       onClick={() => showBulkCheckbox && onBulkSelect?.(habit.id)}
     >
-      <CardContent className="px-2 py-2">
-        <div className="flex items-start gap-3">
+      <CardContent className="px-3 py-2">
+        <div className={cn('flex min-w-0 items-center', viewType === 'x3' ? 'gap-1' : 'gap-2')}>
           {isDragEnabled && !showBulkCheckbox && (
-            <GripVertical data-habit-drag-handle className="mt-0.5 h-5 w-5 shrink-0 cursor-grab touch-none text-muted-foreground active:cursor-grabbing" aria-label="Reorder habit" />
+            <GripVertical data-habit-drag-handle className="h-4 w-4 shrink-0 cursor-grab touch-none text-muted-foreground active:cursor-grabbing" aria-label="Reorder habit" />
           )}
-          <div 
-            className="flex-1 cursor-pointer"
+          <button
+            type="button"
+            className={cn('min-w-0 flex-1 truncate text-left text-sm font-medium', textColorClass)}
             onClick={(event) => handleCardAction(event, () => onEdit(habit))}
+            title={habit.name}
           >
-            <h3 className={`text-left text-sm font-medium leading-tight line-clamp-2 ${textColorClass}`}>
-              {highlightText(habit.name, searchQuery)}
-            </h3>
-          </div>
-          <div className="flex items-center gap-1">
-            {isFiled && <FolderOpen size={14} className={iconColorClass} />}
-            {habit.pinned && <Pin size={14} className={iconColorClass} />}
-            {showBulkCheckbox ? (
-              <BulkCheckbox />
-            ) : (
-              <ItemActionMenu
-                isPinned={habit.pinned}
-                onPin={() => onPin(habit.id)}
-                onUnpin={() => onPin(habit.id)}
-                onEdit={() => onEdit(habit)}
-                onMoveToFolder={() => onMoveToFolder?.(habit.id)}
-                onArchive={() => onArchive(habit.id)}
-                onDelete={() => onDelete(habit.id)}
-              />
-            )}
-          </div>
-        </div>
+            {highlightText(habit.name, searchQuery)}
+          </button>
 
-        {habit.useUnlimitedTimes ? (
-          <>
-            <div className="mt-3 flex items-center justify-between">
-              <Badge variant="outline" className={`${badgeBorderClass} ${hasColor ? 'text-[#000000]' : ''}`}>{t('timesToday').replace('{count}', String(todayCount))}</Badge>
-              <div className="flex gap-2">
+          <div className={cn('flex min-w-0 shrink items-center', viewType === 'x3' ? 'gap-0.5' : 'gap-1.5')}>
+            {habit.useUnlimitedTimes && (
+              <>
+                <Badge
+                  variant="outline"
+                  title={t('timesToday').replace('{count}', String(todayCount))}
+                  className={cn('whitespace-nowrap', viewType === 'x3' ? 'h-5 px-1 text-[9px]' : 'h-6 px-2 text-[10px]', badgeBorderClass, hasColor && 'text-[#000000]')}
+                >
+                  {todayCount}x{viewType !== 'x3' && ` ${t('today')}`}
+                </Badge>
                 {todayCount > 0 && (
-                <Button size="icon" variant="outline" className={`rounded-full h-8 w-8 ${coloredButtonClass}`} style={coloredButtonStyle} onClick={(event) => handleCardAction(event, () => onUndoCompletion(habit.id))}>
-                    <RotateCcw size={14} />
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    aria-label={t('undo')}
+                    className={cn('shrink-0 rounded-full', viewType === 'x3' ? 'h-5 w-5' : 'h-6 w-6', coloredButtonClass)}
+                    style={coloredButtonStyle}
+                    onClick={(event) => handleCardAction(event, () => onUndoCompletion(habit.id))}
+                  >
+                    <RotateCcw size={viewType === 'x3' ? 10 : 12} />
                   </Button>
                 )}
-                <Button size="icon" variant="outline" className={`rounded-full h-8 w-8 ${coloredButtonClass}`} style={coloredButtonStyle} onClick={(event) => handleCardAction(event, () => onMarkUnlimitedDone(habit.id))}>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  aria-label="+1"
+                  className={cn('shrink-0 rounded-full text-[9px]', viewType === 'x3' ? 'h-5 w-5' : 'h-6 w-6', coloredButtonClass)}
+                  style={coloredButtonStyle}
+                  onClick={(event) => handleCardAction(event, () => onMarkUnlimitedDone(habit.id))}
+                >
                   +1
                 </Button>
-              </div>
-            </div>
-            {/* Weekly completion counts grid */}
-            <div className="grid grid-cols-7 gap-1 mt-3">
-              {weekDays.map((date) => {
-                const dateStr = toDateKey(date);
-                const count = habit.completionCounts?.[dateStr] || 0;
-                
-                // Glass effect matching the card - same opacity, black border
-                const dayStyle: React.CSSProperties = hasColor ? {
-                  backgroundColor: hexToRgba(habit.color, count > 0 ? 0.9 : 0.5),
-                  color: '#000000',
-                  border: '1.5px solid #000000',
-                } : {
-                  border: '1.5px solid #000000',
-                };
-                
-                return (
-                  <div
-                    key={date.toISOString()}
-                    className={`w-full aspect-square rounded-full text-xs flex items-center justify-center backdrop-blur-sm ${
-                      hasColor 
-                        ? ''
-                        : (count > 0 
-                            ? 'bg-black text-white' 
-                            : 'bg-background/60 text-foreground')
-                    }`}
-                    style={dayStyle}
-                  >
-                    {/* Show the count, or the day number when there is nothing to count,
-                        matching the other tracking modes. Rendering a bare 0 here read as
-                        "zero completions" rather than "this is the 26th". */}
-                    {count > 0 ? count : format(date, 'd')}
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        ) : habit.useNumberOfDays ? (
-          <>
-            <div className="mt-3 flex items-center justify-between">
-              <div className="flex flex-col gap-1">
-                <Badge variant={weeklyCompletions >= (habit.numberOfDaysPerWeek || 1) ? "default" : "outline"} className={weeklyCompletions >= (habit.numberOfDaysPerWeek || 1) ? '' : `${badgeBorderClass} ${hasColor ? 'text-[#000000]' : ''}`}>
-                  {t('daysThisWeek').replace('{done}', String(weeklyCompletions)).replace('{total}', String(habit.numberOfDaysPerWeek || 1))}
+              </>
+            )}
+
+            {habit.useNumberOfDays && (
+              <Badge
+                variant="outline"
+                title={t('daysThisWeek').replace('{done}', String(weeklyCompletions)).replace('{total}', String(habit.numberOfDaysPerWeek || 1))}
+                className={cn('h-6 whitespace-nowrap px-2 text-[10px]', viewType === 'x3' && 'h-5 px-1 text-[9px]', badgeBorderClass, hasColor && 'text-[#000000]')}
+              >
+                {viewType === 'x3'
+                  ? `${weeklyCompletions}/${habit.numberOfDaysPerWeek || 1}`
+                  : t('daysThisWeek').replace('{done}', String(weeklyCompletions)).replace('{total}', String(habit.numberOfDaysPerWeek || 1))}
+              </Badge>
+            )}
+
+            {habit.useTimesPerDay && !habit.useUnlimitedTimes && (
+              <>
+                <Badge
+                  variant="outline"
+                  title={t('timesTodayOf').replace('{done}', String(todayCount)).replace('{total}', String(timesPerDay))}
+                  className={cn('whitespace-nowrap', viewType === 'x3' ? 'h-5 px-1 text-[9px]' : 'h-6 px-2 text-[10px]', badgeBorderClass, hasColor && 'text-[#000000]')}
+                >
+                  {viewType === 'x3' ? `${todayCount}/${timesPerDay}` : t('timesTodayOf').replace('{done}', String(todayCount)).replace('{total}', String(timesPerDay))}
                 </Badge>
-                {habit.useTimesPerDay && (
-                  <Badge variant={hasReachedDailyLimit ? "default" : "outline"} className={`text-xs ${hasReachedDailyLimit ? '' : `${badgeBorderClass} ${hasColor ? 'text-[#000000]' : ''}`}`}>
-                    {t('timesTodayOf').replace('{done}', String(todayCount)).replace('{total}', String(timesPerDay))}
-                  </Badge>
-                )}
-              </div>
-              <div className="flex gap-2">
-                {(habit.useTimesPerDay ? todayCount > 0 : isCompletedToday) && (
-                <Button size="icon" variant="outline" className={`rounded-full h-8 w-8 ${coloredButtonClass}`} style={coloredButtonStyle} onClick={(event) => handleCardAction(event, () => onUndoCompletion(habit.id))}>
-                    <RotateCcw size={14} />
+                {todayCount > 0 && (
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    aria-label={t('undo')}
+                    className={cn('shrink-0 rounded-full', viewType === 'x3' ? 'h-5 w-5' : 'h-6 w-6', coloredButtonClass)}
+                    style={coloredButtonStyle}
+                    onClick={(event) => handleCardAction(event, () => onUndoCompletion(habit.id))}
+                  >
+                    <RotateCcw size={viewType === 'x3' ? 10 : 12} />
                   </Button>
                 )}
-                <Button 
-                  size="sm" 
-                  variant={hasReachedDailyLimit ? "default" : "outline"}
-                  className={`rounded-full ${hasReachedDailyLimit ? '' : coloredButtonClass}`}
-                  style={hasReachedDailyLimit ? {} : coloredButtonStyle}
-                  onClick={(event) => handleCardAction(event, () => onMarkDone(habit.id))}
-                  disabled={!showBulkCheckbox && hasReachedDailyLimit}
-                >
-                  {hasReachedDailyLimit ? t('done') : habit.useTimesPerDay ? `+1` : t('markDone')}
-                </Button>
-              </div>
-            </div>
-            {/* Weekly completion grid */}
-            <div className="grid grid-cols-7 gap-1 mt-3">
-              {weekDays.map((date) => {
-                const isCompleted = isCompletedForDate(habit, date);
-                const dayDateStr = format(date, 'yyyy-MM-dd');
-                const dayCount = habit.completionCounts?.[dayDateStr] || 0;
-                
-                // Glass effect matching the card - same opacity, black border
-                const dayStyle: React.CSSProperties = hasColor ? {
-                  backgroundColor: hexToRgba(habit.color, isCompleted ? 0.9 : 0.5),
-                  color: '#000000',
-                  border: '1.5px solid #000000',
-                } : {
-                  border: '1.5px solid #000000',
-                };
-                
-                return (
-                  <div
-                    key={date.toISOString()}
-                    className={`w-full aspect-square rounded-full text-xs flex items-center justify-center backdrop-blur-sm ${
-                      hasColor 
-                        ? ''
-                        : (isCompleted 
-                            ? 'bg-black text-white' 
-                            : 'bg-background/60 text-foreground')
-                    }`}
-                    style={dayStyle}
-                  >
-                    {isCompleted 
-                      ? (habit.useTimesPerDay ? dayCount : '✓') 
-                      : format(date, 'd')}
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        ) : (
-          <div className="grid grid-cols-7 gap-1 mt-3">
+              </>
+            )}
+          </div>
+
+          {isFiled && <FolderOpen size={14} className={cn('shrink-0', iconColorClass)} />}
+          <div className={cn('flex shrink-0 items-center', viewType === 'x3' ? 'gap-0.5' : 'gap-1')}>
             {weekDays.map((date, visualIndex) => {
-              // Map visual index to habit array index (where 0=Monday always)
-              const habitIndex = getHabitIndexFromVisualIndex(visualIndex, weekStartDay);
-              const isActive = habit.activeDays?.[habitIndex] ?? true;
+              const dateKey = toDateKey(date);
+              const isToday = startOfDay(date).getTime() === today.getTime();
+              const isFuture = isAfter(startOfDay(date), today);
               const isCompleted = isCompletedForDate(habit, date);
-              
-              // Glass effect matching the card - same opacity, black border
+              const count = habit.completionCounts?.[dateKey] || 0;
+              const habitIndex = getHabitIndexFromVisualIndex(visualIndex, weekStartDay);
+              const isActive = habit.useNumberOfDays || habit.useTimesPerDay || habit.useUnlimitedTimes
+                ? true
+                : habit.activeDays?.[habitIndex] ?? true;
+              const isDisabled = !showBulkCheckbox && (!isActive || isFuture || (habit.useTimesPerDay && isToday && hasReachedDailyLimit));
+              const isCounted = habit.useUnlimitedTimes ? count > 0 : isCompleted;
               const dayStyle: React.CSSProperties = hasColor ? {
-                backgroundColor: !isActive 
-                  ? 'hsl(var(--muted))' 
-                  : hexToRgba(habit.color, isCompleted ? 0.9 : 0.5),
+                backgroundColor: !isActive
+                  ? 'hsl(var(--muted))'
+                  : hexToRgba(habit.color, isCounted ? 0.9 : 0.5),
                 color: !isActive ? 'hsl(var(--muted-foreground))' : '#000000',
-                border: '1.5px solid #000000',
-              } : {
-                border: '1.5px solid #000000',
-              };
-              
+                border: '1px solid rgba(0, 0, 0, 0.3)',
+              } : {};
+
+              const dayLabel = habit.useUnlimitedTimes
+                ? (count > 0 ? String(count) : format(date, 'd'))
+                : isCompleted
+                  ? (habit.useTimesPerDay && count > 0 ? String(count) : '✓')
+                  : format(date, 'd');
+
               return (
                 <button
                   key={date.toISOString()}
+                  type="button"
+                  disabled={isDisabled}
+                  aria-label={format(date, 'EEEE, MMMM d') + (isCompleted ? ', ' + t('done') : '')}
+                  aria-pressed={isCompleted}
                   onClick={(event) => {
                     event.stopPropagation();
                     if (showBulkCheckbox) {
                       onBulkSelect?.(habit.id);
                       return;
                     }
-                    if (!isActive) return;
-                    // Prevent marking future days as complete
-                    const today = startOfDay(new Date());
-                    if (isAfter(startOfDay(date), today)) return;
-                    onToggleCompletion(habit.id, date);
+                    if (!isActive || isFuture || (habit.useTimesPerDay && isToday && hasReachedDailyLimit)) return;
+                    if (habit.useUnlimitedTimes) {
+                      if (isToday) onMarkUnlimitedDone(habit.id);
+                    } else if (habit.useTimesPerDay && isToday) {
+                      onMarkDone(habit.id);
+                    } else {
+                      onToggleCompletion(habit.id, date);
+                    }
                   }}
-                  disabled={!isActive && !showBulkCheckbox}
                   style={dayStyle}
-                  className={`w-full aspect-square rounded-full text-xs flex items-center justify-center transition-colors backdrop-blur-sm ${
-                    hasColor 
-                      ? (!isActive ? 'cursor-not-allowed' : 'hover:opacity-80')
-                      : (!isActive 
-                          ? 'bg-muted text-muted-foreground cursor-not-allowed' 
-                          : isCompleted 
-                            ? 'bg-black text-white' 
-                            : 'bg-muted/60 text-foreground hover:bg-hover')
-                  }`}
+                  className={cn(
+                    'flex shrink-0 items-center justify-center rounded-full border transition-colors',
+                    dayButtonSize,
+                    hasColor
+                      ? (!isActive ? 'cursor-not-allowed opacity-50' : 'hover:opacity-80')
+                      : isCounted
+                        ? 'border-[#2f80e7] bg-[#2f80e7] text-white hover:bg-[#2875d3]'
+                        : 'border-border bg-background text-foreground hover:bg-hover',
+                    isDisabled && 'cursor-not-allowed opacity-50'
+                  )}
                 >
-                  {isCompleted ? '✓' : format(date, 'd')}
+                  {dayLabel}
                 </button>
               );
             })}
           </div>
-        )}
+
+          {showBulkCheckbox ? (
+            <BulkCheckbox />
+          ) : (
+            <ItemActionMenu
+              isPinned={habit.pinned}
+              onPin={() => onPin(habit.id)}
+              onUnpin={() => onPin(habit.id)}
+              onEdit={() => onEdit(habit)}
+              onMoveToFolder={() => onMoveToFolder?.(habit.id)}
+              onArchive={() => onArchive(habit.id)}
+              onDelete={() => onDelete(habit.id)}
+            />
+          )}
+        </div>
       </CardContent>
     </ColoredCard>
   );
