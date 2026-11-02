@@ -111,8 +111,34 @@ export function updateTagUsage(oldTags: string[] = [], newTags: string[] = []): 
   removed.forEach(tag => decrementTagUsage(tag));
 }
 
+/** Collections whose items carry a `tags` list. */
+const TAGGED_COLLECTIONS = ['notes', 'archivedNotes', 'events', 'archivedEvents'];
+/** Folder lists whose auto-import rules name tags. */
+const FOLDER_COLLECTIONS = ['folders', 'archivedFolders', 'eventFolders', 'archivedEventFolders'];
+
 /**
- * Rename a tag globally across all notes and events
+ * Applies `change` to every tag list the app stores: item tags and folder auto-import
+ * rules. The rules used to be skipped, so renaming or deleting a tag left folders
+ * waiting for a tag that no longer existed and they silently stopped auto-importing.
+ * Duplicates are dropped, so renaming #work to an existing #job leaves one #job.
+ */
+function rewriteAllTags(change: (tags: string[]) => string[]): void {
+  const dedupe = (tags: string[]) => [...new Set(change(tags))];
+  const rewrite = (key: string, field: 'tags' | 'autoImportTags') => {
+    const stored = localStorage.getItem(key);
+    if (!stored) return;
+    const items: Array<Record<string, unknown>> = JSON.parse(stored);
+    const updated = items.map(item =>
+      Array.isArray(item[field]) ? { ...item, [field]: dedupe(item[field] as string[]) } : item
+    );
+    localStorage.setItem(key, JSON.stringify(updated));
+  };
+  TAGGED_COLLECTIONS.forEach(key => rewrite(key, 'tags'));
+  FOLDER_COLLECTIONS.forEach(key => rewrite(key, 'autoImportTags'));
+}
+
+/**
+ * Rename a tag globally across all notes, events and folder auto-import rules
  */
 export function renameTagGlobally(oldTag: string, newTag: string): void {
   try {
@@ -121,46 +147,7 @@ export function renameTagGlobally(oldTag: string, newTag: string): void {
     
     if (normalizedOld === normalizedNew) return;
 
-    // Helper to update tags in an array of items
-    const updateItemTags = (items: any[]): any[] => {
-      return items.map(item => {
-        if (item.tags && Array.isArray(item.tags)) {
-          const updatedTags = item.tags.map((t: string) => 
-            t.toLowerCase() === normalizedOld ? normalizedNew : t
-          );
-          return { ...item, tags: updatedTags };
-        }
-        return item;
-      });
-    };
-
-    // Update notes
-    const notesStored = localStorage.getItem('notes');
-    if (notesStored) {
-      const notes = JSON.parse(notesStored);
-      localStorage.setItem('notes', JSON.stringify(updateItemTags(notes)));
-    }
-
-    // Update archived notes
-    const archivedNotesStored = localStorage.getItem('archivedNotes');
-    if (archivedNotesStored) {
-      const archivedNotes = JSON.parse(archivedNotesStored);
-      localStorage.setItem('archivedNotes', JSON.stringify(updateItemTags(archivedNotes)));
-    }
-
-    // Update events
-    const eventsStored = localStorage.getItem('events');
-    if (eventsStored) {
-      const events = JSON.parse(eventsStored);
-      localStorage.setItem('events', JSON.stringify(updateItemTags(events)));
-    }
-
-    // Update archived events
-    const archivedEventsStored = localStorage.getItem('archivedEvents');
-    if (archivedEventsStored) {
-      const archivedEvents = JSON.parse(archivedEventsStored);
-      localStorage.setItem('archivedEvents', JSON.stringify(updateItemTags(archivedEvents)));
-    }
+    rewriteAllTags(tags => tags.map(t => t.toLowerCase() === normalizedOld ? normalizedNew : t));
 
     // Update allTags storage
     const tagsStored = localStorage.getItem(TAGS_STORAGE_KEY);
@@ -179,52 +166,13 @@ export function renameTagGlobally(oldTag: string, newTag: string): void {
 }
 
 /**
- * Delete a tag globally from all notes and events
+ * Delete a tag globally from all notes, events and folder auto-import rules
  */
 export function deleteTagGlobally(tag: string): void {
   try {
     const normalizedTag = tag.toLowerCase();
 
-    // Helper to remove tag from items
-    const removeTagFromItems = (items: any[]): any[] => {
-      return items.map(item => {
-        if (item.tags && Array.isArray(item.tags)) {
-          const filteredTags = item.tags.filter((t: string) => 
-            t.toLowerCase() !== normalizedTag
-          );
-          return { ...item, tags: filteredTags };
-        }
-        return item;
-      });
-    };
-
-    // Update notes
-    const notesStored = localStorage.getItem('notes');
-    if (notesStored) {
-      const notes = JSON.parse(notesStored);
-      localStorage.setItem('notes', JSON.stringify(removeTagFromItems(notes)));
-    }
-
-    // Update archived notes
-    const archivedNotesStored = localStorage.getItem('archivedNotes');
-    if (archivedNotesStored) {
-      const archivedNotes = JSON.parse(archivedNotesStored);
-      localStorage.setItem('archivedNotes', JSON.stringify(removeTagFromItems(archivedNotes)));
-    }
-
-    // Update events
-    const eventsStored = localStorage.getItem('events');
-    if (eventsStored) {
-      const events = JSON.parse(eventsStored);
-      localStorage.setItem('events', JSON.stringify(removeTagFromItems(events)));
-    }
-
-    // Update archived events
-    const archivedEventsStored = localStorage.getItem('archivedEvents');
-    if (archivedEventsStored) {
-      const archivedEvents = JSON.parse(archivedEventsStored);
-      localStorage.setItem('archivedEvents', JSON.stringify(removeTagFromItems(archivedEvents)));
-    }
+    rewriteAllTags(tags => tags.filter(t => t.toLowerCase() !== normalizedTag));
 
     // Remove from allTags storage
     const tagsStored = localStorage.getItem(TAGS_STORAGE_KEY);
