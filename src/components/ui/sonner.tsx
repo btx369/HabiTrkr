@@ -1,10 +1,12 @@
-import { useTheme } from "next-themes"
 import { Toaster as Sonner, toast } from "sonner"
+// The app's own theme. next-themes' hook was used here, but the app never mounts its
+// provider, so toasts followed the phone's theme instead of the one picked in Profile.
+import { useTheme } from "@/contexts/ThemeContext"
 
 type ToasterProps = React.ComponentProps<typeof Sonner>
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
+  const { theme } = useTheme()
 
   return (
     <Sonner
