@@ -485,7 +485,7 @@ export default function Calendar() {
                 </CardHeader>
                 <CardContent className="px-2 pb-2 pt-0">
                   {selectedDayEvents.length === 0 ? (
-                    <p className="text-muted-foreground">No events for this day</p>
+                    <p className="text-muted-foreground">{t('noEventsThisDay')}</p>
                   ) : (
                     <div className="space-y-2">
                       {[...selectedDayEvents].sort((a, b) => {

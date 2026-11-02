@@ -4,6 +4,7 @@ import { Clock } from 'lucide-react';
 import { Event } from '@/types/event';
 import { cn } from '@/lib/utils';
 import { getCardColorStylesWithFallback } from '@/lib/cardColorStyles';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface CalendarDayViewProps {
   currentDate: Date;
@@ -37,6 +38,7 @@ export function CalendarDayView({
   searchQuery = '',
   onViewEvent 
 }: CalendarDayViewProps) {
+  const { t } = useLanguage();
   const gridRef = useRef<HTMLDivElement>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -229,7 +231,7 @@ export function CalendarDayView({
               })}
             </div>
           ) : (
-            <div className="text-sm text-muted-foreground">No all-day events</div>
+            <div className="text-sm text-muted-foreground">{t('noAllDayEvents')}</div>
           )}
         </div>
       </div>

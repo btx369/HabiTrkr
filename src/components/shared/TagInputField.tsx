@@ -7,6 +7,7 @@ import { X } from 'lucide-react';
 import { parseTagsFromInput } from '@/lib/tagParser';
 import { getTopTags } from '@/lib/tagStorage';
 import { TagSuggestions } from '@/components/shared/TagSuggestions';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface TagInputFieldProps {
   tags: string[];
@@ -21,6 +22,7 @@ export function TagInputField({
   placeholder = "Add tags (e.g., #work #personal)",
   showSuggestions = true
 }: TagInputFieldProps) {
+  const { t } = useLanguage();
   const [tagInput, setTagInput] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
@@ -87,12 +89,12 @@ export function TagInputField({
         className="w-full h-10 text-sm"
         disabled={!tagInput.trim()}
       >
-        Add Tags
+        {t('addTags')}
       </Button>
 
       {showSuggestions && suggestions.length > 0 && (
         <div className="space-y-2">
-          <Label className="text-xs text-muted-foreground">Suggestions</Label>
+          <Label className="text-xs text-muted-foreground">{t('suggestions')}</Label>
           <TagSuggestions 
             suggestions={suggestions} 
             onSelect={handleSuggestionClick}

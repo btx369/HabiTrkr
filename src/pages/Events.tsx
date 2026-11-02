@@ -1321,7 +1321,7 @@ export default function Events() {
                 </CardContent>
               </Card>
             ) : (
-              renderEventList(getAllEvents(), "No events yet")
+              renderEventList(getAllEvents(), t('noEventsYet'))
             )}
           </TabsContent>
           

@@ -1410,7 +1410,7 @@ export default function Notes() {
         // Switch to custom sort if not already selected
         if (sortType !== 'custom') {
           setSortType('custom');
-          toast.success('Switched to custom ordering');
+          toast.success(t('switchedToCustomOrder'));
         }
       }
     }
@@ -1780,7 +1780,7 @@ export default function Notes() {
         <Card>
           <CardContent className="text-center py-8">
             {searchQuery.trim() ? (
-              <p className="text-muted-foreground">No matching notes found.</p>
+              <p className="text-muted-foreground">{t('noMatchingNotes')}</p>
             ) : (
               <Button 
                 onClick={handleAddButtonClick}

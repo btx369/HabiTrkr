@@ -145,7 +145,7 @@ export function TagEditor({
     const tagsToAdd = newTags.slice(0, availableSlots);
     
     if (tagsToAdd.length < newTags.length) {
-      toast.warning(`Only ${tagsToAdd.length} of ${newTags.length} tags added (limit: ${TAG_LIMIT})`);
+      toast.warning(t('toastTagLimit').replace('{count}', String(TAG_LIMIT)));
     }
 
     const updatedTags = [...new Set([...tags, ...tagsToAdd])];

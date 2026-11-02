@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { Camera, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { readImageForStorage } from '@/lib/imageCompression';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ImageCapturePopupProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface ImageCapturePopupProps {
 
 export function ImageCapturePopup({ isOpen, onImageSelect, onClose }: ImageCapturePopupProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { t } = useLanguage();
 
   if (!isOpen) return null;
 
@@ -56,14 +58,14 @@ export function ImageCapturePopup({ isOpen, onImageSelect, onClose }: ImageCaptu
             className="h-12 w-full rounded-full bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-3 justify-center"
           >
             <Camera size={20} />
-            <span className="font-medium">Take Photo</span>
+            <span className="font-medium">{t('takePhoto')}</span>
           </Button>
           <Button
             onClick={openGallery}
             className="h-12 w-full rounded-full bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-3 justify-center"
           >
             <Image size={20} />
-            <span className="font-medium">Choose from Device</span>
+            <span className="font-medium">{t('chooseFromDevice')}</span>
           </Button>
         </div>
       </div>
