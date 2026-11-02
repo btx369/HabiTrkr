@@ -214,10 +214,20 @@ export default function HabitTracker() {
     setHabits((prev: Habit[]) => prev.map(habit => {
       if (habit.id === habitId) {
         const isCompleted = habit.completedDates.includes(dateStr);
-        const newCompletedDates = isCompleted 
-          ? habit.completedDates.filter(d => d !== dateStr) 
+        const newCompletedDates = isCompleted
+          ? habit.completedDates.filter(d => d !== dateStr)
           : [...habit.completedDates, dateStr];
-        return { ...habit, completedDates: newCompletedDates };
+        if (!habit.useTimesPerDay) return { ...habit, completedDates: newCompletedDates };
+
+        // A "times per day" habit keeps a counter beside the tick. Toggling a past day
+        // used to change only the tick, leaving "✓" with a count of 0, or an unticked
+        // day still counting 3. Keep the two in step: done means the full target.
+        const { [dateStr]: _previous, ...otherCounts } = habit.completionCounts ?? {};
+        return {
+          ...habit,
+          completedDates: newCompletedDates,
+          completionCounts: isCompleted ? otherCounts : { ...otherCounts, [dateStr]: habit.timesPerDay || 1 },
+        };
       }
       return habit;
     }));
