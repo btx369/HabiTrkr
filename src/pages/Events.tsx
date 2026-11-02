@@ -234,7 +234,7 @@ export default function Events() {
     const tags = eventData.tags || [];
     
     const newEvent: Event = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       ...eventData
     };
@@ -414,7 +414,7 @@ export default function Events() {
     if (eventToCopy) {
       const copiedEvent: Event = {
         ...eventToCopy,
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         name: nextCopyName(eventToCopy.name, [...events, ...archivedEvents].map(e => e.name)),
         createdAt: new Date().toISOString()
       };
@@ -437,7 +437,7 @@ export default function Events() {
   const addEventFolder = (folderData: Omit<EventFolder, 'id' | 'createdAt' | 'eventIds'>, eventIdsToMove?: string[]) => {
     const newFolder: EventFolder = {
       ...folderData,
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       eventIds: eventIdsToMove || []
     };
@@ -499,7 +499,7 @@ export default function Events() {
     if (folderToCopy) {
       const copiedFolder: EventFolder = {
         ...folderToCopy,
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         name: nextCopyName(folderToCopy.name, eventFolders.map(f => f.name)),
         createdAt: new Date().toISOString(),
         eventIds: [], // Don't copy the events
@@ -956,7 +956,7 @@ export default function Events() {
           takenNames.push(copyName);
           return {
             ...event,
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+            id: crypto.randomUUID(),
             name: copyName,
             createdAt: new Date().toISOString(),
             pinned: false,

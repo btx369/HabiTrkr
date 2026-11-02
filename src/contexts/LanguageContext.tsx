@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useCallback, useContext, useState, ReactNode } from 'react';
 // Language context for internationalization
 import { getLocalStorageString, setLocalStorageString } from '@/lib/localStorageUtils';
 import { LANGUAGE_KEY } from '@/lib/storageKeys';
@@ -2534,11 +2534,14 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
    * The key is returned only when even English lacks it, which means a typo in a call
    * site shows up as the key name instead of silently rendering nothing.
    */
-  const t = (key: string): string => {
+  // Stable until the language changes. Anything memoised on `t` (the toast helpers,
+  // effects that announce with a toast) used to be rebuilt on every render because this
+  // was a new function each time.
+  const t = useCallback((key: string): string => {
     const forLanguage = translations[language] as Record<string, string | undefined>;
     const forEnglish = translations.en as Record<string, string | undefined>;
     return forLanguage[key] ?? forEnglish[key] ?? key;
-  };
+  }, [language]);
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage: handleSetLanguage, t }}>

@@ -862,7 +862,7 @@ export function NoteViewer({
 
   const addListItem = () => {
     const newItem = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       text: '',
       completed: false
     };
@@ -2125,7 +2125,7 @@ export function NoteViewer({
             
             // Create list items
             const listItems = lines.map(text => ({
-              id: Date.now().toString() + Math.random(),
+              id: crypto.randomUUID(),
               text,
               completed: false
             }));

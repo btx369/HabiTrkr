@@ -296,7 +296,7 @@ export default function Notes() {
 
   const createEmptyTextNote = () => {
     const newNote: TextNote = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       name: '',
       type: 'text',
       description: '',
@@ -313,10 +313,10 @@ export default function Notes() {
 
   const createEmptyListNote = () => {
     const newNote: ListNote = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       name: '',
       type: 'list',
-      items: [{ id: Date.now().toString(), text: '', completed: false }],
+      items: [{ id: crypto.randomUUID(), text: '', completed: false }],
       color: '#FFFFFF',
       createdAt: new Date().toISOString(),
       pinned: false
@@ -331,7 +331,7 @@ export default function Notes() {
   const handleImageSelect = (imageUrl: string) => {
     // Create and immediately save the image note (like audio notes)
     const newNote: ImageNote = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       name: '',
       type: 'image',
       imageUrl,
@@ -354,7 +354,7 @@ export default function Notes() {
   const handleAudioRecordingComplete = (audioUrl: string, duration: number) => {
     const audioMarker = `[audio:${audioUrl}:${duration}]`;
     const newNote: TextNote = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       name: '',
       type: 'text',
       description: audioMarker,
@@ -376,7 +376,7 @@ export default function Notes() {
   const addTextNote = (noteData: Omit<TextNote, 'id' | 'createdAt'>) => {
     const newNote: TextNote = {
       ...noteData,
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       pinned: false
     };
@@ -392,7 +392,7 @@ export default function Notes() {
   const addListNote = (noteData: Omit<ListNote, 'id' | 'createdAt'>) => {
     const newNote: ListNote = {
       ...noteData,
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       pinned: false
     };
@@ -409,7 +409,7 @@ export default function Notes() {
   const addImageNote = (noteData: Omit<ImageNote, 'id' | 'createdAt'>) => {
     const newNote: ImageNote = {
       ...noteData,
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       pinned: false
     };
@@ -800,7 +800,7 @@ export default function Notes() {
     if (noteToCopy) {
       const copiedNote: Note = {
         ...noteToCopy,
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         name: nextCopyName(noteToCopy.name, [...notes, ...archivedNotes].map(n => n.name)),
         createdAt: new Date().toISOString(),
         pinned: false
@@ -843,7 +843,7 @@ export default function Notes() {
   const addFolder = (folderData: Omit<NoteFolder, 'id' | 'createdAt' | 'noteIds'>, noteIdsToMove?: string[]) => {
     const newFolder: NoteFolder = {
       ...folderData,
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       lastNoteAddedAt: noteIdsToMove?.length ? new Date().toISOString() : undefined,
       noteIds: noteIdsToMove || [],
@@ -2119,7 +2119,7 @@ export default function Notes() {
           takenNames.push(copyName);
           return {
             ...note,
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+            id: crypto.randomUUID(),
             name: copyName,
             createdAt: new Date().toISOString(),
             pinned: false,
