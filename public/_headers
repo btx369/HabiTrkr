@@ -1,0 +1,9 @@
+# Security headers for the hosted web app (Netlify and Cloudflare Pages read this file).
+# Everything the app needs is served from its own origin; photos and recordings are
+# data:/blob: URLs, and React sets inline style attributes.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Permissions-Policy: camera=(self), microphone=(self), geolocation=(), payment=()
+  X-Frame-Options: DENY
