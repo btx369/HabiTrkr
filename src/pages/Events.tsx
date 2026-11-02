@@ -26,6 +26,7 @@ import { MoveToFolderDialog } from '@/components/shared/MoveToFolderDialog';
 import { parseSearchExpression, matchesSearchExpression } from '@/lib/tagParser';
 import { updateTagUsage } from '@/lib/tagStorage';
 import { autoImportEventToFolders } from '@/lib/folderAutoImport';
+import { daysUntilEvent, hasEventEnded } from '@/lib/eventRecurrence';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { useBulkSelection } from '@/hooks/useBulkSelection';
 import { BulkActionBar, BulkActionType, BulkActionContext } from '@/components/shared/BulkActionBar';
@@ -175,17 +176,9 @@ export default function Events() {
   // memoised on toastsEnabled so it is safe to depend on.
   useEffect(() => {
     const autoArchivePastEvents = () => {
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      
-      const pastEvents = events.filter(event => {
-        if (event.isRecurrent) return false; // Don't auto-archive recurring events
-        const eventDateStr = event.startDate || event.date;
-        if (!eventDateStr) return false;
-        const eventDate = new Date(eventDateStr);
-        const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
-        return eventDateOnly < today; // Events before today
-      });
+      // A one-off event is archived once its LAST day has passed, so a trip that is
+      // still under way stays put. Recurring events never end.
+      const pastEvents = events.filter(event => hasEventEnded(event));
 
       if (pastEvents.length > 0) {
         // Store originalFolderId for each auto-archived event
@@ -235,49 +228,7 @@ export default function Events() {
   }, []);
 
 
-  const calculateTimeRemaining = (event: Event) => {
-    const eventDateStr = event.startDate || event.date;
-    if (!eventDateStr) return 999999;
-    
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const eventDate = new Date(eventDateStr);
-    const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
-    
-    if (event.isRecurrent) {
-      const nextOccurrence = new Date(eventDateOnly);
-      const interval = event.recurrenceInterval || 1;
-      
-      if (nextOccurrence.getTime() === today.getTime()) return 0;
-      
-      switch (event.recurrenceType) {
-        case 'daily':
-          while (nextOccurrence <= today) {
-            nextOccurrence.setDate(nextOccurrence.getDate() + interval);
-          }
-          break;
-        case 'weekly':
-          while (nextOccurrence <= today) {
-            nextOccurrence.setDate(nextOccurrence.getDate() + (7 * interval));
-          }
-          break;
-        case 'monthly':
-          while (nextOccurrence <= today) {
-            nextOccurrence.setMonth(nextOccurrence.getMonth() + interval);
-          }
-          break;
-        case 'yearly':
-        default:
-          while (nextOccurrence <= today) {
-            nextOccurrence.setFullYear(nextOccurrence.getFullYear() + interval);
-          }
-          break;
-      }
-      return Math.round((nextOccurrence.getTime() - today.getTime()) / (1000 * 3600 * 24));
-    } else {
-      return Math.round((eventDateOnly.getTime() - today.getTime()) / (1000 * 3600 * 24));
-    }
-  };
+  const calculateTimeRemaining = (event: Event) => daysUntilEvent(event);
 
   const handleCreateEvent = (eventData: Omit<Event, 'id' | 'createdAt'>) => {
     const tags = eventData.tags || [];
@@ -289,19 +240,11 @@ export default function Events() {
     };
 
     // Check if the event is for a past date (and not recurring)
-    const eventDateStr = eventData.startDate || eventData.date;
-    if (!eventData.isRecurrent && eventDateStr) {
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const eventDate = new Date(eventDateStr);
-      const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
-      
-      if (eventDateOnly < today) {
-        setArchivedEvents((prev: Event[]) => [...prev, newEvent]);
-        setIsAddDialogOpen(false);
-        toast.success(say('toastAddedToArchive', 'events'));
-        return;
-      }
+    if (hasEventEnded(newEvent)) {
+      setArchivedEvents((prev: Event[]) => [...prev, newEvent]);
+      setIsAddDialogOpen(false);
+      toast.success(say('toastAddedToArchive', 'events'));
+      return;
     }
 
     // Add to active events for current/future dates or recurring events
@@ -429,60 +372,6 @@ export default function Events() {
         const newEvents = [...prev, restoredEvent];
         // Sort by time remaining (closest events first)
         return newEvents.sort((a, b) => {
-          const calculateTimeRemaining = (event: Event) => {
-            const eventDateStr = event.startDate || event.date;
-            if (!eventDateStr) return 999999;
-            
-            const now = new Date();
-            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            const eventDate = new Date(eventDateStr);
-            const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
-            
-            if (event.isRecurrent) {
-              // For recurring events, find the next occurrence based on recurrence type
-              const nextOccurrence = new Date(eventDateOnly);
-              const interval = event.recurrenceInterval || 1;
-              
-              // If today is the event date, return 0
-              if (nextOccurrence.getTime() === today.getTime()) {
-                return 0;
-              }
-              
-              // Calculate next occurrence based on recurrence type
-              switch (event.recurrenceType) {
-                case 'daily':
-                  while (nextOccurrence <= today) {
-                    nextOccurrence.setDate(nextOccurrence.getDate() + interval);
-                  }
-                  break;
-                  
-                case 'weekly':
-                  while (nextOccurrence <= today) {
-                    nextOccurrence.setDate(nextOccurrence.getDate() + (7 * interval));
-                  }
-                  break;
-                  
-                case 'monthly':
-                  while (nextOccurrence <= today) {
-                    nextOccurrence.setMonth(nextOccurrence.getMonth() + interval);
-                  }
-                  break;
-                  
-                case 'yearly':
-                default:
-                  while (nextOccurrence <= today) {
-                    nextOccurrence.setFullYear(nextOccurrence.getFullYear() + interval);
-                  }
-                  break;
-              }
-              
-              const timeDiff = nextOccurrence.getTime() - today.getTime();
-              return Math.round(timeDiff / (1000 * 3600 * 24));
-            } else {
-              const timeDiff = eventDateOnly.getTime() - today.getTime();
-              return Math.round(timeDiff / (1000 * 3600 * 24));
-            }
-          };
           
           const timeRemainingA = calculateTimeRemaining(a);
           const timeRemainingB = calculateTimeRemaining(b);
@@ -533,60 +422,6 @@ export default function Events() {
         const newEvents = [...prev, copiedEvent];
         // Sort by time remaining (closest events first)
         return newEvents.sort((a, b) => {
-          const calculateTimeRemaining = (event: Event) => {
-            const eventDateStr = event.startDate || event.date;
-            if (!eventDateStr) return 999999;
-            
-            const now = new Date();
-            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            const eventDate = new Date(eventDateStr);
-            const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
-            
-            if (event.isRecurrent) {
-              // For recurring events, find the next occurrence based on recurrence type
-              const nextOccurrence = new Date(eventDateOnly);
-              const interval = event.recurrenceInterval || 1;
-              
-              // If today is the event date, return 0
-              if (nextOccurrence.getTime() === today.getTime()) {
-                return 0;
-              }
-              
-              // Calculate next occurrence based on recurrence type
-              switch (event.recurrenceType) {
-                case 'daily':
-                  while (nextOccurrence <= today) {
-                    nextOccurrence.setDate(nextOccurrence.getDate() + interval);
-                  }
-                  break;
-                  
-                case 'weekly':
-                  while (nextOccurrence <= today) {
-                    nextOccurrence.setDate(nextOccurrence.getDate() + (7 * interval));
-                  }
-                  break;
-                  
-                case 'monthly':
-                  while (nextOccurrence <= today) {
-                    nextOccurrence.setMonth(nextOccurrence.getMonth() + interval);
-                  }
-                  break;
-                  
-                case 'yearly':
-                default:
-                  while (nextOccurrence <= today) {
-                    nextOccurrence.setFullYear(nextOccurrence.getFullYear() + interval);
-                  }
-                  break;
-              }
-              
-              const timeDiff = nextOccurrence.getTime() - today.getTime();
-              return Math.round(timeDiff / (1000 * 3600 * 24));
-            } else {
-              const timeDiff = eventDateOnly.getTime() - today.getTime();
-              return Math.round(timeDiff / (1000 * 3600 * 24));
-            }
-          };
           
           const timeRemainingA = calculateTimeRemaining(a);
           const timeRemainingB = calculateTimeRemaining(b);
@@ -869,60 +704,6 @@ export default function Events() {
         }
         case 'daysRemaining':
         default:
-          const calculateTimeRemaining = (event: Event) => {
-            const eventDateStr = event.startDate || event.date;
-            if (!eventDateStr) return 999999;
-            
-            const now = new Date();
-            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            const eventDate = new Date(eventDateStr);
-            const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
-            
-            if (event.isRecurrent) {
-              // For recurring events, find the next occurrence based on recurrence type
-              const nextOccurrence = new Date(eventDateOnly);
-              const interval = event.recurrenceInterval || 1;
-              
-              // If today is the event date, return 0
-              if (nextOccurrence.getTime() === today.getTime()) {
-                return 0;
-              }
-              
-              // Calculate next occurrence based on recurrence type
-              switch (event.recurrenceType) {
-                case 'daily':
-                  while (nextOccurrence <= today) {
-                    nextOccurrence.setDate(nextOccurrence.getDate() + interval);
-                  }
-                  break;
-                  
-                case 'weekly':
-                  while (nextOccurrence <= today) {
-                    nextOccurrence.setDate(nextOccurrence.getDate() + (7 * interval));
-                  }
-                  break;
-                  
-                case 'monthly':
-                  while (nextOccurrence <= today) {
-                    nextOccurrence.setMonth(nextOccurrence.getMonth() + interval);
-                  }
-                  break;
-                  
-                case 'yearly':
-                default:
-                  while (nextOccurrence <= today) {
-                    nextOccurrence.setFullYear(nextOccurrence.getFullYear() + interval);
-                  }
-                  break;
-              }
-              
-              const timeDiff = nextOccurrence.getTime() - today.getTime();
-              return Math.round(timeDiff / (1000 * 3600 * 24));
-            } else {
-              const timeDiff = eventDateOnly.getTime() - today.getTime();
-              return Math.round(timeDiff / (1000 * 3600 * 24));
-            }
-          };
           
           const timeRemainingA = calculateTimeRemaining(a);
           const timeRemainingB = calculateTimeRemaining(b);
@@ -965,16 +746,7 @@ export default function Events() {
             
             const getClosestEventTime = (folderEvents: Event[]) => {
               if (folderEvents.length === 0) return 999999;
-              return Math.min(...folderEvents.map(event => {
-                const eventDateStr = event.startDate || event.date;
-                if (!eventDateStr) return 999999;
-                const now = new Date();
-                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                const eventDate = new Date(eventDateStr);
-                const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
-                const timeDiff = eventDateOnly.getTime() - today.getTime();
-                return Math.round(timeDiff / (1000 * 3600 * 24));
-              }));
+              return Math.min(...folderEvents.map(event => daysUntilEvent(event)));
             };
             
             const aTime = getClosestEventTime(aEvents);
@@ -1005,60 +777,6 @@ export default function Events() {
     
     // Sort by time remaining (closest events first)
     const sortedEvents = folderEvents.sort((a, b) => {
-      const calculateTimeRemaining = (event: Event) => {
-        const eventDateStr = event.startDate || event.date;
-        if (!eventDateStr) return 999999;
-        
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const eventDate = new Date(eventDateStr);
-        const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
-        
-        if (event.isRecurrent) {
-          // For recurring events, find the next occurrence based on recurrence type
-          const nextOccurrence = new Date(eventDateOnly);
-          const interval = event.recurrenceInterval || 1;
-          
-          // If today is the event date, return 0
-          if (nextOccurrence.getTime() === today.getTime()) {
-            return 0;
-          }
-          
-          // Calculate next occurrence based on recurrence type
-          switch (event.recurrenceType) {
-            case 'daily':
-              while (nextOccurrence <= today) {
-                nextOccurrence.setDate(nextOccurrence.getDate() + interval);
-              }
-              break;
-              
-            case 'weekly':
-              while (nextOccurrence <= today) {
-                nextOccurrence.setDate(nextOccurrence.getDate() + (7 * interval));
-              }
-              break;
-              
-            case 'monthly':
-              while (nextOccurrence <= today) {
-                nextOccurrence.setMonth(nextOccurrence.getMonth() + interval);
-              }
-              break;
-              
-            case 'yearly':
-            default:
-              while (nextOccurrence <= today) {
-                nextOccurrence.setFullYear(nextOccurrence.getFullYear() + interval);
-              }
-              break;
-          }
-          
-          const timeDiff = nextOccurrence.getTime() - today.getTime();
-          return Math.round(timeDiff / (1000 * 3600 * 24));
-        } else {
-          const timeDiff = eventDateOnly.getTime() - today.getTime();
-          return Math.round(timeDiff / (1000 * 3600 * 24));
-        }
-      };
       
       const timeRemainingA = calculateTimeRemaining(a);
       const timeRemainingB = calculateTimeRemaining(b);
@@ -1070,18 +788,8 @@ export default function Events() {
   };
 
   const getPastEvents = () => {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
-    // Show archived events that were past events (non-recurring events that occurred before today)
-    const filteredEvents = archivedEvents.filter(event => {
-      if (event.isRecurrent) return false;
-      const eventDateStr = event.startDate || event.date;
-      if (!eventDateStr) return false;
-      const eventDate = new Date(eventDateStr);
-      const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
-      return eventDateOnly < today;
-    });
+    // Show archived events that were past events (non-recurring events that have ended)
+    const filteredEvents = archivedEvents.filter(event => hasEventEnded(event));
     
     return filterEvents(filteredEvents);
   };

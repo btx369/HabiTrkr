@@ -15,6 +15,9 @@ import { Event } from '@/types/event';
 import { EventFolder } from '@/types/eventFolder';
 import { cn } from '@/lib/utils';
 import { highlightText } from '@/lib/textHighlight';
+import { occursOn } from '@/lib/eventRecurrence';
+import { updateTagUsage } from '@/lib/tagStorage';
+import { cancelEventNotification, scheduleEventNotification } from '@/lib/notificationService';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { useToastSettings } from '@/contexts/ToastContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -77,7 +80,9 @@ const DAY_SHORT_KEYS = [
 
 export default function Calendar() {
   const [events, setEvents] = useLocalStorage<Event[]>('events', []);
+  const [archivedEvents, setArchivedEvents] = useLocalStorage<Event[]>('archivedEvents', []);
   const [eventFolders, setEventFolders] = useLocalStorage<EventFolder[]>('eventFolders', []);
+  const [, setArchivedEventFolders] = useLocalStorage<EventFolder[]>('archivedEventFolders', []);
   const [viewMode, setViewMode] = useState<ViewMode>('weekly');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
@@ -124,30 +129,9 @@ export default function Calendar() {
 
   // Helper function to get events for a specific date
   const getEventsForDate = (date: Date) => {
-    return events.filter(event => {
-      // Support both new startDate and legacy date field
-      const eventDateStr = event.startDate || event.date;
-      if (!eventDateStr) return false;
-      
-      const eventDate = new Date(eventDateStr);
-      
-      if (event.isRecurrent) {
-        // For recurring events, check if the date matches the recurrence pattern
-        if (event.recurrenceType === 'daily') {
-          return true; // Show on all days for daily events
-        } else if (event.recurrenceType === 'weekly') {
-          if (event.recurrenceDays && event.recurrenceDays.length > 0) {
-            return event.recurrenceDays.includes(date.getDay());
-          }
-        } else if (event.recurrenceType === 'monthly') {
-          return eventDate.getDate() === date.getDate();
-        } else if (event.recurrenceType === 'yearly') {
-          return eventDate.getMonth() === date.getMonth() && eventDate.getDate() === date.getDate();
-        }
-      }
-      
-      return isSameDay(eventDate, date);
-    });
+    // Past one-off events are auto-archived by the Events page; they still happened, so
+    // the calendar keeps showing them on their days.
+    return [...events, ...archivedEvents].filter(event => occursOn(event, date));
   };
 
   // Filter events based on search query
@@ -203,16 +187,21 @@ export default function Calendar() {
   const confirmDeleteEvent = () => {
     if (!deletingEvent) return;
 
-    // Remove from events
+    // Remove from events (the calendar also shows archived ones)
     setEvents(prev => prev.filter(e => e.id !== deletingEvent.id));
-    
+    setArchivedEvents(prev => prev.filter(e => e.id !== deletingEvent.id));
+
     // Remove from any folders
-    setEventFolders(prev => 
+    const withoutEvent = (prev: EventFolder[]) =>
       prev.map(folder => ({
         ...folder,
         eventIds: folder.eventIds.filter(id => id !== deletingEvent.id)
-      }))
-    );
+      }));
+    setEventFolders(withoutEvent);
+    setArchivedEventFolders(withoutEvent);
+
+    if (deletingEvent.tags?.length) updateTagUsage(deletingEvent.tags, []);
+    cancelEventNotification(deletingEvent.id);
 
     toast.success(say('toastDeleted', 'events'));
 
@@ -222,13 +211,17 @@ export default function Calendar() {
   const handleSaveEvent = (eventData: Omit<Event, 'id' | 'createdAt'>) => {
     if (!editingEvent) return;
     
-    setEvents(prev => 
-      prev.map(e => e.id === editingEvent.id 
-        ? { ...e, ...eventData }
-        : e
-      )
-    );
-    
+    const updatedEvent: Event = { ...editingEvent, ...eventData };
+    const replace = (prev: Event[]) => prev.map(e => e.id === editingEvent.id ? updatedEvent : e);
+    setEvents(replace);
+    setArchivedEvents(replace);
+
+    updateTagUsage(editingEvent.tags || [], updatedEvent.tags || []);
+    cancelEventNotification(editingEvent.id);
+    if (updatedEvent.alertType && updatedEvent.alertType !== 'none') {
+      scheduleEventNotification(updatedEvent);
+    }
+
     toast.success(say('toastUpdated', 'events'));
     
     setEditingEvent(null);

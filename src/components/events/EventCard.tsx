@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Event } from '@/types/event';
+import { daysUntilEvent, getEventStart } from '@/lib/eventRecurrence';
 import { highlightText } from '@/lib/textHighlight';
 import { ViewType } from '@/components/events/EventViewSettings';
 import { ItemActionMenu } from '@/components/shared/ItemActionMenu';
@@ -152,64 +153,10 @@ export function EventCard({
     return text.substring(0, maxLength) + '...';
   };
 
-  const calculateTimeRemaining = (event: Event) => {
-    // The editor writes startDate; `date` is the legacy field kept for old records.
-    // Reading only `date` here left every modern event with no countdown at all.
-    const eventDateStr = event.startDate || event.date;
-    if (!eventDateStr) return null;
-    
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const eventDate = new Date(eventDateStr);
-    if (isNaN(eventDate.getTime())) return null;
-    const eventDateOnly = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
-    
-    if (event.isRecurrent) {
-      const nextOccurrence = new Date(eventDateOnly);
-      const interval = event.recurrenceInterval || 1;
-      
-      if (nextOccurrence.getTime() === today.getTime()) {
-        return 0;
-      }
-      
-      switch (event.recurrenceType) {
-        case 'daily':
-          while (nextOccurrence <= today) {
-            nextOccurrence.setDate(nextOccurrence.getDate() + interval);
-          }
-          break;
-          
-        case 'weekly':
-          while (nextOccurrence <= today) {
-            nextOccurrence.setDate(nextOccurrence.getDate() + (7 * interval));
-          }
-          break;
-          
-        case 'monthly':
-          while (nextOccurrence <= today) {
-            nextOccurrence.setMonth(nextOccurrence.getMonth() + interval);
-          }
-          break;
-          
-        case 'yearly':
-        default:
-          while (nextOccurrence <= today) {
-            nextOccurrence.setFullYear(nextOccurrence.getFullYear() + interval);
-          }
-          break;
-      }
-      
-      const timeDiff = nextOccurrence.getTime() - today.getTime();
-      const daysRemaining = Math.round(timeDiff / (1000 * 3600 * 24));
-      
-      return daysRemaining;
-    } else {
-      const timeDiff = eventDateOnly.getTime() - today.getTime();
-      const daysRemaining = Math.round(timeDiff / (1000 * 3600 * 24));
-      
-      return daysRemaining;
-    }
-  };
+  // Shared with the Calendar and the Events sort, so all three agree on when a
+  // recurring event next happens (start date, interval and chosen weekdays included).
+  const calculateTimeRemaining = (event: Event) =>
+    getEventStart(event) ? daysUntilEvent(event) : null;
 
   const handleShare = () => {
     const eventDateStr = event.startDate || event.date;

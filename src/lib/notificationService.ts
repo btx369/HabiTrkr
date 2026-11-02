@@ -1,20 +1,41 @@
 import { LocalNotifications, ScheduleOptions } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
 import { Event, AlertType } from '@/types/event';
-import { parseISO, subMinutes, subHours, subDays, subWeeks } from 'date-fns';
+import { addDays, parseISO, subMinutes, subHours, subDays, subWeeks } from 'date-fns';
+import { getEventSpanDays, getNextOccurrenceStart } from './eventRecurrence';
+import { toDateKey } from './dateUtils';
 
-// Calculate notification time based on alert settings
+/**
+ * When the reminder for the next occurrence should fire.
+ *
+ * This used to use the start date only, so a recurring event got one reminder ever. It
+ * now walks the occurrences from today and returns the first reminder still ahead.
+ * (Only one is scheduled per event; the next is scheduled when the app reopens.)
+ */
 const getNotificationTime = (event: Event): Date | null => {
   if (!event.alertType || event.alertType === 'none') return null;
-  
-  const eventDate = event.startDate || event.date;
+
+  const now = new Date();
+  let from = now;
+  for (let attempt = 0; attempt < 400; attempt++) {
+    const occurrence = getNextOccurrenceStart(event, from);
+    if (!occurrence) return null;
+    const alertAt = getAlertTimeForOccurrence(event, toDateKey(occurrence));
+    if (!alertAt) return null;
+    if (alertAt > now) return alertAt;
+    if (!event.isRecurrent) return null;
+    from = addDays(occurrence, getEventSpanDays(event) + 1);
+  }
+  return null;
+};
+
+const getAlertTimeForOccurrence = (event: Event, eventDate: string): Date | null => {
   // For all-day events, use 9:00 AM as the default time for more practical alerts
   const eventTime = event.startTime || event.time || (event.isAllDay ? '09:00' : '00:00');
-  
-  if (!eventDate) return null;
-  
+
   const eventDateTime = parseISO(`${eventDate}T${eventTime}`);
-  
+  if (Number.isNaN(eventDateTime.getTime())) return null;
+
   switch (event.alertType) {
     case '5min':
       return subMinutes(eventDateTime, 5);
@@ -59,7 +80,8 @@ const getNotificationId = (eventId: string): number => {
     hash = ((hash << 5) - hash) + char;
     hash = hash & hash; // Convert to 32bit integer
   }
-  return Math.abs(hash);
+  // Android ids are signed 32-bit; Math.abs(-2^31) is 2^31, one past the maximum.
+  return Math.abs(hash) % 2147483647;
 };
 
 // Request notification permissions
@@ -119,7 +141,6 @@ export const scheduleEventNotification = async (event: Event): Promise<void> => 
   }
   
   const notificationId = getNotificationId(event.id);
-  const eventDate = event.startDate || event.date;
   const eventTime = event.startTime || event.time;
   
   const body = eventTime 
@@ -148,6 +169,10 @@ export const scheduleEventNotification = async (event: Event): Promise<void> => 
     const delay = notificationTime.getTime() - Date.now();
     
     if (delay > 0 && delay < 2147483647) { // Max setTimeout delay
+      // Each visit to Events schedules everything again; drop the earlier timer first or
+      // the same reminder would fire once per visit.
+      await cancelEventNotification(event.id);
+
       // Store the timeout ID for potential cancellation
       const timeoutId = setTimeout(() => {
         new Notification(event.name, {
