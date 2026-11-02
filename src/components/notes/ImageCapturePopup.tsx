@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { Camera, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { readImageForStorage } from '@/lib/imageCompression';
 
 interface ImageCapturePopupProps {
   isOpen: boolean;
@@ -16,13 +17,10 @@ export function ImageCapturePopup({ isOpen, onImageSelect, onClose }: ImageCaptu
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const imageUrl = reader.result as string;
+      readImageForStorage(file).then((imageUrl) => {
         onImageSelect(imageUrl);
         onClose();
-      };
-      reader.readAsDataURL(file);
+      });
     } else {
       onClose();
     }

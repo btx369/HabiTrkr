@@ -19,7 +19,9 @@ export function AudioRecorderPopup({ isOpen, onRecordingComplete, onClose }: Aud
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      // Speech at 32 kbps is about 240 KB a minute, which matters because recordings are
+      // stored in localStorage alongside everything else.
+      const mediaRecorder = new MediaRecorder(stream, { audioBitsPerSecond: 32000 });
       const chunks: Blob[] = [];
 
       mediaRecorder.ondataavailable = (event) => {
@@ -29,7 +31,10 @@ export function AudioRecorderPopup({ isOpen, onRecordingComplete, onClose }: Aud
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'audio/wav' });
+        // Label the data with the format the browser actually recorded (WebM on Chrome,
+        // MP4 on Safari). Calling it WAV made Safari refuse to play it back.
+        const mimeType = (mediaRecorder.mimeType || chunks[0]?.type || 'audio/webm').split(';')[0];
+        const blob = new Blob(chunks, { type: mimeType });
         
         // Convert to base64 for persistence
         const reader = new FileReader();

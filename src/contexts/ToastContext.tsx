@@ -1,5 +1,6 @@
-import { createContext, useContext, ReactNode, useMemo, useRef } from 'react';
+import { createContext, useContext, ReactNode, useEffect, useMemo, useRef } from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { STORAGE_WRITE_FAILED_EVENT } from '@/lib/localStorageUtils';
 import { toast as sonnerToast } from 'sonner';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { takePendingUndo } from '@/lib/undoManager';
@@ -16,6 +17,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const [toastsEnabled, setToastsEnabled] = useLocalStorage('toasts-enabled', true);
   const { t } = useLanguage();
   const lastUndoToastId = useRef<string | number | undefined>(undefined);
+
+  // A failed save is shown even with toasts turned off: it means the change on screen
+  // will be gone when the app reopens. One toast id, so repeated failures don't stack.
+  useEffect(() => {
+    const onWriteFailed = () => {
+      sonnerToast.error(t('storageFullNotSaved'), { id: 'storage-write-failed', duration: 10000 });
+    };
+    window.addEventListener(STORAGE_WRITE_FAILED_EVENT, onWriteFailed);
+    return () => window.removeEventListener(STORAGE_WRITE_FAILED_EVENT, onWriteFailed);
+  }, [t]);
 
   // Create a wrapped toast object that respects the enabled setting
   // Using useMemo to ensure the toast object is recreated when toastsEnabled changes

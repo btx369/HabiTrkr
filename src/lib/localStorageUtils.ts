@@ -35,13 +35,27 @@ export function getLocalStorageString(key: string, fallback: string): string {
 }
 
 /**
+ * Fired on `window` when a write fails, almost always because storage is full.
+ *
+ * Callers update their in-memory state either way, so without this the screen would show
+ * a change that is gone the next time the app opens. ToastContext listens and tells the
+ * user, which is the one thing a failed write must never be: silent.
+ */
+export const STORAGE_WRITE_FAILED_EVENT = 'habitrkr:storage-write-failed';
+
+function reportWriteFailure(key: string, error: unknown): void {
+  console.error(`Error setting localStorage key "${key}":`, error);
+  window.dispatchEvent(new CustomEvent(STORAGE_WRITE_FAILED_EVENT, { detail: { key } }));
+}
+
+/**
  * Safely sets a value in localStorage with JSON serialization.
  */
 export function setLocalStorageItem<T>(key: string, value: T): void {
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
-    console.error(`Error setting localStorage key "${key}":`, error);
+    reportWriteFailure(key, error);
   }
 }
 
@@ -52,6 +66,6 @@ export function setLocalStorageString(key: string, value: string): void {
   try {
     window.localStorage.setItem(key, value);
   } catch (error) {
-    console.error(`Error setting localStorage key "${key}":`, error);
+    reportWriteFailure(key, error);
   }
 }

@@ -38,6 +38,7 @@ import { NoteActionBar } from './NoteActionBar';
 import { highlightText } from '@/lib/textHighlight';
 import { renderMarkdownWithHighlight } from '@/lib/markdownRenderer';
 import { parseNoteContent } from '@/lib/noteContentRenderer';
+import { readImageForStorage } from '@/lib/imageCompression';
 import { extractSearchableText } from '@/lib/noteSearchText';
 import { ImageGalleryViewer } from './ImageGalleryViewer';
 import { isDefaultColor } from '@/lib/cardColorStyles';
@@ -991,15 +992,12 @@ export function NoteViewer({
   const handleCameraCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && note) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const imageUrl = reader.result as string;
-        const newContent = editedDescription 
-          ? `${editedDescription}\n[image:${imageUrl}]` 
+      readImageForStorage(file).then((imageUrl) => {
+        const newContent = editedDescription
+          ? `${editedDescription}\n[image:${imageUrl}]`
           : `[image:${imageUrl}]`;
         setEditedDescription(newContent);
-      };
-      reader.readAsDataURL(file);
+      });
     }
     e.target.value = '';
   };
@@ -1007,15 +1005,12 @@ export function NoteViewer({
   const handleGallerySelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && note) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const imageUrl = reader.result as string;
-        const newContent = editedDescription 
-          ? `${editedDescription}\n[image:${imageUrl}]` 
+      readImageForStorage(file).then((imageUrl) => {
+        const newContent = editedDescription
+          ? `${editedDescription}\n[image:${imageUrl}]`
           : `[image:${imageUrl}]`;
         setEditedDescription(newContent);
-      };
-      reader.readAsDataURL(file);
+      });
     }
     e.target.value = '';
   };
@@ -2277,9 +2272,7 @@ export function NoteViewer({
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              const imageUrl = reader.result as string;
+            readImageForStorage(file).then((imageUrl) => {
               // Add image to note description
               const imageMarker = `[image:${imageUrl}]`;
               if (note.type === 'text' || note.type === 'audio' || note.type === 'image') {
@@ -2290,8 +2283,7 @@ export function NoteViewer({
                   setIsEditingContent(true);
                 }
               }
-            };
-            reader.readAsDataURL(file);
+            });
           }
           e.target.value = '';
         }}
@@ -2305,9 +2297,7 @@ export function NoteViewer({
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              const imageUrl = reader.result as string;
+            readImageForStorage(file).then((imageUrl) => {
               // Add image to note description
               const imageMarker = `[image:${imageUrl}]`;
               if (note.type === 'text' || note.type === 'audio' || note.type === 'image') {
@@ -2325,8 +2315,7 @@ export function NoteViewer({
                   }
                 }, 100);
               }
-            };
-            reader.readAsDataURL(file);
+            });
           }
           e.target.value = '';
         }}
