@@ -47,6 +47,16 @@ export function fromDateKey(key: string): Date | null {
 }
 
 /**
+ * Reads a stored date for display or comparison. A bare `yyyy-MM-dd` key is a local day:
+ * `new Date('2026-11-09')` would read it as UTC midnight, which is Nov 8 anywhere west of
+ * Greenwich. Anything else (a full ISO timestamp) is passed to `new Date` as before.
+ */
+export function parseStoredDate(value: string): Date | null {
+  const date = fromDateKey(value) ?? new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/**
  * Parses a `yyyy-MM-dd` key as a UTC instant.
  * Used only by the migration, which has to reinterpret legacy UTC-written keys.
  * Returns null for malformed input.

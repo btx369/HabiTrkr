@@ -4,7 +4,10 @@ import { Button } from '@/components/ui/button';
 import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Event } from '@/types/event';
+import { format } from 'date-fns';
 import { daysUntilEvent, getEventStart } from '@/lib/eventRecurrence';
+import { parseStoredDate } from '@/lib/dateUtils';
+import { useDateLocale } from '@/lib/dateLocale';
 import { highlightText } from '@/lib/textHighlight';
 import { ViewType } from '@/components/events/EventViewSettings';
 import { ItemActionMenu } from '@/components/shared/ItemActionMenu';
@@ -64,6 +67,7 @@ export function EventCard({
 }: EventCardProps) {
   const { weekStartDay } = useWeekStart();
   const { t, language } = useLanguage();
+  const dateLocale = useDateLocale();
   // Short translated day names in week-start order: the function returns translation KEYS,
   // because a hook cannot run in the provider.
   const orderedDayNames = getOrderedDayNameKeys(weekStartDay).map((key) => t(key));
@@ -158,9 +162,15 @@ export function EventCard({
   const calculateTimeRemaining = (event: Event) =>
     getEventStart(event) ? daysUntilEvent(event) : null;
 
+  // In the app's language and read as a local day (a bare `new Date(key)` is UTC).
+  const formatEventDate = (key: string) => {
+    const date = parseStoredDate(key);
+    return date ? format(date, 'P', { locale: dateLocale }) : key;
+  };
+
   const handleShare = () => {
     const eventDateStr = event.startDate || event.date;
-    const shareText = `${event.name}${event.description ? '\n\n' + event.description : ''}${eventDateStr ? '\n\nDate: ' + new Date(eventDateStr).toLocaleDateString() : ''}`;
+    const shareText = `${event.name}${event.description ? '\n\n' + event.description : ''}${eventDateStr ? '\n\n' + formatEventDate(eventDateStr) : ''}`;
     
     if (navigator.share) {
       navigator.share({
@@ -288,7 +298,7 @@ export function EventCard({
               <span className={viewType !== 'list' ? 'truncate' : ''}>
                 {(() => {
                   const eventDateStr = event.startDate || event.date;
-                  return eventDateStr ? new Date(eventDateStr).toLocaleDateString() : 'No date set';
+                  return eventDateStr ? formatEventDate(eventDateStr) : t('noDateSet');
                 })()}
               </span>
               {/* Desktop/Tablet: show recurrence inline */}

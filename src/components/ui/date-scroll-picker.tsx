@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Calendar, LucideIcon } from 'lucide-react';
-import { toDateKey } from '@/lib/dateUtils';
+import { parseStoredDate, toDateKey } from '@/lib/dateUtils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useDateLocale } from '@/lib/dateLocale';
 
@@ -305,9 +305,8 @@ export function DatePickerInput({ value, onChange, className, id, label, icon: I
   // Parse the date value, ensuring we always have a valid Date object
   const getValidDate = (dateString: string | undefined): Date => {
     if (!dateString) return new Date();
-    const parsed = new Date(dateString);
-    // Check if the date is valid (Invalid Date has NaN time)
-    return isNaN(parsed.getTime()) ? new Date() : parsed;
+    // A local day, not UTC midnight, or the picker opens (and saves) the day before.
+    return parseStoredDate(dateString) ?? new Date();
   };
   
   const dateValue = getValidDate(value);
@@ -318,7 +317,7 @@ export function DatePickerInput({ value, onChange, className, id, label, icon: I
 
   const formatDisplayDate = (dateString: string) => {
     if (!dateString) return t('selectDate');
-    const date = new Date(dateString);
+    const date = parseStoredDate(dateString) ?? new Date();
     // This was `toLocaleDateString('en-US', …)`, which printed "Oct 2, 2026" whatever
     // language the app was set to. 'PP' is date-fns' localised medium date.
     return format(date, 'PP', { locale: dateLocale });

@@ -12,6 +12,7 @@ import {
 import { isDefaultColor } from '@/lib/cardColorStyles';
 import { getColoredIconButtonStyles, getColoredIconClass, getColoredBorderClass } from '@/lib/coloredButtonStyles';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { parseStoredDate } from '@/lib/dateUtils';
 import { useDateLocale } from '@/lib/dateLocale';
 import { useWeekStart, getOrderedDayNameKeys, getVisualIndexFromJsDay } from '@/contexts/WeekStartContext';
 
@@ -98,11 +99,11 @@ export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventV
   const endTime = event.endTime;
 
   const formattedStartDate = startDate 
-    ? format(new Date(startDate), 'EEEE, MMMM d, yyyy', { locale: dateLocale })
-    : 'No date set';
+    ? format(parseStoredDate(startDate) ?? new Date(), 'EEEE, MMMM d, yyyy', { locale: dateLocale })
+    : t('noDateSet');
 
   const formattedEndDate = endDate 
-    ? format(new Date(endDate), 'EEEE, MMMM d, yyyy', { locale: dateLocale })
+    ? format(parseStoredDate(endDate) ?? new Date(), 'EEEE, MMMM d, yyyy', { locale: dateLocale })
     : null;
 
   // Check if start and end dates are the same
