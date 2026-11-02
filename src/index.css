@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Sonner on phones (≤600px) pins every toast to `left: 0` of a toaster that is
+ * `width: 100%` but starts at the left offset, so it overflows the viewport by that
+ * offset on the right. Our toasts are `w-fit`, so they ended up hugging the left edge.
+ * Anchor them to the right instead, pulling back by twice the offset to land 1rem
+ * from the screen edge. The extra attribute selector outranks Sonner's own rule.
+ */
+@media (max-width: 600px) {
+  [data-sonner-toaster][data-x-position="right"] [data-sonner-toast] {
+    left: auto;
+    right: calc(var(--mobile-offset-left) * 2);
+  }
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */

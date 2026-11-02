@@ -29,9 +29,11 @@ const Toaster = ({ ...props }: ToasterProps) => {
             "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg group-[.toaster]:w-fit group-[.toaster]:min-w-[180px] group-[.toaster]:max-w-[min(420px,calc(100vw-2rem))]",
           description: "group-[.toast]:text-muted-foreground",
           actionButton:
-            "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
+            "group-[.toast]:!bg-primary group-[.toast]:!text-primary-foreground",
+          // `!` because Sonner's own button rule has the same specificity, so whichever
+          // stylesheet loads last would otherwise decide the colours.
           cancelButton:
-            "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+            "group-[.toast]:!bg-muted group-[.toast]:!text-muted-foreground",
         },
       }}
       {...props}
