@@ -19,12 +19,16 @@ import {
   Check,
   FileText,
   Lock,
+  KeyRound,
   MessageSquare
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { PROFILE_AVATAR_KEY, PROFILE_NAME_KEY } from '@/lib/storageKeys';
 import { applyBackup, BackupError, createBackup, readBackup } from '@/lib/backup';
+import { changeVaultPassword, createVault, hasVault, lockVault, VAULT_ATTEMPTS_ID } from '@/lib/noteVault';
+import { clearPinFailures, getPinLockoutRemaining, recordPinFailure } from '@/lib/notePin';
+import { NotePasswordDialog, NotePasswordMode, NotePasswordValues } from '@/components/notes/NotePasswordDialog';
 import {
   Dialog,
   DialogContent,
@@ -52,6 +56,28 @@ export default function Profile() {
   const [showImportConfirm, setShowImportConfirm] = useState(false);
   const [languageDialogOpen, setLanguageDialogOpen] = useState(false);
   const [weekStartDialogOpen, setWeekStartDialogOpen] = useState(false);
+  const [passwordDialogMode, setPasswordDialogMode] = useState<NotePasswordMode | null>(null);
+  const [vaultExists, setVaultExists] = useState(() => hasVault());
+
+  // Creating or changing the note password. Changing re-wraps the key that encrypts the
+  // notes, so it needs the current password; the notes themselves are not rewritten.
+  const handleNotePassword = async ({ password, currentPassword }: NotePasswordValues): Promise<string | null> => {
+    if (passwordDialogMode === 'change') {
+      const waitMs = getPinLockoutRemaining(VAULT_ATTEMPTS_ID);
+      if (waitMs > 0) return t('pinTooManyAttempts').replace('{seconds}', String(Math.ceil(waitMs / 1000)));
+      if (!(await changeVaultPassword(currentPassword ?? '', password))) {
+        recordPinFailure(VAULT_ATTEMPTS_ID);
+        return t('notePasswordIncorrect');
+      }
+      clearPinFailures(VAULT_ATTEMPTS_ID);
+    } else {
+      await createVault(password);
+      lockVault(); // nothing is open on this page; keep the key out of memory
+      setVaultExists(true);
+    }
+    toast.success(t('notePasswordSaved'));
+    return null;
+  };
 
   /*
    * 'User' is the placeholder name shown until the user types their own, and it stays in
@@ -255,6 +281,13 @@ export default function Profile() {
             />
             <div className="h-px bg-border mx-4" />
             <SettingsRow
+              icon={<KeyRound size={20} />}
+              label={t('notePasswordProfileLabel')}
+              value={vaultExists ? t('notePasswordSet') : t('notePasswordNotSet')}
+              onClick={() => setPasswordDialogMode(vaultExists ? 'change' : 'create')}
+            />
+            <div className="h-px bg-border mx-4" />
+            <SettingsRow
               icon={<Tag size={20} />}
               label={t('tags')}
               onClick={() => navigate('/tags')}
@@ -447,6 +480,13 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      <NotePasswordDialog
+        isOpen={passwordDialogMode !== null}
+        mode={passwordDialogMode ?? 'create'}
+        onClose={() => setPasswordDialogMode(null)}
+        onSubmit={handleNotePassword}
+      />
 
       <ConfirmationDialog
         open={showImportConfirm}

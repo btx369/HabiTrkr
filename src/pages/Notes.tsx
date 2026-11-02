@@ -25,7 +25,11 @@ import { NoteFolderCard } from '@/components/noteFolders/NoteFolderCard';
 import { NoteFolderEditor } from '@/components/noteFolders/NoteFolderEditor';
 import { MoveToFolderDialog } from '@/components/shared/MoveToFolderDialog';
 import { PinPadDialog } from '@/components/notes/PinPadDialog';
-import { clearPinFailures, createPinFields, getPinLockoutRemaining, recordPinFailure, upgradeLegacyPin, verifyNotePin, withoutPin } from '@/lib/notePin';
+import { LockChoiceDialog } from '@/components/notes/LockChoiceDialog';
+import { takePendingUndo } from '@/lib/undoManager';
+import { NotePasswordDialog, NotePasswordMode, NotePasswordValues } from '@/components/notes/NotePasswordDialog';
+import { createVault, hasVault, isPasswordNote, isVaultUnlocked, lockVault, openNote, sealNote, sealNotesForStorage, unlockVault, VAULT_ATTEMPTS_ID } from '@/lib/noteVault';
+import { clearPinFailures, createPinFields,getPinLockoutRemaining, recordPinFailure, upgradeLegacyPin, verifyNotePin, withoutPin } from '@/lib/notePin';
 import { NoteEditor } from '@/components/notes/NoteEditor';
 import { highlightText } from '@/lib/textHighlight';
 import { updateTagUsage } from '@/lib/tagStorage';
@@ -47,8 +51,9 @@ const NOTE_TABS = ['all-notes', 'folders', 'archived'];
 
 export default function Notes() {
   const { toast } = useToastSettings();
-  const [notes, setNotes] = useLocalStorage<Note[]>('notes', []);
-  const [archivedNotes, setArchivedNotes] = useLocalStorage<Note[]>('archivedNotes', []);
+  // Password-protected notes are encrypted on their way to storage, whatever wrote them.
+  const [notes, setNotes] = useLocalStorage<Note[]>('notes', [], { toStorage: (list) => sealNotesForStorage(list, 'notes') });
+  const [archivedNotes, setArchivedNotes] = useLocalStorage<Note[]>('archivedNotes', [], { toStorage: (list) => sealNotesForStorage(list, 'archivedNotes') });
   const [folders, setFolders] = useLocalStorage<NoteFolder[]>('folders', []);
   const [archivedFolders, setArchivedFolders] = useLocalStorage<NoteFolder[]>('archivedFolders', []);
 
@@ -186,6 +191,22 @@ export default function Notes() {
   const [showPinPad, setShowPinPad] = useState(false);
   const [pinPadMode, setPinPadMode] = useState<'set' | 'unlock'>('set');
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
+  // Choosing PIN or password when locking, and the password prompt with what it is for
+  const [lockChoiceNoteId, setLockChoiceNoteId] = useState<string | null>(null);
+  const [passwordPrompt, setPasswordPrompt] = useState<{ mode: NotePasswordMode; purpose: 'open' | 'lock' } | null>(null);
+
+  // Password notes are decrypted only while needed. As soon as no protected note is on
+  // screen, put their content back under encryption in memory and forget the key.
+  useEffect(() => {
+    if (!isVaultUnlocked()) return;
+    if (isNoteViewerOpen && noteToView && isPasswordNote(noteToView)) return;
+    if (passwordPrompt || lockChoiceNoteId) return;
+    const reseal = (list: Note[]) => list.some(n => isPasswordNote(n) && !n.sealed) ? list.map(n => sealNote(n)) : list;
+    setNotes(reseal);
+    setArchivedNotes(reseal);
+    lockVault();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-run whenever what is on screen changes
+  }, [isNoteViewerOpen, noteToView, notes, archivedNotes, passwordPrompt, lockChoiceNoteId]);
   // Notes unlocked during this session (avoid re-PIN while viewing)
   const [unlockedNoteIds, setUnlockedNoteIds] = useState<string[]>([]);
 
@@ -482,13 +503,34 @@ export default function Notes() {
     toast.success(say('toastDeleted', 'noteViewerTitle'));
   };
   
+  /**
+   * Whether acting on a locked note needs the PIN or password first. A PIN note is open
+   * while viewed or after its PIN was entered this session. A password note is open only
+   * while its content is decrypted in memory (not sealed).
+   */
+  const needsUnlock = (note: Note | undefined): boolean => {
+    if (!note?.locked) return false;
+    if (isPasswordNote(note)) return !!note.sealed;
+    return !unlockedNoteIds.includes(note.id) && noteToView?.id !== note.id;
+  };
+
+  /** Shows the right prompt for a locked note: the PIN pad or the password dialog. */
+  const promptUnlock = (noteId: string) => {
+    const note = notes.find(n => n.id === noteId) || archivedNotes.find(n => n.id === noteId);
+    setActiveNoteId(noteId);
+    if (note && isPasswordNote(note)) {
+      setPasswordPrompt({ mode: 'unlock', purpose: 'open' });
+    } else {
+      setPinPadMode('unlock');
+      setShowPinPad(true);
+    }
+  };
+
    const confirmArchiveNote = (noteId: string) => {
      const note = notes.find(n => n.id === noteId);
      // Don't ask for PIN if note is currently being viewed or already unlocked in session
-     if (note?.locked && !unlockedNoteIds.includes(noteId) && noteToView?.id !== noteId) {
-       setActiveNoteId(noteId);
-       setPinPadMode('unlock');
-       setShowPinPad(true);
+     if (needsUnlock(note)) {
+       promptUnlock(noteId);
        (window as any).pendingAction = () => {
          setItemToArchive({ type: 'note', id: noteId });
          setArchiveDialogOpen(true);
@@ -598,7 +640,9 @@ export default function Notes() {
    * deleted the moment its body was cleared. Typing a title is writing the note.
    */
   const isNoteEmpty = (note: Note): boolean => {
-    const hasTitle = (note.name || '').trim() !== '';
+    // An encrypted note's readable fields are blank on purpose; it is never empty.
+    if (note.sealed) return false;
+const hasTitle = (note.name || '').trim() !== '';
     if (hasTitle) return false;
 
     switch (note.type) {
@@ -743,11 +787,10 @@ export default function Notes() {
     const isArchivedNote = archivedNotes.some(archivedNote => archivedNote.id === note.id);
     const noteWithArchivedStatus = isArchivedNote ? { ...note, archived: true } : note;
     
-    // Always require PIN for locked notes, regardless of previous unlock status
-    if (note.locked) {
-      setActiveNoteId(note.id);
-      setPinPadMode('unlock');
-      setShowPinPad(true);
+    // Always require the PIN for locked notes, regardless of previous unlock status. A
+    // password note already decrypted in this session opens directly.
+    if (note.locked && !(isPasswordNote(note) && !note.sealed)) {
+      promptUnlock(note.id);
       // Store the note to view after unlock (with proper archived status)
       (window as any).pendingNoteToView = noteWithArchivedStatus;
     } else {
@@ -970,15 +1013,13 @@ export default function Notes() {
 
   // Lock/Unlock functionality
   const handleLockNote = (noteId: string) => {
-    setActiveNoteId(noteId);
-    setPinPadMode('set');
-    setShowPinPad(true);
+    setLockChoiceNoteId(noteId);
   };
 
   const handleUnlockNote = (noteId: string) => {
     const note = notes.find(n => n.id === noteId) || archivedNotes.find(n => n.id === noteId);
     // Don't ask for PIN if note is currently being viewed or already unlocked in session
-    if (note?.locked && (unlockedNoteIds.includes(noteId) || noteToView?.id === noteId)) {
+    if (note?.locked && !needsUnlock(note)) {
       // Note is already unlocked in this session or being viewed, perform unlock directly
       setNotes((prev: Note[]) => prev.map(note => 
         note.id === noteId ? withoutPin(note) : note
@@ -991,13 +1032,14 @@ export default function Notes() {
         setNoteToView(prev => prev ? withoutPin(prev) : null);
       }
       setUnlockedNoteIds(prev => prev.filter(id => id !== noteId));
+      // No Undo: re-locking a password note needs its key, which is gone by the time the
+      // button could be pressed. Locking again from the menu is the way back.
+      takePendingUndo();
       toast.success(t('noteUnlockedToast'));
       return;
     }
     
-    setActiveNoteId(noteId);
-    setPinPadMode('unlock');
-    setShowPinPad(true);
+    promptUnlock(noteId);
     // Store the action to remove the lock after PIN verification
     (window as any).pendingAction = () => {
       setNotes((prev: Note[]) => prev.map(note => 
@@ -1007,6 +1049,7 @@ export default function Notes() {
         note.id === noteId ? withoutPin(note) : note
       ));
       setUnlockedNoteIds(prev => prev.filter(id => id !== noteId));
+      takePendingUndo(); // see the note on Undo above
       toast.success(t('noteUnlockedToast'));
     };
   };
@@ -1039,6 +1082,97 @@ export default function Notes() {
     toast.success(t('noteLockedToast'));
   };
 
+  /** What happens after any successful PIN or password: open the note or run the action. */
+  const completeUnlock = () => {
+    // A pending action announces itself; a second "unlocked" toast would only stack up.
+    if (!(window as any).pendingAction) toast.success(t('noteUnlockedToast'));
+    setActiveNoteId(null);
+
+    // If there's a pending note to view, open it
+    if ((window as any).pendingNoteToView) {
+      setNoteToView((window as any).pendingNoteToView);
+      setIsNoteViewerOpen(true);
+      (window as any).pendingNoteToView = null;
+    }
+
+    // Execute any other pending action after unlock
+    if ((window as any).pendingAction) {
+      (window as any).pendingAction();
+      (window as any).pendingAction = null;
+    }
+  };
+
+  /** Turns a note into a password note. Needs the vault unlocked; storage seals it. */
+  const lockWithPassword = (noteId: string) => {
+    const lock = (note: Note) => note.id === noteId ? { ...withoutPin(note, true), lockType: 'password' as const } : note;
+    setNotes((prev: Note[]) => prev.map(lock));
+    setArchivedNotes((prev: Note[]) => prev.map(lock));
+    if (noteToView?.id === noteId) setNoteToView(prev => prev ? lock(prev) : null);
+    setUnlockedNoteIds(prev => prev.filter(id => id !== noteId));
+    toast.success(t('noteLockedWithPasswordToast'));
+  };
+
+  const handleLockChoice = (type: 'pin' | 'password') => {
+    const noteId = lockChoiceNoteId;
+    setLockChoiceNoteId(null);
+    if (!noteId) return;
+    setActiveNoteId(noteId);
+    // Open the next dialog once this one has closed: opened in the same tick, the closing
+    // dialog's outside-interaction handling dismisses the new one straight away.
+    setTimeout(() => {
+      if (type === 'pin') {
+        setPinPadMode('set');
+        setShowPinPad(true);
+      } else if (isVaultUnlocked()) {
+        setActiveNoteId(null);
+        lockWithPassword(noteId);
+      } else {
+        setPasswordPrompt({ mode: hasVault() ? 'unlock' : 'create', purpose: 'lock' });
+      }
+    }, 0);
+  };
+
+  const handlePasswordSubmit = async ({ password }: NotePasswordValues): Promise<string | null> => {
+    const noteId = activeNoteId;
+    if (!noteId || !passwordPrompt) return null;
+
+    if (passwordPrompt.mode === 'create') {
+      try {
+        await createVault(password);
+      } catch (error) {
+        console.error('Could not create the note password:', error);
+        return t('pinLockFailed');
+      }
+    } else {
+      const waitMs = getPinLockoutRemaining(VAULT_ATTEMPTS_ID);
+      if (waitMs > 0) return t('pinTooManyAttempts').replace('{seconds}', String(Math.ceil(waitMs / 1000)));
+      if (!(await unlockVault(password))) {
+        recordPinFailure(VAULT_ATTEMPTS_ID);
+        return t('notePasswordIncorrect');
+      }
+      clearPinFailures(VAULT_ATTEMPTS_ID);
+    }
+
+    setPasswordPrompt(null);
+    if (passwordPrompt.purpose === 'lock') {
+      setActiveNoteId(null);
+      lockWithPassword(noteId);
+      return null;
+    }
+
+    // Decrypt the note in memory (storage stays sealed) and carry on with what was asked.
+    const open = (note: Note) => note.id === noteId && note.sealed ? openNote(note) : note;
+    setNotes((prev: Note[]) => prev.map(open));
+    setArchivedNotes((prev: Note[]) => prev.map(open));
+    if ((window as any).pendingNoteToView) {
+      (window as any).pendingNoteToView = open((window as any).pendingNoteToView);
+    }
+    // Decrypting is not a change the user made, so the toast must not offer to undo it.
+    takePendingUndo();
+    completeUnlock();
+    return null;
+  };
+
   const handleUnlockAttempt = async (pin: string): Promise<boolean> => {
     if (activeNoteId) {
       const note = notes.find(n => n.id === activeNoteId) || archivedNotes.find(n => n.id === activeNoteId);
@@ -1052,25 +1186,9 @@ export default function Notes() {
 
       if (await verifyNotePin(note, pin)) {
         clearPinFailures(note.id);
-        // Unlock and allow access
-        toast.success(t('noteUnlockedToast'));
         // Mark as unlocked for this session to prevent re-prompt within this view
-        setUnlockedNoteIds(prev => prev.includes(activeNoteId) ? prev : [...prev, activeNoteId]);
-
-        setActiveNoteId(null);
-        
-        // If there's a pending note to view, open it
-        if ((window as any).pendingNoteToView) {
-          setNoteToView((window as any).pendingNoteToView);
-          setIsNoteViewerOpen(true);
-          (window as any).pendingNoteToView = null;
-        }
-        
-        // Execute any other pending action after unlock
-        if ((window as any).pendingAction) {
-          (window as any).pendingAction();
-          (window as any).pendingAction = null;
-        }
+        setUnlockedNoteIds(prev => prev.includes(note.id) ? prev : [...prev, note.id]);
+        completeUnlock();
         return true;
       } else {
         recordPinFailure(note.id);
@@ -1084,11 +1202,8 @@ export default function Notes() {
   const checkLockBeforeAction = (noteId: string, action: () => void) => {
     const note = notes.find(n => n.id === noteId) || archivedNotes.find(n => n.id === noteId);
     // Don't ask for PIN if note is currently being viewed or already unlocked in session
-    const needsPin = note?.locked && !unlockedNoteIds.includes(noteId) && noteToView?.id !== noteId;
-    if (needsPin) {
-      setActiveNoteId(noteId);
-      setPinPadMode('unlock');
-      setShowPinPad(true);
+    if (needsUnlock(note)) {
+      promptUnlock(noteId);
       // Store the action to execute after unlock
       (window as any).pendingAction = action;
     } else {
@@ -2336,6 +2451,24 @@ export default function Notes() {
          onLock={handleLockNote}
          onUnlock={handleUnlockNote}
        />
+
+      <LockChoiceDialog
+        isOpen={lockChoiceNoteId !== null}
+        onClose={() => setLockChoiceNoteId(null)}
+        onChoose={handleLockChoice}
+      />
+
+      <NotePasswordDialog
+        isOpen={passwordPrompt !== null}
+        mode={passwordPrompt?.mode ?? 'unlock'}
+        onClose={() => {
+          setPasswordPrompt(null);
+          setActiveNoteId(null);
+          (window as any).pendingNoteToView = null;
+          (window as any).pendingAction = null;
+        }}
+        onSubmit={handlePasswordSubmit}
+      />
 
       <PinPadDialog
         isOpen={showPinPad}

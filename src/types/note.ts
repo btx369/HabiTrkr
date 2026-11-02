@@ -14,6 +14,8 @@ export interface BaseNote {
   pin?: string; // Legacy plain-text PIN; replaced by pinHash on first load (see lib/notePin)
   pinHash?: string; // PBKDF2-SHA256 of the PIN, base64
   pinSalt?: string; // Salt for pinHash, base64
+  lockType?: 'pin' | 'password'; // How a locked note is protected; absent means PIN
+  sealed?: { iv: string; data: string }; // Encrypted content of a password note (lib/noteVault)
   tags?: string[]; // Tags for categorization (stored without #)
 }
 

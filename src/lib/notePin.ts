@@ -44,9 +44,12 @@ export async function verifyNotePin(note: Note, pin: string): Promise<boolean> {
   return note.pin !== undefined && note.pin === pin;
 }
 
-/** A copy of the note with every PIN field removed. */
+/**
+ * A copy of the note with every lock field removed (PIN and lock type). Never pass a
+ * sealed password note: its content is still encrypted and would stay unreadable.
+ */
 export function withoutPin<T extends Note>(note: T, locked = false): T {
-  const { pin: _pin, pinHash: _hash, pinSalt: _salt, ...rest } = note;
+  const { pin: _pin, pinHash: _hash, pinSalt: _salt, lockType: _lockType, ...rest } = note;
   return { ...rest, locked } as T;
 }
 
