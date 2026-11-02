@@ -23,12 +23,8 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import {
-  LANGUAGE_KEY,
-  PROFILE_AVATAR_KEY,
-  PROFILE_NAME_KEY,
-  THEME_KEY,
-} from '@/lib/storageKeys';
+import { PROFILE_AVATAR_KEY, PROFILE_NAME_KEY } from '@/lib/storageKeys';
+import { applyBackup, BackupError, createBackup, readBackup } from '@/lib/backup';
 import {
   Dialog,
   DialogContent,
@@ -73,30 +69,8 @@ export default function Profile() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState(userName);
 
-  const DATA_KEYS = [
-    'notes','archivedNotes','folders','archivedFolders',
-    'globalNoteViewerOpen','globalNoteToView','globalIsNewNote',
-    'notesViewType','notesSortType','notesSortDirection',
-    'foldersSortType','foldersSortDirection','notesCustomOrder',
-    'habits',
-    'events','archivedEvents','eventFolders','archivedEventFolders',
-    'eventsViewType','eventsSortType','eventsSortDirection',
-    'eventFoldersSortType','eventFoldersSortDirection',
-    'alarms','worldClocks',
-    LANGUAGE_KEY, THEME_KEY
-  ] as const;
-
-  type BackupShape = Partial<Record<(typeof DATA_KEYS)[number], unknown>> & { version?: number; exportedAt?: string };
-
   const handleExport = () => {
-    const payload: BackupShape = { version: 1, exportedAt: new Date().toISOString() };
-    DATA_KEYS.forEach((key) => {
-      const raw = localStorage.getItem(key);
-      if (raw !== null) {
-        try { payload[key] = JSON.parse(raw); } catch { payload[key] = raw; }
-      }
-    });
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(createBackup(), null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     const ts = new Date().toISOString().replace(/[:.]/g, '-');
@@ -122,20 +96,19 @@ export default function Profile() {
   const handleConfirmImport = async () => {
     if (!pendingFile) return;
     try {
-      const text = await pendingFile.text();
-      const data = JSON.parse(text) as BackupShape;
-      let applied = 0;
-      DATA_KEYS.forEach((key) => {
-        if (key in data) {
-          localStorage.setItem(key, JSON.stringify(data[key]));
-          applied++;
-        }
-      });
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(await pendingFile.text());
+      } catch {
+        throw new BackupError('invalid');
+      }
+      applyBackup(readBackup(parsed));
       toast.success(t('importSuccess'));
       setTimeout(() => window.location.reload(), 600);
     } catch (err) {
       console.error('Import error:', err);
-      toast.error(t('invalidBackupFile'));
+      const storageFull = err instanceof BackupError && err.reason === 'storage';
+      toast.error(t(storageFull ? 'importStorageFull' : 'invalidBackupFile'));
     } finally {
       setPendingFile(null);
     }
