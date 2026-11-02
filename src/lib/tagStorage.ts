@@ -3,7 +3,25 @@
  * Stores all tags with usage frequency in localStorage
  */
 
+import { registerUndo } from './undoManager';
+
 const TAGS_STORAGE_KEY = 'allTags';
+
+/**
+ * Writes the usage counts so that the Undo on the toast that follows puts them back.
+ *
+ * Counts change as a side effect of saving or deleting a note or event. Those collections
+ * are restored by Undo through useLocalStorage, but this key was written directly, so
+ * undoing a delete brought the note back while its tags stayed one count short.
+ */
+function saveTagUsage(tagUsage: TagUsage): void {
+  const previous = localStorage.getItem(TAGS_STORAGE_KEY);
+  registerUndo(TAGS_STORAGE_KEY, () => {
+    if (previous === null) localStorage.removeItem(TAGS_STORAGE_KEY);
+    else localStorage.setItem(TAGS_STORAGE_KEY, previous);
+  });
+  localStorage.setItem(TAGS_STORAGE_KEY, JSON.stringify(tagUsage));
+}
 
 export interface TagUsage {
   [tag: string]: number; // tag -> usage count
@@ -64,7 +82,7 @@ export function incrementTagUsage(tag: string): void {
     const normalizedTag = tag.toLowerCase();
     tagUsage[normalizedTag] = (tagUsage[normalizedTag] || 0) + 1;
     
-    localStorage.setItem(TAGS_STORAGE_KEY, JSON.stringify(tagUsage));
+    saveTagUsage(tagUsage);
   } catch (error) {
     console.error('Error incrementing tag usage:', error);
   }
@@ -89,7 +107,7 @@ export function decrementTagUsage(tag: string): void {
         delete tagUsage[normalizedTag];
       }
       
-      localStorage.setItem(TAGS_STORAGE_KEY, JSON.stringify(tagUsage));
+      saveTagUsage(tagUsage);
     }
   } catch (error) {
     console.error('Error decrementing tag usage:', error);

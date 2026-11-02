@@ -27,6 +27,7 @@ import { parseSearchExpression, matchesSearchExpression } from '@/lib/tagParser'
 import { updateTagUsage } from '@/lib/tagStorage';
 import { autoImportEventToFolders } from '@/lib/folderAutoImport';
 import { daysUntilEvent, hasEventEnded } from '@/lib/eventRecurrence';
+import { takePendingUndo } from '@/lib/undoManager';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { useBulkSelection } from '@/hooks/useBulkSelection';
 import { BulkActionBar, BulkActionType, BulkActionContext } from '@/components/shared/BulkActionBar';
@@ -202,6 +203,9 @@ export default function Events() {
           }))
         );
 
+        // No Undo here: this effect would archive the same events again straight away,
+        // so the button could only ever appear to do nothing. Drop the pending rollback.
+        takePendingUndo();
         toast.success(say('toastArchived', 'events'));
       }
     };
