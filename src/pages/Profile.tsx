@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ChevronRight, 
@@ -20,13 +20,14 @@ import {
   FileText,
   Lock,
   KeyRound,
+  Fingerprint,
   MessageSquare
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { PROFILE_AVATAR_KEY, PROFILE_NAME_KEY } from '@/lib/storageKeys';
 import { applyBackup, BackupError, createBackup, readBackup } from '@/lib/backup';
-import { changeVaultPassword, createVault, hasVault, lockVault, VAULT_ATTEMPTS_ID } from '@/lib/noteVault';
+import { changeVaultPassword, createVault, disableBiometric, enableBiometric, hasBiometric, hasVault, isBiometricAvailable, lockVault, unlockVault, VAULT_ATTEMPTS_ID } from '@/lib/noteVault';
 import { clearPinFailures, getPinLockoutRemaining, recordPinFailure } from '@/lib/notePin';
 import { NotePasswordDialog, NotePasswordMode, NotePasswordValues } from '@/components/notes/NotePasswordDialog';
 import {
@@ -58,10 +59,48 @@ export default function Profile() {
   const [weekStartDialogOpen, setWeekStartDialogOpen] = useState(false);
   const [passwordDialogMode, setPasswordDialogMode] = useState<NotePasswordMode | null>(null);
   const [vaultExists, setVaultExists] = useState(() => hasVault());
+  const [biometricOn, setBiometricOn] = useState(() => hasBiometric());
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+
+  useEffect(() => {
+    isBiometricAvailable().then(setBiometricAvailable);
+  }, []);
+
+  const handleBiometricToggle = (checked: boolean) => {
+    if (checked) {
+      setPasswordDialogMode('unlock');
+    } else {
+      disableBiometric();
+      setBiometricOn(false);
+      toast.success(t('fingerprintDisabled'));
+    }
+  };
 
   // Creating or changing the note password. Changing re-wraps the key that encrypts the
   // notes, so it needs the current password; the notes themselves are not rewritten.
   const handleNotePassword = async ({ password, currentPassword }: NotePasswordValues): Promise<string | null> => {
+    if (passwordDialogMode === 'unlock') {
+      // Turning the fingerprint on: the password proves it is you, then the passkey is made.
+      const waitMs = getPinLockoutRemaining(VAULT_ATTEMPTS_ID);
+      if (waitMs > 0) return t('pinTooManyAttempts').replace('{seconds}', String(Math.ceil(waitMs / 1000)));
+      if (!(await unlockVault(password))) {
+        recordPinFailure(VAULT_ATTEMPTS_ID);
+        return t('notePasswordIncorrect');
+      }
+      clearPinFailures(VAULT_ATTEMPTS_ID);
+      try {
+        const result = await enableBiometric();
+        if (result === 'enabled') {
+          setBiometricOn(true);
+          toast.success(t('fingerprintEnabled'));
+        } else {
+          toast.error(t(result === 'unsupported' ? 'fingerprintUnsupported' : 'fingerprintFailed'));
+        }
+      } finally {
+        lockVault();
+      }
+      return null;
+    }
     if (passwordDialogMode === 'change') {
       const waitMs = getPinLockoutRemaining(VAULT_ATTEMPTS_ID);
       if (waitMs > 0) return t('pinTooManyAttempts').replace('{seconds}', String(Math.ceil(waitMs / 1000)));
@@ -287,6 +326,23 @@ export default function Profile() {
               onClick={() => setPasswordDialogMode(vaultExists ? 'change' : 'create')}
             />
             <div className="h-px bg-border mx-4" />
+            {vaultExists && biometricAvailable && (
+              <>
+                <SettingsRow
+                  icon={<Fingerprint size={20} />}
+                  label={t('fingerprintUnlock')}
+                  onClick={() => handleBiometricToggle(!biometricOn)}
+                  rightElement={
+                    <Switch
+                      checked={biometricOn}
+                      onCheckedChange={handleBiometricToggle}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  }
+                />
+                <div className="h-px bg-border mx-4" />
+              </>
+            )}
             <SettingsRow
               icon={<Tag size={20} />}
               label={t('tags')}

@@ -28,7 +28,7 @@ import { PinPadDialog } from '@/components/notes/PinPadDialog';
 import { LockChoiceDialog } from '@/components/notes/LockChoiceDialog';
 import { takePendingUndo } from '@/lib/undoManager';
 import { NotePasswordDialog, NotePasswordMode, NotePasswordValues } from '@/components/notes/NotePasswordDialog';
-import { createVault, hasVault, isPasswordNote, isVaultUnlocked, lockVault, openNote, sealNote, sealNotesForStorage, unlockVault, VAULT_ATTEMPTS_ID } from '@/lib/noteVault';
+import { createVault, hasBiometric, hasVault, isPasswordNote, isVaultUnlocked, lockVault, openNote, sealNote, sealNotesForStorage, unlockVault, unlockVaultWithBiometric, VAULT_ATTEMPTS_ID } from '@/lib/noteVault';
 import { clearPinFailures, createPinFields,getPinLockoutRemaining, recordPinFailure, upgradeLegacyPin, verifyNotePin, withoutPin } from '@/lib/notePin';
 import { NoteEditor } from '@/components/notes/NoteEditor';
 import { highlightText } from '@/lib/textHighlight';
@@ -1153,11 +1153,26 @@ const hasTitle = (note.name || '').trim() !== '';
       clearPinFailures(VAULT_ATTEMPTS_ID);
     }
 
+    afterVaultUnlocked(noteId, passwordPrompt.purpose);
+    return null;
+  };
+
+  const handleBiometricUnlock = async (): Promise<string | null> => {
+    const noteId = activeNoteId;
+    if (!noteId || !passwordPrompt) return null;
+    if (!(await unlockVaultWithBiometric())) return t('fingerprintFailed');
+    clearPinFailures(VAULT_ATTEMPTS_ID);
+    afterVaultUnlocked(noteId, passwordPrompt.purpose);
+    return null;
+  };
+
+  /** Continues whatever asked for the note password, once the vault is open. */
+  const afterVaultUnlocked = (noteId: string, purpose: 'open' | 'lock') => {
     setPasswordPrompt(null);
-    if (passwordPrompt.purpose === 'lock') {
+    if (purpose === 'lock') {
       setActiveNoteId(null);
       lockWithPassword(noteId);
-      return null;
+      return;
     }
 
     // Decrypt the note in memory (storage stays sealed) and carry on with what was asked.
@@ -1170,7 +1185,6 @@ const hasTitle = (note.name || '').trim() !== '';
     // Decrypting is not a change the user made, so the toast must not offer to undo it.
     takePendingUndo();
     completeUnlock();
-    return null;
   };
 
   const handleUnlockAttempt = async (pin: string): Promise<boolean> => {
@@ -2468,6 +2482,7 @@ const hasTitle = (note.name || '').trim() !== '';
           (window as any).pendingAction = null;
         }}
         onSubmit={handlePasswordSubmit}
+        onBiometric={passwordPrompt?.mode === 'unlock' && hasBiometric() ? handleBiometricUnlock : undefined}
       />
 
       <PinPadDialog

@@ -36,6 +36,16 @@ interface VaultRecord {
   iterations: number;
   iv: string;
   wrappedKey: string;
+  /** A second copy of the data key, wrapped by the fingerprint (see enableBiometric). */
+  biometric?: BiometricRecord;
+}
+
+interface BiometricRecord {
+  credentialId: string;
+  /** Input to the passkey's PRF: same salt in, same secret out, only after the fingerprint. */
+  prfSalt: string;
+  iv: string;
+  wrappedKey: string;
 }
 
 export interface SealedContent {
@@ -114,8 +124,151 @@ export async function changeVaultPassword(currentPassword: string, newPassword: 
   if (!record) return false;
   const key = await unwrap(record, currentPassword);
   if (!key) return false;
-  setLocalStorageItem(VAULT_KEY, await wrap(key, newPassword));
+  // Keep the fingerprint copy: it wraps the same data key, which has not changed.
+  setLocalStorageItem(VAULT_KEY, { ...(await wrap(key, newPassword)), biometric: record.biometric });
   return true;
+}
+
+/*
+ * Fingerprint / face unlock, through WebAuthn (passkeys) with the PRF extension.
+ *
+ * A passkey is created on this device for this site. Its PRF extension returns a secret
+ * only after the device has verified the user (fingerprint, face or screen lock), and
+ * always the same secret for the same salt. That secret wraps a second copy of the data
+ * key, so the fingerprint opens protected notes without the password. The password
+ * still works, and is the only way in on another device or after removing the passkey.
+ *
+ * Requires a secure context and a browser/authenticator with PRF support (recent Chrome
+ * on Android, recent Safari). When either is missing the option is simply not offered.
+ */
+
+const BIOMETRIC_INFO = new TextEncoder().encode('habitrkr-note-vault-biometric');
+
+/** AES key from the PRF output, via HKDF so the raw PRF secret is never used directly. */
+async function keyFromPrf(prfOutput: ArrayBuffer): Promise<Uint8Array> {
+  const material = await crypto.subtle.importKey('raw', prfOutput, 'HKDF', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(32), info: BIOMETRIC_INFO },
+    material,
+    256,
+  );
+  return new Uint8Array(bits);
+}
+
+/** Asks for the fingerprint and returns the PRF secret, or null if refused/unsupported. */
+async function evaluatePrf(credentialId: Uint8Array, prfSalt: Uint8Array): Promise<ArrayBuffer | null> {
+  const assertion = (await navigator.credentials.get({
+    publicKey: {
+      challenge: randomBytes(32),
+      allowCredentials: [{ type: 'public-key', id: credentialId }],
+      userVerification: 'required',
+      timeout: 60_000,
+      extensions: { prf: { eval: { first: prfSalt } } } as AuthenticationExtensionsClientInputs,
+    },
+  })) as PublicKeyCredential | null;
+  const results = assertion?.getClientExtensionResults() as { prf?: { results?: { first?: ArrayBuffer } } } | undefined;
+  return results?.prf?.results?.first ?? null;
+}
+
+/** Whether this device can verify the user (fingerprint, face, screen lock) for passkeys. */
+export async function isBiometricAvailable(): Promise<boolean> {
+  try {
+    return (
+      window.isSecureContext &&
+      typeof PublicKeyCredential !== 'undefined' &&
+      (await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable())
+    );
+  } catch {
+    return false;
+  }
+}
+
+export const hasBiometric = () => !!readVault()?.biometric;
+
+export type EnableBiometricResult = 'enabled' | 'cancelled' | 'unsupported';
+
+/**
+ * Registers a passkey and stores a fingerprint-wrapped copy of the data key.
+ * The vault must be unlocked (the caller asks for the password first).
+ */
+export async function enableBiometric(): Promise<EnableBiometricResult> {
+  const record = readVault();
+  if (!record || !dataKey) throw new Error('Note vault is locked');
+  const key = dataKey;
+  const prfSalt = randomBytes(32);
+
+  let credential: PublicKeyCredential | null;
+  try {
+    credential = (await navigator.credentials.create({
+      publicKey: {
+        rp: { name: 'HabiTrkr' },
+        user: { id: randomBytes(16), name: 'HabiTrkr', displayName: 'HabiTrkr' },
+        challenge: randomBytes(32),
+        pubKeyCredParams: [
+          { type: 'public-key', alg: -7 },
+          { type: 'public-key', alg: -257 },
+        ],
+        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'preferred' },
+        timeout: 60_000,
+        extensions: { prf: { eval: { first: prfSalt } } } as AuthenticationExtensionsClientInputs,
+      },
+    })) as PublicKeyCredential | null;
+  } catch (error) {
+    console.warn('Passkey creation failed:', error);
+    return 'cancelled';
+  }
+  if (!credential) return 'cancelled';
+
+  const created = credential.getClientExtensionResults() as { prf?: { enabled?: boolean; results?: { first?: ArrayBuffer } } };
+  if (created.prf?.enabled === false) return 'unsupported';
+  const credentialId = new Uint8Array(credential.rawId);
+
+  // Some authenticators return the secret at creation; others only on the first use.
+  let secret = created.prf?.results?.first ?? null;
+  if (!secret) {
+    try {
+      secret = await evaluatePrf(credentialId, prfSalt);
+    } catch (error) {
+      console.warn('Passkey check failed:', error);
+      return 'cancelled';
+    }
+  }
+  if (!secret) return 'unsupported';
+
+  const iv = randomBytes(12);
+  const wrappingKey = await keyFromPrf(secret);
+  const biometric: BiometricRecord = {
+    credentialId: toBase64(credentialId),
+    prfSalt: toBase64(prfSalt),
+    iv: toBase64(iv),
+    wrappedKey: toBase64(gcm(wrappingKey, iv).encrypt(key)),
+  };
+  setLocalStorageItem(VAULT_KEY, { ...record, biometric });
+  return 'enabled';
+}
+
+/** Unlocks the vault with the fingerprint. False when cancelled or it did not match. */
+export async function unlockVaultWithBiometric(): Promise<boolean> {
+  const biometric = readVault()?.biometric;
+  if (!biometric) return false;
+  try {
+    const secret = await evaluatePrf(fromBase64(biometric.credentialId), fromBase64(biometric.prfSalt));
+    if (!secret) return false;
+    const wrappingKey = await keyFromPrf(secret);
+    dataKey = gcm(wrappingKey, fromBase64(biometric.iv)).decrypt(fromBase64(biometric.wrappedKey));
+    return true;
+  } catch (error) {
+    console.warn('Fingerprint unlock failed:', error);
+    return false;
+  }
+}
+
+/** Forgets the fingerprint copy of the key. The password keeps working. */
+export function disableBiometric(): void {
+  const record = readVault();
+  if (!record?.biometric) return;
+  const { biometric: _biometric, ...rest } = record;
+  setLocalStorageItem(VAULT_KEY, rest);
 }
 
 export function lockVault(): void {

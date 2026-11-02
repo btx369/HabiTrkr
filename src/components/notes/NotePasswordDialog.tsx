@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { KeyRound } from 'lucide-react';
+import { Fingerprint, KeyRound } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,8 @@ interface NotePasswordDialogProps {
   onClose: () => void;
   /** Resolves to an error message to show, or null when it worked (the dialog then closes). */
   onSubmit: (values: NotePasswordValues) => Promise<string | null>;
+  /** When set (unlock mode only), offers the fingerprint instead of typing; same contract as onSubmit. */
+  onBiometric?: () => Promise<string | null>;
 }
 
 /**
@@ -26,7 +28,7 @@ interface NotePasswordDialogProps {
  * Creating and changing ask twice and say plainly that a forgotten password cannot be
  * recovered, since that is the one way to lose protected notes for good.
  */
-export function NotePasswordDialog({ isOpen, mode, onClose, onSubmit }: NotePasswordDialogProps) {
+export function NotePasswordDialog({ isOpen, mode, onClose, onSubmit, onBiometric }: NotePasswordDialogProps) {
   const { t } = useLanguage();
   const [currentPassword, setCurrentPassword] = useState('');
   const [password, setPassword] = useState('');
@@ -45,6 +47,16 @@ export function NotePasswordDialog({ isOpen, mode, onClose, onSubmit }: NotePass
   }, [isOpen]);
 
   const choosingNew = mode !== 'unlock';
+
+  const handleBiometric = async () => {
+    if (!onBiometric || isBusy) return;
+    setIsBusy(true);
+    setError(null);
+    const result = await onBiometric();
+    setIsBusy(false);
+    if (result) setError(result);
+    else onClose();
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -116,6 +128,19 @@ export function NotePasswordDialog({ isOpen, mode, onClose, onSubmit }: NotePass
           )}
 
           {error && <p className="text-center text-sm font-medium text-destructive">{error}</p>}
+
+          {mode === 'unlock' && onBiometric && (
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 w-full gap-2 border-border text-foreground hover:bg-hover"
+              onClick={handleBiometric}
+              disabled={isBusy}
+            >
+              <Fingerprint size={18} />
+              {t('useFingerprint')}
+            </Button>
+          )}
 
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="outline" className="h-11 flex-1 border-border text-foreground hover:bg-hover" onClick={onClose}>
