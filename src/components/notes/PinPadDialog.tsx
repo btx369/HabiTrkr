@@ -7,7 +7,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 interface PinPadDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (pin: string) => boolean | void; // Return false to trigger shake animation
+  onSubmit: (pin: string) => boolean | void | Promise<boolean | void>; // Resolve false to trigger shake animation
   mode: 'set' | 'unlock';
   title?: string;
 }
@@ -35,9 +35,14 @@ export const PinPadDialog = ({ isOpen, onClose, onSubmit, mode, title }: PinPadD
     setPin(prev => prev.slice(0, -1));
   };
   
-  const handleSubmit = () => {
-    if (pin.length === 4) {
-      const result = onSubmit(pin);
+  const [isChecking, setIsChecking] = useState(false);
+
+  const handleSubmit = async () => {
+    if (pin.length === 4 && !isChecking) {
+      // Checking a hashed PIN takes a moment; block a second tap meanwhile.
+      setIsChecking(true);
+      const result = await onSubmit(pin);
+      setIsChecking(false);
       
       // If onSubmit returns false, it means PIN was incorrect - trigger shake
       if (result === false) {
@@ -147,7 +152,7 @@ export const PinPadDialog = ({ isOpen, onClose, onSubmit, mode, title }: PinPadD
             <Button
               className="h-11 flex-1 bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-muted-foreground/70 disabled:text-primary-foreground disabled:opacity-100"
               onClick={handleSubmit}
-              disabled={pin.length !== 4}
+              disabled={pin.length !== 4 || isChecking}
               type="button"
             >
               {mode === 'set' ? t('setPin') : t('unlock')}

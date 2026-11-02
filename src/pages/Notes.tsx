@@ -25,6 +25,7 @@ import { NoteFolderCard } from '@/components/noteFolders/NoteFolderCard';
 import { NoteFolderEditor } from '@/components/noteFolders/NoteFolderEditor';
 import { MoveToFolderDialog } from '@/components/shared/MoveToFolderDialog';
 import { PinPadDialog } from '@/components/notes/PinPadDialog';
+import { clearPinFailures, createPinFields, getPinLockoutRemaining, recordPinFailure, upgradeLegacyPin, verifyNotePin, withoutPin } from '@/lib/notePin';
 import { NoteEditor } from '@/components/notes/NoteEditor';
 import { highlightText } from '@/lib/textHighlight';
 import { updateTagUsage } from '@/lib/tagStorage';
@@ -50,6 +51,28 @@ export default function Notes() {
   const [archivedNotes, setArchivedNotes] = useLocalStorage<Note[]>('archivedNotes', []);
   const [folders, setFolders] = useLocalStorage<NoteFolder[]>('folders', []);
   const [archivedFolders, setArchivedFolders] = useLocalStorage<NoteFolder[]>('archivedFolders', []);
+
+  // Notes locked before PINs were hashed still hold the PIN in plain text. Hash them once,
+  // as soon as Notes opens, rather than waiting for each to be unlocked.
+  useEffect(() => {
+    const upgrade = async (list: Note[], save: (update: (prev: Note[]) => Note[]) => void) => {
+      if (!list.some(note => note.pin !== undefined)) return;
+      const upgraded = new Map<string, Note>();
+      for (const note of list) {
+        if (note.pin !== undefined) upgraded.set(note.id, await upgradeLegacyPin(note));
+      }
+      // Copy only the PIN fields, in case the note was edited while hashing ran.
+      save(prev => prev.map(note => {
+        const hashed = upgraded.get(note.id);
+        return hashed && note.pin !== undefined
+          ? { ...withoutPin(note, note.locked ?? true), pinHash: hashed.pinHash, pinSalt: hashed.pinSalt }
+          : note;
+      }));
+    };
+    upgrade(notes, setNotes).catch(error => console.error('PIN upgrade failed:', error));
+    upgrade(archivedNotes, setArchivedNotes).catch(error => console.error('PIN upgrade failed:', error));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one pass on open; later locks are hashed when set
+  }, []);
   const [activeTab, setActiveTab] = useState('all-notes');
   const [showArchivedItems, setShowArchivedItems] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -958,17 +981,17 @@ export default function Notes() {
     if (note?.locked && (unlockedNoteIds.includes(noteId) || noteToView?.id === noteId)) {
       // Note is already unlocked in this session or being viewed, perform unlock directly
       setNotes((prev: Note[]) => prev.map(note => 
-        note.id === noteId ? { ...note, locked: false, pin: undefined } : note
+        note.id === noteId ? withoutPin(note) : note
       ));
       setArchivedNotes((prev: Note[]) => prev.map(note => 
-        note.id === noteId ? { ...note, locked: false, pin: undefined } : note
+        note.id === noteId ? withoutPin(note) : note
       ));
       // Update noteToView if this is the currently viewed note
       if (noteToView?.id === noteId) {
-        setNoteToView(prev => prev ? { ...prev, locked: false, pin: undefined } : null);
+        setNoteToView(prev => prev ? withoutPin(prev) : null);
       }
       setUnlockedNoteIds(prev => prev.filter(id => id !== noteId));
-      toast.success('Note unlocked successfully!');
+      toast.success(t('noteUnlockedToast'));
       return;
     }
     
@@ -978,43 +1001,59 @@ export default function Notes() {
     // Store the action to remove the lock after PIN verification
     (window as any).pendingAction = () => {
       setNotes((prev: Note[]) => prev.map(note => 
-        note.id === noteId ? { ...note, locked: false, pin: undefined } : note
+        note.id === noteId ? withoutPin(note) : note
       ));
       setArchivedNotes((prev: Note[]) => prev.map(note => 
-        note.id === noteId ? { ...note, locked: false, pin: undefined } : note
+        note.id === noteId ? withoutPin(note) : note
       ));
       setUnlockedNoteIds(prev => prev.filter(id => id !== noteId));
-      toast.success('Note unlocked successfully!');
+      toast.success(t('noteUnlockedToast'));
     };
   };
 
-   const handleSetPin = (pin: string) => {
-     if (activeNoteId) {
-       const updatedNotes = notes.map(note =>
-         note.id === activeNoteId ? { ...note, locked: true, pin } : note
-       );
-       const updatedArchived = archivedNotes.map(note =>
-         note.id === activeNoteId ? { ...note, locked: true, pin } : note
-       );
-       setNotes(updatedNotes);
-       setArchivedNotes(updatedArchived);
-       // Update noteToView if this is the currently viewed note
-       if (noteToView?.id === activeNoteId) {
-         setNoteToView(prev => prev ? { ...prev, locked: true, pin } : null);
-       }
-       // Ensure the note is not considered unlocked in this session
-       setUnlockedNoteIds(prev => prev.filter(id => id !== activeNoteId));
-       toast.success('Note locked with PIN code');
-     }
-     setActiveNoteId(null);
-   };
+  const handleSetPin = async (pin: string) => {
+    const noteId = activeNoteId;
+    setActiveNoteId(null);
+    if (!noteId) return;
 
-  const handleUnlockAttempt = (pin: string): boolean => {
+    let pinFields: Awaited<ReturnType<typeof createPinFields>>;
+    try {
+      pinFields = await createPinFields(pin);
+    } catch (error) {
+      // No Web Crypto (an insecure context): refuse rather than store the PIN in clear.
+      console.error('Could not hash PIN:', error);
+      toast.error(t('pinLockFailed'));
+      return;
+    }
+
+    const lock = (note: Note) => note.id === noteId ? { ...withoutPin(note, true), ...pinFields } : note;
+    setNotes((prev: Note[]) => prev.map(lock));
+    setArchivedNotes((prev: Note[]) => prev.map(lock));
+    // Update noteToView if this is the currently viewed note
+    if (noteToView?.id === noteId) {
+      setNoteToView(prev => prev ? lock(prev) : null);
+    }
+    clearPinFailures(noteId);
+    // Ensure the note is not considered unlocked in this session
+    setUnlockedNoteIds(prev => prev.filter(id => id !== noteId));
+    toast.success(t('noteLockedToast'));
+  };
+
+  const handleUnlockAttempt = async (pin: string): Promise<boolean> => {
     if (activeNoteId) {
       const note = notes.find(n => n.id === activeNoteId) || archivedNotes.find(n => n.id === activeNoteId);
-      if (note && note.pin === pin) {
+      if (!note) return false;
+
+      const waitMs = getPinLockoutRemaining(note.id);
+      if (waitMs > 0) {
+        toast.error(t('pinTooManyAttempts').replace('{seconds}', String(Math.ceil(waitMs / 1000))));
+        return false;
+      }
+
+      if (await verifyNotePin(note, pin)) {
+        clearPinFailures(note.id);
         // Unlock and allow access
-        toast.success('Note unlocked');
+        toast.success(t('noteUnlockedToast'));
         // Mark as unlocked for this session to prevent re-prompt within this view
         setUnlockedNoteIds(prev => prev.includes(activeNoteId) ? prev : [...prev, activeNoteId]);
 
@@ -1034,6 +1073,7 @@ export default function Notes() {
         }
         return true;
       } else {
+        recordPinFailure(note.id);
         // Return false to trigger shake animation in PinPadDialog
         return false;
       }
@@ -1084,6 +1124,10 @@ export default function Notes() {
     const expression = parseSearchExpression(query);
 
     const matchesText = (term: string): boolean => {
+      // A locked note's content is hidden on its card, so a search must not reveal it
+      // either: matching a word would tell anyone that the note contains it.
+      if (note.locked) return extractSearchableText(note.name).includes(term);
+
       if (extractSearchableText(note).includes(term)) return true;
 
       switch (note.type) {

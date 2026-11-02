@@ -11,7 +11,9 @@ export interface BaseNote {
   archived?: boolean;
   originalFolderId?: string; // Track original folder when note is deleted
   locked?: boolean; // Whether the note is locked
-  pin?: string; // 4-digit PIN for locked notes
+  pin?: string; // Legacy plain-text PIN; replaced by pinHash on first load (see lib/notePin)
+  pinHash?: string; // PBKDF2-SHA256 of the PIN, base64
+  pinSalt?: string; // Salt for pinHash, base64
   tags?: string[]; // Tags for categorization (stored without #)
 }
 
