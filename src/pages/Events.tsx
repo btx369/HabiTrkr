@@ -695,7 +695,7 @@ export default function Events() {
       
       switch (sortType) {
         case 'title': {
-          const result = a.name.localeCompare(b.name);
+          const result = a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true });
           return sortDirection === 'asc' ? result : -result;
         }
         case 'dateCreated': {
@@ -732,7 +732,7 @@ export default function Events() {
         // Then sort by selected sort type
         switch (folderSortType) {
           case 'title': {
-            const result = a.name.localeCompare(b.name);
+            const result = a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true });
             return folderSortDirection === 'asc' ? result : -result;
           }
           case 'dateCreated': {
@@ -760,7 +760,7 @@ export default function Events() {
             return folderSortDirection === 'asc' ? result : -result;
           }
           default:
-            return a.name.localeCompare(b.name);
+            return a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true });
         }
       });
   };

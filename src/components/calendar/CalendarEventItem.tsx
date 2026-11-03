@@ -4,6 +4,10 @@ import { Event } from '@/types/event';
 import { highlightText } from '@/lib/textHighlight';
 import { getCardColorStylesWithFallback, isDefaultColor } from '@/lib/cardColorStyles';
 import { getColoredBorderClass } from '@/lib/coloredButtonStyles';
+import { format } from 'date-fns';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useDateLocale } from '@/lib/dateLocale';
+import { describeRecurrence } from '@/lib/recurrenceLabel';
 
 interface CalendarEventItemProps {
   event: Event;
@@ -25,17 +29,15 @@ export function CalendarEventItem({
   compact = false,
   onClick
 }: CalendarEventItemProps) {
-  const recurrenceLabel = event.recurrenceType 
-    ? event.recurrenceType.charAt(0).toUpperCase() + event.recurrenceType.slice(1)
+  const { t, language } = useLanguage();
+  const dateLocale = useDateLocale();
+  // Short form here ("Every 2 weeks"); the event viewer adds the weekdays.
+  const recurrenceLabel = event.recurrenceType
+    ? describeRecurrence({ ...event, recurrenceDays: undefined }, t, language, () => '') ?? ''
     : '';
 
-  // Format time for display (convert 24h to 12h format)
-  const formatTime = (time: string) => {
-    const [hours, minutes] = time.split(':').map(Number);
-    const period = hours >= 12 ? 'PM' : 'AM';
-    const displayHours = hours % 12 || 12;
-    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
-  };
+  // The locale's own short time: 18:30 in Portugal, 6:30 PM in the US.
+  const formatTime = (time: string) => format(new Date(`2000-01-01T${time}`), 'p', { locale: dateLocale });
 
   const hasTime = event.startTime && !event.isAllDay;
   const isAllDay = event.isAllDay;
@@ -71,7 +73,7 @@ export function CalendarEventItem({
           {isAllDay && (
             <Badge variant="outline" className={`text-xs shrink-0 w-fit ${badgeBorderClass} ${hasColor ? 'text-[#000000]' : ''}`}>
               <Clock size={12} className="mr-1" />
-              All-Day
+              {t('allDay')}
             </Badge>
           )}
           {hasTime && (

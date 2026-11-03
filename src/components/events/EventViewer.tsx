@@ -15,6 +15,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { parseStoredDate } from '@/lib/dateUtils';
 import { useDateLocale } from '@/lib/dateLocale';
 import { useWeekStart, getOrderedDayNameKeys, getVisualIndexFromJsDay } from '@/contexts/WeekStartContext';
+import { describeRecurrence } from '@/lib/recurrenceLabel';
 
 interface EventViewerProps {
   event: Event | null;
@@ -81,7 +82,7 @@ const CUSTOM_ALERT_UNIT_KEYS: Record<string, string> = {
 };
 
 export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventViewerProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const dateLocale = useDateLocale();
   const { weekStartDay } = useWeekStart();
 
@@ -111,34 +112,18 @@ export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventV
 
   const formatTime = (time?: string) => {
     if (!time) return null;
-    return format(new Date(`2000-01-01T${time}`), 'h:mm a');
+    // 'p' is the locale's own short time: 18:30 in Portugal, 6:30 PM in the US.
+    return format(new Date(`2000-01-01T${time}`), 'p', { locale: dateLocale });
   };
 
-  const getRecurrenceText = () => {
-    if (!event.isRecurrent || !event.recurrenceType) return null;
-
-    const interval = event.recurrenceInterval || 1;
-    const typeLabel = {
-      daily: interval === 1 ? 'day' : 'days',
-      weekly: interval === 1 ? 'week' : 'weeks',
-      monthly: interval === 1 ? 'month' : 'months',
-      yearly: interval === 1 ? 'year' : 'years',
-    }[event.recurrenceType];
-
-    let text = interval === 1 
-      ? `Every ${typeLabel}` 
-      : `Every ${interval} ${typeLabel}`;
-
-    if (event.recurrenceType === 'weekly' && event.recurrenceDays?.length) {
-      const days = event.recurrenceDays
-        .sort((a, b) => getVisualIndexFromJsDay(a, weekStartDay) - getVisualIndexFromJsDay(b, weekStartDay))
-        .map(d => orderedDayNames[getVisualIndexFromJsDay(d, weekStartDay)])
-        .join(', ');
-      text += ` on ${days}`;
-    }
-
-    return text;
-  };
+  const getRecurrenceText = () =>
+    describeRecurrence(
+      event,
+      t,
+      language,
+      (jsDay) => orderedDayNames[getVisualIndexFromJsDay(jsDay, weekStartDay)],
+      (jsDay) => getVisualIndexFromJsDay(jsDay, weekStartDay),
+    );
 
   const getAlertText = () => {
     if (!event.alertType || event.alertType === 'none') return null;

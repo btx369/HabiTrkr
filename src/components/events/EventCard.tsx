@@ -5,8 +5,8 @@ import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Event } from '@/types/event';
 import { format } from 'date-fns';
-import { daysUntilEvent, getEventStart } from '@/lib/eventRecurrence';
-import { parseStoredDate } from '@/lib/dateUtils';
+import { daysUntilEvent, getEventStart, getNextOccurrenceStart } from '@/lib/eventRecurrence';
+import { parseStoredDate, toDateKey } from '@/lib/dateUtils';
 import { useDateLocale } from '@/lib/dateLocale';
 import { highlightText } from '@/lib/textHighlight';
 import { ViewType } from '@/components/events/EventViewSettings';
@@ -19,6 +19,7 @@ import { isDefaultColor } from '@/lib/cardColorStyles';
 import { getColoredIconClass, getColoredBorderClass } from '@/lib/coloredButtonStyles';
 import { useIsFiled } from '@/contexts/FolderMembershipContext';
 import { cn } from '@/lib/utils';
+import { describeRecurrence } from '@/lib/recurrenceLabel';
 
 
 interface EventCardProps {
@@ -118,15 +119,13 @@ export function EventCard({
     : undefined;
 
   // Helper to get day names in order based on recurrenceDays (JS days: 0=Sun, 6=Sat)
-  const getRecurrenceDayNames = (recurrenceDays: number[]) => {
-    // Sort by visual index order for display
-    const sortedDays = [...recurrenceDays].sort((a, b) => {
-      const visualA = getVisualIndexFromJsDay(a, weekStartDay);
-      const visualB = getVisualIndexFromJsDay(b, weekStartDay);
-      return visualA - visualB;
-    });
-    return sortedDays.map(jsDay => orderedDayNames[getVisualIndexFromJsDay(jsDay, weekStartDay)]).join(', ');
-  };
+  const recurrenceText = describeRecurrence(
+    event,
+    t,
+    language,
+    (jsDay) => orderedDayNames[getVisualIndexFromJsDay(jsDay, weekStartDay)],
+    (jsDay) => getVisualIndexFromJsDay(jsDay, weekStartDay),
+  );
 
   const getCardHeight = () => {
     switch (viewType) {
@@ -299,7 +298,10 @@ export function EventCard({
               <Calendar size={14} className={iconColorClass} />
               <span className={viewType !== 'list' ? 'truncate' : ''}>
                 {(() => {
-                  const eventDateStr = event.startDate || event.date;
+                  // A recurring event shows its next occurrence, not the day it was first set
+                  // up (which can be months back and says nothing about when it happens next).
+                  const next = event.isRecurrent ? getNextOccurrenceStart(event) : null;
+                  const eventDateStr = next ? toDateKey(next) : event.startDate || event.date;
                   return eventDateStr ? formatEventDate(eventDateStr) : t('noDateSet');
                 })()}
               </span>
@@ -310,10 +312,7 @@ export function EventCard({
                   className={`text-xs flex-shrink-0 hidden md:inline-flex ${badgeBorderClass} ${hasColor ? 'text-[#000000]' : ''}`}
                   style={recurrenceBadgeStyle}
                 >
-                  {event.recurrenceType === 'weekly' && event.recurrenceDays && event.recurrenceDays.length > 0
-                    ? `Every ${getRecurrenceDayNames(event.recurrenceDays)}`
-                    : `Every ${event.recurrenceInterval || 1} ${event.recurrenceType === 'daily' ? 'day' : event.recurrenceType === 'weekly' ? 'week' : event.recurrenceType === 'monthly' ? 'month' : 'year'}${(event.recurrenceInterval || 1) !== 1 ? 's' : ''}`
-                  }
+                  {recurrenceText}
                 </Badge>
               )}
             </div>
@@ -349,10 +348,7 @@ export function EventCard({
                 className={`text-xs ${badgeBorderClass} ${hasColor ? 'text-[#000000]' : ''}`}
                 style={recurrenceBadgeStyle}
               >
-                {event.recurrenceType === 'weekly' && event.recurrenceDays && event.recurrenceDays.length > 0
-                  ? `Every ${getRecurrenceDayNames(event.recurrenceDays)}`
-                  : `Every ${event.recurrenceInterval || 1} ${event.recurrenceType === 'daily' ? 'day' : event.recurrenceType === 'weekly' ? 'week' : event.recurrenceType === 'monthly' ? 'month' : 'year'}${(event.recurrenceInterval || 1) !== 1 ? 's' : ''}`
-                }
+                {recurrenceText}
               </Badge>
             </div>
           )}

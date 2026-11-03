@@ -562,7 +562,7 @@ export default function HabitTracker() {
       let comparison = 0;
       switch (habitsSortType) {
         case 'name':
-          comparison = a.name.localeCompare(b.name);
+          comparison = a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true });
           break;
         case 'dateCreated':
           comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
@@ -606,7 +606,7 @@ export default function HabitTracker() {
       let comparison = 0;
       switch (habitFoldersSortType) {
         case 'name':
-          comparison = a.name.localeCompare(b.name);
+          comparison = a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true });
           break;
         case 'dateCreated':
           comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
@@ -652,7 +652,7 @@ export default function HabitTracker() {
       let comparison = 0;
       switch (archivedHabitsSortType) {
         case 'name':
-          comparison = a.name.localeCompare(b.name);
+          comparison = a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true });
           break;
         case 'dateCreated':
           comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();

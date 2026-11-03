@@ -23,6 +23,7 @@ import { getColoredIconClass } from '@/lib/coloredButtonStyles';
 import { useIsFiled } from '@/contexts/FolderMembershipContext';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { countedSentence } from '@/lib/countedMessage';
 
 interface NoteCardProps {
   note: Note;
@@ -94,7 +95,7 @@ export function NoteCard({
   isBulkSelected = false,
   onBulkSelect,
 }: NoteCardProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   // Track when bulk mode was enabled for animation control
   const bulkModeEntryRef = useRef<number | null>(null);
 
@@ -297,7 +298,7 @@ export function NoteCard({
             ))}
             {hasCompletedItems && (
               <div className={`text-xs ${mutedTextColorClass}`}>
-                +{completedItems.length} ticked items
+                +{countedSentence(t, language, 'checkedItems', completedItems.length)}
               </div>
             )}
           </div>

@@ -46,21 +46,30 @@ export function getAllTags(): string[] {
 }
 
 /**
- * Get all tags with their usage counts
+ * Every tag in use, with how many notes and events (archived ones included) carry it.
+ *
+ * Counted from the items themselves rather than read from the `allTags` usage store.
+ * That store is only updated when tags are edited in the app, so data that arrived any
+ * other way (an older backup, a migration) showed "No tags yet" while notes plainly had
+ * tags, and any drift in the store showed wrong counts.
  */
 export function getAllTagsWithCounts(): { tag: string; count: number }[] {
-  try {
-    const stored = localStorage.getItem(TAGS_STORAGE_KEY);
-    if (!stored) return [];
-    
-    const tagUsage: TagUsage = JSON.parse(stored);
-    return Object.entries(tagUsage)
-      .map(([tag, count]) => ({ tag, count }))
-      .sort((a, b) => b.count - a.count); // Sort by count descending
-  } catch (error) {
-    console.error('Error getting all tags with counts:', error);
-    return [];
+  const counts = new Map<string, number>();
+  for (const key of TAGGED_COLLECTIONS) {
+    try {
+      const items = JSON.parse(localStorage.getItem(key) ?? '[]');
+      if (!Array.isArray(items)) continue;
+      for (const item of items) {
+        if (!Array.isArray(item?.tags)) continue;
+        for (const tag of new Set<string>(item.tags.map((t: string) => t.toLowerCase()))) {
+          counts.set(tag, (counts.get(tag) ?? 0) + 1);
+        }
+      }
+    } catch (error) {
+      console.error(`Error reading tags from "${key}":`, error);
+    }
   }
+  return [...counts].map(([tag, count]) => ({ tag, count })).sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
 }
 
 /**

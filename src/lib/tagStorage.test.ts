@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { deleteTagGlobally, renameTagGlobally, updateTagUsage } from './tagStorage';
+import { deleteTagGlobally, getAllTagsWithCounts, renameTagGlobally, updateTagUsage } from './tagStorage';
 import { takePendingUndo } from './undoManager';
 
 const read = (key: string) => JSON.parse(localStorage.getItem(key) ?? 'null');
@@ -25,6 +25,12 @@ describe('tags', () => {
     deleteTagGlobally('WORK');
     expect(read('events')[0].tags).toEqual(['home']);
     expect(read('archivedFolders')[0].autoImportTags).toEqual([]);
+  });
+
+  it('counts tags from the items themselves, archived ones included', () => {
+    localStorage.setItem('notes', JSON.stringify([{ id: 'a', tags: ['Work', 'home'] }, { id: 'b', tags: ['work', 'work'] }]));
+    localStorage.setItem('archivedEvents', JSON.stringify([{ id: 'c', tags: ['home'] }]));
+    expect(getAllTagsWithCounts()).toEqual([{ tag: 'home', count: 2 }, { tag: 'work', count: 2 }]);
   });
 
   it('lets Undo restore the usage counts', async () => {

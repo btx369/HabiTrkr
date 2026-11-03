@@ -1736,7 +1736,7 @@ const hasTitle = (note.name || '').trim() !== '';
     const sorted = [...foldersList];
     switch (folderSortType) {
       case 'name':
-        return sorted.sort((a, b) => a.name.localeCompare(b.name));
+        return sorted.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true }));
       case 'dateCreated':
         return sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       case 'dateModified':

@@ -112,7 +112,7 @@ export default function TagsManager() {
       <div className="px-2 pb-8 space-y-4">
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+          <Search className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-muted-foreground" size={18} />
           <Input
             placeholder={t('searchTags')}
             value={searchQuery}

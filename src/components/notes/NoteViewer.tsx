@@ -48,6 +48,7 @@ import { ImageCapturePopup } from './ImageCapturePopup';
 import { TextFormattingBar } from './TextFormattingBar';
 import { ListNote, TextNote } from '@/types/note';
 import { RichTextEditor, RichTextEditorHandle } from './RichTextEditor';
+import { countedSentence } from '@/lib/countedMessage';
 
 /**
  * Convert hex color to rgba for glass effect (matching ColoredCard)
@@ -116,7 +117,7 @@ export function NoteViewer({
   onUnlock
 }: NoteViewerProps) {
   const { toast } = useToastSettings();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   // Toast copy is a translated sentence plus a translated entity noun. Both halves are
   // resolved here so the `{entity}` substitution is written once instead of at every toast.
   const say = (key: string, entity: string) => t(key).replace('{entity}', t(entity));
@@ -1625,7 +1626,7 @@ export function NoteViewer({
                             size={12} 
                             className={`mr-1 transition-transform ${isCompletedExpanded ? 'rotate-0' : '-rotate-90'}`}
                           />
-                          {completedItems.length} checked items
+                          {countedSentence(t, language, 'checkedItems', completedItems.length)}
                         </Button>
                       </CollapsibleTrigger>
                     </div>

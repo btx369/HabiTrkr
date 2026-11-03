@@ -5,6 +5,7 @@ import { Event } from '@/types/event';
 import { cn } from '@/lib/utils';
 import { getCardColorStylesWithFallback } from '@/lib/cardColorStyles';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useDateLocale } from '@/lib/dateLocale';
 
 interface CalendarDayViewProps {
   currentDate: Date;
@@ -39,6 +40,7 @@ export function CalendarDayView({
   onViewEvent 
 }: CalendarDayViewProps) {
   const { t } = useLanguage();
+  const dateLocale = useDateLocale();
   const gridRef = useRef<HTMLDivElement>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -188,7 +190,7 @@ export function CalendarDayView({
     return { top, height };
   };
 
-  const dayOfWeek = format(currentDate, 'EEE');
+  const dayOfWeek = format(currentDate, 'EEE', { locale: dateLocale });
   const dayNumber = format(currentDate, 'd');
 
   return (
@@ -222,7 +224,7 @@ export function CalendarDayView({
                     {event.isAllDay && (
                       <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
                         <Clock size={12} />
-                        All-Day
+                        {t('allDay')}
                       </span>
                     )}
                     <span className="truncate">{event.name}</span>
