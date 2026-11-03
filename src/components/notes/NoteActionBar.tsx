@@ -24,6 +24,7 @@ import { Note } from '@/types/note';
 import { TagEditorPopover } from './TagEditorPopover';
 import { isDefaultColor } from '@/lib/cardColorStyles';
 import { getColoredBorderClass } from '@/lib/coloredButtonStyles';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface NoteActionBarProps {
   note: Note;
@@ -52,6 +53,7 @@ export const NoteActionBar = ({
   showFormattingBar,
   isTextNote
 }: NoteActionBarProps) => {
+  const { t } = useLanguage();
   const hasColor = !isDefaultColor(note.color);
   const borderClass = getColoredBorderClass(hasColor, 20);
   
@@ -99,6 +101,7 @@ export const NoteActionBar = ({
           <Button 
             size="sm" 
             className={`${sizeStyles} ${restStyles} ${openTriggerStyles}`}
+            aria-label={t('add')}
           >
             <Plus size={16} />
           </Button>
@@ -106,19 +109,19 @@ export const NoteActionBar = ({
         <DropdownMenuContent align="center" side="top" className="w-48 bg-background border border-border">
           <DropdownMenuItem onClick={onTakePhoto} className="flex items-center gap-2">
             <Camera size={16} />
-            Take Photo
+            {t('takePhoto')}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={onAddImage} className="flex items-center gap-2">
             <ImageIcon size={16} />
-            Add image
+            {t('addImage')}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={onStartRecording} className="flex items-center gap-2">
             <Mic size={16} />
-            Recording
+            {t('recording')}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={onAddTickBoxes} className="flex items-center gap-2">
             <CheckSquare size={16} />
-            Tick Boxes
+            {t('tickBoxes')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -128,6 +131,7 @@ export const NoteActionBar = ({
           <Button 
             size="sm" 
             className={`${sizeStyles} ${restStyles} ${openTriggerStyles}`}
+            aria-label={t('tags')}
           >
             <Tag size={16} />
           </Button>
@@ -148,28 +152,36 @@ export const NoteActionBar = ({
         </PopoverContent>
       </Popover>
       
-      <Button 
-        size="sm" 
-        className={`${sizeStyles} ${restStyles}`}
-        onClick={onRemindMe}
-      >
-        <Bell size={16} />
-      </Button>
+      {/* Reminders and transcription are not built yet: show their buttons only once a
+          handler exists, instead of buttons that do nothing when tapped. */}
+      {onRemindMe && (
+        <Button 
+          size="sm" 
+          className={`${sizeStyles} ${restStyles}`}
+          onClick={onRemindMe}
+          aria-label={t('alert')}
+        >
+          <Bell size={16} />
+        </Button>
+      )}
       
-      <Button 
-        size="sm" 
-        className={`${sizeStyles} ${restStyles}`}
-        onClick={onTranscribeAudio}
-        title="Transcribe audio to text (Coming soon)"
-      >
-        <Mic size={16} />
-      </Button>
+      {onTranscribeAudio && (
+        <Button 
+          size="sm" 
+          className={`${sizeStyles} ${restStyles}`}
+          onClick={onTranscribeAudio}
+          aria-label={t('transcribeAudio')}
+        >
+          <Mic size={16} />
+        </Button>
+      )}
       
       {isTextNote && onToggleFormatting && (
         <Button 
           size="sm" 
           className={`${sizeStyles} ${showFormattingBar ? activeButtonStyles : restStyles}`}
           aria-pressed={showFormattingBar}
+          aria-label={t('textFormatting')}
           onClick={onToggleFormatting}
         >
           <Type size={16} />

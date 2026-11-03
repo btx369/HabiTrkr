@@ -1547,7 +1547,7 @@ export function NoteViewer({
                               if (onSave) saveIfEditable(updatedNote);
                             }}>
                               <Trash2 size={14} className="mr-2" />
-                              Delete note
+                              {t('deleteRecording')}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -1565,6 +1565,9 @@ export function NoteViewer({
                   <Button
                     size="sm"
                     variant="outline"
+                    role="checkbox"
+                    aria-checked={false}
+                    aria-label={item.text || t('listItemPlaceholder')}
                     onClick={(e) => handleListItemToggle(item.id, e)}
                     className="h-6 w-6 p-0 flex-shrink-0"
                   >
@@ -1632,6 +1635,9 @@ export function NoteViewer({
                           <Button
                             size="sm"
                             variant="default"
+                            role="checkbox"
+                            aria-checked={true}
+                            aria-label={item.text || t('listItemPlaceholder')}
                             onClick={(e) => handleListItemToggle(item.id, e)}
                             className="h-6 w-6 p-0 flex-shrink-0"
                           >
@@ -2029,7 +2035,7 @@ export function NoteViewer({
         </DialogHeader>
         
         <ScrollArea ref={scrollAreaRootRef} className="flex-1 h-full w-full" scrollbarClassName={hasColor ? 'bg-black/30' : 'bg-foreground/20'} style={{ overflowAnchor: 'none' }}>
-          <div className="h-full w-full box-border py-2 pl-3 flex flex-col items-stretch max-w-full space-y-3" style={{ overflowAnchor: 'none' }}>
+          <div className="h-full w-full box-border py-2 px-3 flex flex-col items-stretch max-w-full space-y-3" style={{ overflowAnchor: 'none' }}>
             {renderNoteContent()}
           </div>
         </ScrollArea>
@@ -2164,7 +2170,6 @@ export function NoteViewer({
               toast.success(t('toastItemCount').replace('{count}', String(lines.length)));
             }
           }}
-            onRemindMe={() => {/* TODO: Implement remind me functionality */}}
             onToggleFormatting={() => {
               // Blur current element to prevent focus/scroll issues
               (document.activeElement as HTMLElement)?.blur();
