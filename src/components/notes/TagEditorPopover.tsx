@@ -24,7 +24,6 @@ export function TagEditorPopover({ note, onSave, noteColor }: TagEditorPopoverPr
     <TagEditor 
       tags={currentTags} 
       onTagsChange={handleTagsChange}
-      placeholder="Add tags (e.g., #work #project)"
       noteColor={noteColor}
     />
   );

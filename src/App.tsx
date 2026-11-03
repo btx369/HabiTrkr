@@ -1,14 +1,15 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ToastProvider } from "@/contexts/ToastContext";
 import { WeekStartProvider } from "@/contexts/WeekStartContext";
 import HabitTracker from "./pages/HabitTracker";
+import { scheduleStoredEventNotifications } from "./lib/notificationService";
 
 // The habit tracker is the start route, so it stays in the main bundle.
 // Everything else is split out: Notes pulls in the rich-text editor and the
@@ -18,7 +19,9 @@ const Notes = lazy(() => import("./pages/Notes"));
 const Events = lazy(() => import("./pages/Events"));
 const Calendar = lazy(() => import("./pages/Calendar"));
 const Profile = lazy(() => import("./pages/Profile"));
-const Tasks = lazy(() => import("./pages/Tasks"));
+const Reports = lazy(() => import("./pages/Reports"));
+const Security = lazy(() => import("./pages/Security"));
+const InfoPage = lazy(() => import("./pages/InfoPage"));
 const TagsManager = lazy(() => import("./pages/TagsManager"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -35,6 +38,14 @@ const RouteFallback = () => (
   </div>
 );
 
+/** Arms event reminders once the app opens, whichever page that is. */
+const ReminderScheduler = () => {
+  useEffect(() => {
+    void scheduleStoredEventNotifications();
+  }, []);
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     {/* Do not pass storageKey here: the default comes from THEME_KEY, and overriding
@@ -45,6 +56,7 @@ const App = () => (
         <WeekStartProvider>
           <ToastProvider>
             <TooltipProvider>
+              <ReminderScheduler />
               <Toaster />
               <Sonner />
               {/* BASE_URL is "/" normally and "/HabiTrkr/" on GitHub Pages (see vite.config.ts). */}
@@ -57,7 +69,13 @@ const App = () => (
                     <Route path="/calendar" element={<Calendar />} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/tags" element={<TagsManager />} />
-                    <Route path="/tasks" element={<Tasks />} />
+                    <Route path="/reports" element={<Reports />} />
+                    {/* The page was Tasks until it became Reports; keep old links working. */}
+                    <Route path="/tasks" element={<Navigate to="/reports" replace />} />
+                    <Route path="/security" element={<Security />} />
+                    <Route path="/about" element={<InfoPage page="about" />} />
+                    <Route path="/terms" element={<InfoPage page="terms" />} />
+                    <Route path="/privacy" element={<InfoPage page="privacy" />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>

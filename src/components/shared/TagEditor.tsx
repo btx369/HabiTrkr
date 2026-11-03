@@ -30,7 +30,7 @@ export function TagEditor({
   tags, 
   onTagsChange,
   onValidationChange,
-  placeholder = "Add tags (e.g., #work #project)",
+  placeholder,
   suggestionsLimit = 5,
   icon: Icon,
   iconColor,
@@ -251,7 +251,7 @@ export function TagEditor({
               className="absolute inset-0 pointer-events-none flex items-center overflow-hidden px-3 py-2 text-sm h-10"
               aria-hidden="true"
             >
-              <span className={hasNoteColor ? "text-[#000000]/40" : "text-muted-foreground"}>#work #project</span>
+              <span className={hasNoteColor ? "text-[#000000]/40" : "text-muted-foreground"}>{t('tagExample')}</span>
             </div>
           )}
           {/* Suggestion overlay */}

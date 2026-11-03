@@ -181,6 +181,11 @@ export const scheduleEventNotification = async (event: Event): Promise<void> => 
           tag: event.id,
           requireInteraction: true
         });
+        // Arm the next occurrence of a recurring event, from its latest saved version.
+        if (event.isRecurrent) {
+          const latest = readStoredEvent(event.id);
+          if (latest) void scheduleEventNotification(latest);
+        }
       }, delay);
       
       // Store timeout ID in sessionStorage for tracking
@@ -242,3 +247,29 @@ export const cancelAllEventNotifications = async (): Promise<void> => {
     sessionStorage.removeItem('notificationTimeouts');
   }
 };
+
+const readStoredEvent = (eventId: string): Event | undefined => {
+  try {
+    return (JSON.parse(localStorage.getItem('events') ?? '[]') as Event[]).find((e) => e.id === eventId);
+  } catch {
+    return undefined;
+  }
+};
+
+/**
+ * Arms reminders for every saved event, from anywhere in the app.
+ *
+ * Reminders used to be scheduled only when the Events page opened, so on the web (where a
+ * reminder is a timer in the open tab) nothing fired unless that page had been visited.
+ * Only runs when permission was already granted: asking is left to the Events page, where
+ * the user can tell why.
+ */
+export async function scheduleStoredEventNotifications(): Promise<void> {
+  if (!(await checkNotificationPermission())) return;
+  try {
+    const events = JSON.parse(localStorage.getItem('events') ?? '[]') as Event[];
+    await scheduleAllEventNotifications(events.filter((e) => e.alertType && e.alertType !== 'none'));
+  } catch (error) {
+    console.error('Could not schedule reminders:', error);
+  }
+}

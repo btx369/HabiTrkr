@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ChevronRight, 
@@ -13,23 +13,20 @@ import {
   Download, 
   Upload,
   HelpCircle,
-  LogOut,
   Trash2,
   Camera,
   Check,
   FileText,
   Lock,
-  KeyRound,
-  Fingerprint,
   MessageSquare
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { PROFILE_AVATAR_KEY, PROFILE_NAME_KEY } from '@/lib/storageKeys';
 import { applyBackup, BackupError, createBackup, readBackup } from '@/lib/backup';
-import { changeVaultPassword, createVault, disableBiometric, enableBiometric, hasBiometric, hasVault, isBiometricAvailable, lockVault, unlockVault, VAULT_ATTEMPTS_ID } from '@/lib/noteVault';
-import { clearPinFailures, getPinLockoutRemaining, recordPinFailure } from '@/lib/notePin';
-import { NotePasswordDialog, NotePasswordMode, NotePasswordValues } from '@/components/notes/NotePasswordDialog';
+import { clearAllAppData } from '@/lib/backup';
+import { FeedbackDialog } from '@/components/shared/FeedbackDialog';
+import { SettingsDivider, SettingsRow, SettingsSection, settingsPanelClass } from '@/components/shared/SettingsRow';
 import {
   Dialog,
   DialogContent,
@@ -57,65 +54,13 @@ export default function Profile() {
   const [showImportConfirm, setShowImportConfirm] = useState(false);
   const [languageDialogOpen, setLanguageDialogOpen] = useState(false);
   const [weekStartDialogOpen, setWeekStartDialogOpen] = useState(false);
-  const [passwordDialogMode, setPasswordDialogMode] = useState<NotePasswordMode | null>(null);
-  const [vaultExists, setVaultExists] = useState(() => hasVault());
-  const [biometricOn, setBiometricOn] = useState(() => hasBiometric());
-  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
 
-  useEffect(() => {
-    isBiometricAvailable().then(setBiometricAvailable);
-  }, []);
-
-  const handleBiometricToggle = (checked: boolean) => {
-    if (checked) {
-      setPasswordDialogMode('unlock');
-    } else {
-      disableBiometric();
-      setBiometricOn(false);
-      toast.success(t('fingerprintDisabled'));
-    }
-  };
-
-  // Creating or changing the note password. Changing re-wraps the key that encrypts the
-  // notes, so it needs the current password; the notes themselves are not rewritten.
-  const handleNotePassword = async ({ password, currentPassword }: NotePasswordValues): Promise<string | null> => {
-    if (passwordDialogMode === 'unlock') {
-      // Turning the fingerprint on: the password proves it is you, then the passkey is made.
-      const waitMs = getPinLockoutRemaining(VAULT_ATTEMPTS_ID);
-      if (waitMs > 0) return t('pinTooManyAttempts').replace('{seconds}', String(Math.ceil(waitMs / 1000)));
-      if (!(await unlockVault(password))) {
-        recordPinFailure(VAULT_ATTEMPTS_ID);
-        return t('notePasswordIncorrect');
-      }
-      clearPinFailures(VAULT_ATTEMPTS_ID);
-      try {
-        const result = await enableBiometric();
-        if (result === 'enabled') {
-          setBiometricOn(true);
-          toast.success(t('fingerprintEnabled'));
-        } else {
-          toast.error(t(result === 'unsupported' ? 'fingerprintUnsupported' : 'fingerprintFailed'));
-        }
-      } finally {
-        lockVault();
-      }
-      return null;
-    }
-    if (passwordDialogMode === 'change') {
-      const waitMs = getPinLockoutRemaining(VAULT_ATTEMPTS_ID);
-      if (waitMs > 0) return t('pinTooManyAttempts').replace('{seconds}', String(Math.ceil(waitMs / 1000)));
-      if (!(await changeVaultPassword(currentPassword ?? '', password))) {
-        recordPinFailure(VAULT_ATTEMPTS_ID);
-        return t('notePasswordIncorrect');
-      }
-      clearPinFailures(VAULT_ATTEMPTS_ID);
-    } else {
-      await createVault(password);
-      lockVault(); // nothing is open on this page; keep the key out of memory
-      setVaultExists(true);
-    }
-    toast.success(t('notePasswordSaved'));
-    return null;
+  // Apagar todos os dados: everything this app stored on this device, then a fresh start.
+  const handleDeleteAllData = () => {
+    clearAllAppData();
+    window.location.replace(import.meta.env.BASE_URL);
   };
 
   /*
@@ -229,10 +174,6 @@ export default function Profile() {
     setIsEditingName(false);
   };
 
-  const handleComingSoon = () => {
-    toast.info(t('comingSoon'));
-  };
-
   const getWeekStartLabel = () => {
     if (weekStartDay === 'monday') return t('monday');
     if (weekStartDay === 'saturday') return t('saturday');
@@ -240,7 +181,7 @@ export default function Profile() {
   };
 
   const bgColor = 'hsl(var(--background))';
-  const profilePanelClass = 'bg-card border border-border shadow-[var(--surface-shadow)] rounded-[20px]';
+  const profilePanelClass = settingsPanelClass;
 
   return (
     <div 
@@ -316,33 +257,10 @@ export default function Profile() {
             <SettingsRow
               icon={<Shield size={20} />}
               label={t('security')}
-              onClick={handleComingSoon}
+              onClick={() => navigate('/security')}
+              showChevron
             />
             <div className="h-px bg-border mx-4" />
-            <SettingsRow
-              icon={<KeyRound size={20} />}
-              label={t('notePasswordProfileLabel')}
-              value={vaultExists ? t('notePasswordSet') : t('notePasswordNotSet')}
-              onClick={() => setPasswordDialogMode(vaultExists ? 'change' : 'create')}
-            />
-            <div className="h-px bg-border mx-4" />
-            {vaultExists && biometricAvailable && (
-              <>
-                <SettingsRow
-                  icon={<Fingerprint size={20} />}
-                  label={t('fingerprintUnlock')}
-                  onClick={() => handleBiometricToggle(!biometricOn)}
-                  rightElement={
-                    <Switch
-                      checked={biometricOn}
-                      onCheckedChange={handleBiometricToggle}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  }
-                />
-                <div className="h-px bg-border mx-4" />
-              </>
-            )}
             <SettingsRow
               icon={<Tag size={20} />}
               label={t('tags')}
@@ -487,61 +405,38 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Support Section */}
-        <div>
-          <h3 className="text-sm font-medium text-muted-foreground mb-2 px-2">{t('support')}</h3>
-          <div className={`${profilePanelClass} overflow-hidden`}>
-            <SettingsRow
-              icon={<MessageSquare size={20} />}
-              label={t('feedback')}
-              onClick={handleComingSoon}
-            />
-            <div className="h-px bg-border mx-4" />
-            <SettingsRow
-              icon={<HelpCircle size={20} />}
-              label={t('helpAbout')}
-              onClick={handleComingSoon}
-            />
-            <div className="h-px bg-border mx-4" />
-            <SettingsRow
-              icon={<FileText size={20} />}
-              label={t('termsOfService')}
-              onClick={handleComingSoon}
-            />
-            <div className="h-px bg-border mx-4" />
-            <SettingsRow
-              icon={<Lock size={20} />}
-              label={t('privacyPolicy')}
-              onClick={handleComingSoon}
-            />
-          </div>
-        </div>
+        <SettingsSection title={t('support')}>
+          <SettingsRow icon={<MessageSquare size={20} />} label={t('feedback')} onClick={() => setFeedbackOpen(true)} />
+          <SettingsDivider />
+          <SettingsRow icon={<HelpCircle size={20} />} label={t('helpAbout')} onClick={() => navigate('/about')} showChevron />
+          <SettingsDivider />
+          <SettingsRow icon={<FileText size={20} />} label={t('termsOfService')} onClick={() => navigate('/terms')} showChevron />
+          <SettingsDivider />
+          <SettingsRow icon={<Lock size={20} />} label={t('privacyPolicy')} onClick={() => navigate('/privacy')} showChevron />
+        </SettingsSection>
 
-        {/* Danger Zone Section */}
-        <div>
-          <h3 className="text-sm font-medium text-muted-foreground mb-2 px-2">{t('dangerZone')}</h3>
-          <div className={`${profilePanelClass} overflow-hidden`}>
-            <SettingsRow
-              icon={<LogOut size={20} />}
-              label={t('logOut')}
-              onClick={handleComingSoon}
-            />
-            <div className="h-px bg-border mx-4" />
-            <SettingsRow
-              icon={<Trash2 size={20} className="text-destructive" />}
-              label={t('deleteAccount')}
-              labelClassName="text-destructive"
-              onClick={handleComingSoon}
-            />
-          </div>
-        </div>
+        {/* "Terminar sessão" returns with Google sign-in; there is no account to leave yet. */}
+        <SettingsSection title={t('dangerZone')}>
+          <SettingsRow
+            icon={<Trash2 size={20} className="text-destructive" />}
+            label={t('deleteAllData')}
+            labelClassName="text-destructive"
+            onClick={() => setDeleteAllOpen(true)}
+          />
+        </SettingsSection>
       </div>
 
-      <NotePasswordDialog
-        isOpen={passwordDialogMode !== null}
-        mode={passwordDialogMode ?? 'create'}
-        onClose={() => setPasswordDialogMode(null)}
-        onSubmit={handleNotePassword}
+      <FeedbackDialog isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
+
+      <ConfirmationDialog
+        open={deleteAllOpen}
+        onOpenChange={setDeleteAllOpen}
+        title={t('deleteAllDataTitle')}
+        description={t('deleteAllDataDescription')}
+        onConfirm={handleDeleteAllData}
+        action="delete"
+        confirmLabel={t('deleteAllData')}
+        cancelLabel={t('cancel')}
       />
 
       <ConfirmationDialog
@@ -560,71 +455,3 @@ export default function Profile() {
 }
 
 // Reusable Settings Row Component
-interface SettingsRowProps {
-  icon: React.ReactNode;
-  label: string;
-  value?: string;
-  onClick?: () => void;
-  rightElement?: React.ReactNode;
-  showChevron?: boolean;
-  labelClassName?: string;
-}
-
-function SettingsRow({ icon, label, value, onClick, rightElement, showChevron, labelClassName }: SettingsRowProps) {
-  // Hover uses the muted surface, which in light reads as a soft beige (rgb(239,237,236)).
-  //
-  // This previously read `[@media_(hover:_hover)]:hover:bg-foreground/5`. Tailwind did not
-  // compile that arbitrary variant, so no rule was ever emitted and these rows had NO
-  // hover at all. A plain `hover:` class is generated and works.
-  /*
-   * `text-sm` is explicit here on purpose. Without it the label inherited the body's 16px,
-   * which made it LARGER than the value beside it (text-sm) and larger than the section
-   * headings (also text-sm) — an inverted hierarchy. Measured against grok.com, whose
-   * labels sit at 14px, this was the one screen in the app rendering a full step too big.
-   */
-  const rowClass = 'flex items-center justify-between p-4 transition-colors';
-  const rowHover = 'cursor-pointer hover:bg-hover active:bg-muted';
-  const labelSide = (
-    <div className="flex items-center gap-3">
-      <span className="text-foreground">{icon}</span>
-      <span className={`text-sm font-medium ${labelClassName || 'text-foreground'}`}>{label}</span>
-    </div>
-  );
-  const valueSide = (
-    <div className="flex items-center gap-2">
-      {value && <span className="text-muted-foreground text-sm">{value}</span>}
-      {/*
-        * The control keeps its clicks to itself. A tap on the switch is meant to change the
-        * setting once, and without this the row's own click handler would run on the same
-        * tap and set the same value a second time.
-        */}
-      {rightElement && <span onClick={(event) => event.stopPropagation()}>{rightElement}</span>}
-      {showChevron && <ChevronRight size={18} className="text-muted-foreground" />}
-    </div>
-  );
-
-  /*
-   * A row that ends in a control is a container, not a button.
-   *
-   * It used to be a `<button>` in every case, which put the Theme and Notifications switches
-   * — themselves buttons — inside a button. A button inside a button is invalid HTML, React
-   * reported it on every visit to this screen, and the two handlers ran off the same click,
-   * setting the value twice. The row is still clickable, so tapping the label works as
-   * before, and the switch remains the keyboard-reachable control for those two settings.
-   */
-  if (rightElement) {
-    return (
-      <div className={`${rowClass} ${onClick ? rowHover : ''}`} onClick={onClick}>
-        {labelSide}
-        {valueSide}
-      </div>
-    );
-  }
-
-  if (onClick) {
-    // text-sm on the button itself, not just inside it: the wrapper was still computing to
-    // the 16px body size, which is what a text measurement of the row reports.
-    return <button onClick={onClick} className={`w-full text-left text-sm focus:outline-none ${rowClass} ${rowHover}`}>{labelSide}{valueSide}</button>;
-  }
-  return <div className={rowClass}>{labelSide}{valueSide}</div>;
-}

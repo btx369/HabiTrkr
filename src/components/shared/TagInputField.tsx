@@ -19,7 +19,7 @@ interface TagInputFieldProps {
 export function TagInputField({ 
   tags, 
   onTagsChange, 
-  placeholder = "Add tags (e.g., #work #personal)",
+  placeholder,
   showSuggestions = true
 }: TagInputFieldProps) {
   const { t } = useLanguage();
@@ -80,7 +80,7 @@ export function TagInputField({
         value={tagInput}
         onChange={(e) => setTagInput(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder={placeholder}
+        placeholder={placeholder ?? t('placeholderAddTagsWork')}
         className="h-10 text-sm"
       />
       <Button 

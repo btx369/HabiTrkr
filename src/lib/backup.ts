@@ -15,6 +15,7 @@
  */
 
 import {
+  isAppKey,
   LANGUAGE_KEY,
   PROFILE_AVATAR_KEY,
   PROFILE_NAME_KEY,
@@ -61,7 +62,8 @@ export function createBackup(): BackupFileV2 {
   const data: Record<string, string> = {};
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key === null || NOT_BACKED_UP.has(key) || !VALID_KEY.test(key)) continue;
+    // Only HabiTrkr's keys: the published origin can hold other sites' data too.
+    if (key === null || NOT_BACKED_UP.has(key) || !isAppKey(key)) continue;
     const value = localStorage.getItem(key);
     if (value !== null) data[key] = value;
   }
@@ -110,7 +112,7 @@ export function readBackup(file: unknown): Record<string, string> {
   }
 
   for (const key of Object.keys(entries)) {
-    if (!VALID_KEY.test(key) || NOT_BACKED_UP.has(key)) delete entries[key];
+    if (!VALID_KEY.test(key) || NOT_BACKED_UP.has(key) || !isAppKey(key)) delete entries[key];
   }
 
   for (const key of COLLECTION_KEYS) {
@@ -145,4 +147,19 @@ export function applyBackup(entries: Record<string, string>): void {
     }
     throw new BackupError('storage');
   }
+}
+
+/**
+ * "Delete all data": removes every HabiTrkr key on this device (and nothing else on the
+ * origin), plus the session's reminder timers. Passkeys made for fingerprint unlock live
+ * in the device's password manager and are removed there.
+ */
+export function clearAllAppData(): void {
+  const keys: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key !== null && isAppKey(key)) keys.push(key);
+  }
+  keys.forEach((key) => localStorage.removeItem(key));
+  sessionStorage.removeItem('notificationTimeouts');
 }

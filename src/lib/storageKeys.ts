@@ -73,3 +73,28 @@ export const VIEW_TYPE_KEYS: readonly string[] = [
  */
 export const RETIRED_VALUES: ReadonlyArray<{ key: string; values: Record<string, string> }> =
   VIEW_TYPE_KEYS.map((key) => ({ key, values: { medium: 'x3', large: 'x2' } }));
+
+/**
+ * Every unprefixed key the app stores, so the app can tell its own data apart.
+ *
+ * This matters because the published site shares its origin (btx369.github.io) with any
+ * other GitHub Pages site of the same account, and localStorage is per origin. Backups and
+ * "Delete all data" must touch only HabiTrkr's keys, never everything on the origin.
+ * New keys should use the `habitrkr.` prefix; an unprefixed key must be added here
+ * (useLocalStorage warns in development when one is missing).
+ */
+export const APP_KEYS: ReadonlySet<string> = new Set([
+  'notes', 'archivedNotes', 'folders', 'archivedFolders', 'notesCustomOrder', 'archivedNotesCustomOrder',
+  'notesAllSortType', 'notesAllSortDirection', 'notesArchivedSortType', 'notesArchivedSortDirection',
+  'foldersSortType', 'foldersSortDirection',
+  'habits', 'archivedHabits', 'habitFolders', 'archivedHabitFolders', 'habitsCustomOrder', 'archivedHabitsCustomOrder',
+  'habitsSortType', 'habitsSortDirection', 'archivedHabitsSortType', 'archivedHabitsSortDirection',
+  'habitFoldersSortType', 'habitFoldersSortDirection',
+  'events', 'archivedEvents', 'eventFolders', 'archivedEventFolders',
+  'eventsAllSortType', 'eventsAllSortDirection', 'eventsArchivedSortType', 'eventsArchivedSortDirection',
+  'eventFoldersSortType', 'eventFoldersSortDirection',
+  ...VIEW_TYPE_KEYS,
+  'allTags', 'toasts-enabled', 'premiumAccount',
+]);
+
+export const isAppKey = (key: string) => key.startsWith(`${PREFIX}.`) || APP_KEYS.has(key);

@@ -1,6 +1,9 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
+import { readFileSync } from "fs";
+
+const { version } = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8"));
 
 // https://vitejs.dev/config/
 // GitHub Pages serves the site from /HabiTrkr/, so that build (and only that one)
@@ -14,6 +17,8 @@ const PAGES_CSP =
   "media-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'";
 
 export default defineConfig({
+  // Shown in Help/About and attached to feedback (src/lib/appInfo.ts).
+  define: { __APP_VERSION__: JSON.stringify(version) },
   base: githubPages ? "/HabiTrkr/" : "/",
   server: {
     port: 8080,

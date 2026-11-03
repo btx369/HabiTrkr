@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { getLocalStorageItem, setLocalStorageItem } from '@/lib/localStorageUtils';
 import { registerUndo } from '@/lib/undoManager';
+import { isAppKey } from '@/lib/storageKeys';
 
 interface UseLocalStorageOptions<T> {
   /**
@@ -16,6 +17,9 @@ export function useLocalStorage<T>(
   initialValue: T,
   { toStorage }: UseLocalStorageOptions<T> = {},
 ): [T, (value: T | ((prev: T) => T)) => void] {
+  if (import.meta.env.DEV && !isAppKey(key)) {
+    console.warn(`useLocalStorage: "${key}" is not registered in storageKeys.ts; backups and "Delete all data" will skip it.`);
+  }
   const [storedValue, setStoredValue] = useState<T>(() => {
     return getLocalStorageItem(key, initialValue);
   });

@@ -18,7 +18,7 @@ export function AutoImportSection({
   onEnabledChange,
   tags,
   onTagsChange,
-  placeholder = "Add tags (e.g., #work #personal)"
+  placeholder
 }: AutoImportSectionProps) {
   const [premiumAccount] = usePremiumAccount();
   const { t } = useLanguage();

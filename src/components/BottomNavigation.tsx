@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Notebook, CalendarPlus, Target, CalendarDays, ListTodo } from 'lucide-react';
+import { Notebook, CalendarPlus, Target, CalendarDays, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -8,7 +8,7 @@ const navItems = [
   { path: '/events', icon: CalendarPlus, label: 'events' },
   { path: '/', icon: Target, label: 'habits' },
   { path: '/calendar', icon: CalendarDays, label: 'calendar' },
-  { path: '/tasks', icon: ListTodo, label: 'tasks' },
+  { path: '/reports', icon: BarChart3, label: 'reports' },
 ];
 
 interface BottomNavigationProps {
