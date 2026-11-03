@@ -91,6 +91,7 @@ export function ItemActionMenu({
               : 'transition-colors hover:bg-hover data-[state=open]:bg-hover'
           }`}
           onClick={(e) => e.stopPropagation()}
+          aria-label={t('moreOptions')}
         >
           <MoreVertical size={iconSize} className={iconColorClass} />
         </Button>

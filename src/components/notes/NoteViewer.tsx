@@ -1878,6 +1878,7 @@ export function NoteViewer({
           <DialogDescription className="sr-only">{t('noteViewerSubtitle')}</DialogDescription>
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <Button
+              aria-label={t('back')}
                   variant={iconButtonStyles.variant}
                   size="sm"
                   onClick={handleBackClick}
@@ -1888,6 +1889,7 @@ export function NoteViewer({
             {/* Save button for list notes when editing */}
             {isEditingContent && note.type === 'list' && (
               <Button
+                aria-label={t('save')}
                 variant="ghost"
                 size="sm"
                 onClick={() => {
@@ -1900,6 +1902,7 @@ export function NoteViewer({
             )}
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <Button
+                aria-label={t('search')}
                 variant={iconButtonStyles.variant}
                 size="sm"
                 onClick={handleSearchToggle}
@@ -2014,7 +2017,8 @@ export function NoteViewer({
             <Button
               variant={iconButtonStyles.variant}
               size="sm"
-              onClick={handleCloseClick}
+              aria-label={t('close')}
+                  onClick={handleCloseClick}
               className={`h-8 w-8 p-0 rounded-full transition-colors duration-200 ${themedHoverStyles}`}
             >
               <X size={14} />

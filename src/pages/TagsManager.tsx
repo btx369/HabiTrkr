@@ -145,6 +145,7 @@ export default function TagsManager() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
+                      aria-label={t('edit')}
                       variant="ghost"
                       size="icon"
                       onClick={() => handleEditClick(tagData.tag)}
@@ -153,6 +154,7 @@ export default function TagsManager() {
                       <Pencil size={16} />
                     </Button>
                     <Button
+                      aria-label={t('delete')}
                       variant="ghost"
                       size="icon"
                       onClick={() => handleDeleteClick(tagData)}

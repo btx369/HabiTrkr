@@ -1231,6 +1231,7 @@ export default function Events() {
           <Button 
             variant="ghostStatic" 
             size="icon" 
+            aria-label={t('add')}
             onClick={handleAddButtonClick} 
             /* Same hairline as the floating nav capsule; see the note in Notes.tsx. */
             className={cn(
@@ -1275,7 +1276,8 @@ export default function Events() {
               <TabsTrigger value="archived">{t('tabArchived')}</TabsTrigger>
             </SlidingTabsList>
             <div className="flex items-center gap-1">
-              <Button 
+              <Button
+                aria-label={t('selectItems')} 
                 variant="ghostStatic" 
                 size="icon"
                 className="rounded-full hover:bg-hover hover:text-foreground focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:!size-5 data-[state=open]:bg-hover data-[state=open]:text-foreground"

@@ -2301,6 +2301,7 @@ const hasTitle = (note.name || '').trim() !== '';
           <Button 
             variant="ghostStatic"
             size="icon" 
+            aria-label={t('add')}
             onClick={handleAddButtonClick} 
             /*
              * `border border-nav-border` gives this the same hairline as the floating nav
@@ -2333,7 +2334,8 @@ const hasTitle = (note.name || '').trim() !== '';
             <TabsTrigger value="archived">{t('tabArchived')}</TabsTrigger>
           </SlidingTabsList>
           <div className="flex items-center gap-1">
-            <Button 
+            <Button
+                aria-label={t('selectItems')} 
               variant="ghostStatic" 
               size="icon"
               className="rounded-full hover:bg-hover hover:text-foreground focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:!size-5 data-[state=open]:bg-hover data-[state=open]:text-foreground"

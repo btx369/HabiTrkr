@@ -60,6 +60,7 @@ export function NoteFolderViewSettings({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
+          aria-label={t('viewSettings')}
           variant="ghostStatic"
           size="icon"
           className="text-foreground hover:bg-hover hover:text-foreground rounded-full data-[state=open]:bg-hover data-[state=open]:text-foreground focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:!size-5"

@@ -312,7 +312,7 @@ export default function Calendar() {
           <Card>
             <CardContent className="px-2 py-2">
               <div className="flex items-center justify-between">
-                <Button variant="ghost" size="icon" className="text-foreground hover:bg-hover hover:text-foreground rounded-full [&_svg]:!size-5" onClick={goToPrevious} onMouseDown={(e) => e.currentTarget.blur()}>
+                <Button aria-label={t('previous')} variant="ghost" size="icon" className="text-foreground hover:bg-hover hover:text-foreground rounded-full [&_svg]:!size-5" onClick={goToPrevious} onMouseDown={(e) => e.currentTarget.blur()}>
                   <ChevronLeft size={24} />
                 </Button>
                 
@@ -320,7 +320,7 @@ export default function Calendar() {
                   <h2 className="text-lg font-semibold">{currentPeriod}</h2>
                 </div>
                 
-                <Button variant="ghost" size="icon" className="text-foreground hover:bg-hover hover:text-foreground rounded-full [&_svg]:!size-5" onClick={goToNext} onMouseDown={(e) => e.currentTarget.blur()}>
+                <Button aria-label={t('next')} variant="ghost" size="icon" className="text-foreground hover:bg-hover hover:text-foreground rounded-full [&_svg]:!size-5" onClick={goToNext} onMouseDown={(e) => e.currentTarget.blur()}>
                   <ChevronRight size={24} />
                 </Button>
               </div>

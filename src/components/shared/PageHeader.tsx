@@ -1,5 +1,6 @@
 import { ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface PageHeaderProps {
   title: string;
@@ -25,12 +26,14 @@ interface PageHeaderProps {
  *     the viewport regardless of what sits either side — the same approach <Header> uses.
  */
 export function PageHeader({ title, onBack, trailing }: PageHeaderProps) {
+  const { t } = useLanguage();
   return (
     <div className="flex items-center justify-between py-2 px-2 gap-3">
       <Button
         variant="ghost"
         size="icon"
         onClick={onBack}
+        aria-label={t('back')}
         className="text-foreground hover:bg-hover hover:text-foreground rounded-full shrink-0"
       >
         <ChevronLeft size={20} />

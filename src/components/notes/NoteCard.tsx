@@ -22,6 +22,7 @@ import { isDefaultColor } from '@/lib/cardColorStyles';
 import { getColoredIconClass } from '@/lib/coloredButtonStyles';
 import { useIsFiled } from '@/contexts/FolderMembershipContext';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface NoteCardProps {
   note: Note;
@@ -93,6 +94,7 @@ export function NoteCard({
   isBulkSelected = false,
   onBulkSelect,
 }: NoteCardProps) {
+  const { t } = useLanguage();
   // Track when bulk mode was enabled for animation control
   const bulkModeEntryRef = useRef<number | null>(null);
 
@@ -485,7 +487,7 @@ export function NoteCard({
                 <BulkCheckbox />
               ) : (isArchived || isDeleted) ? (
                 <div className="flex gap-1">
-                  <Button 
+                  <Button aria-label={t('restore')} 
                     size="icon" 
                     variant="outline" 
                   className="rounded-full h-8 w-8" 
@@ -497,7 +499,7 @@ export function NoteCard({
                 >
                   <RotateCcw size={14} />
                 </Button>
-                <Button 
+                <Button aria-label={t('delete')} 
                   size="icon" 
                   variant="destructive" 
                   className="rounded-full h-8 w-8" 
@@ -581,7 +583,7 @@ export function NoteCard({
                   <BulkCheckbox />
                 ) : (isArchived || isDeleted) ? (
                   <div className="flex gap-1">
-                    <Button 
+                    <Button aria-label={t('restore')} 
                       size="icon" 
                       variant="outline" 
                       className="rounded-full h-8 w-8" 
@@ -593,7 +595,7 @@ export function NoteCard({
                   >
                     <RotateCcw size={14} />
                   </Button>
-                  <Button 
+                  <Button aria-label={t('delete')} 
                     size="icon" 
                     variant="destructive" 
                     className="rounded-full h-8 w-8" 
@@ -650,7 +652,7 @@ export function NoteCard({
                 <BulkCheckbox />
               ) : (isArchived || isDeleted) ? (
                 <div className="flex gap-1">
-                  <Button 
+                  <Button aria-label={t('restore')} 
                     size="icon" 
                     variant="outline" 
                     className="rounded-full h-8 w-8" 
@@ -662,7 +664,7 @@ export function NoteCard({
                   >
                     <RotateCcw size={14} />
                   </Button>
-                  <Button 
+                  <Button aria-label={t('delete')} 
                     size="icon" 
                     variant="destructive" 
                     className="rounded-full h-8 w-8" 

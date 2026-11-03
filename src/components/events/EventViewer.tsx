@@ -209,6 +209,7 @@ export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventV
               </ResponsiveDialogTitle>
               <div className="flex gap-2">
                 <Button
+                  aria-label={t('delete')}
                   variant={iconButtonStyles.variant}
                   size="icon"
                   onClick={() => onDelete(event)}
@@ -219,6 +220,7 @@ export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventV
                 <Button
                   variant={iconButtonStyles.variant}
                   size="icon"
+                  aria-label={t('close')}
                   onClick={onClose}
                   className={`${iconColorClass} ${editCloseButtonStyles}`}
                 >

@@ -374,6 +374,7 @@ export function ArchivedHabitCard({
   onDrop,
   onDragEnd,
 }: ArchivedHabitCardProps) {
+  const { t } = useLanguage();
   // This card has no icon row of its own, so the folder glyph is placed where the other
   // cards put their icons: immediately before the actions.
   const hasColor = !isDefaultColor(habit.color);
@@ -425,10 +426,10 @@ export function ArchivedHabitCard({
               <BulkCheckbox />
             ) : (
               <>
-                <Button size="icon" variant="outline" className="rounded-full h-8 w-8" onClick={() => onRestore(habit.id)}>
+                <Button aria-label={t('restore')} size="icon" variant="outline" className="rounded-full h-8 w-8" onClick={() => onRestore(habit.id)}>
                   <RotateCcw size={14} />
                 </Button>
-                <Button size="icon" variant="destructive" className="rounded-full h-8 w-8" onClick={() => onDelete(habit.id)}>
+                <Button aria-label={t('delete')} size="icon" variant="destructive" className="rounded-full h-8 w-8" onClick={() => onDelete(habit.id)}>
                   <Trash2 size={14} />
                 </Button>
               </>

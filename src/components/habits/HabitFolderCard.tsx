@@ -158,6 +158,7 @@ export function HabitFolderCard({
               ) : (isFolderArchived || isDeleted) ? (
                 <div className="flex gap-1">
                   <Button 
+                    aria-label={t('restore')}
                     size="icon" 
                     variant="outline" 
                     className="rounded-full h-8 w-8" 
@@ -166,6 +167,7 @@ export function HabitFolderCard({
                     <RotateCcw size={14} />
                   </Button>
                   <Button 
+                    aria-label={t('delete')}
                     size="icon" 
                     variant="destructive" 
                     className="rounded-full h-8 w-8" 

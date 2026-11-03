@@ -110,6 +110,7 @@ export const Header = ({ showSearch = false, searchQuery = '', onSearchChange, p
           variant="ghost"
           size="icon"
           onClick={() => setIsSearchExpanded(true)}
+          aria-label={t('search')}
           /*
            * No `!size-7` and no `size={28}`. The arbitrary variant `[&_svg]:!size-7` was
            * forcing the glyph to 28px and overriding the `size={28}` attribute on the icon,
@@ -142,6 +143,7 @@ export const Header = ({ showSearch = false, searchQuery = '', onSearchChange, p
                 variant="ghost"
                 size="sm"
                 onClick={handleCloseSearch}
+                aria-label={t('closeSearch')}
                 className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0 z-20 text-foreground hover:bg-hover hover:text-foreground rounded-full"
               >
                 <X className="h-3 w-3" />
@@ -166,6 +168,7 @@ export const Header = ({ showSearch = false, searchQuery = '', onSearchChange, p
           variant="ghost"
           size="icon"
           onClick={() => navigate('/profile')}
+          aria-label={t('profile')}
           /* Same 20px as the search button: the two are a pair and must match. */
           className="text-foreground hover:bg-hover hover:text-foreground rounded-full shrink-0"
         >
