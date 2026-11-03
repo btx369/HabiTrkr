@@ -36,6 +36,8 @@ export function ColorPicker({
         <button
           type="button"
           onClick={() => onColorChange('#FFFFFF')}
+          aria-label={t('noColor')}
+          aria-pressed={selectedColor === '#FFFFFF' || selectedColor === ''}
           className={`${singleRow ? 'w-6 h-6' : 'w-8 h-8'} rounded-full border-2 flex items-center justify-center bg-white transition-all ${
             selectedColor === '#FFFFFF' || selectedColor === ''
               ? 'border-foreground scale-110' 
@@ -44,10 +46,12 @@ export function ColorPicker({
         >
           <span className="text-gray-400 text-xs">✕</span>
         </button>
-        {NOTE_COLORS.filter(color => color !== '#FFFFFF').map((color) => (
+        {NOTE_COLORS.filter(color => color !== '#FFFFFF').map((color, index) => (
           <button
             key={color}
             type="button"
+            aria-label={`${resolvedLabel} ${index + 1}`}
+            aria-pressed={selectedColor === color}
             className={`${singleRow ? 'w-6 h-6' : 'w-8 h-8'} rounded-full border-2 transition-all ${
               selectedColor === color 
                 ? 'border-foreground scale-110' 

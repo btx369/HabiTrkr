@@ -94,7 +94,7 @@ export function NoteFolderEditor({ isOpen, onClose, onSave, initialFolder }: Not
         onEnabledChange={(checked) => setFormData(prev => ({ ...prev, autoImportEnabled: checked }))}
         tags={formData.autoImportTags}
         onTagsChange={(tags) => setFormData(prev => ({ ...prev, autoImportTags: tags }))}
-        placeholder="Add tags (e.g., #invoice #receipt)"
+        placeholder={t('addTagsPlaceholder')}
       />
     </EditorDialog>
   );

@@ -543,7 +543,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
           tags={formData.tags} 
           onTagsChange={(tags) => setFormData(prev => ({ ...prev, tags }))}
           onValidationChange={setHasTagError}
-          placeholder="Add tags (e.g., #work #meeting)"
+          placeholder={t('placeholderAddTagsMeeting')}
           suggestionsLimit={100}
           icon={Hash}
           iconColor={ICON_COLOR}

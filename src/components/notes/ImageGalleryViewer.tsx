@@ -108,7 +108,7 @@ export function ImageGalleryViewer({
               variant="ghost"
               size="sm"
               onClick={onClose}
-              aria-label="Back to note"
+              aria-label={t('back')}
               className="h-8 w-8 p-0 text-white hover:bg-white/20"
             >
               <ChevronLeft size={20} />
@@ -126,7 +126,7 @@ export function ImageGalleryViewer({
                   variant="ghost"
                   size="sm"
                   className="h-8 w-8 p-0 text-white hover:bg-white/20"
-                  aria-label="Image options"
+                  aria-label={t('moreOptions')}
                 >
                   <MoreVertical size={20} />
                 </Button>

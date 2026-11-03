@@ -175,84 +175,104 @@ export function HabitCard({
           {isDragEnabled && !showBulkCheckbox && (
             <GripVertical data-habit-drag-handle className="h-4 w-4 shrink-0 cursor-grab touch-none text-muted-foreground active:cursor-grabbing" aria-label="Reorder habit" />
           )}
-          <button
-            type="button"
-            className={cn('min-w-0 flex-1 truncate text-left text-sm font-medium', textColorClass)}
-            onClick={(event) => handleCardAction(event, () => onEdit(habit))}
-            title={habit.name}
-          >
-            {highlightText(habit.name, searchQuery)}
-          </button>
+          {/*
+            * Name above, progress badges below. Side by side, the badges are nowrap and the
+            * seven day buttons do not shrink, so on a phone the name collapsed to nothing and
+            * the badges spilled over the day buttons, covering them (and their taps).
+            */}
+          <div className="flex min-w-0 flex-1 flex-col gap-1 overflow-hidden">
+            <button
+              type="button"
+              className={cn('min-w-0 truncate text-left text-sm font-medium', textColorClass)}
+              onClick={(event) => handleCardAction(event, () => onEdit(habit))}
+              title={habit.name}
+            >
+              {highlightText(habit.name, searchQuery)}
+            </button>
 
-          <div className={cn('flex min-w-0 shrink items-center', viewType === 'x3' ? 'gap-0.5' : 'gap-1.5')}>
-            {habit.useUnlimitedTimes && (
-              <>
-                <Badge
-                  variant="outline"
-                  title={t('timesToday').replace('{count}', String(todayCount))}
-                  className={cn('whitespace-nowrap', viewType === 'x3' ? 'h-5 px-1 text-[9px]' : 'h-6 px-2 text-[10px]', badgeBorderClass, hasColor && 'text-[#000000]')}
-                >
-                  {todayCount}x{viewType !== 'x3' && ` ${t('today')}`}
-                </Badge>
-                {todayCount > 0 && (
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    aria-label={t('undo')}
-                    className={cn('shrink-0 rounded-full', viewType === 'x3' ? 'h-5 w-5' : 'h-6 w-6', coloredButtonClass)}
-                    style={coloredButtonStyle}
-                    onClick={(event) => handleCardAction(event, () => onUndoCompletion(habit.id))}
-                  >
-                    <RotateCcw size={viewType === 'x3' ? 10 : 12} />
-                  </Button>
+            {(habit.useUnlimitedTimes || habit.useNumberOfDays || habit.useTimesPerDay) && (
+              <div className={cn('flex min-w-0 flex-wrap items-center', viewType === 'x3' ? 'gap-0.5' : 'gap-1.5')}>
+                {habit.useUnlimitedTimes && (
+                  <>
+                    <Badge
+                      variant="outline"
+                      title={t('timesToday').replace('{count}', String(todayCount))}
+                      className={cn('block max-w-full truncate whitespace-nowrap', viewType === 'x3' ? 'h-5 px-1 text-[9px]' : 'h-6 px-2 text-[10px]', badgeBorderClass, hasColor && 'text-[#000000]')}
+                    >
+                      {todayCount}x{viewType !== 'x3' && ` ${t('today')}`}
+                    </Badge>
+                    {todayCount > 0 && (
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        aria-label={t('undo')}
+                        className={cn('shrink-0 rounded-full', viewType === 'x3' ? 'h-5 w-5' : 'h-6 w-6', coloredButtonClass)}
+                        style={coloredButtonStyle}
+                        onClick={(event) => handleCardAction(event, () => onUndoCompletion(habit.id))}
+                      >
+                        <RotateCcw size={viewType === 'x3' ? 10 : 12} />
+                      </Button>
+                    )}
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      aria-label="+1"
+                      className={cn('shrink-0 rounded-full text-[9px]', viewType === 'x3' ? 'h-5 w-5' : 'h-6 w-6', coloredButtonClass)}
+                      style={coloredButtonStyle}
+                      onClick={(event) => handleCardAction(event, () => onMarkUnlimitedDone(habit.id))}
+                    >
+                      +1
+                    </Button>
+                  </>
                 )}
-                <Button
-                  size="icon"
-                  variant="outline"
-                  aria-label="+1"
-                  className={cn('shrink-0 rounded-full text-[9px]', viewType === 'x3' ? 'h-5 w-5' : 'h-6 w-6', coloredButtonClass)}
-                  style={coloredButtonStyle}
-                  onClick={(event) => handleCardAction(event, () => onMarkUnlimitedDone(habit.id))}
-                >
-                  +1
-                </Button>
-              </>
-            )}
 
-            {habit.useNumberOfDays && (
-              <Badge
-                variant="outline"
-                title={t('daysThisWeek').replace('{done}', String(weeklyCompletions)).replace('{total}', String(habit.numberOfDaysPerWeek || 1))}
-                className={cn('h-6 whitespace-nowrap px-2 text-[10px]', viewType === 'x3' && 'h-5 px-1 text-[9px]', badgeBorderClass, hasColor && 'text-[#000000]')}
-              >
-                {viewType === 'x3'
-                  ? `${weeklyCompletions}/${habit.numberOfDaysPerWeek || 1}`
-                  : t('daysThisWeek').replace('{done}', String(weeklyCompletions)).replace('{total}', String(habit.numberOfDaysPerWeek || 1))}
-              </Badge>
-            )}
-
-            {habit.useTimesPerDay && !habit.useUnlimitedTimes && (
-              <>
-                <Badge
-                  variant="outline"
-                  title={t('timesTodayOf').replace('{done}', String(todayCount)).replace('{total}', String(timesPerDay))}
-                  className={cn('whitespace-nowrap', viewType === 'x3' ? 'h-5 px-1 text-[9px]' : 'h-6 px-2 text-[10px]', badgeBorderClass, hasColor && 'text-[#000000]')}
-                >
-                  {viewType === 'x3' ? `${todayCount}/${timesPerDay}` : t('timesTodayOf').replace('{done}', String(todayCount)).replace('{total}', String(timesPerDay))}
-                </Badge>
-                {todayCount > 0 && (
-                  <Button
-                    size="icon"
+                {habit.useNumberOfDays && (
+                  <Badge
                     variant="outline"
-                    aria-label={t('undo')}
-                    className={cn('shrink-0 rounded-full', viewType === 'x3' ? 'h-5 w-5' : 'h-6 w-6', coloredButtonClass)}
-                    style={coloredButtonStyle}
-                    onClick={(event) => handleCardAction(event, () => onUndoCompletion(habit.id))}
+                    title={t('daysThisWeek').replace('{done}', String(weeklyCompletions)).replace('{total}', String(habit.numberOfDaysPerWeek || 1))}
+                    className={cn('block h-6 max-w-full truncate whitespace-nowrap px-2 text-[10px] leading-6', viewType === 'x3' && 'h-5 px-1 text-[9px]', badgeBorderClass, hasColor && 'text-[#000000]')}
                   >
-                    <RotateCcw size={viewType === 'x3' ? 10 : 12} />
-                  </Button>
+                    {viewType === 'x3'
+                      ? `${weeklyCompletions}/${habit.numberOfDaysPerWeek || 1}`
+                      : (
+                      <>
+                        {/* Short wording on phones, where the badge column is ~110px wide */}
+                        <span className="sm:hidden">{t('daysThisWeekShort').replace('{done}', String(weeklyCompletions)).replace('{total}', String(habit.numberOfDaysPerWeek || 1))}</span>
+                        <span className="hidden sm:inline">{t('daysThisWeek').replace('{done}', String(weeklyCompletions)).replace('{total}', String(habit.numberOfDaysPerWeek || 1))}</span>
+                      </>
+                    )}
+                  </Badge>
                 )}
-              </>
+
+                {habit.useTimesPerDay && !habit.useUnlimitedTimes && (
+                  <>
+                    <Badge
+                      variant="outline"
+                      title={t('timesTodayOf').replace('{done}', String(todayCount)).replace('{total}', String(timesPerDay))}
+                      className={cn('block max-w-full truncate whitespace-nowrap', viewType === 'x3' ? 'h-5 px-1 text-[9px]' : 'h-6 px-2 text-[10px]', badgeBorderClass, hasColor && 'text-[#000000]')}
+                    >
+                      {viewType === 'x3' ? `${todayCount}/${timesPerDay}` : (
+                        <>
+                          <span className="sm:hidden">{t('timesTodayShort').replace('{done}', String(todayCount)).replace('{total}', String(timesPerDay))}</span>
+                          <span className="hidden sm:inline">{t('timesTodayOf').replace('{done}', String(todayCount)).replace('{total}', String(timesPerDay))}</span>
+                        </>
+                      )}
+                    </Badge>
+                    {todayCount > 0 && (
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        aria-label={t('undo')}
+                        className={cn('shrink-0 rounded-full', viewType === 'x3' ? 'h-5 w-5' : 'h-6 w-6', coloredButtonClass)}
+                        style={coloredButtonStyle}
+                        onClick={(event) => handleCardAction(event, () => onUndoCompletion(habit.id))}
+                      >
+                        <RotateCcw size={viewType === 'x3' ? 10 : 12} />
+                      </Button>
+                    )}
+                  </>
+                )}
+              </div>
             )}
           </div>
 

@@ -41,6 +41,7 @@ import {
   isSameMonth,
   isSameWeek
 } from 'date-fns';
+import { entitySentence } from '@/lib/entityToast';
 
 type ViewMode = 'daily' | 'weekly' | 'monthly';
 
@@ -94,10 +95,10 @@ export default function Calendar() {
   const [deletingEvent, setDeletingEvent] = useState<Event | null>(null);
   
   const { toast } = useToastSettings();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   // Toast copy is a translated sentence plus a translated entity noun. Both halves are
   // resolved here so the `{entity}` substitution is written once instead of at every toast.
-  const say = (key: string, entity: string) => t(key).replace('{entity}', t(entity));
+  const say = (key: string, entity: string) => entitySentence(t, language, key, entity);
   const dateLocale = useDateLocale();
   const { weekStartsOn, weekStartDay } = useWeekStart();
   // Seven short labels in the user's week-start order; `t()` runs here because the keys

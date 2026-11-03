@@ -99,7 +99,7 @@ export function NoteEditor({ note, isOpen, onClose, onSave }: NoteEditorProps) {
         label={t('title')}
         value={formData.name}
         onChange={(value) => updateField('name', value)}
-        placeholder="Enter note title..."
+        placeholder={t('enterNoteTitle')}
         maxLength={50}
         icon={NotebookPen}
         iconColor={ICON_COLOR}
@@ -109,7 +109,7 @@ export function NoteEditor({ note, isOpen, onClose, onSave }: NoteEditorProps) {
         tags={formData.tags} 
         onTagsChange={(tags) => updateField('tags', tags)}
         onValidationChange={setHasTagError}
-        placeholder="Add tags (e.g., #work #project)"
+        placeholder={t('addTagsPlaceholder')}
         icon={Hash}
         iconColor={ICON_COLOR}
       />

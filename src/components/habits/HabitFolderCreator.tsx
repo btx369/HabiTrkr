@@ -55,7 +55,7 @@ export function HabitFolderCreator({ isOpen, onClose, onSave }: HabitFolderCreat
         label={t('title')}
         value={name}
         onChange={setName}
-        placeholder="Enter folder title..."
+        placeholder={t('placeholderFolderTitle')}
         maxLength={35}
         required
         icon={NotebookPen}
@@ -67,7 +67,7 @@ export function HabitFolderCreator({ isOpen, onClose, onSave }: HabitFolderCreat
         label={t('description')}
         value={description}
         onChange={setDescription}
-        placeholder="Enter folder description..."
+        placeholder={t('placeholderFolderDescription')}
         maxLength={35}
         icon={FileText}
         iconColor={ICON_COLOR}

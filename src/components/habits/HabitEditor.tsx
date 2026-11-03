@@ -122,6 +122,9 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
       setFormData(prev => ({
         ...prev,
         useNumberOfDays: checked,
+        // "Times per day" lives inside this section; hiding the section must not leave
+        // it switched on, or the habit is saved with a counter nobody can see or edit.
+        useTimesPerDay: checked ? prev.useTimesPerDay : false,
         useUnlimitedTimes: checked ? false : prev.useUnlimitedTimes
       }));
     }
@@ -191,7 +194,7 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
     <EditorDialog
       isOpen={isOpen}
       onClose={handleClose}
-      title={mode === 'create' ? t('createHabit') : 'Edit Habit'}
+      title={mode === 'create' ? t('createHabit') : t('editHabit')}
       onSave={handleSave}
       saveLabel={t('save')}
       saveDisabled={!formData.name.trim()}

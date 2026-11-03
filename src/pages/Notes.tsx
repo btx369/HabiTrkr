@@ -43,6 +43,7 @@ import { useBulkSelection } from '@/hooks/useBulkSelection';
 import { BulkActionBar, BulkActionType, BulkActionContext } from '@/components/shared/BulkActionBar';
 import { useScrollDirection } from '@/hooks/useScrollDirection';
 import { cn } from '@/lib/utils';
+import { entitySentence } from '@/lib/entityToast';
 
 // Tab order for swipe navigation. Module-level so its identity is stable across
 // renders; declared inside the component it was rebuilt every render, which made it
@@ -2281,7 +2282,7 @@ const hasTitle = (note.name || '').trim() !== '';
   const { t, language } = useLanguage();
   // Toast copy is a translated sentence plus a translated entity noun. Both halves are
   // resolved here so the `{entity}` substitution is written once instead of at every toast.
-  const say = (key: string, entity: string) => t(key).replace('{entity}', t(entity));
+  const say = (key: string, entity: string) => entitySentence(t, language, key, entity);
   // Folder toasts name the items a folder contains rather than the folder itself.
 
   return (

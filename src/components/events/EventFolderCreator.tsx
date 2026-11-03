@@ -57,7 +57,7 @@ export function EventFolderCreator({ isOpen, onClose, onSave, eventIdsToMove }: 
         label={t('title')}
         value={formData.name}
         onChange={(value) => setFormData(prev => ({ ...prev, name: value }))}
-        placeholder="Enter folder title..."
+        placeholder={t('placeholderFolderTitle')}
         maxLength={35}
         required
         icon={NotebookPen}
@@ -69,7 +69,7 @@ export function EventFolderCreator({ isOpen, onClose, onSave, eventIdsToMove }: 
         label={t('description')}
         value={formData.description}
         onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
-        placeholder="Enter folder description..."
+        placeholder={t('placeholderFolderDescription')}
         maxLength={35}
         icon={FileText}
         iconColor={ICON_COLOR}

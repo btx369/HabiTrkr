@@ -86,7 +86,7 @@ export function EventFolderEditor({ isOpen, onClose, onSave, folder }: EventFold
         onEnabledChange={(checked) => setFormData(prev => ({ ...prev, autoImportEnabled: checked }))}
         tags={formData.autoImportTags}
         onTagsChange={(tags) => setFormData(prev => ({ ...prev, autoImportTags: tags }))}
-        placeholder="Add tags (e.g., #meeting #work)"
+        placeholder={t('placeholderAddTagsMeeting')}
       />
     </EditorDialog>
   );

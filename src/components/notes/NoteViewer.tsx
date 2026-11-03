@@ -505,7 +505,7 @@ export function NoteViewer({
         const isAddingNewItem = isAddingNewItemRef.current;
         if (clickedListItemId) {
           // Focus the specific input for the clicked item
-          const inputs = document.querySelectorAll('input[placeholder="List item..."]') as NodeListOf<HTMLInputElement>;
+          const inputs = document.querySelectorAll('input[data-list-item-input]') as NodeListOf<HTMLInputElement>;
           const items = isEditingContent ? editedItemsRef.current : displayItemsRef.current;
           const clickedIndex = items.findIndex(item => item.id === clickedListItemId);
           if (clickedIndex >= 0 && inputs[clickedIndex]) {
@@ -520,7 +520,7 @@ export function NoteViewer({
           setDesiredListCursorIndex(null); // Reset after focusing
         } else if (!isAddingNewItem) {
           // Only focus first input if we're not adding a new item
-          const firstInput = document.querySelector('input[placeholder="List item..."]') as HTMLInputElement;
+          const firstInput = document.querySelector('input[data-list-item-input]') as HTMLInputElement;
           if (firstInput) {
             firstInput.focus();
           }
@@ -871,7 +871,7 @@ export function NoteViewer({
     // Focus the new input after it's rendered - target only UNCHECKED item inputs
     setTimeout(() => {
       const inputs = Array.from(
-        document.querySelectorAll('input[placeholder="List item..."]:not(.line-through)')
+        document.querySelectorAll('input[data-list-item-input]:not(.line-through)')
       ) as HTMLInputElement[];
       const lastInput = inputs[inputs.length - 1];
       if (lastInput) {
@@ -1575,7 +1575,8 @@ export function NoteViewer({
                         value={item.text}
                         onChange={(e) => updateListItem(item.id, e.target.value)}
                         onKeyDown={(e) => handleListItemKeyDown(e, item.id)}
-                        placeholder="List item..."
+                        placeholder={t('listItemPlaceholder')}
+                        data-list-item-input
                         className="text-sm flex-1 border-none shadow-none focus-visible:ring-0 p-1 bg-transparent rounded-none h-7"
                       />
                       <Button
@@ -1605,7 +1606,7 @@ export function NoteViewer({
                   className="h-8 w-full justify-start text-muted-foreground hover:bg-hover flex-shrink-0"
                 >
                   <Plus size={16} className="mr-2" />
-                  List item
+                  {t('addListItem')}
                 </Button>
                 
                  {/* Completed items - show only if there are any */}
@@ -1642,7 +1643,8 @@ export function NoteViewer({
                                 value={item.text}
                                 onChange={(e) => updateListItem(item.id, e.target.value)}
                                 onKeyDown={(e) => handleListItemKeyDown(e, item.id)}
-                                placeholder="List item..."
+                                placeholder={t('listItemPlaceholder')}
+                        data-list-item-input
                                 className="text-sm flex-1 border-none shadow-none focus-visible:ring-0 p-1 bg-transparent rounded-none line-through text-muted-foreground"
                               />
                               <Button
