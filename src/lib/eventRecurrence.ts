@@ -64,6 +64,12 @@ function startsOn(event: Event, start: Date, day: Date): boolean {
   }
 }
 
+/** True when an occurrence of the event STARTS on `date` (a multi-day event counts once). */
+export function occurrenceStartsOn(event: Event, date: Date): boolean {
+  const start = getEventStart(event);
+  return start ? startsOn(event, start, startOfDay(date)) : false;
+}
+
 /** True when the event is happening on `date`, including the later days of a multi-day event. */
 export function occursOn(event: Event, date: Date): boolean {
   const start = getEventStart(event);
