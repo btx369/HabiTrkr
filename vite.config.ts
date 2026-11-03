@@ -36,6 +36,8 @@ export default defineConfig({
         // Anything that hosts a Chrome profile must never be watched: the browser
         // keeps locked cache files there and the watcher dies with EBUSY on Windows.
         "**/.screenshots/**",
+        // End-to-end tests write downloads and screenshots here while the server runs.
+        "**/e2e/**",
         "**/GPUPersistentCache/**",
       ],
     },

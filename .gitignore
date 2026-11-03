@@ -56,3 +56,6 @@ preview/
 # Scratch files written while working in the repo. Commit messages are passed to
 # `git commit -F`, and using `git add -A` afterwards swept them into the commit twice.
 commitmsg*.txt
+
+# End-to-end failure screenshots and temp files
+e2e/output/
