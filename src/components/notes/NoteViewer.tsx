@@ -1873,6 +1873,33 @@ export function NoteViewer({
     }
   };
 
+  // Used by both the Gallery and the Camera input.
+  const handleImagePicked = (e: React.ChangeEvent<HTMLInputElement>) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            readImageForStorage(file).then((imageUrl) => {
+              // Add image to note description
+              const imageMarker = `[image:${imageUrl}]`;
+              if (note.type === 'text' || note.type === 'audio' || note.type === 'image') {
+                const currentDesc = isEditingContent ? editedDescription : (note.description || '');
+                const newDesc = currentDesc ? `${currentDesc}\n${imageMarker}` : imageMarker;
+                setEditedDescription(newDesc);
+                if (!isEditingContent) {
+                  setIsEditingContent(true);
+                }
+                
+                // Focus the textarea after adding image
+                setTimeout(() => {
+                  if (textareaRef.current) {
+                    textareaRef.current.focus();
+                  }
+                }, 100);
+              }
+            });
+          }
+          e.target.value = '';
+        }
+
   // Use standardized color helpers for consistent styling
   const hasColor = !isDefaultColor(note.color);
   const iconButtonStyles = getColoredIconButtonStyles(hasColor);
@@ -2117,7 +2144,8 @@ export function NoteViewer({
             onTakePhoto={() => {
               // Blur any focused button to prevent space key from triggering it
               (document.activeElement as HTMLElement)?.blur();
-              setShowImageCapturePopup(true);
+              // Straight to the camera: the chooser it used to open duplicated "Add image".
+              cameraInputRef.current?.click();
             }}
             onAddImage={() => {
               // Blur any focused button to prevent space key from triggering it
@@ -2163,6 +2191,10 @@ export function NoteViewer({
               // Remove list-specific properties
               delete (updatedNote as any).items;
               
+              // Leave list editing and show the text at once. Without this the viewer kept its
+              // (empty) edit buffers and showed a blank note until the next press.
+              setIsEditingContent(false);
+              setEditedDescription(finalDescription);
               if (onSave) {
                 saveIfEditable(updatedNote);
                 toast.success(say('toastUpdated', 'noteViewerTitle'));
@@ -2182,7 +2214,8 @@ export function NoteViewer({
             
             // Split into lines and filter empties
             const lines = textContent.split('\n')
-              .map(line => line.trim())
+              // The text is stored as markdown: a list item should be the plain words.
+              .map(line => line.replace(/^#{1,6}\s+/, '').replace(/\*\*|__|\*/g, '').trim())
               .filter(line => line.length > 0);
             
             if (lines.length === 0) {
@@ -2220,6 +2253,12 @@ export function NoteViewer({
             delete updatedNote.duration;
             delete updatedNote.imageUrl;
             
+            // Show the new list at once. The viewer reads its edit buffers while it is in
+            // edit mode, and those were empty, so the converted note looked blank.
+            setEditedItems(listItems);
+            setDisplayItems(listItems);
+            setIsEditingContent(false);
+            setEditedDescription(mediaDescription.trim());
             if (onSave) {
               saveIfEditable(updatedNote);
               toast.success(t('toastItemCount').replace('{count}', String(lines.length)));
@@ -2346,25 +2385,8 @@ export function NoteViewer({
         ref={cameraInputRef}
         type="file"
         accept="image/*"
-        capture={true}
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) {
-            readImageForStorage(file).then((imageUrl) => {
-              // Add image to note description
-              const imageMarker = `[image:${imageUrl}]`;
-              if (note.type === 'text' || note.type === 'audio' || note.type === 'image') {
-                const currentDesc = isEditingContent ? editedDescription : (note.description || '');
-                const newDesc = currentDesc ? `${currentDesc}\n${imageMarker}` : imageMarker;
-                setEditedDescription(newDesc);
-                if (!isEditingContent) {
-                  setIsEditingContent(true);
-                }
-              }
-            });
-          }
-          e.target.value = '';
-        }}
+        capture="environment"
+        onChange={handleImagePicked}
         className="hidden"
       />
 
@@ -2372,33 +2394,10 @@ export function NoteViewer({
         ref={galleryInputRef}
         type="file"
         accept="image/*"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) {
-            readImageForStorage(file).then((imageUrl) => {
-              // Add image to note description
-              const imageMarker = `[image:${imageUrl}]`;
-              if (note.type === 'text' || note.type === 'audio' || note.type === 'image') {
-                const currentDesc = isEditingContent ? editedDescription : (note.description || '');
-                const newDesc = currentDesc ? `${currentDesc}\n${imageMarker}` : imageMarker;
-                setEditedDescription(newDesc);
-                if (!isEditingContent) {
-                  setIsEditingContent(true);
-                }
-                
-                // Focus the textarea after adding image
-                setTimeout(() => {
-                  if (textareaRef.current) {
-                    textareaRef.current.focus();
-                  }
-                }, 100);
-              }
-            });
-          }
-          e.target.value = '';
-        }}
+        onChange={handleImagePicked}
         className="hidden"
       />
+
 
       <ImageGalleryViewer
         images={
