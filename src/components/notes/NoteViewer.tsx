@@ -48,6 +48,7 @@ import { readImageForStorage } from '@/lib/imageCompression';
 import { extractSearchableText } from '@/lib/noteSearchText';
 import { ImageGalleryViewer } from './ImageGalleryViewer';
 import { isDefaultColor } from '@/lib/cardColorStyles';
+import { useKeyboardViewport } from '@/hooks/useKeyboardViewport';
 import { getColoredIconButtonStyles, getColoredIconClass, getColoredBorderClass } from '@/lib/coloredButtonStyles';
 import { AudioRecorderPopup } from './AudioRecorderPopup';
 import { ImageCapturePopup } from './ImageCapturePopup';
@@ -187,6 +188,12 @@ export function NoteViewer({
   const [editingAudioUrl, setEditingAudioUrl] = useState<string | null>(null);
   const [editingAudioText, setEditingAudioText] = useState('');
   const [showFormattingBar, setShowFormattingBar] = useState(false);
+  // The formatting button enters edit mode WITHOUT focusing the editor, so it never raises
+  // the keyboard. Read (and cleared) by the focus-on-edit effect below.
+  const skipEditFocusRef = useRef(false);
+  // While the keyboard is open the note is resized to the visible area, which lifts the
+  // action bar (and the formatting button in it) above the keyboard.
+  const keyboardViewport = useKeyboardViewport(isOpen);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const audioRefs = useRef<Record<string, HTMLAudioElement>>({});
@@ -551,7 +558,9 @@ export function NoteViewer({
       }, 100);
       } else {
         // For non-list notes, focus the rich text editor if available; otherwise fallback to textarea
-        if (richTextEditorRef.current) {
+        if (skipEditFocusRef.current) {
+          skipEditFocusRef.current = false; // entered edit mode from the formatting button
+        } else if (richTextEditorRef.current) {
           requestAnimationFrame(() => {
             richTextEditorRef.current?.focus();
           });
@@ -1900,6 +1909,9 @@ export function NoteViewer({
         // looked wrong but the body was the thing out of step.
         style={{
           backgroundColor: hasColor ? hexToRgba(note.color, 0.75) : 'hsl(var(--background))',
+          ...(keyboardViewport
+            ? { height: keyboardViewport.height, maxHeight: keyboardViewport.height, top: keyboardViewport.top, bottom: 'auto' }
+            : {}),
           ...(hasColor
             ? ({ '--card-hover-color': getLighterColor(note.color) } as React.CSSProperties)
             : {}),
@@ -2211,8 +2223,13 @@ export function NoteViewer({
             }
           }}
             onToggleFormatting={() => {
-              // Blur current element to prevent focus/scroll issues
-              (document.activeElement as HTMLElement)?.blur();
+              // Blur the button to prevent focus/scroll issues. When already editing the
+              // editor keeps focus (the button does not take it on press), so the keyboard
+              // stays as it was; when not editing, edit mode starts without focusing.
+              if (!isEditingContent) {
+                (document.activeElement as HTMLElement)?.blur();
+                skipEditFocusRef.current = true;
+              }
               
               // Capture scroll position before toggle
               const viewport = getScrollViewport();

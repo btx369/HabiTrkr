@@ -186,6 +186,10 @@ export const NoteActionBar = ({
           size="sm" 
           className={`${sizeStyles} ${showFormattingBar ? activeButtonStyles : restStyles}`}
           aria-pressed={showFormattingBar}
+          // Pressing must not take focus from the editor: that would close the keyboard
+          // when typing, and nothing here should ever open it.
+          onMouseDown={(e) => e.preventDefault()}
+          onPointerDown={(e) => { if (e.pointerType === 'touch') e.preventDefault(); }}
           aria-label={t('textFormatting')}
           onClick={onToggleFormatting}
         >
