@@ -246,11 +246,12 @@ export function NoteCard({
             {embeddedAudios.length > 0 && (
               <>
                 {isListView ? (
-                  <MultiAudioPlayer audios={embeddedAudios} size={audioSize} />
+                  <MultiAudioPlayer hasColor={hasColor} audios={embeddedAudios} size={audioSize} />
                 ) : (
                   <div className="flex flex-col gap-1">
                     {embeddedAudios.map((audio, idx) => (
                       <AudioPlayer
+                        hasColor={hasColor}
                         key={idx}
                         audioUrl={audio.url}
                         initialDuration={audio.duration}
@@ -310,6 +311,7 @@ export function NoteCard({
         return (
           <div className={`${isX3View ? '' : 'mt-2'} space-y-2`}>
             <AudioPlayer
+              hasColor={hasColor}
               audioUrl={note.audioUrl!}
               initialDuration={note.duration}
               compact={!isListView}
@@ -342,11 +344,12 @@ export function NoteCard({
             {imageEmbeddedAudios.length > 0 && (
               <>
                 {isListView ? (
-                  <MultiAudioPlayer audios={imageEmbeddedAudios} size={audioSize} />
+                  <MultiAudioPlayer hasColor={hasColor} audios={imageEmbeddedAudios} size={audioSize} />
                 ) : (
                   <div className="flex flex-col gap-1">
                     {imageEmbeddedAudios.map((audio, idx) => (
                       <AudioPlayer
+                        hasColor={hasColor}
                         key={idx}
                         audioUrl={audio.url}
                         initialDuration={audio.duration}

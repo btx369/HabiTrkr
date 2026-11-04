@@ -2,8 +2,19 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Play, Pause } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
+import { getColoredOutlineButtonStyles } from '@/lib/coloredButtonStyles';
+
+/**
+ * Classes for an audio player sitting on a note with a custom colour. Those surfaces are
+ * always light pastel tints with black text, so the controls go black-on-translucent-black
+ * (like the other buttons of a coloured note) instead of the theme's primary colour.
+ */
+const COLORED_PLAY_BUTTON = 'bg-black/10 text-[#000000] hover:bg-black/20';
+const COLORED_SLIDER = '[&_[role=slider]]:border-black [&>span:first-child]:bg-black/20 [&>span:first-child>span]:bg-black';
 
 interface AudioPlayerProps {
+  /** The note holding this audio has a custom colour: tint the controls to match it. */
+  hasColor?: boolean;
   audioUrl: string;
   initialDuration?: number;
   /**
@@ -28,6 +39,7 @@ interface AudioPlayerProps {
  * Encapsulates all audio state management and cleanup.
  */
 export function AudioPlayer({
+  hasColor = false,
   audioUrl,
   initialDuration = 0,
   compact = false,
@@ -130,6 +142,7 @@ export function AudioPlayer({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const speedStyles = getColoredOutlineButtonStyles(hasColor);
   const buttonSize = size === 'sm' || compact ? 'h-6 w-6' : 'h-8 w-8';
   const iconSize = size === 'sm' || compact ? 10 : 12;
   const speedButtonClass = compact
@@ -147,7 +160,7 @@ export function AudioPlayer({
       <Button
         size="sm"
         onClick={togglePlayback}
-        className={`${buttonSize} rounded-full p-0 flex-shrink-0`}
+        className={`${buttonSize} rounded-full p-0 flex-shrink-0 ${hasColor ? COLORED_PLAY_BUTTON : ''}`}
       >
         {isPlaying ? <Pause size={iconSize} /> : <Play size={iconSize} />}
       </Button>
@@ -176,7 +189,7 @@ export function AudioPlayer({
             onValueChange={handleSeek}
             max={Math.max(duration, 1)}
             step={0.1}
-            className="w-full"
+            className={`w-full ${hasColor ? COLORED_SLIDER : ''}`}
           />
         </div>
       )}
@@ -200,9 +213,9 @@ export function AudioPlayer({
       {showSpeedControl && (
         <Button
           size="sm"
-          variant="outline"
+          variant={speedStyles.variant}
           onClick={cyclePlaybackSpeed}
-          className={`${speedButtonClass} flex-shrink-0`}
+          className={`${speedButtonClass} flex-shrink-0 ${speedStyles.className}`}
         >
           {playbackSpeed}×
         </Button>
@@ -212,6 +225,8 @@ export function AudioPlayer({
 }
 
 interface MultiAudioPlayerProps {
+  /** The note holding these audios has a custom colour: tint the controls to match it. */
+  hasColor?: boolean;
   audios: { url: string; duration: number }[];
   /** Size variant */
   size?: 'sm' | 'md';
@@ -221,7 +236,7 @@ interface MultiAudioPlayerProps {
  * Manages multiple audio players, ensuring only one plays at a time.
  * Includes a shared playback speed control.
  */
-export function MultiAudioPlayer({ audios, size = 'md' }: MultiAudioPlayerProps) {
+export function MultiAudioPlayer({ audios, size = 'md', hasColor = false }: MultiAudioPlayerProps) {
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [playingUrl, setPlayingUrl] = useState<string | null>(null);
   const audioRefs = useRef<Map<string, HTMLAudioElement>>(new Map());
@@ -315,6 +330,7 @@ export function MultiAudioPlayer({ audios, size = 'md' }: MultiAudioPlayerProps)
 
   const buttonSize = size === 'sm' ? 'h-6 w-6' : 'h-8 w-8';
   const iconSize = size === 'sm' ? 10 : 12;
+  const speedStyles = getColoredOutlineButtonStyles(hasColor);
   const speedButtonClass = size === 'sm' ? 'h-6 px-1.5 text-[10px]' : 'h-8 px-2 text-xs';
 
   return (
@@ -329,7 +345,7 @@ export function MultiAudioPlayer({ audios, size = 'md' }: MultiAudioPlayerProps)
             <Button
               size="sm"
               onClick={(e) => toggleAudio(audio.url, audio.duration, e)}
-              className={`${buttonSize} rounded-full p-0 flex-shrink-0`}
+              className={`${buttonSize} rounded-full p-0 flex-shrink-0 ${hasColor ? COLORED_PLAY_BUTTON : ''}`}
             >
               {isPlaying ? <Pause size={iconSize} /> : <Play size={iconSize} />}
             </Button>
@@ -348,7 +364,7 @@ export function MultiAudioPlayer({ audios, size = 'md' }: MultiAudioPlayerProps)
                 onValueChange={(value) => handleSeek(audio.url, value)}
                 max={Math.max(duration, 1)}
                 step={0.1}
-                className="w-full"
+                className={`w-full ${hasColor ? COLORED_SLIDER : ''}`}
               />
             </div>
 
@@ -363,9 +379,9 @@ export function MultiAudioPlayer({ audios, size = 'md' }: MultiAudioPlayerProps)
                 the track it applies to. */}
             <Button
               size="sm"
-              variant="outline"
+              variant={speedStyles.variant}
               onClick={cyclePlaybackSpeed}
-              className={`${speedButtonClass} flex-shrink-0`}
+              className={`${speedButtonClass} flex-shrink-0 ${speedStyles.className}`}
             >
               {playbackSpeed}×
             </Button>

@@ -1277,6 +1277,7 @@ export function NoteViewer({
                 onMouseDown={(e) => e.stopPropagation()}
               >
                 <AudioPlayer
+                  hasColor={!isDefaultColor(note.color)}
                   audioUrl={a.content}
                   initialDuration={a.duration ?? 0}
                   showSeeker
@@ -1548,6 +1549,7 @@ export function NoteViewer({
                     {/* Shared player for consistency with the cards and the text-note
                         audio list; the native element had no speed control. */}
                     <AudioPlayer
+                      hasColor={!isDefaultColor(note.color)}
                       audioUrl={audioItem.content}
                       initialDuration={audioItem.duration ?? 0}
                       showSeeker
@@ -1722,6 +1724,7 @@ export function NoteViewer({
             <div className="mb-4">
               {/* Shared player, matching the audio-note card. */}
               <AudioPlayer
+                hasColor={!isDefaultColor(note.color)}
                 audioUrl={note.audioUrl!}
                 initialDuration={note.duration ?? 0}
                 showSeeker
