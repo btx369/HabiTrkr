@@ -235,7 +235,7 @@ export function BulkActionBar({
       )}
     >
       <div className="flex w-max max-w-[calc(100vw-16px)] items-center justify-center gap-2 rounded-full border border-nav-border bg-nav p-2">
-        {selectedCount > 0 ? (
+        {selectedCount > 0 && (
           <Button
             variant="ghostStatic"
             onClick={onClearSelection}
@@ -245,10 +245,6 @@ export function BulkActionBar({
             <X size={15} />
             <span className="text-xs font-medium">{selectedCount}</span>
           </Button>
-        ) : (
-          <div className="flex h-11 min-w-[68px] items-center justify-center px-2 text-[10px] font-medium text-nav-foreground">
-            {t('selectItems')}
-          </div>
         )}
         {actions.map((action) => {
           const Icon = action.icon;
@@ -283,7 +279,7 @@ export function BulkActionBar({
               key={action.type}
               variant="ghost"
               className={cn(
-                "flex h-11 min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0 px-0.5 transition-all duration-300 ease-out md:min-w-[48px] md:basis-auto md:px-2",
+                "flex h-11 min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0 px-2.5 transition-all duration-300 ease-out md:min-w-[48px] md:basis-auto md:px-2",
                 isSelectionAction && isActionSelected(action.type) && "bg-nav-active hover:bg-nav-active",
                 action.type === 'delete'
                   ? "text-destructive hover:text-destructive hover:bg-white/10"
