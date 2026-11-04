@@ -166,14 +166,6 @@ export function NoteCard({
   const extractTextContent = (content: string): string =>
     extractSearchableText({ description: content }, { lowercase: false });
 
-  // Helper function to extract embedded audio from content
-  const extractEmbeddedAudio = (content: string): { url: string; duration: number }[] => {
-    const parts = parseNoteContent(content);
-    return parts
-      .filter(part => part.type === 'audio')
-      .map(part => ({ url: part.content, duration: part.duration || 0 }));
-  };
-
   const renderNoteContent = () => {
     // For locked notes, show a padlock icon instead of content
     if (note.locked) {
@@ -232,44 +224,77 @@ export function NoteCard({
     
     switch (note.type) {
       case 'text':
+      case 'audio':
+      case 'image': {
+        /*
+         * One layout for every non-list note, whatever type it was created as: a thumbnail of
+         * the image first, then the audio players, then the text. A note that gained an image
+         * after it was created used to show nothing of it on the card, while a note created as
+         * an image note did. The type only decides where the first media file is stored.
+         */
+        const description = note.description || '';
+        const embedded = parseNoteContent(description);
+        const images: string[] = [
+          ...(note.type === 'image' && note.imageUrl ? [note.imageUrl] : []),
+          ...embedded.filter(part => part.type === 'image').map(part => part.content),
+        ];
+        const audios: { url: string; duration: number }[] = [
+          ...(note.type === 'audio' && note.audioUrl ? [{ url: note.audioUrl, duration: note.duration || 0 }] : []),
+          ...embedded.filter(part => part.type === 'audio').map(part => ({ url: part.content, duration: part.duration || 0 })),
+        ];
         /*
          * When searching, show the excerpt around the match rather than the opening of the
          * note. The clamp below can only show a few lines, so a match further down was
-         * highlighted but off-screen — cards came back with nothing visible tying them to the
-         * query. The excerpt keeps the matched text inside the visible part.
+         * highlighted but off-screen.
          */
-        const textContent = excerptAroundMatch(extractTextContent(note.description), searchQuery);
-        const embeddedAudios = extractEmbeddedAudio(note.description);
-        
+        const bodyText = excerptAroundMatch(extractTextContent(description), searchQuery);
+        const hasMedia = images.length > 0 || audios.length > 0;
+        const bodyClamp = !hasMedia ? getTextLineClamp() : images.length > 0 ? getImageLineClamp() : getAudioLineClamp();
+
         return (
           <div className={`${isX3View ? 'flex-1 flex flex-col gap-2' : 'mt-1 flex-1 flex flex-col gap-2'}`}>
-            {embeddedAudios.length > 0 && (
-              <>
-                {isListView ? (
-                  <MultiAudioPlayer hasColor={hasColor} audios={embeddedAudios} size={audioSize} />
-                ) : (
-                  <div className="flex flex-col gap-1">
-                    {embeddedAudios.map((audio, idx) => (
-                      <AudioPlayer
-                        hasColor={hasColor}
-                        key={idx}
-                        audioUrl={audio.url}
-                        initialDuration={audio.duration}
-                        compact
-                        showSeeker={!isX3View}
-                        showSpeedControl
-                        size={audioSize}
-                      />
-                    ))}
-                  </div>
+            {images.length > 0 && (
+              <div className="relative">
+                <img
+                  src={images[0]}
+                  alt={note.name}
+                  className={`w-full object-cover rounded-md ${viewType === 'x3' ? 'h-20' : 'h-28'}`}
+                />
+                {images.length > 1 && (
+                  <span className="absolute bottom-1 right-1 rounded-full bg-black/60 px-1.5 text-[10px] font-medium leading-4 text-white">
+                    +{images.length - 1}
+                  </span>
                 )}
-              </>
+              </div>
             )}
-            <div className={`${textSize} ${textColorClass} flex-1 break-words hyphens-auto ${getTextLineClamp()} ${isListView ? 'max-h-32 overflow-hidden' : ''} overflow-hidden`}>
-              {renderMarkdownWithHighlight(textContent, searchQuery)}
-            </div>
+            {audios.length > 0 && (
+              isListView ? (
+                <MultiAudioPlayer hasColor={hasColor} audios={audios} size={audioSize} />
+              ) : (
+                <div className="flex flex-col gap-1">
+                  {audios.map((audio, idx) => (
+                    <AudioPlayer
+                      hasColor={hasColor}
+                      key={idx}
+                      audioUrl={audio.url}
+                      initialDuration={audio.duration}
+                      compact
+                      showSeeker={!isX3View}
+                      showSpeedControl
+                      size={audioSize}
+                    />
+                  ))}
+                </div>
+              )
+            )}
+            {bodyText && (
+              <div className={`${textSize} ${textColorClass} ${!hasMedia ? 'flex-1' : ''} break-words hyphens-auto ${bodyClamp} ${isListView && !hasMedia ? 'max-h-32' : ''} overflow-hidden`}>
+                {renderMarkdownWithHighlight(bodyText, searchQuery)}
+              </div>
+            )}
           </div>
         );
+      }
       
       case 'list':
         const itemsToShow = getListItemsToShow();
@@ -301,71 +326,6 @@ export function NoteCard({
             {hasCompletedItems && (
               <div className={`text-xs ${mutedTextColorClass}`}>
                 +{countedSentence(t, language, 'checkedItems', completedItems.length)}
-              </div>
-            )}
-          </div>
-        );
-      
-      case 'audio':
-        const audioTextContent = excerptAroundMatch(extractTextContent(note.description || ''), searchQuery);
-        return (
-          <div className={`${isX3View ? '' : 'mt-2'} space-y-2`}>
-            <AudioPlayer
-              hasColor={hasColor}
-              audioUrl={note.audioUrl!}
-              initialDuration={note.duration}
-              compact={!isListView}
-              showSeeker={!isX3View}
-              showSpeedControl
-              size={audioSize}
-            />
-            {audioTextContent && (
-              <div className={`${textSize} ${textColorClass} break-words hyphens-auto ${getAudioLineClamp()}`}>
-                {renderMarkdownWithHighlight(audioTextContent, searchQuery)}
-              </div>
-            )}
-          </div>
-        );
-      
-      case 'image':
-        const imageTextContent = excerptAroundMatch(extractTextContent(note.description || ''), searchQuery);
-        const imageEmbeddedAudios = extractEmbeddedAudio(note.description || '');
-        
-        return (
-          <div className={`${isX3View ? '' : 'mt-2'} space-y-2`}>
-            <img
-              src={note.imageUrl}
-              alt={note.name}
-              className={`w-full object-cover rounded-md ${
-                viewType === 'x3' ? 'h-20' : 
-                viewType === 'x2' ? 'h-28' : 'h-28'
-              }`}
-            />
-            {imageEmbeddedAudios.length > 0 && (
-              <>
-                {isListView ? (
-                  <MultiAudioPlayer hasColor={hasColor} audios={imageEmbeddedAudios} size={audioSize} />
-                ) : (
-                  <div className="flex flex-col gap-1">
-                    {imageEmbeddedAudios.map((audio, idx) => (
-                      <AudioPlayer
-                        hasColor={hasColor}
-                        key={idx}
-                        audioUrl={audio.url}
-                        initialDuration={audio.duration}
-                        compact
-                        showSeeker={!isX3View}
-                        showSpeedControl
-                        size={audioSize}
-                      />
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-            {imageTextContent && (
-              <div className={`${textSize} ${textColorClass} break-words hyphens-auto ${getImageLineClamp()}`}>
-                {renderMarkdownWithHighlight(imageTextContent, searchQuery)}
               </div>
             )}
           </div>
