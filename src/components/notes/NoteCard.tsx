@@ -256,7 +256,7 @@ export function NoteCard({
                         audioUrl={audio.url}
                         initialDuration={audio.duration}
                         compact
-                        showSeeker
+                        showSeeker={!isX3View}
                         showSpeedControl
                         size={audioSize}
                       />
@@ -315,7 +315,7 @@ export function NoteCard({
               audioUrl={note.audioUrl!}
               initialDuration={note.duration}
               compact={!isListView}
-              showSeeker
+              showSeeker={!isX3View}
               showSpeedControl
               size={audioSize}
             />
@@ -354,7 +354,7 @@ export function NoteCard({
                         audioUrl={audio.url}
                         initialDuration={audio.duration}
                         compact
-                        showSeeker
+                        showSeeker={!isX3View}
                         showSpeedControl
                         size={audioSize}
                       />

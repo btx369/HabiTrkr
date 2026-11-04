@@ -125,9 +125,9 @@ export function AudioPlayer({
   const handleSeek = (value: number[]) => {
     const newTime = value[0];
     setCurrentTime(newTime);
-    if (audioRef.current) {
-      audioRef.current.currentTime = newTime;
-    }
+    // Create the element if the note has not been played yet, so dragging the bar works
+    // before pressing play.
+    initAudio().currentTime = newTime;
   };
 
   const cyclePlaybackSpeed = (e: React.MouseEvent) => {
@@ -185,7 +185,7 @@ export function AudioPlayer({
         */}
       {showSeeker && (
         <div
-          className="hidden sm:block flex-1 mx-2 min-w-0"
+          className="flex-1 mx-1 sm:mx-2 min-w-0"
           onClick={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
           onTouchStart={(e) => e.stopPropagation()}
@@ -212,7 +212,7 @@ export function AudioPlayer({
         * nothing pushed the button across — it drifted left and looked unanchored. From `sm`
         * up the seeker takes the free space itself and this has no effect.
         */}
-      <span className={`${compact ? 'text-[10px]' : 'text-xs'} text-muted-foreground flex-shrink-0 tabular-nums ml-auto sm:ml-0`}>
+      <span className={`${compact ? 'text-[10px]' : 'text-xs'} text-muted-foreground flex-shrink-0 tabular-nums ${showSeeker ? '' : 'ml-auto sm:ml-0'}`}>
         {formatDuration(Math.floor(currentTime))}/{formatDuration(Math.floor(duration))}
       </span>
 
@@ -364,7 +364,7 @@ export function MultiAudioPlayer({ audios, size = 'md', hasColor = false }: Mult
                 list view, where the row is full width, but the parts are identical and the
                 narrow-column case is one layout change away from reappearing. */}
             <div
-              className="hidden sm:block flex-1 mx-2 min-w-0"
+              className="flex-1 mx-1 sm:mx-2 min-w-0"
               onClick={(e) => e.stopPropagation()}
               onMouseDown={(e) => e.stopPropagation()}
               onTouchStart={(e) => e.stopPropagation()}
@@ -380,7 +380,7 @@ export function MultiAudioPlayer({ audios, size = 'md', hasColor = false }: Mult
 
             {/* Elapsed/total, and `ml-auto` to park the speed button on the right edge once
                 the seeker is hidden below `sm`. Same reasoning as AudioPlayer above. */}
-            <span className={`${size === 'sm' ? 'text-[10px]' : 'text-xs'} text-muted-foreground flex-shrink-0 tabular-nums ml-auto sm:ml-0`}>
+            <span className={`${size === 'sm' ? 'text-[10px]' : 'text-xs'} text-muted-foreground flex-shrink-0 tabular-nums`}>
               {formatDuration(Math.floor(currentTime))}/{formatDuration(Math.floor(duration))}
             </span>
 
