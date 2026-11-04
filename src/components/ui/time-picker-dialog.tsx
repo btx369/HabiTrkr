@@ -9,15 +9,26 @@ interface TimePickerDialogProps {
   onClose: () => void;
   onSave: (time: string) => void;
   initialTime?: string;
+  /** Shown when there is no `initialTime`. Defaults to the next full hour from now. */
+  defaultTime?: string;
 }
 
 const two = (n: number) => String(n).padStart(2, '0');
+
+/** The next full hour: at 14:35 it is 15:00. */
+export const nextFullHour = (from: Date = new Date()): string => `${two((from.getHours() + 1) % 24)}:00`;
+
+/** One hour after an "HH:MM" time (same minutes); undefined if the input is not a time. */
+export const oneHourAfter = (time?: string): string | undefined => {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(time ?? '');
+  return match ? `${two((Number(match[1]) + 1) % 24)}:${match[2]}` : undefined;
+};
 
 /**
  * Roulette time picker, built from the same scroll columns as the date picker: spin the
  * hours and the minutes to the wanted time. Nothing is typed, so the keyboard never opens.
  */
-export function TimePickerDialog({ isOpen, onClose, onSave, initialTime }: TimePickerDialogProps) {
+export function TimePickerDialog({ isOpen, onClose, onSave, initialTime, defaultTime }: TimePickerDialogProps) {
   const { t } = useLanguage();
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(0);
@@ -27,10 +38,10 @@ export function TimePickerDialog({ isOpen, onClose, onSave, initialTime }: TimeP
 
   useEffect(() => {
     if (!isOpen) return;
-    const [h, m] = (initialTime ?? '').split(':').map((part) => parseInt(part, 10));
+    const [h, m] = (initialTime || defaultTime || nextFullHour()).split(':').map((part) => parseInt(part, 10));
     setHours(Number.isFinite(h) ? Math.min(23, Math.max(0, h)) : 0);
     setMinutes(Number.isFinite(m) ? Math.min(59, Math.max(0, m)) : 0);
-  }, [isOpen, initialTime]);
+  }, [isOpen, initialTime, defaultTime]);
 
   const handleSave = () => {
     onSave(`${two(hours)}:${two(minutes)}`);

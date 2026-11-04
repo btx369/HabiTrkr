@@ -5,7 +5,7 @@ import { TitleInput } from '@/components/shared/TitleInput';
 import { TagEditor } from '@/components/shared/TagEditor';
 import { DaySelector } from '@/components/ui/day-selector';
 import { DatePickerInput } from '@/components/ui/date-scroll-picker';
-import { TimePickerDialog } from '@/components/ui/time-picker-dialog';
+import { TimePickerDialog, oneHourAfter } from '@/components/ui/time-picker-dialog';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -580,6 +580,8 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
         onClose={() => setIsEndTimePickerOpen(false)}
         onSave={(time) => setFormData(prev => ({ ...prev, endTime: time }))}
         initialTime={formData.endTime}
+        // The end suggests one hour after the start, when there is one.
+        defaultTime={oneHourAfter(formData.startTime)}
       />
     </>
   );
