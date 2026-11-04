@@ -16,9 +16,6 @@ function keysOf(language: string): Set<string> {
   return new Set([...body.slice(0, end).matchAll(/^\s+'([A-Za-z0-9_]+)':/gm)].map((m) => m[1]));
 }
 
-// Internal to the singular-toast wording (lib/entityToast), which these languages do not use.
-const ENTITY_GRAMMAR = /^entity(Note|Event|Habit|Folder)(Singular|Gender)$/;
-const WITHOUT_ENTITY_GRAMMAR = ['nl', 'pl', 'tr', 'ja', 'zh', 'ko'];
 
 describe('translations', () => {
   const english = keysOf('en');
@@ -26,7 +23,7 @@ describe('translations', () => {
   it.each(['pt', 'es', 'fr', 'de', 'it', 'nl', 'pl', 'tr', 'ja', 'zh', 'ko'])('%s has every English key', (language) => {
     const have = keysOf(language);
     const missing = [...english].filter(
-      (key) => !have.has(key) && !(WITHOUT_ENTITY_GRAMMAR.includes(language) && ENTITY_GRAMMAR.test(key)),
+      (key) => !have.has(key),
     );
     expect(missing).toEqual([]);
   });

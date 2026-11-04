@@ -23,7 +23,7 @@ export function ReminderIcon({ reminder, className }: { reminder: NoteReminder; 
   const label = `${t('reminder')}: ${text}${overdue ? ` (${t('reminderOverdue')})` : ''}`;
   const Icon = overdue ? Bell : BellRing;
   return (
-    <span role="img" aria-label={label} title={label} className="inline-flex" data-testid="note-reminder-icon">
+    <span role="img" aria-label={label} className="inline-flex" data-testid="note-reminder-icon">
       <Icon size={20} className={cn(className, overdue && 'opacity-50')} />
     </span>
   );

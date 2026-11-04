@@ -82,7 +82,7 @@ export const PinPadDialog = ({ isOpen, onClose, onSubmit, mode, title }: PinPadD
         
         <div className="space-y-4 pt-5">
           {/* PIN Display */}
-          <div className={`flex justify-center gap-3 py-1 ${isShaking ? 'animate-shake' : ''}`} aria-label={`${pin.length} of 4 digits entered`}>
+          <div className={`flex justify-center gap-3 py-1 ${isShaking ? 'animate-shake' : ''}`} aria-label={t('pinDigitsEntered').replace('{count}', String(pin.length))}>
             {[0, 1, 2, 3].map(index => (
               <div
                 key={index}
@@ -132,7 +132,7 @@ export const PinPadDialog = ({ isOpen, onClose, onSubmit, mode, title }: PinPadD
               variant="ghost"
               className="h-12 w-full rounded-2xl border border-border bg-muted text-foreground hover:border-border hover:bg-hover active:bg-hover"
               onClick={handleDelete}
-              aria-label="Delete last digit"
+              aria-label={t('deleteLastDigit')}
               type="button"
             >
               <Delete size={20} />

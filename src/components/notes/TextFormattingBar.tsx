@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Heading1, Heading2, Type, Bold, Italic, Underline, RemoveFormatting, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Editor } from '@tiptap/react';
 import { isDefaultColor } from '@/lib/cardColorStyles';
 import { getColoredIconButtonStyles, getColoredIconClass } from '@/lib/coloredButtonStyles';
@@ -13,6 +14,7 @@ interface TextFormattingBarProps {
 }
 
 export function TextFormattingBar({ onFormat, onClose, editor, noteColor }: TextFormattingBarProps) {
+  const { t } = useLanguage();
   const [isClosing, setIsClosing] = useState(false);
 
   const isH1Active = editor?.isActive('heading', { level: 1 }) ?? false;
@@ -83,7 +85,7 @@ export function TextFormattingBar({ onFormat, onClose, editor, noteColor }: Text
             {...getButtonProps(isH1Active)}
             size="sm"
             onClick={() => onFormat('h1')}
-            title="Heading 1"
+            aria-label={t('fmtHeading1')}
           >
             <Heading1 size={20} />
           </Button>
@@ -91,7 +93,7 @@ export function TextFormattingBar({ onFormat, onClose, editor, noteColor }: Text
             {...getButtonProps(isH2Active)}
             size="sm"
             onClick={() => onFormat('h2')}
-            title="Heading 2"
+            aria-label={t('fmtHeading2')}
           >
             <Heading2 size={20} />
           </Button>
@@ -99,7 +101,7 @@ export function TextFormattingBar({ onFormat, onClose, editor, noteColor }: Text
             {...getButtonProps(!!isNormalActive)}
             size="sm"
             onClick={() => onFormat('normal')}
-            title="Normal text"
+            aria-label={t('fmtNormal')}
           >
             <Type size={20} />
           </Button>
@@ -108,7 +110,7 @@ export function TextFormattingBar({ onFormat, onClose, editor, noteColor }: Text
             {...getButtonProps(isBoldActive)}
             size="sm"
             onClick={() => onFormat('bold')}
-            title="Bold"
+            aria-label={t('fmtBold')}
           >
             <Bold size={20} />
           </Button>
@@ -116,7 +118,7 @@ export function TextFormattingBar({ onFormat, onClose, editor, noteColor }: Text
             {...getButtonProps(isItalicActive)}
             size="sm"
             onClick={() => onFormat('italic')}
-            title="Italic"
+            aria-label={t('fmtItalic')}
           >
             <Italic size={20} />
           </Button>
@@ -124,7 +126,7 @@ export function TextFormattingBar({ onFormat, onClose, editor, noteColor }: Text
             {...getButtonProps(isUnderlineActive)}
             size="sm"
             onClick={() => onFormat('underline')}
-            title="Underline"
+            aria-label={t('fmtUnderline')}
           >
             <Underline size={20} />
           </Button>
@@ -133,7 +135,7 @@ export function TextFormattingBar({ onFormat, onClose, editor, noteColor }: Text
             size="sm"
             onClick={() => onFormat('clear')}
             className={`h-8 w-8 rounded-full p-0 ${themedHoverStyles}`}
-            title="Clear formatting"
+            aria-label={t('fmtClear')}
           >
             <RemoveFormatting size={20} />
           </Button>
@@ -143,7 +145,7 @@ export function TextFormattingBar({ onFormat, onClose, editor, noteColor }: Text
             size="sm"
             onClick={handleClose}
             className={`h-8 w-8 rounded-full p-0 flex-shrink-0 ${themedHoverStyles}`}
-            title="Close formatting bar"
+            aria-label={t('fmtClose')}
           >
             <X size={20} />
           </Button>

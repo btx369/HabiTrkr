@@ -1,5 +1,6 @@
 import { MoreVertical, Copy, Share2, Trash2, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +34,7 @@ export function ImageActionMenu({
   triggerClassName = '',
   align = 'end',
 }: ImageActionMenuProps) {
+  const { t } = useLanguage();
   const handleAction = (action: () => void, e: React.MouseEvent) => {
     e.stopPropagation();
     action();
@@ -51,7 +53,7 @@ export function ImageActionMenu({
             size="sm"
             className={`h-8 w-8 p-0 text-white hover:bg-white/20 data-[state=open]:bg-white/20 ${triggerClassName}`}
             onClick={(e) => e.stopPropagation()}
-            aria-label="Image options"
+            aria-label={t('imageOptions')}
           >
             <MoreVertical size={20} />
           </Button>

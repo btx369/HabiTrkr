@@ -190,7 +190,7 @@ export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventV
                 {t('edit')}
               </Button>
               <ResponsiveDialogTitle className={`text-lg font-semibold ${textColorClass} sr-only`}>
-                Event Details
+                {t('eventDetails')}
               </ResponsiveDialogTitle>
               <div className="flex gap-2">
                 <Button

@@ -2,6 +2,7 @@ import { useEditor, EditorContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Placeholder from '@tiptap/extension-placeholder';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Extension } from '@tiptap/core';
 import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state';
 import { useEffect, forwardRef, useImperativeHandle } from 'react';
@@ -91,7 +92,9 @@ export interface RichTextEditorHandle {
 }
 
 export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorProps>(
-  ({ content, onChange, placeholder = 'Start writing...', className, onFocus }, ref) => {
+  ({ content, onChange, placeholder: placeholderProp, className, onFocus }, ref) => {
+  const { t } = useLanguage();
+  const placeholder = placeholderProp ?? t('startWriting');
   const editor = useEditor({
     extensions: [
       StarterKit.configure({

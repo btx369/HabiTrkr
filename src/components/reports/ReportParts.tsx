@@ -90,7 +90,6 @@ export function Heatmap({ weeks, rowLabels, compact = false }: {
             cell ? (
               <div
                 key={cell.key}
-                title={cell.label}
                 className={cn(cellHeight, compact ? 'rounded-[2px]' : 'rounded-[4px]', cell.future ? 'bg-transparent' : 'bg-foreground')}
                 style={{ opacity: cell.future ? 0 : cell.level === 0 ? 0.08 : 0.25 + cell.level * 0.75 }}
               />
@@ -119,7 +118,7 @@ export function MonthGrid({ weeks, dayLabels }: {
       ))}
       {weeks.flat().map((cell, i) =>
         cell ? (
-          <div key={cell.key} title={cell.label} className={cn('relative flex aspect-square items-center justify-center rounded-md text-[11px]', cell.today && 'ring-2 ring-foreground ring-offset-1 ring-offset-background')}>
+          <div key={cell.key} className={cn('relative flex aspect-square items-center justify-center rounded-md text-[11px]', cell.today && 'ring-2 ring-foreground ring-offset-1 ring-offset-background')}>
             <div
               className="absolute inset-0 rounded-md bg-foreground"
               style={{ opacity: cell.future ? 0.03 : cell.level === 0 ? 0.08 : 0.25 + cell.level * 0.75 }}

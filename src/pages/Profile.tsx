@@ -216,7 +216,7 @@ export default function Profile() {
                     className="w-20 h-20 rounded-full overflow-hidden bg-muted flex items-center justify-center border-2 border-primary/20 hover:border-primary/50 transition-colors"
                   >
                     {userAvatar ? (
-                      <img src={userAvatar} alt="Avatar" className="w-full h-full object-cover" />
+                      <img src={userAvatar} alt={t('profilePhoto')} className="w-full h-full object-cover" />
                     ) : (
                       <span className="text-3xl font-semibold text-muted-foreground">
                         {userName.charAt(0).toUpperCase()}

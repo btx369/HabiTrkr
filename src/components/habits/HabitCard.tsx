@@ -168,7 +168,7 @@ export function HabitCard({
   const dragGrip = (
     <>
           {isDragEnabled && !showBulkCheckbox && (
-            <GripVertical data-habit-drag-handle className="h-5 w-5 shrink-0 cursor-grab touch-none text-muted-foreground active:cursor-grabbing" aria-label="Reorder habit" />
+            <GripVertical data-habit-drag-handle className="h-5 w-5 shrink-0 cursor-grab touch-none text-muted-foreground active:cursor-grabbing" aria-label={t('reorderHabit')} />
           )}
     </>
   );
@@ -177,7 +177,6 @@ export function HabitCard({
               type="button"
               className={cn('min-w-0 text-left text-sm font-medium', twoRows ? 'truncate' : 'line-clamp-2 break-words', textColorClass)}
               onClick={(event) => handleCardAction(event, () => onEdit(habit))}
-              title={habit.name}
             >
               {highlightText(habit.name, searchQuery)}
             </button>
@@ -190,7 +189,7 @@ export function HabitCard({
                   <>
                     <Badge
                       variant="outline"
-                      title={t('timesToday').replace('{count}', String(todayCount))}
+                      aria-label={t('timesToday').replace('{count}', String(todayCount))}
                       className={cn('block max-w-full truncate whitespace-nowrap', viewType === 'x3' ? 'h-5 px-1 text-[9px]' : 'h-6 px-2 text-[10px]', badgeBorderClass, hasColor && 'text-[#000000]')}
                     >
                       {todayCount}x{viewType !== 'x3' && ` ${t('today')}`}
@@ -223,7 +222,7 @@ export function HabitCard({
                 {habit.useNumberOfDays && (
                   <Badge
                     variant="outline"
-                    title={t('daysThisWeek').replace('{done}', String(weeklyCompletions)).replace('{total}', String(habit.numberOfDaysPerWeek || 1))}
+                    aria-label={t('daysThisWeek').replace('{done}', String(weeklyCompletions)).replace('{total}', String(habit.numberOfDaysPerWeek || 1))}
                     className={cn('block h-6 max-w-full truncate whitespace-nowrap px-2 text-[10px] leading-6', viewType === 'x3' && 'h-5 px-1 text-[9px]', badgeBorderClass, hasColor && 'text-[#000000]')}
                   >
                     {viewType === 'x3'
@@ -242,7 +241,7 @@ export function HabitCard({
                   <>
                     <Badge
                       variant="outline"
-                      title={t('timesTodayOf').replace('{done}', String(todayCount)).replace('{total}', String(timesPerDay))}
+                      aria-label={t('timesTodayOf').replace('{done}', String(todayCount)).replace('{total}', String(timesPerDay))}
                       className={cn('block max-w-full truncate whitespace-nowrap', viewType === 'x3' ? 'h-5 px-1 text-[9px]' : 'h-6 px-2 text-[10px]', badgeBorderClass, hasColor && 'text-[#000000]')}
                     >
                       {viewType === 'x3' ? `${todayCount}/${timesPerDay}` : (
@@ -479,7 +478,7 @@ export function ArchivedHabitCard({
         <div className="flex items-start justify-between">
           <div className="flex min-w-0 items-start gap-2">
             {isDragEnabled && !showBulkCheckbox && (
-              <GripVertical data-habit-drag-handle className="mt-0.5 h-5 w-5 shrink-0 cursor-grab touch-none text-muted-foreground active:cursor-grabbing" aria-label="Reorder habit" />
+              <GripVertical data-habit-drag-handle className="mt-0.5 h-5 w-5 shrink-0 cursor-grab touch-none text-muted-foreground active:cursor-grabbing" aria-label={t('reorderHabit')} />
             )}
             <h3 className="text-sm font-medium text-foreground">{highlightText(habit.name, searchQuery)}</h3>
           </div>

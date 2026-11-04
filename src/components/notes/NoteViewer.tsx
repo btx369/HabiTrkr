@@ -328,8 +328,8 @@ export function NoteViewer({
     
     // For image notes, prevent deletion of the main image
     if (note.type === 'image' && imageUrl === note.imageUrl) {
-      toast.error("Cannot delete", {
-        description: "Cannot delete the main image of an image note",
+      toast.error(t('cannotDelete'), {
+        description: t('cannotDeleteMainImage'),
       });
       return;
     }
@@ -1286,7 +1286,7 @@ export function NoteViewer({
         >
           <img
             src={images[0]}
-            alt="Note image"
+            alt={t('noteImageAlt')}
             className="block w-full h-auto rounded-lg"
           />
         </div>
@@ -1470,7 +1470,7 @@ export function NoteViewer({
                       );
                       
                       if (updatedDescription === currentDescription) {
-                        toast.error("Could not attach note. Please try again.");
+                        toast.error(t('attachNoteFailed'));
                         return;
                       }
                       
@@ -1505,7 +1505,7 @@ export function NoteViewer({
                     );
                     
                     if (updatedDescription === currentDescription) {
-                      toast.error("Could not attach note. Please try again.");
+                      toast.error(t('attachNoteFailed'));
                       return;
                     }
                     
@@ -2128,7 +2128,7 @@ export function NoteViewer({
                     <span className="text-muted-foreground/70 italic font-normal">{t('untitledItem')}</span>
                   ) : (
                     <>
-                      <span className="text-muted-foreground/70 italic font-normal">Add a title</span>
+                      <span className="text-muted-foreground/70 italic font-normal">{t('addTitle')}</span>
                       <Edit size={20} className="flex-shrink-0 text-muted-foreground/50" />
                     </>
                   )}
@@ -2246,7 +2246,7 @@ export function NoteViewer({
               const listNote = note as ListNote;
               
               if (!listNote.items || listNote.items.length === 0) {
-                toast.error("Checklist has no items to convert");
+                toast.error(t('listHasNoItems'));
                 return;
               }
               
@@ -2298,7 +2298,7 @@ export function NoteViewer({
               .filter(line => line.length > 0);
             
             if (lines.length === 0) {
-              toast.error("No text to convert to tick boxes");
+              toast.error(t('noTextToConvert'));
               return;
             }
             

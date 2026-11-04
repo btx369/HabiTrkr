@@ -1,3 +1,4 @@
+import { translateNow } from '@/contexts/LanguageContext';
 import { LocalNotifications, ScheduleOptions } from '@capacitor/local-notifications';
 import { Capacitor } from '@capacitor/core';
 import { Event, AlertType } from '@/types/event';
@@ -146,8 +147,8 @@ export const scheduleEventNotification = async (event: Event): Promise<void> => 
   const eventTime = event.startTime || event.time;
   
   const body = eventTime 
-    ? `Starts at ${eventTime}${event.location ? ` - ${event.location}` : ''}`
-    : event.location || 'Event reminder';
+    ? `${translateNow('eventStartsAt').replace('{time}', eventTime)}${event.location ? ` - ${event.location}` : ''}`
+    : event.location || translateNow('eventReminder');
   
   if (Capacitor.isNativePlatform()) {
     const options: ScheduleOptions = {

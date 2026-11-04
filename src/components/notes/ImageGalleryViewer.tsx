@@ -99,8 +99,8 @@ export function ImageGalleryViewer({
         aria-labelledby="image-gallery-title"
         aria-describedby="image-gallery-description"
       >
-          <DialogTitle className="sr-only" id="image-gallery-title">Image gallery</DialogTitle>
-          <p id="image-gallery-description" className="sr-only">Full-screen image viewer. Swipe left or right to navigate. Use the back button to return to the note.</p>
+          <DialogTitle className="sr-only" id="image-gallery-title">{t('imageGallery')}</DialogTitle>
+          <p id="image-gallery-description" className="sr-only">{t('imageGalleryHint')}</p>
           <div className="relative w-full h-full flex flex-col">
           {/* Header */}
           <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4 bg-gradient-to-b from-black/50 to-transparent">

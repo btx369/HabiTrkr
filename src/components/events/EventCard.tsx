@@ -360,7 +360,6 @@ export function EventCard({
                 variant="outline" 
                 className={`text-xs ${isX3 ? 'max-w-full' : ''} ${badgeBorderClass} ${hasColor ? 'text-[#000000]' : ''}`}
                 style={recurrenceBadgeStyle}
-                title={recurrenceText ?? undefined}
               >
                 <span className={isX3 ? 'truncate' : ''}>{recurrenceText}</span>
               </Badge>

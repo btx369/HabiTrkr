@@ -1345,7 +1345,7 @@ export default function Events() {
                 </CardContent>
               </Card>
             ) : (
-              renderEventFolderList(getEventFolders(), "No folders yet.")
+              renderEventFolderList(getEventFolders(), t('noFoldersYet'))
             )}
           </TabsContent>
           
