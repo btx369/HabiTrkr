@@ -26,17 +26,34 @@ export function useKeyboardViewport(enabled: boolean): KeyboardViewport | null {
       return;
     }
     const update = () => {
-      // A shrink under ~120px is browser chrome (address bar), not a keyboard.
+      // A shrink under ~120px is browser chrome (address bar), not a keyboard. The keyboard
+      // can only be up while a text field has focus, which also covers the cases where the
+      // browser does not report the viewport growing back (e.g. after a button press made
+      // the field lose focus) and would otherwise leave the sheet stuck at keyboard size.
+      const active = document.activeElement as HTMLElement | null;
+      const typing = !!active && (active.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName));
       const covered = window.innerHeight - vv.height - vv.offsetTop;
-      const keyboardOpen = window.innerHeight - vv.height > 120 && vv.scale <= 1.01;
-      setViewport(keyboardOpen && covered > -1 ? { height: vv.height, top: vv.offsetTop } : null);
+      const keyboardOpen = typing && window.innerHeight - vv.height > 120 && vv.scale <= 1.01;
+      const next = keyboardOpen && covered > -1 ? { height: vv.height, top: vv.offsetTop } : null;
+      // Keep the previous object when nothing changed so the timer does not re-render.
+      setViewport((prev) => (prev && next && prev.height === next.height && prev.top === next.top) || (!prev && !next) ? prev : next);
     };
     update();
+    // Focus moves (e.g. tapping "Add" next to a field) are re-checked once the browser has
+    // settled, and while the keyboard is considered open a slow timer catches any change
+    // the events missed.
+    const onFocusChange = () => { update(); setTimeout(update, 150); setTimeout(update, 500); };
+    const timer = window.setInterval(update, 500);
     vv.addEventListener('resize', update);
     vv.addEventListener('scroll', update);
+    document.addEventListener('focusin', onFocusChange);
+    document.addEventListener('focusout', onFocusChange);
     return () => {
+      window.clearInterval(timer);
       vv.removeEventListener('resize', update);
       vv.removeEventListener('scroll', update);
+      document.removeEventListener('focusin', onFocusChange);
+      document.removeEventListener('focusout', onFocusChange);
     };
   }, [enabled]);
 
