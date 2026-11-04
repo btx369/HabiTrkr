@@ -268,8 +268,8 @@ export function HabitCard({
   );
   const statusIcons = (
     <>
-      {habit.pinned && <Pin size={20} className={cn('shrink-0', iconColorClass)} />}
       {isFiled && <FolderOpen size={20} className={cn('shrink-0', iconColorClass)} />}
+      {habit.pinned && <Pin size={20} className={cn('shrink-0', iconColorClass)} />}
     </>
   );
   const dayButtons = (

@@ -157,8 +157,8 @@ export function EventFolderCard({
               </p>
             </div>
             <div className="flex items-center gap-1">
-              {folder.pinned && <Pin size={20} className={iconColorClass} />}
               <FolderOpen size={20} className={iconColorClass} />
+              {folder.pinned && <Pin size={20} className={iconColorClass} />}
               {showBulkCheckbox ? (
                 <BulkCheckbox />
               ) : (isArchived || isDeleted) ? (

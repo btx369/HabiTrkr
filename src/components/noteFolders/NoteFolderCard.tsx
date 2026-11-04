@@ -166,8 +166,8 @@ export function NoteFolderCard({
               </p>
             </div>
             <div className="flex items-center gap-1">
-              {folder.pinned && <Pin size={20} className={iconColorClass} />}
               <FolderOpen size={20} className={iconColorClass} />
+              {folder.pinned && <Pin size={20} className={iconColorClass} />}
               {showBulkCheckbox ? (
                 <BulkCheckbox />
               ) : (isFolderArchived || isDeleted) ? (
