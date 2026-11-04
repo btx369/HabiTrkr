@@ -9,7 +9,8 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ToastProvider } from "@/contexts/ToastContext";
 import { WeekStartProvider } from "@/contexts/WeekStartContext";
 import HabitTracker from "./pages/HabitTracker";
-import { scheduleStoredEventNotifications } from "./lib/notificationService";
+import { scheduleStoredEventNotifications, scheduleStoredNoteReminders } from "./lib/notificationService";
+import { useLanguage } from "./contexts/LanguageContext";
 
 // The habit tracker is the start route, so it stays in the main bundle.
 // Everything else is split out: Notes pulls in the rich-text editor and the
@@ -38,10 +39,14 @@ const RouteFallback = () => (
   </div>
 );
 
-/** Arms event reminders once the app opens, whichever page that is. */
+/** Arms event and note reminders once the app opens, whichever page that is. */
 const ReminderScheduler = () => {
+  const { t } = useLanguage();
   useEffect(() => {
     void scheduleStoredEventNotifications();
+    void scheduleStoredNoteReminders(t('reminderNotificationTitle'));
+    // Once per launch; the Notes page keeps them in step after that.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return null;
 };

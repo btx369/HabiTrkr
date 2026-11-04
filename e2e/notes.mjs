@@ -70,6 +70,31 @@ try {
   await viewer().getByRole('button', { name: 'Back' }).click();
   await wait(page, 600);
 
+  // 3b. Reminder, Keep style: the bell, a quick choice, a chip in the note and on the card
+  await card('Todo').click();
+  await wait(page, 700);
+  await viewer().getByTestId('note-remind-button').click();
+  await wait(page, 500);
+  await page.getByTestId('reminder-dialog').getByText('Tomorrow', { exact: true }).click();
+  await wait(page, 600);
+  const reminder = (await notes()).find((n) => n.name === 'Todo')?.reminder;
+  check('set a note reminder', /T08:00$/.test(reminder?.at ?? ''), JSON.stringify(reminder));
+  check('reminder chip in the note', await viewer().getByTestId('note-reminder-chip').isVisible());
+  await viewer().getByRole('button', { name: 'Back' }).click();
+  await wait(page, 600);
+  check('reminder bell on the card', (await card('Todo').getByTestId('note-reminder-icon').count()) === 1);
+  await page.goto(`${BASE}/reports`);
+  await wait(page, 900);
+  check('reports list notes with reminders', await page.getByTestId('reports-note-reminders').getByText('Todo').isVisible());
+  await page.getByTestId('reports-note-reminders').getByText('Todo').click();
+  await wait(page, 900);
+  check('reports opens the note', await viewer().getByTestId('note-reminder-chip').isVisible());
+  await viewer().getByRole('button', { name: 'Remove' }).click();
+  await wait(page, 500);
+  check('remove a note reminder', !(await notes()).find((n) => n.name === 'Todo')?.reminder);
+  await viewer().getByRole('button', { name: 'Back' }).click();
+  await wait(page, 600);
+
   // 4. Pin
   await menu('Todo', 'Pin');
   check('pin note', (await notes()).find((n) => n.name === 'Todo')?.pinned === true);

@@ -17,6 +17,16 @@ export interface BaseNote {
   lockType?: 'pin' | 'password'; // How a locked note is protected; absent means PIN
   sealed?: { iv: string; data: string }; // Encrypted content of a password note (lib/noteVault)
   tags?: string[]; // Tags for categorization (stored without #)
+  reminder?: NoteReminder; // When to remind about this note (lib/noteReminders)
+}
+
+/** A note reminder, Google Keep style: a local date-time, optionally repeating. */
+export interface NoteReminder {
+  /** Local date and time, `yyyy-MM-ddTHH:mm`. */
+  at: string;
+  repeat?: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  /** Every N days/weeks/months/years; 1 when absent. */
+  interval?: number;
 }
 
 export interface TextNote extends BaseNote {

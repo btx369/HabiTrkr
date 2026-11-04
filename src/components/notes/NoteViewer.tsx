@@ -35,6 +35,12 @@ import { AudioPlayer } from '@/components/shared/AudioPlayer';
 import { Note, ListItem } from '@/types/note';
 import { NoteEditor } from './NoteEditor';
 import { NoteActionBar } from './NoteActionBar';
+import { ReminderDialog } from './ReminderDialog';
+import { ReminderChip } from './ReminderChip';
+import { requestNotificationPermission } from '@/lib/notificationService';
+import { formatReminder, nextReminderTime } from '@/lib/noteReminders';
+import { useDateLocale } from '@/lib/dateLocale';
+import type { NoteReminder } from '@/types/note';
 import { highlightText } from '@/lib/textHighlight';
 import { renderMarkdownWithHighlight } from '@/lib/markdownRenderer';
 import { parseNoteContent } from '@/lib/noteContentRenderer';
@@ -145,6 +151,20 @@ export function NoteViewer({
     onSave?.(noteId, updates);
   };
 
+  /** Sets or clears the reminder, and asks for notifications the first time one is set. */
+  const saveReminder = async (reminder: NoteReminder | undefined) => {
+    saveIfEditable({ reminder });
+    if (!reminder) {
+      toast.success(t('reminderRemoved'));
+      return;
+    }
+    const next = nextReminderTime(reminder);
+    const when = next ? formatReminder(next, dateLocale, { today: t('today'), tomorrow: t('reminderTomorrow') }) : '';
+    const allowed = await requestNotificationPermission().catch(() => false);
+    if (allowed) toast.success(t('reminderSet').replace('{when}', when));
+    else toast.info(t('reminderNotificationsOff'));
+  };
+
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingContent, setIsEditingContent] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
@@ -162,6 +182,8 @@ export function NoteViewer({
   const [galleryStartIndex, setGalleryStartIndex] = useState(0);
   const [showAudioRecorder, setShowAudioRecorder] = useState(false);
   const [showImageCapturePopup, setShowImageCapturePopup] = useState(false);
+  const [showReminderDialog, setShowReminderDialog] = useState(false);
+  const dateLocale = useDateLocale();
   const [editingAudioUrl, setEditingAudioUrl] = useState<string | null>(null);
   const [editingAudioText, setEditingAudioText] = useState('');
   const [showFormattingBar, setShowFormattingBar] = useState(false);
@@ -2038,6 +2060,15 @@ export function NoteViewer({
         <ScrollArea ref={scrollAreaRootRef} className="flex-1 h-full w-full" scrollbarClassName={hasColor ? 'bg-black/30' : 'bg-foreground/20'} style={{ overflowAnchor: 'none' }}>
           <div className="h-full w-full box-border py-2 px-3 flex flex-col items-stretch max-w-full space-y-3" style={{ overflowAnchor: 'none' }}>
             {renderNoteContent()}
+            {note.reminder && (
+              <div className="pt-1">
+                <ReminderChip
+                  reminder={note.reminder}
+                  onEdit={readOnly ? undefined : () => setShowReminderDialog(true)}
+                  onRemove={readOnly ? undefined : () => saveReminder(undefined)}
+                />
+              </div>
+            )}
           </div>
         </ScrollArea>
         
@@ -2060,6 +2091,11 @@ export function NoteViewer({
           <NoteActionBar
             note={note}
             onSave={(noteId, updates) => saveIfEditable(updates, noteId)}
+            onRemindMe={() => {
+              (document.activeElement as HTMLElement)?.blur();
+              setShowReminderDialog(true);
+            }}
+            hasReminder={!!note.reminder}
             onTakePhoto={() => {
               // Blur any focused button to prevent space key from triggering it
               (document.activeElement as HTMLElement)?.blur();
@@ -2237,6 +2273,13 @@ export function NoteViewer({
             }
             setShowAudioRecorder(false);
           }}
+        />
+
+        <ReminderDialog
+          isOpen={showReminderDialog}
+          onClose={() => setShowReminderDialog(false)}
+          reminder={note.reminder}
+          onSave={(reminder) => void saveReminder(reminder)}
         />
 
         <ImageCapturePopup

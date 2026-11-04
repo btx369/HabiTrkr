@@ -7,6 +7,8 @@ import {
   eventSummary,
   insights,
   noteSummary,
+  periodBounds,
+  periodReport,
   rateOf,
   streakOf,
   upcomingEvents,
@@ -145,5 +147,34 @@ describe('insights', () => {
     expect(kinds).toContain('missedYesterday');
     expect(kinds).toContain('streakAtRisk');
     expect(kinds).toContain('eventToday');
+  });
+});
+
+describe('habits by week, month and year', () => {
+  it('finds the bounds of the current and earlier periods', () => {
+    expect(periodBounds('week', NOW, 0, MON)).toEqual({ from: day('2026-11-02'), to: day('2026-11-08') });
+    expect(periodBounds('week', NOW, 1, MON).from).toEqual(day('2026-10-26'));
+    expect(periodBounds('month', NOW, 0, MON)).toEqual({ from: day('2026-11-01'), to: day('2026-11-30') });
+    expect(periodBounds('month', NOW, 11, MON).from).toEqual(day('2025-12-01'));
+    expect(periodBounds('year', NOW, 1, MON)).toEqual({ from: day('2025-01-01'), to: day('2025-12-31') });
+  });
+
+  it('splits a week into days, a month into weeks and a year into months', () => {
+    const daily = habit({ completedDates: ['2026-11-02', '2026-10-05', '2026-10-06'] });
+    const week = periodReport([daily], 'week', NOW, 0, MON);
+    expect(week.buckets).toHaveLength(7);
+    expect(week.buckets.map((b) => b.count)).toEqual([1, 0, 0, 0, 0, 0, 0]);
+    // Monday done, Tuesday (today) not yet: 1 of 2 so far
+    expect(week.rate).toBe(0.5);
+
+    const month = periodReport([daily], 'month', NOW, 0, MON);
+    // November 2026 starts on a Sunday: weeks of 1, 7, 7, 7, 7 and 1 days
+    expect(month.buckets.map((b) => b.start.getDate())).toEqual([1, 2, 9, 16, 23, 30]);
+    expect(month.buckets[3].rate).toBeNull(); // still ahead
+
+    const year = periodReport([daily], 'year', NOW, 0, MON);
+    expect(year.buckets).toHaveLength(12);
+    expect(year.buckets[9].count).toBe(2); // October
+    expect(year.habits[0]).toMatchObject({ count: 3 });
   });
 });

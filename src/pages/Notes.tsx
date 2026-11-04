@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Plus, X, FolderOpen, Notebook, FileStack } from 'lucide-react';
 import { ViewSettings, ViewType, SortType, SortDirection } from '@/components/notes/ViewSettings';
 import { NoteFolderViewSettings, NoteFolderSortType, NoteFolderSortDirection } from '@/components/noteFolders/NoteFolderViewSettings';
@@ -27,6 +28,7 @@ import { MoveToFolderDialog } from '@/components/shared/MoveToFolderDialog';
 import { PinPadDialog } from '@/components/notes/PinPadDialog';
 import { LockChoiceDialog } from '@/components/notes/LockChoiceDialog';
 import { takePendingUndo } from '@/lib/undoManager';
+import { syncNoteReminders } from '@/lib/notificationService';
 import { NotePasswordDialog, NotePasswordMode, NotePasswordValues } from '@/components/notes/NotePasswordDialog';
 import { createVault, hasBiometric, hasVault, isPasswordNote, isVaultUnlocked, lockVault, openNote, sealNote, sealNotesForStorage, unlockVault, unlockVaultWithBiometric, VAULT_ATTEMPTS_ID } from '@/lib/noteVault';
 import { clearPinFailures, createPinFields,getPinLockoutRemaining, recordPinFailure, upgradeLegacyPin, verifyNotePin, withoutPin } from '@/lib/notePin';
@@ -2280,6 +2282,23 @@ const hasTitle = (note.name || '').trim() !== '';
   };
 
   const { t, language } = useLanguage();
+  // Keep note reminders armed in step with the notes: added, changed, removed, archived
+  // or deleted, whichever path did it.
+  useEffect(() => {
+    void syncNoteReminders(notes, t('reminderNotificationTitle'));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notes]);
+  // Reports links straight to a note (its "Notes with reminders" list).
+  const location = useLocation();
+  const navigate = useNavigate();
+  useEffect(() => {
+    const id = (location.state as { openNoteId?: string } | null)?.openNoteId;
+    if (!id) return;
+    navigate(location.pathname, { replace: true, state: null });
+    const target = notes.find((n) => n.id === id);
+    if (target) openNoteViewer(target);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
   // Toast copy is a translated sentence plus a translated entity noun. Both halves are
   // resolved here so the `{entity}` substitution is written once instead of at every toast.
   const say = (key: string, entity: string) => entitySentence(t, language, key, entity);

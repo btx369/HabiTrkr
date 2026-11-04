@@ -18,6 +18,7 @@ import {
   CheckSquare,
   Tag,
   Bell,
+  BellRing,
   Type
 } from 'lucide-react';
 import { Note } from '@/types/note';
@@ -34,6 +35,8 @@ interface NoteActionBarProps {
   onStartRecording?: () => void;
   onAddTickBoxes?: () => void;
   onRemindMe?: () => void;
+  /** Shows the bell as set (solid) when the note already has a reminder. */
+  hasReminder?: boolean;
   onTranscribeAudio?: () => void;
   onToggleFormatting?: () => void;
   showFormattingBar?: boolean;
@@ -48,6 +51,7 @@ export const NoteActionBar = ({
   onStartRecording,
   onAddTickBoxes,
   onRemindMe,
+  hasReminder,
   onTranscribeAudio,
   onToggleFormatting,
   showFormattingBar,
@@ -152,16 +156,17 @@ export const NoteActionBar = ({
         </PopoverContent>
       </Popover>
       
-      {/* Reminders and transcription are not built yet: show their buttons only once a
-          handler exists, instead of buttons that do nothing when tapped. */}
+      {/* Transcription is not built yet: these buttons show only when a handler exists,
+          instead of buttons that do nothing when tapped. */}
       {onRemindMe && (
         <Button 
           size="sm" 
           className={`${sizeStyles} ${restStyles}`}
           onClick={onRemindMe}
-          aria-label={t('alert')}
+          aria-label={t('reminder')}
+          data-testid="note-remind-button"
         >
-          <Bell size={16} />
+          {hasReminder ? <BellRing size={16} /> : <Bell size={16} />}
         </Button>
       )}
       

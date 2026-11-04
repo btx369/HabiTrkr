@@ -4,6 +4,8 @@ import { Event, AlertType } from '@/types/event';
 import { addDays, parseISO, subMinutes, subHours, subDays, subWeeks } from 'date-fns';
 import { getEventSpanDays, getNextOccurrenceStart } from './eventRecurrence';
 import { toDateKey } from './dateUtils';
+import { nextReminderTime } from './noteReminders';
+import type { Note } from '@/types/note';
 
 /**
  * When the reminder for the next occurrence should fire.
@@ -271,5 +273,126 @@ export async function scheduleStoredEventNotifications(): Promise<void> {
     await scheduleAllEventNotifications(events.filter((e) => e.alertType && e.alertType !== 'none'));
   } catch (error) {
     console.error('Could not schedule reminders:', error);
+  }
+}
+
+/* ---------------------------------------------------------------------------------------
+ * Note reminders
+ *
+ * Synced from the list of notes rather than called from every place a note is saved,
+ * deleted or archived: syncNoteReminders(notes) schedules what has a reminder, reschedules
+ * what changed and cancels the rest. Only active notes ring; archived ones do not.
+ * ------------------------------------------------------------------------------------- */
+
+const noteKey = (noteId: string) => `note:${noteId}`;
+/** What is armed now, by note id, so an unchanged reminder is not rescheduled on each edit. */
+const armedNotes = new Map<string, string>();
+
+const noteSignature = (note: Note) =>
+  JSON.stringify([note.reminder?.at, note.reminder?.repeat, note.reminder?.interval, note.name, note.locked]);
+
+/** A short, plain-text preview of an unlocked note for the notification body. */
+function notePreview(note: Note): string {
+  if (note.locked) return '';
+  const text = note.type === 'list'
+    ? (note.items ?? []).filter((i) => !i.completed).map((i) => i.text).join(', ')
+    : (note.description ?? '');
+  return text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
+}
+
+async function cancelNoteReminder(noteId: string): Promise<void> {
+  armedNotes.delete(noteId);
+  const key = noteKey(noteId);
+  if (Capacitor.isNativePlatform()) {
+    await LocalNotifications.cancel({ notifications: [{ id: getNotificationId(key) }] });
+  } else {
+    const timeouts = JSON.parse(sessionStorage.getItem('notificationTimeouts') || '{}');
+    if (timeouts[key]) {
+      clearTimeout(timeouts[key]);
+      delete timeouts[key];
+      sessionStorage.setItem('notificationTimeouts', JSON.stringify(timeouts));
+    }
+  }
+}
+
+async function scheduleNoteReminder(note: Note, fallbackTitle: string): Promise<void> {
+  await cancelNoteReminder(note.id);
+  if (!note.reminder) return;
+  const at = nextReminderTime(note.reminder);
+  if (!at) return;
+  armedNotes.set(note.id, noteSignature(note));
+
+  const key = noteKey(note.id);
+  const title = note.name?.trim() || fallbackTitle;
+  // A locked note's content stays out of the notification shade.
+  const body = notePreview(note) || fallbackTitle;
+
+  if (Capacitor.isNativePlatform()) {
+    await LocalNotifications.schedule({
+      notifications: [{
+        id: getNotificationId(key),
+        title,
+        body,
+        schedule: { at, allowWhileIdle: true },
+        sound: 'default',
+        extra: { noteId: note.id },
+      }],
+    });
+    return;
+  }
+
+  const delay = at.getTime() - Date.now();
+  if (delay <= 0 || delay >= 2147483647) return;
+  const timeoutId = setTimeout(() => {
+    new Notification(title, { body, icon: `${import.meta.env.BASE_URL}favicon.ico`, tag: key });
+    armedNotes.delete(note.id);
+    // Arm the next one of a repeating reminder, from the note as it is saved now.
+    if (note.reminder?.repeat) {
+      const latest = readStoredNote(note.id);
+      if (latest?.reminder) void scheduleNoteReminder(latest, fallbackTitle);
+    }
+  }, delay);
+  const timeouts = JSON.parse(sessionStorage.getItem('notificationTimeouts') || '{}');
+  timeouts[key] = timeoutId;
+  sessionStorage.setItem('notificationTimeouts', JSON.stringify(timeouts));
+}
+
+const readStoredNote = (noteId: string): Note | undefined => {
+  try {
+    return (JSON.parse(localStorage.getItem('notes') ?? '[]') as Note[]).find((n) => n.id === noteId);
+  } catch {
+    return undefined;
+  }
+};
+
+/**
+ * Brings the armed reminders in line with `notes`. Safe to call on every change: only
+ * reminders that were added, changed or removed touch the scheduler.
+ */
+export async function syncNoteReminders(notes: Note[], fallbackTitle: string): Promise<void> {
+  const wanted = new Map(notes.filter((n) => n.reminder).map((n) => [n.id, n]));
+
+  for (const id of [...armedNotes.keys()]) {
+    if (!wanted.has(id)) await cancelNoteReminder(id);
+  }
+  if (Capacitor.isNativePlatform()) {
+    // After a restart the map is empty, but the system still holds what was scheduled.
+    const pending = await LocalNotifications.getPending();
+    const stale = pending.notifications.filter((p) => p.extra?.noteId && !wanted.has(p.extra.noteId));
+    if (stale.length > 0) await LocalNotifications.cancel({ notifications: stale.map((p) => ({ id: p.id })) });
+  }
+
+  if (wanted.size === 0 || !(await checkNotificationPermission())) return;
+  for (const note of wanted.values()) {
+    if (armedNotes.get(note.id) !== noteSignature(note)) await scheduleNoteReminder(note, fallbackTitle);
+  }
+}
+
+/** Arms note reminders from storage when the app opens. */
+export async function scheduleStoredNoteReminders(fallbackTitle: string): Promise<void> {
+  try {
+    await syncNoteReminders(JSON.parse(localStorage.getItem('notes') ?? '[]') as Note[], fallbackTitle);
+  } catch (error) {
+    console.error('Could not schedule note reminders:', error);
   }
 }

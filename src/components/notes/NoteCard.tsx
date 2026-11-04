@@ -24,6 +24,7 @@ import { useIsFiled } from '@/contexts/FolderMembershipContext';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { countedSentence } from '@/lib/countedMessage';
+import { ReminderIcon } from './ReminderChip';
 
 interface NoteCardProps {
   note: Note;
@@ -483,6 +484,7 @@ export function NoteCard({
                 {isFiled && <FolderOpen size={14} className={iconColorClass} />}
                 {note.pinned && <Pin size={14} className={iconColorClass} />}
                 {note.locked && <Lock size={14} className={iconColorClass} />}
+                {note.reminder && <ReminderIcon reminder={note.reminder} className={iconColorClass} />}
               </div>
               {showBulkCheckbox ? (
                 <BulkCheckbox />
@@ -579,6 +581,7 @@ export function NoteCard({
                 <div className="flex items-center gap-1">
                   {note.pinned && <Pin size={14} className={iconColorClass} />}
                   {note.locked && <Lock size={14} className={iconColorClass} />}
+                {note.reminder && <ReminderIcon reminder={note.reminder} className={iconColorClass} />}
                 </div>
                 {showBulkCheckbox ? (
                   <BulkCheckbox />
@@ -649,6 +652,7 @@ export function NoteCard({
               {isFiled && <FolderOpen size={14} className={iconColorClass} />}
               {note.pinned && <Pin size={14} className={iconColorClass} />}
               {note.locked && <Lock size={14} className={iconColorClass} />}
+                {note.reminder && <ReminderIcon reminder={note.reminder} className={iconColorClass} />}
               {showBulkCheckbox ? (
                 <BulkCheckbox />
               ) : (isArchived || isDeleted) ? (

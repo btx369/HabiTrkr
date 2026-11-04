@@ -1,29 +1,32 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { addDays, format, startOfDay, startOfWeek } from 'date-fns';
-import { CalendarDays, ChevronRight, Flame, Lightbulb, NotebookText, Target } from 'lucide-react';
+import { BellRing, CalendarDays, ChevronLeft, ChevronRight, Flame, Lightbulb, Target } from 'lucide-react';
 import { Layout } from '@/components/Layout';
 import { Tabs, TabsContent, SlidingTabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Heatmap, BarChart, ProgressBar, ReportCard, StatTile, WeekDots } from '@/components/reports/ReportParts';
+import { Heatmap, BarChart, MonthGrid, ProgressBar, ReportCard, StatTile, WeekDots } from '@/components/reports/ReportParts';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useWeekStart } from '@/contexts/WeekStartContext';
 import { useDateLocale } from '@/lib/dateLocale';
 import { getLocalStorageItem } from '@/lib/localStorageUtils';
 import { toDateKey } from '@/lib/dateUtils';
 import { countedSentence } from '@/lib/countedMessage';
+import { notesWithReminders } from '@/lib/noteReminders';
+import { ReminderChip } from '@/components/notes/ReminderChip';
 import {
-  dailyActivity,
+  isDoneOn,
   eventsPerMonth,
   eventSummary,
   habitReports,
   insights,
   noteSummary,
+  periodReport,
   upcomingEvents,
   weekdayLoad,
-  weeklyRates,
   weekSummary,
   type HabitReport,
   type Insight,
+  type ReportPeriod,
   type WeekStart,
 } from '@/lib/reportStats';
 import type { Habit } from '@/types/habit';
@@ -40,6 +43,8 @@ export default function Reports() {
   const dateLocale = useDateLocale();
   const navigate = useNavigate();
   const [tab, setTab] = useState('summary');
+  const [period, setPeriod] = useState<ReportPeriod>('week');
+  const [offset, setOffset] = useState(0);
 
   const weekStart = weekStartsOn as WeekStart;
   const now = useMemo(() => new Date(), []);
@@ -56,23 +61,18 @@ export default function Reports() {
   const stats = useMemo(() => {
     const { habits, events, archivedEvents, notes, archivedNotes } = data;
     const reports = habitReports(habits, now, weekStart);
-    const today = startOfDay(now);
-    const heatStart = startOfWeek(addDays(today, -7 * 11), { weekStartsOn });
-    const activity = dailyActivity(habits, Math.round((today.getTime() - heatStart.getTime()) / 86400000) + 1, now);
     return {
       reports,
       weekRate: weekSummary(habits, now, weekStart),
-      rates: weeklyRates(habits, 8, now, weekStart),
-      activity,
-      heatStart,
       events: eventSummary(events, archivedEvents, now, weekStart),
       upcoming: upcomingEvents(events, now, 30, 5),
       perMonth: eventsPerMonth([...events, ...archivedEvents], 6, now),
       byWeekday: weekdayLoad(events, now),
       notes: noteSummary(notes, archivedNotes, now, weekStart),
+      reminders: notesWithReminders(notes, now),
       nudges: insights(habits, events, now, weekStart, 4),
     };
-  }, [data, now, weekStart, weekStartsOn]);
+  }, [data, now, weekStart]);
 
   const dayName = (jsDay: number) => t(DAY_SHORT_KEYS[jsDay]);
   const insightText = (i: Insight): { text: string; to: string } => {
@@ -90,18 +90,58 @@ export default function Reports() {
   const withGoal = stats.reports.some((r) => r.kind !== 'open');
   const streaks = [...stats.reports].filter((r) => r.streak.current > 0).sort((a, b) => b.streak.current - a.streak.current).slice(0, 4);
 
+  const periodData = useMemo(() => periodReport(data.habits, period, now, offset, weekStart), [data.habits, period, now, offset, weekStart]);
+
+  /** A month calendar or a whole-year grid: one column per week, shaded by check-ins. */
   const heatWeeks = useMemo(() => {
-    const byKey = new Map(stats.activity.map((a) => [a.key, a.count]));
+    if (period === 'week') return [];
     const max = Math.max(1, data.habits.length);
     const today = startOfDay(now);
-    return Array.from({ length: 12 }, (_, w) =>
+    const first = startOfWeek(periodData.from, { weekStartsOn });
+    const weeks = Math.ceil((Math.round((periodData.to.getTime() - first.getTime()) / 86400000) + 1) / 7);
+    return Array.from({ length: weeks }, (_, w) =>
       Array.from({ length: 7 }, (_, d) => {
-        const date = addDays(stats.heatStart, w * 7 + d);
+        const date = addDays(first, w * 7 + d);
+        if (date < periodData.from || date > periodData.to) return null;
         const key = toDateKey(date);
-        return { key, level: Math.min(1, (byKey.get(key) ?? 0) / max), label: `${format(date, 'PP', { locale: dateLocale })}: ${byKey.get(key) ?? 0}`, future: date > today };
+        const count = data.habits.filter((h) => isDoneOn(h, key)).length;
+        return {
+          key,
+          day: date.getDate(),
+          level: Math.min(1, count / max),
+          label: `${format(date, 'PP', { locale: dateLocale })}: ${count}`,
+          future: date > today,
+          today: date.getTime() === today.getTime(),
+        };
       })
     );
-  }, [stats, data.habits.length, now, dateLocale]);
+  }, [period, periodData, data.habits, now, weekStartsOn, dateLocale]);
+
+  const periodLabel = (() => {
+    const { from, to } = periodData;
+    if (period === 'year') return String(from.getFullYear());
+    if (period === 'month') return format(from, 'LLLL yyyy', { locale: dateLocale });
+    if (offset === 0) return t('reportsThisWeek');
+    return `${format(from, 'd MMM', { locale: dateLocale })} – ${format(to, 'd MMM', { locale: dateLocale })}`;
+  })();
+  const maxDayCount = Math.max(1, data.habits.length);
+  const todayStart = startOfDay(now);
+  const periodBars = periodData.buckets.map((b) => {
+    if (period === 'week') {
+      return {
+        label: dayName(b.start.getDay()),
+        value: b.start > todayStart ? null : b.count / maxDayCount,
+        display: String(b.count),
+        highlight: b.start.getTime() === todayStart.getTime(),
+      };
+    }
+    return {
+      label: period === 'month' ? format(b.start, 'd/M', { locale: dateLocale }) : format(b.start, 'LLLLL', { locale: dateLocale }),
+      value: b.rate,
+      display: b.rate === null ? '' : percent(b.rate),
+      highlight: b.start <= todayStart && todayStart <= b.end,
+    };
+  });
 
   const orderedWeekdays = Array.from({ length: 7 }, (_, i) => (weekStartsOn + i) % 7);
   const maxWeekday = Math.max(1, ...stats.byWeekday);
@@ -173,17 +213,24 @@ export default function Reports() {
                 <UpcomingList upcoming={stats.upcoming} onOpen={() => navigate('/calendar')} />
               </ReportCard>
 
-              <ReportCard title={t('notes')} icon={<NotebookText size={16} />}>
-                <div className="flex gap-2">
-                  <StatTile label={t('noteCount')} value={stats.notes.total} />
-                  <StatTile label={t('reportsNewThisWeek')} value={stats.notes.newThisWeek} />
-                </div>
-                {stats.notes.topTags.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-1.5" aria-label={t('reportsTopTags')}>
-                    {stats.notes.topTags.map(({ tag, count }) => (
-                      <span key={tag} className="rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground">#{tag} · {count}</span>
+              <ReportCard title={t('reportsNoteReminders')} icon={<BellRing size={16} />}>
+                {stats.reminders.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">{t('reportsNoReminders')}</p>
+                ) : (
+                  <ul className="divide-y divide-border" data-testid="reports-note-reminders">
+                    {stats.reminders.slice(0, 8).map(({ note }) => (
+                      <li key={note.id}>
+                        <button
+                          type="button"
+                          onClick={() => navigate('/notes', { state: { openNoteId: note.id } })}
+                          className="flex w-full items-center justify-between gap-3 py-2.5 text-left text-sm"
+                        >
+                          <span className="min-w-0 truncate text-foreground">{note.name?.trim() || t('untitledItem')}</span>
+                          <ReminderChip reminder={note.reminder!} className="shrink-0 text-muted-foreground" />
+                        </button>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 )}
               </ReportCard>
             </TabsContent>
@@ -193,38 +240,78 @@ export default function Reports() {
                 <p className="mt-10 text-center text-muted-foreground">{t('reportsNoHabits')}</p>
               ) : (
                 <>
-                  <ReportCard title={t('reportsWeeklyRate')} icon={<Target size={16} />}>
-                    <BarChart
-                      bars={stats.rates.map((r, i) => ({
-                        label: format(r.weekStart, 'd/M', { locale: dateLocale }),
-                        value: r.rate,
-                        display: r.rate === null ? '' : percent(r.rate),
-                        highlight: i === stats.rates.length - 1,
-                      }))}
-                    />
+                  <div className="flex items-center justify-between gap-2">
+                    <div role="radiogroup" aria-label={t('reportsPeriod')} className="flex rounded-full bg-muted p-1">
+                      {(['week', 'month', 'year'] as const).map((p) => (
+                        <button
+                          key={p}
+                          type="button"
+                          role="radio"
+                          aria-checked={period === p}
+                          onClick={() => {
+                            setPeriod(p);
+                            setOffset(0);
+                          }}
+                          className={`rounded-full px-3 py-1.5 text-sm transition-colors ${period === p ? 'bg-foreground font-medium text-background' : 'text-muted-foreground'}`}
+                        >
+                          {t(p === 'week' ? 'reportsWeek' : p === 'month' ? 'reportsMonth' : 'reportsYear')}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button type="button" onClick={() => setOffset((o) => o + 1)} aria-label={t('reportsPrevious')} className="rounded-full p-1.5 hover:bg-hover">
+                        <ChevronLeft size={18} />
+                      </button>
+                      <button type="button" onClick={() => setOffset((o) => Math.max(0, o - 1))} disabled={offset === 0} aria-label={t('reportsNext')} className="rounded-full p-1.5 hover:bg-hover disabled:opacity-30">
+                        <ChevronRight size={18} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <ReportCard title={periodLabel} icon={<Target size={16} />}>
+                    <div className="flex gap-2">
+                      <StatTile label={t('reportsHabitsDone')} value={periodData.rate === null ? '–' : percent(periodData.rate)} />
+                      <StatTile label={t('reportsCheckIns')} value={periodData.count} />
+                    </div>
+                    {periodData.rate !== null && <div className="mt-3"><ProgressBar value={periodData.rate} label={t('reportsHabitsDone')} /></div>}
+                    <div className="mt-4">
+                      <BarChart bars={periodBars} height={period === 'week' ? 72 : 96} />
+                    </div>
                   </ReportCard>
 
-                  <ReportCard title={t('reportsActivity')}>
-                    <Heatmap weeks={heatWeeks} rowLabels={orderedWeekdays.map(dayName)} />
-                  </ReportCard>
-
-                  {stats.reports.map((r) => (
-                    <ReportCard key={r.habit.id}>
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="truncate font-medium text-foreground">{r.habit.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {r.kind === 'open' ? t('reportsOpenHabit') : r.rate30 === null ? '–' : `${t('reportsLast30')}: ${percent(r.rate30)}`}
-                          </p>
-                        </div>
-                        <WeekDots days={r.last7} />
-                      </div>
-                      <div className="mt-3 flex items-center gap-4 text-sm">
-                        <span className="flex items-center gap-1.5 text-foreground"><Flame size={14} />{streakText(r)}</span>
-                        <span className="text-muted-foreground">{t('reportsBest').replace('{count}', String(r.streak.best))}</span>
-                      </div>
+                  {period !== 'week' && (
+                    <ReportCard title={t('reportsDailyActivity')}>
+                      {period === 'month'
+                        ? <MonthGrid weeks={heatWeeks} dayLabels={orderedWeekdays.map(dayName)} />
+                        : <Heatmap weeks={heatWeeks} rowLabels={[]} compact />}
                     </ReportCard>
-                  ))}
+                  )}
+
+                  {periodData.habits.map((h) => {
+                    const r = stats.reports.find((x) => x.habit.id === h.habit.id);
+                    return (
+                      <ReportCard key={h.habit.id}>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate font-medium text-foreground">{h.habit.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {h.kind === 'open' || h.rate === null
+                                ? countedSentence(t, language, 'daysCount', h.count)
+                                : `${percent(h.rate)} · ${h.done}/${h.expected}`}
+                            </p>
+                          </div>
+                          {period === 'week' && offset === 0 && r && <WeekDots days={r.last7} />}
+                        </div>
+                        {h.rate !== null && h.kind !== 'open' && <div className="mt-3"><ProgressBar value={h.rate} label={h.habit.name} /></div>}
+                        {r && (
+                          <div className="mt-3 flex items-center gap-4 text-sm">
+                            <span className="flex items-center gap-1.5 text-foreground"><Flame size={14} />{streakText(r)}</span>
+                            <span className="text-muted-foreground">{t('reportsBest').replace('{count}', String(r.streak.best))}</span>
+                          </div>
+                        )}
+                      </ReportCard>
+                    );
+                  })}
                 </>
               )}
             </TabsContent>

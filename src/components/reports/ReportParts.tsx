@@ -68,30 +68,68 @@ export function BarChart({ bars, height = 96 }: { bars: Bar[]; height?: number }
 }
 
 /** Contribution-style grid: one column per week, one row per weekday, shade = how many habits were done. */
-export function Heatmap({ weeks, rowLabels }: { weeks: Array<Array<{ key: string; level: number; label: string; future?: boolean } | null>>; rowLabels: string[] }) {
+export function Heatmap({ weeks, rowLabels, compact = false }: {
+  weeks: Array<Array<{ key: string; level: number; label: string; future?: boolean } | null>>;
+  rowLabels: string[];
+  /** A whole year: 53 narrow columns of square cells with tighter gaps. */
+  compact?: boolean;
+}) {
+  const cellHeight = compact ? 'aspect-square' : 'h-4';
   return (
-    <div className="flex gap-1" role="img" aria-label={rowLabels.join(', ')}>
-      <div className="flex flex-col gap-1 pr-1 text-[9px] text-muted-foreground">
-        {rowLabels.map((label, i) => (
-          <span key={i} className="flex h-4 items-center">{i % 2 === 0 ? label : ''}</span>
-        ))}
-      </div>
+    <div className={compact ? 'flex gap-[2px]' : 'flex gap-1'} role="img" aria-label={rowLabels.join(', ')}>
+      {rowLabels.length > 0 && (
+        <div className="flex flex-col gap-1 pr-1 text-[9px] text-muted-foreground">
+          {rowLabels.map((label, i) => (
+            <span key={i} className="flex h-4 items-center">{i % 2 === 0 ? label : ''}</span>
+          ))}
+        </div>
+      )}
       {weeks.map((week, w) => (
-        <div key={w} className="flex flex-1 flex-col gap-1">
+        <div key={w} className={cn('flex min-w-0 flex-1 flex-col', compact ? 'gap-[2px]' : 'gap-1')}>
           {week.map((cell, d) =>
             cell ? (
               <div
                 key={cell.key}
                 title={cell.label}
-                className={cn('h-4 rounded-[4px]', cell.future ? 'bg-transparent' : 'bg-foreground')}
+                className={cn(cellHeight, compact ? 'rounded-[2px]' : 'rounded-[4px]', cell.future ? 'bg-transparent' : 'bg-foreground')}
                 style={{ opacity: cell.future ? 0 : cell.level === 0 ? 0.08 : 0.25 + cell.level * 0.75 }}
               />
             ) : (
-              <div key={d} className="h-4" />
+              <div key={d} className={cellHeight} />
             )
           )}
         </div>
       ))}
+    </div>
+  );
+}
+
+/**
+ * A month as a calendar: one row per week, one column per weekday, each day numbered and
+ * shaded by how many habits were done. `null` cells are days outside the month.
+ */
+export function MonthGrid({ weeks, dayLabels }: {
+  weeks: Array<Array<{ key: string; day: number; level: number; label: string; future?: boolean; today?: boolean } | null>>;
+  dayLabels: string[];
+}) {
+  return (
+    <div className="mx-auto grid max-w-sm grid-cols-7 gap-1" role="img" aria-label={dayLabels.join(', ')}>
+      {dayLabels.map((label, i) => (
+        <span key={`h${i}`} className="pb-1 text-center text-[10px] text-muted-foreground">{label}</span>
+      ))}
+      {weeks.flat().map((cell, i) =>
+        cell ? (
+          <div key={cell.key} title={cell.label} className={cn('relative flex aspect-square items-center justify-center rounded-md text-[11px]', cell.today && 'ring-2 ring-foreground ring-offset-1 ring-offset-background')}>
+            <div
+              className="absolute inset-0 rounded-md bg-foreground"
+              style={{ opacity: cell.future ? 0.03 : cell.level === 0 ? 0.08 : 0.25 + cell.level * 0.75 }}
+            />
+            <span className={cn('relative', !cell.future && cell.level > 0.5 ? 'text-background' : 'text-foreground')}>{cell.day}</span>
+          </div>
+        ) : (
+          <div key={`e${i}`} />
+        )
+      )}
     </div>
   );
 }

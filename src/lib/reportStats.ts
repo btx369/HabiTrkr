@@ -247,6 +247,109 @@ export function weekSummary(habits: Habit[], now: Date, weekStartsOn: WeekStart)
   return expected > 0 ? done / expected : null;
 }
 
+/* ------------------------------------------------- habits by week / month / year */
+
+export type ReportPeriod = 'week' | 'month' | 'year';
+
+/** The week, month or year containing `now`, moved back by `offset` periods (0 = current). */
+export function periodBounds(period: ReportPeriod, now: Date, offset: number, weekStartsOn: WeekStart): { from: Date; to: Date } {
+  if (period === 'week') {
+    const from = addDays(startOfWeek(now, { weekStartsOn }), -7 * offset);
+    return { from, to: addDays(from, 6) };
+  }
+  if (period === 'month') {
+    const from = addMonths(startOfMonth(now), -offset);
+    return { from, to: addDays(addMonths(from, 1), -1) };
+  }
+  const from = new Date(now.getFullYear() - offset, 0, 1);
+  return { from, to: new Date(now.getFullYear() - offset, 11, 31) };
+}
+
+export interface PeriodBucket {
+  start: Date;
+  end: Date;
+  /** Completion of goal-bearing habits in the bucket; null before anything was due. */
+  rate: number | null;
+  /** Check-ins in the bucket: one per habit per day it was done. */
+  count: number;
+}
+
+export interface PeriodHabit {
+  habit: Habit;
+  kind: HabitKind;
+  done: number;
+  expected: number;
+  rate: number | null;
+  /** Days it was done in the period. */
+  count: number;
+}
+
+export interface PeriodReport {
+  from: Date;
+  to: Date;
+  rate: number | null;
+  count: number;
+  /** Days of a week, weeks of a month, months of a year. */
+  buckets: PeriodBucket[];
+  habits: PeriodHabit[];
+}
+
+const countDone = (habits: Habit[], from: Date, to: Date, now: Date) => {
+  const last = new Date(Math.min(startOfDay(to).getTime(), startOfDay(now).getTime()));
+  let count = 0;
+  for (let d = startOfDay(from); d <= last; d = addDays(d, 1)) {
+    const key = toDateKey(d);
+    for (const habit of habits) if (isDoneOn(habit, key)) count++;
+  }
+  return count;
+};
+
+const completionOf = (habits: Habit[], from: Date, to: Date, now: Date, weekStartsOn: WeekStart) => {
+  let done = 0;
+  let expected = 0;
+  for (const habit of habits) {
+    const c = completionBetween(habit, from, to, now, weekStartsOn);
+    done += c.done;
+    expected += c.expected;
+  }
+  return expected > 0 ? done / expected : null;
+};
+
+/** Everything the habits tab shows for one week, month or year. */
+export function periodReport(habits: Habit[], period: ReportPeriod, now: Date, offset: number, weekStartsOn: WeekStart): PeriodReport {
+  const { from, to } = periodBounds(period, now, offset, weekStartsOn);
+  const ranges: Array<[Date, Date]> = [];
+  if (period === 'week') {
+    for (let i = 0; i < 7; i++) ranges.push([addDays(from, i), addDays(from, i)]);
+  } else if (period === 'month') {
+    for (let ws = startOfWeek(from, { weekStartsOn }); ws <= to; ws = addDays(ws, 7)) {
+      const we = addDays(ws, 6);
+      ranges.push([ws < from ? from : ws, we > to ? to : we]);
+    }
+  } else {
+    for (let m = 0; m < 12; m++) {
+      const start = addMonths(from, m);
+      ranges.push([start, addDays(addMonths(start, 1), -1)]);
+    }
+  }
+  return {
+    from,
+    to,
+    rate: completionOf(habits, from, to, now, weekStartsOn),
+    count: countDone(habits, from, to, now),
+    buckets: ranges.map(([start, end]) => ({
+      start,
+      end,
+      rate: completionOf(habits, start, end, now, weekStartsOn),
+      count: countDone(habits, start, end, now),
+    })),
+    habits: habits.map((habit) => {
+      const c = completionBetween(habit, from, to, now, weekStartsOn);
+      return { habit, kind: habitKind(habit), ...c, rate: rateOf(c), count: countDone([habit], from, to, now) };
+    }),
+  };
+}
+
 /* ------------------------------------------------------------------ events */
 
 export interface Occurrence {
