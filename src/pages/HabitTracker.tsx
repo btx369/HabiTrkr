@@ -27,7 +27,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { countedSentence, itemDisplayName, namedSentence } from '@/lib/countedMessage';
 import { useDateLocale } from '@/lib/dateLocale';
 import { useWeekStart, getJsDayFromVisualIndex } from '@/contexts/WeekStartContext';
-import { useScrollDirection } from '@/hooks/useScrollDirection';
+import { FLOATING_ADD_CLASS, FLOATING_ADD_STYLE } from '@/lib/floatingAdd';
 import { useBulkSelection } from '@/hooks/useBulkSelection';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { getTodayKey, toDateKey } from '@/lib/dateUtils';
@@ -148,7 +148,6 @@ export default function HabitTracker() {
     exitBulkMode,
   } = useBulkSelection();
   
-  const scrollDirection = useScrollDirection();
 
   const weekStart = startOfWeek(currentWeek, { weekStartsOn });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -1444,13 +1443,8 @@ export default function HabitTracker() {
         aria-label={t('add')}
         onClick={handleAddButtonClick}
         /* Same hairline as the floating nav capsule; see the note in Notes.tsx. */
-        className={cn(
-          "fixed bottom-20 right-2 h-14 w-14 rounded-full z-30 px-0 py-0 bg-black text-white border border-nav-border hover:bg-black/90",
-          "transition-all duration-300 ease-out",
-          scrollDirection === 'down' || activeTab === 'archived'
-            ? "opacity-0 translate-y-4 pointer-events-none" 
-            : "opacity-100 translate-y-0"
-        )}
+        style={FLOATING_ADD_STYLE}
+            className={cn(FLOATING_ADD_CLASS, activeTab === 'archived' && 'hidden')}
       >
         <Plus size={24} />
       </Button>

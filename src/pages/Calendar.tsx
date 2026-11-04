@@ -424,12 +424,8 @@ export default function Calendar() {
                 
                 {/* Calendar days */}
                 <div
-                  className="grid grid-cols-7"
-                  style={{
-                    gridTemplateRows: `repeat(${calendarDays.length / 7}, minmax(0, 1fr))`,
-                    height: 'calc(100dvh - 19rem)',
-                    minHeight: '18rem',
-                  }}
+                  // Compact fixed-height rows instead of stretching the grid to fill the screen.
+                  className="grid grid-cols-7 auto-rows-[3.25rem] md:auto-rows-[4.75rem]"
                 >
                   {calendarDays.map(day => {
                     const dayEvents = filterEvents(getEventsForDate(day));
@@ -443,7 +439,9 @@ export default function Calendar() {
                         onClick={() => setSelectedDate(day)}
                         onMouseDown={(e) => e.currentTarget.blur()}
                         className={cn(
-                          "relative flex min-h-0 items-start justify-start border-b border-r p-2 text-sm text-left transition-colors last:border-r-0",
+                          // Phone: the day number sits in the middle of the cell. From `md` (tablet, desktop) it
+                          // moves to the top-left corner, where there is room for it.
+                          "relative flex min-h-0 items-center justify-center md:items-start md:justify-start border-b border-r p-1 md:p-2 text-sm text-left transition-colors last:border-r-0",
                           "focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
                           isCurrentMonth ? "text-foreground" : "text-muted-foreground",
                           isToday(day) && "font-bold",
@@ -457,7 +455,9 @@ export default function Calendar() {
                           isSelected && !isToday(day) && "ring-2 ring-primary",
                         )}>{format(day, 'd')}</span>
                         {hasEvents && (
-                          <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 flex gap-0.5">
+                          // Dots sit around the middle of the cell, not on its bottom edge: just under the
+                          // centred number on a phone, in the centre of the cell from `md`.
+                          <div className="absolute left-1/2 top-[68%] md:top-1/2 -translate-x-1/2 md:-translate-y-1/2 flex gap-0.5">
                             {dayEvents.slice(0, 3).map((event, idx) => {
                               const hasColor = event.color && event.color !== '#FFFFFF';
                               return (

@@ -42,6 +42,7 @@ export function CalendarDayView({
   const { t } = useLanguage();
   const dateLocale = useDateLocale();
   const gridRef = useRef<HTMLDivElement>(null);
+  const stickyHeaderRef = useRef<HTMLDivElement>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // Separate all-day/untimed events from timed events
@@ -159,7 +160,12 @@ export function CalendarDayView({
     if (gridRef.current) {
       const scrollToHour = isToday(currentDate) ? Math.max(getHours(new Date()) - 1, 0) : 8;
       const offsetTop = gridRef.current.getBoundingClientRect().top + window.scrollY;
-      window.scrollTo({ top: offsetTop + scrollToHour * HOUR_HEIGHT, behavior: 'smooth' });
+      // The fixed page header (11.5rem, see Calendar's shield) and the sticky day header
+      // cover the top of the screen, so the wanted hour has to land BELOW them. Without
+      // this the hour sat underneath and the current-time line was scrolled out of view.
+      const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      const covered = 11.5 * rem + (stickyHeaderRef.current?.offsetHeight ?? 0) + 24; // +24: keeps that hour label (centred on its line) readable
+      window.scrollTo({ top: Math.max(offsetTop + scrollToHour * HOUR_HEIGHT - covered, 0), behavior: 'smooth' });
     }
   }, [currentDate]);
 
@@ -196,7 +202,7 @@ export function CalendarDayView({
   return (
     <div className="flex flex-col bg-[hsl(var(--surface-card))] backdrop-blur-[12px] rounded-[20px] border border-border shadow-[var(--surface-shadow)]">
       {/* Header with day info and all-day events */}
-      <div className="sticky top-[11.5rem] z-30 flex rounded-t-[20px] bg-[hsl(var(--item-card-surface))] border-b-2 border-black dark:border-white">
+      <div ref={stickyHeaderRef} className="sticky top-[11.5rem] z-30 flex rounded-t-[20px] bg-[hsl(var(--item-card-surface))] border-b-2 border-black dark:border-white">
         {/* Day label */}
         <div className="w-16 flex-shrink-0 p-2 text-center border-r border-border">
           <span className="text-sm text-muted-foreground">{dayOfWeek}</span>

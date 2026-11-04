@@ -40,7 +40,7 @@ export function NoteTypePopup({ isOpen, onTypeSelect, onClose }: NoteTypePopupPr
       />
       
       {/* Popup */}
-      <div className="fixed bottom-36 right-2 z-50 flex flex-col gap-3">
+      <div className="fixed bottom-[5.5rem] right-2 z-50 flex flex-col gap-3">
         {noteTypes.map(({ type, icon: Icon, label }) => (
             <Button
               key={type}

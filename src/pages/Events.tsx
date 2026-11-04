@@ -31,7 +31,7 @@ import { takePendingUndo } from '@/lib/undoManager';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { useBulkSelection } from '@/hooks/useBulkSelection';
 import { BulkActionBar, BulkActionType, BulkActionContext } from '@/components/shared/BulkActionBar';
-import { useScrollDirection } from '@/hooks/useScrollDirection';
+import { FLOATING_ADD_CLASS, FLOATING_ADD_STYLE } from '@/lib/floatingAdd';
 import { cn } from '@/lib/utils';
 import { 
   scheduleEventNotification, 
@@ -140,8 +140,6 @@ export default function Events() {
     exitBulkMode,
   } = useBulkSelection();
 
-  // Scroll direction for hiding Add button
-  const scrollDirection = useScrollDirection();
 
   // Check if any dialog/editor is open - blocks swipe navigation
   const isAnyDialogOpen = isAddDialogOpen || !!selectedEvent || isEventFolderCreatorOpen || 
@@ -1235,13 +1233,8 @@ export default function Events() {
             aria-label={t('add')}
             onClick={handleAddButtonClick} 
             /* Same hairline as the floating nav capsule; see the note in Notes.tsx. */
-            className={cn(
-              "fixed bottom-20 right-2 h-14 w-14 rounded-full z-30 bg-black text-white border border-nav-border hover:bg-black/90",
-              "transition-all duration-300 ease-out",
-              scrollDirection === 'down' 
-                ? "opacity-0 translate-y-4 pointer-events-none" 
-                : "opacity-100 translate-y-0"
-            )}
+            style={FLOATING_ADD_STYLE}
+            className={FLOATING_ADD_CLASS}
           >
             <Plus size={24} />
           </Button>
