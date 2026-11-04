@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { addDays, format, startOfDay, startOfWeek } from 'date-fns';
 import { BellRing, CalendarDays, ChevronLeft, ChevronRight, Flame, Lightbulb, Target } from 'lucide-react';
 import { Layout } from '@/components/Layout';
+import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { Tabs, TabsContent, SlidingTabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Heatmap, BarChart, MonthGrid, ProgressBar, ReportCard, StatTile, WeekDots } from '@/components/reports/ReportParts';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -37,12 +38,22 @@ const DAY_SHORT_KEYS = ['dayShortSunday', 'dayShortMonday', 'dayShortTuesday', '
 const percent = (value: number) => `${Math.round(value * 100)}%`;
 
 /** Reports and statistics, computed from the habits, events and notes on this device. */
+const REPORT_TABS = ['summary', 'habits', 'events'];
+
 export default function Reports() {
   const { t, language } = useLanguage();
   const { weekStartsOn } = useWeekStart();
   const dateLocale = useDateLocale();
   const navigate = useNavigate();
   const [tab, setTab] = useState('summary');
+  const swipeTab = useCallback((step: number) => {
+    setTab((current) => REPORT_TABS[Math.min(REPORT_TABS.length - 1, Math.max(0, REPORT_TABS.indexOf(current) + step))]);
+  }, []);
+  const swipeHandlers = useSwipeGesture({
+    onSwipeLeft: () => swipeTab(1),
+    onSwipeRight: () => swipeTab(-1),
+    threshold: 50,
+  });
   const [period, setPeriod] = useState<ReportPeriod>('week');
   const [offset, setOffset] = useState(0);
 
@@ -150,7 +161,7 @@ export default function Reports() {
   const nothingYet = data.habits.length === 0 && data.events.length + data.archivedEvents.length === 0 && stats.notes.total === 0;
 
   return (
-    <Layout pageTitle={t('reports')} showSearch={false}>
+    <Layout pageTitle={t('reports')} showSearch={false} swipeHandlers={swipeHandlers}>
       <Tabs value={tab} onValueChange={setTab} className="w-full">
         <div className="fixed top-16 left-0 right-0 z-40 px-2">
           <div className="flex items-center justify-between py-2">

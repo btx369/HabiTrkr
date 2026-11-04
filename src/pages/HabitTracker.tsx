@@ -1133,7 +1133,7 @@ export default function HabitTracker() {
       habitFolders.map((folder) => ({ id: folder.id, itemIds: folder.habitIds })),
       archivedHabits,
     )}>
-    <Layout 
+    <Layout swipeHandlers={swipeHandlers} 
       showSearch={true}
       searchQuery={searchQuery}
       onSearchChange={setSearchQuery}
@@ -1141,7 +1141,7 @@ export default function HabitTracker() {
       isBulkMode={isBulkMode}
       shieldHeight={activeTab === 'habits' ? '14rem' : '7.25rem'}
     >
-      <div {...swipeHandlers}>
+      <div>
         <Tabs value={activeTab} onValueChange={(tab) => { finishHabitPointerDrag(false); setActiveTab(tab); exitBulkMode(); setDraggedHabitId(null); setHabitDragPreviewOrder([]); habitDragPreviewRef.current = []; }}>
           <div className="fixed top-16 left-0 right-0 z-40 px-2">
             <div className="flex items-start justify-between py-2">

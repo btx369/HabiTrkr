@@ -1219,14 +1219,14 @@ export default function Events() {
       eventFolders.map((folder) => ({ id: folder.id, itemIds: folder.eventIds })),
       archivedEvents,
     )}>
-    <Layout 
+    <Layout swipeHandlers={swipeHandlers} 
       showSearch={true}
       searchQuery={searchQuery}
       onSearchChange={setSearchQuery}
       isBulkMode={isBulkMode}
       pageTitle={t('events')}
     >
-      <div {...swipeHandlers} className="space-y-2">
+      <div className="space-y-2">
         {/* Floating Add Button */}
         {!isBulkMode && activeTab !== 'archived' && (
           <Button 

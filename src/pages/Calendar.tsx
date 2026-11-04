@@ -270,14 +270,14 @@ export default function Calendar() {
     }
   }, [currentDate, viewMode, weekStartsOn]);
 
-  return (    <Layout 
+  return (    <Layout swipeHandlers={swipeHandlers} 
       showSearch={true}
       searchQuery={searchQuery}
       onSearchChange={setSearchQuery}
       pageTitle={t('calendar')}
       shieldHeight="11.5rem"
     >
-      <div {...swipeHandlers}>
+      <div>
         {/* Tab navigation - matches Notes/Events layout */}
         <div className="fixed top-16 left-0 right-0 z-40 px-2">
           <div className="flex items-center justify-between py-2">

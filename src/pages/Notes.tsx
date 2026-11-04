@@ -2309,14 +2309,14 @@ const hasTitle = (note.name || '').trim() !== '';
       folders.map((folder) => ({ id: folder.id, itemIds: folder.noteIds })),
       archivedNotes,
     )}>
-    <Layout 
+    <Layout swipeHandlers={swipeHandlers} 
       showSearch={true}
       searchQuery={searchQuery}
       onSearchChange={setSearchQuery}
       isBulkMode={isBulkMode}
       pageTitle={t('notes')}
     >
-      <div {...swipeHandlers}>
+      <div>
         {!isBulkMode && activeTab !== 'archived' && (
           <Button 
             variant="ghostStatic"
