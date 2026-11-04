@@ -1,4 +1,4 @@
-import { useRef, TouchEvent } from 'react';
+import { useRef, TouchEvent, WheelEvent } from 'react';
 
 interface SwipeGestureOptions {
   onSwipeLeft?: () => void;
@@ -46,7 +46,18 @@ export const useSwipeGesture = ({ onSwipeLeft, onSwipeRight, threshold = 80 }: S
     touchEndY.current = null;
   };
 
+  // Desktop: horizontal trackpad scroll (two-finger swipe) or a sideways mouse wheel.
+  const wheelLockUntil = useRef(0);
+  const handleWheel = (e: WheelEvent) => {
+    if (Math.abs(e.deltaX) < 40 || Math.abs(e.deltaX) < Math.abs(e.deltaY) * 1.5) return;
+    const now = Date.now();
+    if (now < wheelLockUntil.current) return;
+    wheelLockUntil.current = now + 600; // one tab per gesture (inertia keeps firing events)
+    if (e.deltaX > 0) onSwipeLeft?.(); else onSwipeRight?.();
+  };
+
   return {
+    onWheel: handleWheel,
     onTouchStart: handleTouchStart,
     onTouchMove: handleTouchMove,
     onTouchEnd: handleTouchEnd,

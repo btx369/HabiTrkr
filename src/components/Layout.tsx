@@ -1,4 +1,4 @@
-import { ReactNode, TouchEvent, useEffect, useRef } from 'react';
+import { ReactNode, TouchEvent, WheelEvent, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Header } from './Header';
 import { BottomNavigation } from './BottomNavigation';
@@ -18,6 +18,7 @@ interface LayoutProps {
     onTouchStart: (e: TouchEvent) => void;
     onTouchMove: (e: TouchEvent) => void;
     onTouchEnd: () => void;
+    onWheel?: (e: WheelEvent) => void;
   };
 }
 
@@ -54,6 +55,11 @@ export const Layout = ({
       }
       swipeActive.current = true;
       swipeHandlers.onTouchStart(e);
+    },
+    onWheel: (e: WheelEvent) => {
+      const zone = parseFloat(shieldHeight) * (shieldHeight.endsWith('rem') ? 16 : 1);
+      if (e.clientY < zone || (e.target as HTMLElement).closest?.('[data-no-swipe], input, textarea')) return;
+      swipeHandlers.onWheel?.(e);
     },
     onTouchMove: (e: TouchEvent) => { if (swipeActive.current) swipeHandlers.onTouchMove(e); },
     onTouchEnd: () => {
