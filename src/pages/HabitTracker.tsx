@@ -734,6 +734,7 @@ export default function HabitTracker() {
   };
 
   const handleHabitDragStart = (habitId: string, event: React.DragEvent<HTMLDivElement>) => {
+    if (habits.find((h) => h.id === habitId)?.pinned) { event.preventDefault(); return; }
     const visibleItems = activeTab === 'archived' ? getArchivedHabitsFiltered() : filterHabits();
     setDraggedHabitId(habitId);
     draggedHabitIdRef.current = habitId;
@@ -774,6 +775,10 @@ export default function HabitTracker() {
   };
 
   const moveHabitInOrder = (order: string[], draggedId: string, targetId: string, beforeTarget: boolean) => {
+    // Pinned habits never move: they cannot be dragged, and a dragged habit cannot take a
+    // place above them. They stay at the top in the order they already have.
+    const pinnedIds = new Set(habits.filter((h) => h.pinned).map((h) => h.id));
+    if (pinnedIds.has(draggedId)) return order;
     const fromIndex = order.indexOf(draggedId);
     const targetIndex = order.indexOf(targetId);
     if (fromIndex < 0 || targetIndex < 0) return order;
@@ -783,8 +788,9 @@ export default function HabitTracker() {
     let insertIndex = targetIndex + (beforeTarget ? 0 : 1);
     if (fromIndex < insertIndex) insertIndex -= 1;
     next.splice(insertIndex, 0, draggedId);
-    if (next.every((id, index) => id === order[index])) return order;
-    return next;
+    const settled = [...next.filter((id) => pinnedIds.has(id)), ...next.filter((id) => !pinnedIds.has(id))];
+    if (settled.every((id, index) => id === order[index])) return order;
+    return settled;
   };
 
   const updateHabitDragPreview = (draggedId: string, targetId: string, beforeTarget: boolean) => {
@@ -808,6 +814,7 @@ export default function HabitTracker() {
     const card = target.closest('[data-habit-id]');
     const habitId = card?.getAttribute('data-habit-id');
     if (!habitId) return;
+    if (habits.find((h) => h.id === habitId)?.pinned) return; // pinned habits stay put
 
     const visibleItems = activeTab === 'archived' ? getArchivedHabitsFiltered() : filterHabits();
     const visibleIds = visibleItems.map((habit) => habit.id);
