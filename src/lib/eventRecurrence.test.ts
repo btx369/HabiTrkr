@@ -75,6 +75,12 @@ describe('next occurrence and ending', () => {
     expect(daysUntilEvent(event({}))).toBe(999999);
   });
 
+  it('ends a one-off event at midnight after its last day, not when its time passes', () => {
+    const late = event({ startDate: '2026-11-04', startTime: '09:00', endTime: '10:00' });
+    expect(hasEventEnded(late, new Date(2026, 10, 4, 23, 59))).toBe(false);
+    expect(hasEventEnded(late, new Date(2026, 10, 5, 0, 0))).toBe(true);
+  });
+
   it('never ends a recurring event', () => {
     expect(hasEventEnded(event({ isRecurrent: true, recurrenceType: 'daily', startDate: '2020-01-01' }))).toBe(false);
   });

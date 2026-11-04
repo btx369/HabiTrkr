@@ -14,6 +14,10 @@ const Toaster = ({ ...props }: ToasterProps) => {
       // Any toast can be flicked away in any direction, not only the default ones for its corner.
       swipeDirections={["left", "right", "top", "bottom"]}
       className="toaster group"
+      // Above the bottom navigation bar (16px from the edge, 56px tall) and the Add button,
+      // which toasts used to cover for a few seconds.
+      offset={{ bottom: 'calc(88px + env(safe-area-inset-bottom))' }}
+      mobileOffset={{ bottom: 'calc(88px + env(safe-area-inset-bottom))' }}
       /*
        * A sensible width instead of a fixed one.
        *

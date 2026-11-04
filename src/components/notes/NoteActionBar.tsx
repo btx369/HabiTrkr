@@ -85,7 +85,9 @@ export const NoteActionBar = ({
    */
   const sizeStyles = 'h-9 w-9 rounded-full p-0 [&_svg]:!size-6';
   const restStyles = hasColor
-    ? 'bg-transparent hover:bg-black/10'
+    // Black icons on a coloured note, as in its header. In the dark theme the buttons
+    // otherwise took the theme's white and stood out against the pastel.
+    ? 'bg-transparent text-[#000000] hover:bg-black/10'
     : 'bg-transparent hover:bg-hover';
 
   /*

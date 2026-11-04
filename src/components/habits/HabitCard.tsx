@@ -16,6 +16,7 @@ import { getColoredIconClass, getColoredBorderClass } from '@/lib/coloredButtonS
 import { useIsFiled } from '@/contexts/FolderMembershipContext';
 import { cn } from '@/lib/utils';
 import type { ViewType } from '@/types/view';
+import { useNarrowScreen } from '@/hooks/use-narrow-screen';
 
 // Helper to convert hex to rgba for glass effect (matching ColoredCard)
 const hexToRgba = (hexColor: string, alpha: number): string => {
@@ -160,7 +161,10 @@ export function HabitCard({
 
   // The card's parts, laid out one way for the list view (a single row) and another for
   // `x2` (name and icons on a top row, progress and day buttons on a second one).
-  const twoRows = viewType === 'x2';
+  // The list view also uses two rows on narrow phones: in one row the name wrapped, the
+  // badge was cut to "3/8 h…" and icons, days and menu fought for the same space.
+  const isNarrow = useNarrowScreen();
+  const twoRows = viewType === 'x2' || (viewType === 'list' && isNarrow);
   const dragGrip = (
     <>
           {isDragEnabled && !showBulkCheckbox && (

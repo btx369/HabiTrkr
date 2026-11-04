@@ -1984,7 +1984,7 @@ export function NoteViewer({
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent 
         hideCloseButton 
-        className={`fixed inset-0 w-full max-w-none h-full max-h-none m-0 !rounded-none flex flex-col p-0 border-0 translate-x-0 translate-y-0 left-0 top-0 backdrop-blur-xl data-[state=open]:animate-hero-expand data-[state=closed]:animate-hero-collapse ${
+        className={`fixed inset-0 w-full max-w-none h-full max-h-none m-0 !rounded-none flex flex-col p-0 border-0 translate-x-0 translate-y-0 left-0 top-0 data-[state=open]:animate-hero-expand data-[state=closed]:animate-hero-collapse ${
           hasColor ? 'text-[#000000] [&_.text-muted-foreground]:text-[#000000]/70 [&_.text-foreground]:text-[#000000]' : ''
         }`}
         // `--card-hover-color` is set here for the same reason ColoredCard sets it:
@@ -1997,7 +1997,13 @@ export function NoteViewer({
         // at the bottom (a translucent wash over it) came out visibly greyer — the bar
         // looked wrong but the body was the thing out of step.
         style={{
-          backgroundColor: hasColor ? hexToRgba(note.color, 0.75) : 'hsl(var(--background))',
+          // Opaque: the same tint as before, laid over the page background instead of over
+          // whatever is behind the dialog. Translucent and blurred, it showed smudges of the
+          // cards behind a coloured note, which stood out in the dark theme.
+          backgroundColor: 'hsl(var(--background))',
+          ...(hasColor
+            ? { backgroundImage: `linear-gradient(${hexToRgba(note.color, 0.75)}, ${hexToRgba(note.color, 0.75)})` }
+            : {}),
           ...(keyboardViewport
             ? { height: keyboardViewport.height, maxHeight: keyboardViewport.height, top: keyboardViewport.top, bottom: 'auto' }
             : {}),

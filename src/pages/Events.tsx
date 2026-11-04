@@ -205,7 +205,7 @@ export default function Events() {
         // No Undo here: this effect would archive the same events again straight away,
         // so the button could only ever appear to do nothing. Drop the pending rollback.
         takePendingUndo();
-        toast.success(say('toastArchived', 'events'));
+        toast.success(countedSentence(t, language, 'autoArchivedEvents', pastEvents.length));
       }
     };
 
