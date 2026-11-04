@@ -1744,21 +1744,32 @@ const hasTitle = (note.name || '').trim() !== '';
   };
 
   const sortFolders = (foldersList: NoteFolder[]): NoteFolder[] => {
-    const sorted = [...foldersList];
-    switch (folderSortType) {
-      case 'name':
-        return sorted.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true }));
-      case 'dateCreated':
-        return sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      case 'dateModified':
-        return sorted.sort((a, b) => new Date(b.modifiedAt || b.createdAt).getTime() - new Date(a.modifiedAt || a.createdAt).getTime());
-      case 'recentlyAdded':
-        return sorted.sort((a, b) => new Date(b.lastNoteAddedAt || b.createdAt).getTime() - new Date(a.lastNoteAddedAt || a.createdAt).getTime());
-      case 'noteCount':
-        return sorted.sort((a, b) => b.noteIds.length - a.noteIds.length);
-      default:
-        return sorted;
-    }
+    const time = (value?: string) => (value ? new Date(value).getTime() : 0);
+    const compare = (a: NoteFolder, b: NoteFolder): number => {
+      switch (folderSortType) {
+        case 'name':
+          return a.name.localeCompare(b.name, undefined, { sensitivity: 'base', numeric: true });
+        case 'dateCreated':
+          return time(a.createdAt) - time(b.createdAt);
+        case 'dateModified':
+          return time(a.modifiedAt || a.createdAt) - time(b.modifiedAt || b.createdAt);
+        case 'recentlyAdded':
+          return time(a.lastNoteAddedAt || a.createdAt) - time(b.lastNoteAddedAt || b.createdAt);
+        case 'noteCount':
+          return a.noteIds.length - b.noteIds.length;
+        default:
+          return 0;
+      }
+    };
+    // The direction chosen in the menu was never applied here, and the ordering below it
+    // always ran newest/largest first, so the menu looked dead. Ascending is the natural
+    // order (A-Z, oldest first, fewest notes first), the same as the Events folders.
+    const sign = folderSortDirection === 'asc' ? 1 : -1;
+    return [...foldersList].sort((a, b) => {
+      if (a.pinned && !b.pinned) return -1;
+      if (!a.pinned && b.pinned) return 1;
+      return sign * compare(a, b);
+    });
   };
 
   /**
