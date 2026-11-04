@@ -233,6 +233,15 @@ export default function Profile() {
                     <ImageIcon size={20} />
                     {t('addImage')}
                   </DropdownMenuItem>
+                  {userAvatar && (
+                    <DropdownMenuItem
+                      onSelect={() => { setUserAvatar(''); setLocalStorageString(PROFILE_AVATAR_KEY, ''); }}
+                      className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+                    >
+                      <Trash2 size={20} />
+                      {t('removePhoto')}
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
               <div className="pointer-events-none absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-1.5">
