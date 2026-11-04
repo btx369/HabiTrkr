@@ -1919,7 +1919,7 @@ export function NoteViewer({
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
-        <DialogHeader className={`flex-row items-center justify-between space-y-0 pb-2 border-b px-3 flex-shrink-0 h-14 ${borderClass}`}>
+        <DialogHeader className={`flex-row items-center justify-between space-y-0 border-b px-3 flex-shrink-0 h-14 ${borderClass}`}>
           <DialogTitle className="sr-only" id="note-viewer-title">{t('noteViewerTitle')}</DialogTitle>
           <DialogDescription className="sr-only">{t('noteViewerSubtitle')}</DialogDescription>
           <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -1949,10 +1949,13 @@ export function NoteViewer({
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <Button
                 aria-label={t('search')}
+                aria-pressed={isSearching}
                 variant={iconButtonStyles.variant}
                 size="sm"
                 onClick={handleSearchToggle}
-                className={`h-8 w-8 p-0 flex-shrink-0 rounded-full transition-colors duration-200 ${themedHoverStyles}`}
+                // While searching the button is filled, like the open buttons of the action
+                // bar, so it is clear that tapping it again switches the search off.
+                className={`h-8 w-8 p-0 flex-shrink-0 rounded-full transition-colors duration-200 ${isSearching ? 'bg-black text-white hover:bg-black' : themedHoverStyles}`}
               >
                 <Search size={16} />
               </Button>
@@ -2073,7 +2076,7 @@ export function NoteViewer({
         </DialogHeader>
         
         <ScrollArea ref={scrollAreaRootRef} className="flex-1 h-full w-full" scrollbarClassName={hasColor ? 'bg-black/30' : 'bg-foreground/20'} style={{ overflowAnchor: 'none' }}>
-          <div className="h-full w-full box-border py-2 px-3 flex flex-col items-stretch max-w-full space-y-3" style={{ overflowAnchor: 'none' }}>
+          <div className="h-full w-full box-border py-3 px-3 flex flex-col items-stretch max-w-full space-y-3" style={{ overflowAnchor: 'none' }}>
             {renderNoteContent()}
             {note.reminder && (
               <div className="pt-1">
