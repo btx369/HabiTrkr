@@ -276,6 +276,7 @@ export default function Calendar() {
       onSearchChange={setSearchQuery}
       pageTitle={t('calendar')}
       shieldHeight="11.5rem"
+      swipeZone="7.25rem"
     >
       <div>
         {/* Tab navigation - matches Notes/Events layout */}

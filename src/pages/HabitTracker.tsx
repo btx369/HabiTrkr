@@ -1140,6 +1140,7 @@ export default function HabitTracker() {
       pageTitle={t('habits')}
       isBulkMode={isBulkMode}
       shieldHeight={activeTab === 'habits' ? '14rem' : '7.25rem'}
+      swipeZone="7.25rem"
     >
       <div>
         <Tabs value={activeTab} onValueChange={(tab) => { finishHabitPointerDrag(false); setActiveTab(tab); exitBulkMode(); setDraggedHabitId(null); setHabitDragPreviewOrder([]); habitDragPreviewRef.current = []; }}>

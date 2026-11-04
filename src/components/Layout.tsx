@@ -13,6 +13,8 @@ interface LayoutProps {
   isBulkMode?: boolean;
   pageTitle?: string;
   shieldHeight?: string;
+  /** Height of the no-swipe zone at the top. Defaults to the shield height; pages whose shield also covers a week/period navigator pass a smaller one so that navigator can be swiped. */
+  swipeZone?: string;
   /** Tab-swipe handlers (useSwipeGesture). Applied to the whole page body, except the header zone. */
   swipeHandlers?: {
     onTouchStart: (e: TouchEvent) => void;
@@ -31,6 +33,7 @@ export const Layout = ({
   isBulkMode = false,
   pageTitle,
   shieldHeight = '7.25rem',
+  swipeZone,
   swipeHandlers
 }: LayoutProps) => {
   const location = useLocation();
@@ -42,12 +45,13 @@ export const Layout = ({
 
   // Swipes only start below the header zone (title/search/profile + tab row with its
   // bulk-action and cog buttons). The zone is the same height as the fixed shield above.
+  const zoneHeight = swipeZone ?? shieldHeight;
   const swipeActive = useRef(false);
   const swipeProps = swipeHandlers && {
     ...swipeHandlers,
     onTouchStart: (e: TouchEvent) => {
       const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-      const zone = shieldHeight.endsWith('rem') ? parseFloat(shieldHeight) * rem : parseFloat(shieldHeight);
+      const zone = zoneHeight.endsWith('rem') ? parseFloat(zoneHeight) * rem : parseFloat(zoneHeight);
       const target = e.target as HTMLElement;
       if (e.touches[0].clientY < zone || target.closest?.('input, textarea, select, [role="slider"], [data-no-swipe]')) {
         swipeActive.current = false;
@@ -57,7 +61,7 @@ export const Layout = ({
       swipeHandlers.onTouchStart(e);
     },
     onWheel: (e: WheelEvent) => {
-      const zone = parseFloat(shieldHeight) * (shieldHeight.endsWith('rem') ? 16 : 1);
+      const zone = parseFloat(zoneHeight) * (zoneHeight.endsWith('rem') ? 16 : 1);
       if (e.clientY < zone || (e.target as HTMLElement).closest?.('[data-no-swipe], input, textarea')) return;
       swipeHandlers.onWheel?.(e);
     },
