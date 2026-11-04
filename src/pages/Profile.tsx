@@ -18,8 +18,15 @@ import {
   Check,
   FileText,
   Lock,
-  MessageSquare
+  MessageSquare,
+  Image as ImageIcon
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { PROFILE_AVATAR_KEY, PROFILE_NAME_KEY } from '@/lib/storageKeys';
@@ -50,6 +57,8 @@ export default function Profile() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const avatarCameraInputRef = useRef<HTMLInputElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [showImportConfirm, setShowImportConfirm] = useState(false);
   const [languageDialogOpen, setLanguageDialogOpen] = useState(false);
@@ -124,7 +133,6 @@ export default function Profile() {
     }
   };
 
-  const handleAvatarClick = () => avatarInputRef.current?.click();
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -172,6 +180,9 @@ export default function Profile() {
     setUserName(trimmedName);
     setLocalStorageString(PROFILE_NAME_KEY, trimmedName);
     setIsEditingName(false);
+    // Lower the keyboard together with the field.
+    nameInputRef.current?.blur();
+    (document.activeElement as HTMLElement | null)?.blur?.();
   };
 
   const getWeekStartLabel = () => {
@@ -197,23 +208,45 @@ export default function Profile() {
         <div className={`${profilePanelClass} p-6`}>
           <div className="flex items-center gap-4">
             <div className="relative">
-              <button
-                onClick={handleAvatarClick}
-                className="w-20 h-20 rounded-full overflow-hidden bg-muted flex items-center justify-center border-2 border-primary/20 hover:border-primary/50 transition-colors"
-              >
-                {userAvatar ? (
-                  <img src={userAvatar} alt="Avatar" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-3xl font-semibold text-muted-foreground">
-                    {userName.charAt(0).toUpperCase()}
-                  </span>
-                )}
-              </button>
-              <div className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-1.5">
+              {/* Same two choices as the notes image options: camera or gallery. */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    aria-label={t('addImage')}
+                    className="w-20 h-20 rounded-full overflow-hidden bg-muted flex items-center justify-center border-2 border-primary/20 hover:border-primary/50 transition-colors"
+                  >
+                    {userAvatar ? (
+                      <img src={userAvatar} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-3xl font-semibold text-muted-foreground">
+                        {userName.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="bg-background border border-border">
+                  <DropdownMenuItem onSelect={() => avatarCameraInputRef.current?.click()} className="gap-2 cursor-pointer">
+                    <Camera size={20} />
+                    {t('takePhoto')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => avatarInputRef.current?.click()} className="gap-2 cursor-pointer">
+                    <ImageIcon size={20} />
+                    {t('addImage')}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <div className="pointer-events-none absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-1.5">
                 <Camera size={12} />
               </div>
               <input
                 ref={avatarInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarChange}
+              />
+              <input
+                ref={avatarCameraInputRef}
                 type="file"
                 accept="image/*"
                 capture="user"
@@ -221,20 +254,34 @@ export default function Profile() {
                 onChange={handleAvatarChange}
               />
             </div>
-            <div className="flex-1">
+            <div className="min-w-0 flex-1">
               {isEditingName ? (
-                <div className="flex items-center gap-2">
+                /* One rounded field with the confirm tick inside it, on the right. Enter on the
+                   keyboard does the same; saving drops the keyboard; Escape cancels. */
+                <div className="flex items-center gap-1 rounded-full border border-primary/30 bg-background/50 py-1 pl-4 pr-1 focus-within:border-primary">
                   <input
+                    ref={nameInputRef}
                     type="text"
                     value={tempName}
                     onChange={(e) => setTempName(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleNameSave()}
-                    className="flex-1 bg-background/50 border border-primary/30 rounded-lg px-3 py-2 text-lg font-medium focus:outline-none focus:border-primary"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleNameSave();
+                      if (e.key === 'Escape') setIsEditingName(false);
+                    }}
+                    enterKeyHint="done"
+                    aria-label={t('profile')}
+                    className="w-0 min-w-0 flex-1 bg-transparent text-lg font-medium focus:outline-none"
                     autoFocus
                     maxLength={30}
                   />
-                  <Button size="sm" onClick={handleNameSave} className="rounded-full">
-                    <Check size={20} />
+                  <Button
+                    size="icon"
+                    aria-label={t('save')}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={handleNameSave}
+                    className="h-9 w-9 shrink-0 rounded-full [&_svg]:!size-5"
+                  >
+                    <Check />
                   </Button>
                 </div>
               ) : (
