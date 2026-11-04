@@ -2,13 +2,19 @@ import * as React from "react"
 import { Drawer as DrawerPrimitive } from "vaul"
 
 import { cn } from "@/lib/utils"
+import { useKeyboardViewport } from "@/hooks/useKeyboardViewport"
 
 const Drawer = ({
   shouldScaleBackground = true,
+  // vaul's own keyboard handling resizes the sheet when a field is focused and, on Android,
+  // often fails to restore it afterwards, leaving the sheet squashed with the footer far
+  // above the bottom. DrawerContent follows the keyboard itself (useKeyboardViewport).
+  repositionInputs = false,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Root>) => (
   <DrawerPrimitive.Root
     shouldScaleBackground={shouldScaleBackground}
+    repositionInputs={repositionInputs}
     {...props}
   />
 )
@@ -35,7 +41,14 @@ DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName
 const DrawerContent = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content> & { style?: React.CSSProperties }
->(({ className, children, style, ...props }, ref) => (
+>(({ className, children, style, ...props }, ref) => {
+  // While the keyboard is open the sheet is limited to, and lifted above, the visible area;
+  // with the keyboard closed nothing is overridden, so it always returns to normal.
+  const keyboard = useKeyboardViewport(true)
+  const keyboardStyle: React.CSSProperties | undefined = keyboard
+    ? { maxHeight: keyboard.height, bottom: window.innerHeight - keyboard.height - keyboard.top }
+    : undefined
+  return (
   <DrawerPortal>
     <DrawerOverlay />
     <DrawerPrimitive.Content
@@ -45,7 +58,7 @@ const DrawerContent = React.forwardRef<
         "bg-popover border-t border-border backdrop-blur-xl",
         className
       )}
-      style={style}
+      style={{ ...style, ...keyboardStyle }}
       {...props}
     >
       <div className={cn(
@@ -58,7 +71,8 @@ const DrawerContent = React.forwardRef<
       {children}
     </DrawerPrimitive.Content>
   </DrawerPortal>
-))
+  )
+})
 DrawerContent.displayName = "DrawerContent"
 
 const DrawerHeader = ({
