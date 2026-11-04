@@ -24,17 +24,20 @@ def logo(px, bg=None, scale=1.0, rounded=False):
             d.rounded_rectangle([0, 0, n - 1, n - 1], radius=n * 0.224, fill=bg)
         else:
             d.rectangle([0, 0, n, n], fill=bg)
-    c, R = n / 2, n * scale / 2
+    # `scale` = fraction of the canvas taken by the whole logo (ring + dots, 474 units tall)
+    R = n * scale * 197 / 474
+    c = n / 2 - 40 * R / 197  # ring centre; content bbox is centred on the canvas
+    cy = c
     ring_w = R * 0.03
-    d.ellipse([c - R, c - R, c + R, c + R], fill=BLACK)
+    d.ellipse([c - R, cy - R, c + R, cy + R], fill=BLACK)
     r2 = R - ring_w
-    d.ellipse([c - r2, c - r2, c + r2, c + r2], fill=WHITE)
+    d.ellipse([c - r2, cy - r2, c + r2, cy + r2], fill=WHITE)
     r3 = R * 0.84
-    d.ellipse([c - r3, c - r3, c + r3, c + r3], fill=BLACK)
+    d.ellipse([c - r3, cy - r3, c + r3, cy + r3], fill=BLACK)
     # check mark, coordinates relative to the ring centre in units of R
     u = R / 197.0
     pts = [(-96, 2), (-31, 75), (98, -65)]
-    pts = [(c + x * u, c + y * u) for x, y in pts]
+    pts = [(c + x * u, cy + y * u) for x, y in pts]
     w = 34 * u
     # stroke with round caps/joins: stamp discs densely along the path
     for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
@@ -42,6 +45,10 @@ def logo(px, bg=None, scale=1.0, rounded=False):
         for i in range(steps + 1):
             x, y = x0 + (x1 - x0) * i / steps, y0 + (y1 - y0) * i / steps
             d.ellipse([x - w / 2, y - w / 2, x + w / 2, y + w / 2], fill=WHITE)
+    # five grey dots under the ring (x offsets / grey levels measured from the source)
+    for dx, g in [(-128, 208), (-69, 170), (-7, 136), (58, 90), (124, 0)]:
+        x, y, rr = c + dx * u, cy + 253 * u, 20 * u
+        d.ellipse([x - rr, y - rr, x + rr, y + rr], fill=(g, g, g, 255))
     return im.resize((px, px), Image.LANCZOS)
 
 def save(rel, im):
@@ -50,11 +57,11 @@ def save(rel, im):
     im.save(p)
     print('ok', rel, im.size)
 
-art = lambda s: logo(s, WHITE, 0.84, rounded=True)           # favicons / PWA "any"
+art = lambda s: logo(s, WHITE, 0.74, rounded=True)           # favicons / PWA "any"
 for s, name in [(16, 'favicon-16x16'), (32, 'favicon-32x32'), (48, 'favicon-48x48'),
                 (180, 'apple-touch-icon'), (192, 'icon-192'), (512, 'icon-512')]:
     save(f'public/{name}.png', art(s))
-save('public/icon-maskable-512.png', logo(512, WHITE, 0.62))   # inside the 80% safe zone
+save('public/icon-maskable-512.png', logo(512, WHITE, 0.52))   # inside the 80% safe zone
 save('resources/icon.png', art(1024))
 
 DENS = ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi', 'xxxhdpi']
@@ -63,13 +70,13 @@ FORE = dict(zip(DENS, [108, 162, 216, 324, 432]))
 SPLASH = dict(zip(DENS, [480, 720, 960, 1440, 1920]))
 res = 'android/app/src/main/res'
 for dn in DENS:
-    save(f'{res}/mipmap-{dn}/ic_launcher.png', logo(LAUNCH[dn], WHITE, 0.84, rounded=True))
-    rnd = logo(LAUNCH[dn], WHITE, 0.84)
+    save(f'{res}/mipmap-{dn}/ic_launcher.png', logo(LAUNCH[dn], WHITE, 0.74, rounded=True))
+    rnd = logo(LAUNCH[dn], WHITE, 0.74)
     m = Image.new('L', rnd.size, 0)
     ImageDraw.Draw(m).ellipse([0, 0, rnd.size[0] - 1, rnd.size[1] - 1], fill=255)
     rnd.putalpha(m)
     save(f'{res}/mipmap-{dn}/ic_launcher_round.png', rnd)
-    fg = logo(FORE[dn], None, 0.60)  # transparent; ring inside adaptive safe zone
+    fg = logo(FORE[dn], None, 0.52)  # transparent; ring inside adaptive safe zone
     save(f'{res}/mipmap-{dn}/ic_launcher_foreground.png', fg)
     save(f'{res}/mipmap-{dn}/ic_launcher_foreground_adaptive.png', fg)
     s = SPLASH[dn]
