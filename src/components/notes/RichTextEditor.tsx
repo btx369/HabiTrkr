@@ -28,7 +28,11 @@ const WORD_CHAR = /[\p{L}\p{N}_'’-]/u;
 const WordSelection = Extension.create({
   name: 'wordSelectionOnLongPress',
   addProseMirrorPlugins() {
-    let armed = false;
+    // Armed for a short time after a touch begins. Android cancels the touch (touchcancel)
+    // the moment a long-press starts selecting, and the selection can land after that, so
+    // the window is time-based rather than tied to the touch still being down.
+    let armedUntil = 0;
+    const isArmed = () => Date.now() < armedUntil;
     let point: { x: number; y: number } | null = null;
     return [
       new Plugin({
@@ -37,23 +41,21 @@ const WordSelection = Extension.create({
           handleDOMEvents: {
             touchstart: (_view, event) => {
               const t = (event as TouchEvent).touches[0];
-              armed = true;
+              armedUntil = Date.now() + 1800;
               point = t ? { x: t.clientX, y: t.clientY } : null;
               return false;
             },
-            touchend: () => { armed = false; return false; },
-            touchcancel: () => { armed = false; return false; },
           },
         },
         view(editorView) {
           return {
             update(v) {
-              if (!armed || !point) return;
+              if (!isArmed() || !point) return;
               const { selection } = v.state;
               if (selection.empty || !(selection instanceof TextSelection)) return;
               if (!selection.$from.sameParent(selection.$to)) return;
               const selected = v.state.doc.textBetween(selection.from, selection.to);
-              armed = false; // one correction per press
+              armedUntil = 0; // one correction per press
               if (!/\s/.test(selected.trim())) return; // already a single word
               const hit = editorView.posAtCoords({ left: point.x, top: point.y });
               if (!hit || hit.pos < selection.from || hit.pos > selection.to) return;

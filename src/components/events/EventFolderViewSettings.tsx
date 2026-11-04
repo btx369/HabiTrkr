@@ -62,7 +62,7 @@ export function EventFolderViewSettings({
           <Settings className="h-6 w-6" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48 bg-background border border-border">
+      <DropdownMenuContent align="end" className="bg-background border border-border">
         <DropdownMenuLabel>{t('sortBy')}</DropdownMenuLabel>
         {(['title', 'dateCreated', 'dateModified', 'daysRemaining'] as const).map((type) => (
           <DropdownMenuItem

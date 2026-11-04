@@ -68,7 +68,7 @@ export function NoteFolderViewSettings({
           <Settings className="h-6 w-6" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48 bg-background border border-border">
+      <DropdownMenuContent align="end" className="bg-background border border-border">
         <DropdownMenuLabel>{t('sortBy')}</DropdownMenuLabel>
         {(['name', 'dateCreated', 'dateModified', 'recentlyAdded', 'noteCount'] as const).map((type) => (
           <DropdownMenuItem

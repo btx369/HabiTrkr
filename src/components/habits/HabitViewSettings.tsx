@@ -76,7 +76,7 @@ export function HabitViewSettings({
           <Settings className="h-6 w-6" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48 bg-background border border-border">
+      <DropdownMenuContent align="end" className="bg-background border border-border">
         <DropdownMenuLabel>{t('view')}</DropdownMenuLabel>
         <DropdownMenuRadioGroup
           // Habits have no 3-per-row view; a saved `x3` is shown as `x2`.

@@ -11,6 +11,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner
       theme={theme as ToasterProps["theme"]}
+      // Any toast can be flicked away in any direction, not only the default ones for its corner.
+      swipeDirections={["left", "right", "top", "bottom"]}
       className="toaster group"
       /*
        * A sensible width instead of a fixed one.

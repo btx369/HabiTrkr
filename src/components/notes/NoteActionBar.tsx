@@ -110,7 +110,7 @@ export const NoteActionBar = ({
             <Plus size={16} />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="center" side="top" className="w-48 bg-background border border-border">
+        <DropdownMenuContent align="center" side="top" className="bg-background border border-border">
           <DropdownMenuItem onClick={onTakePhoto} className="flex items-center gap-2">
             <Camera size={16} />
             {t('takePhoto')}

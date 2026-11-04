@@ -81,7 +81,7 @@ export function ViewSettings({
           <Settings className="h-6 w-6" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48 bg-background border border-border">
+      <DropdownMenuContent align="end" className="bg-background border border-border">
         <DropdownMenuLabel>{t('view')}</DropdownMenuLabel>
         {/*
           Radix types this callback as `(value: string) => void`, so the value has to be
