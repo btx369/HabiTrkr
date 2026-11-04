@@ -73,7 +73,7 @@ export const Layout = ({
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: bgColor }}>
+    <div className="min-h-[100dvh]" style={{ backgroundColor: bgColor }}>
       {/* Fixed shield: solid background hides scrolling content behind header/tabs */}
       <div
         className="fixed top-0 left-0 right-0 z-40 pointer-events-none"
@@ -85,7 +85,7 @@ export const Layout = ({
         onSearchChange={onSearchChange}
         pageTitle={pageTitle}
       />
-      <main {...swipeProps} className={cn("min-h-screen pt-16 px-2", isBulkMode ? "pb-36" : "pb-20")}>
+      <main {...swipeProps} className={cn("min-h-[100dvh] pt-16 px-2", isBulkMode ? "pb-36" : "pb-20")}>
         {children}
       </main>
       <BottomNavigation hidden={hideBottomNav} />
