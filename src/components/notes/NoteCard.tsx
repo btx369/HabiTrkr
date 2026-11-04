@@ -472,16 +472,8 @@ export function NoteCard({
         onDragEnd={draggable ? onDragEnd : undefined}
       >
         <CardContent className="py-2 px-2 h-full flex flex-col">
-          {/* Title and actions share one row, matching list view. They used to be
-              stacked, which put the title on its own line below the menu in 3x.
-              `ml-auto` is what keeps the menu pinned right: with no title there is no
-              `flex-1` sibling to push it, so it would otherwise collapse to the left. */}
+          {/* 3x: first row holds only the icons and menu; the title goes on the line below. */}
           <div className="flex items-start gap-2 mb-1">
-            {shouldShowTitle() && (
-              <CardTitle className={`flex-1 min-w-0 font-bold truncate break-words ${textColorClass} text-xs`}>
-                {highlightText(note.name, searchQuery)}
-              </CardTitle>
-            )}
             <div className="flex items-center gap-2 ml-auto flex-shrink-0">
               <div className="flex items-center gap-1">
                 {isFiled && <FolderOpen size={20} className={iconColorClass} />}
@@ -538,6 +530,12 @@ export function NoteCard({
             </div>
           </div>
 
+          {shouldShowTitle() && (
+            <CardTitle className={`font-bold truncate break-words mb-1 ${textColorClass} text-xs`}>
+              {highlightText(note.name, searchQuery)}
+            </CardTitle>
+          )}
+
           <div className="flex-1 overflow-hidden">
             {renderNoteContent()}
           </div>
@@ -576,12 +574,13 @@ export function NoteCard({
                 `flex-1` sibling to push it, so it would otherwise collapse to the left. */}
             <div className="flex items-start gap-2 mb-2">
               {shouldShowTitle() && (
-                <CardTitle className={`flex-1 min-w-0 font-bold truncate break-words text-sm ${textColorClass}`}>
+                <CardTitle className={`flex-1 min-w-0 font-bold truncate break-words text-sm leading-7 ${textColorClass}`}>
                   {highlightText(note.name, searchQuery)}
                 </CardTitle>
               )}
               <div className="flex items-center gap-2 ml-auto flex-shrink-0">
                 <div className="flex items-center gap-1">
+                  {isFiled && <FolderOpen size={20} className={iconColorClass} />}
                   {note.pinned && <Pin size={20} className={iconColorClass} />}
                   {note.locked && <Lock size={20} className={iconColorClass} />}
                 {note.reminder && <ReminderIcon reminder={note.reminder} className={iconColorClass} />}
@@ -643,7 +642,7 @@ export function NoteCard({
           <div className="flex items-start gap-2 flex-1">
             <div className="flex-1 min-w-0 overflow-hidden">
               {shouldShowTitle() && (
-                <CardTitle className={`font-bold mb-1 truncate break-words text-sm ${textColorClass}`}>
+                <CardTitle className={`font-bold truncate break-words text-sm leading-7 ${textColorClass}`}>
                   {highlightText(note.name, searchQuery)}
                 </CardTitle>
               )}
