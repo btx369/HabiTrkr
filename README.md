@@ -89,10 +89,10 @@ locked`. Keep those entries in place.
 
 ```
 resources/
-  icon-source.jpg   master artwork for scripts/generate-icons.mjs
+  icon-source.jpg   master artwork for scripts/generate-icons.py
   icon.png          generated 1024px app icon
 scripts/
-  generate-icons.mjs        regenerates every web/PWA/Android icon
+  generate-icons.py        regenerates every web/PWA/Android icon
   verify-date-utils.mjs     proves the local-date helpers
   verify-date-migration.mjs exercises the date-key repair tool
   verify-icons.mjs          checks icon wiring in a real browser
@@ -119,8 +119,7 @@ src/
 All icons come from one source image:
 
 ```sh
-node scripts/generate-icons.mjs            # uses resources/icon-source.jpg
-node scripts/generate-icons.mjs other.jpg  # or an explicit source
+python3 scripts/generate-icons.py            # needs Pillow; logo is drawn as vectors
 ```
 
 It renders with headless Chrome via a canvas, so there is no image library to install.

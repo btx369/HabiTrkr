@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Average of the app icon's gradient corners; sits behind the adaptive foreground. -->
-    <color name="ic_launcher_background">#2A8BE3</color>
+    <color name="ic_launcher_background">#FFFFFF</color>
 </resources>
