@@ -2,6 +2,8 @@ import { useEditor, EditorContent, Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Placeholder from '@tiptap/extension-placeholder';
+import { Extension } from '@tiptap/core';
+import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state';
 import { useEffect, forwardRef, useImperativeHandle } from 'react';
 import { cn } from '@/lib/utils';
 import { markdownToHtml, htmlToMarkdown } from '@/lib/markdownConverter';
@@ -14,6 +16,71 @@ interface RichTextEditorProps {
   className?: string;
   onFocus?: () => void;
 }
+
+/**
+ * A long-press on a word selects that word. On some mobile browsers, when the word sits
+ * inside a bold / italic / underlined run the whole run gets selected instead. While a
+ * touch is down, the first non-empty selection that appears is therefore narrowed back to
+ * the word under the finger.
+ */
+const WORD_CHAR = /[\p{L}\p{N}_'’-]/u;
+
+const WordSelection = Extension.create({
+  name: 'wordSelectionOnLongPress',
+  addProseMirrorPlugins() {
+    let armed = false;
+    let point: { x: number; y: number } | null = null;
+    return [
+      new Plugin({
+        key: new PluginKey('wordSelectionOnLongPress'),
+        props: {
+          handleDOMEvents: {
+            touchstart: (_view, event) => {
+              const t = (event as TouchEvent).touches[0];
+              armed = true;
+              point = t ? { x: t.clientX, y: t.clientY } : null;
+              return false;
+            },
+            touchend: () => { armed = false; return false; },
+            touchcancel: () => { armed = false; return false; },
+          },
+        },
+        view(editorView) {
+          return {
+            update(v) {
+              if (!armed || !point) return;
+              const { selection } = v.state;
+              if (selection.empty || !(selection instanceof TextSelection)) return;
+              if (!selection.$from.sameParent(selection.$to)) return;
+              const selected = v.state.doc.textBetween(selection.from, selection.to);
+              armed = false; // one correction per press
+              if (!/\s/.test(selected.trim())) return; // already a single word
+              const hit = editorView.posAtCoords({ left: point.x, top: point.y });
+              if (!hit || hit.pos < selection.from || hit.pos > selection.to) return;
+              const parent = selection.$from.parent;
+              const text = parent.textBetween(0, parent.content.size, undefined, '\ufffc');
+              const base = selection.$from.start();
+              let i = hit.pos - base;
+              if (i > 0 && (i >= text.length || !WORD_CHAR.test(text[i])) && WORD_CHAR.test(text[i - 1])) i -= 1;
+              if (!WORD_CHAR.test(text[i] ?? '')) return;
+              let a = i;
+              let b = i + 1;
+              while (a > 0 && WORD_CHAR.test(text[a - 1])) a -= 1;
+              while (b < text.length && WORD_CHAR.test(text[b])) b += 1;
+              const from = base + a;
+              const to = base + b;
+              // Dispatching from inside update() would re-enter it, so defer.
+              queueMicrotask(() => {
+                if (editorView.isDestroyed) return;
+                editorView.dispatch(editorView.state.tr.setSelection(TextSelection.create(editorView.state.doc, from, to)));
+              });
+            },
+          };
+        },
+      }),
+    ];
+  },
+});
 
 export interface RichTextEditorHandle {
   editor: Editor | null;
@@ -31,6 +98,7 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
         },
       }),
       Underline,
+      WordSelection,
       Placeholder.configure({
         placeholder: ({ editor }) => {
           return editor.isFocused ? '' : placeholder;

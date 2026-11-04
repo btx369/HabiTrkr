@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Play, Pause } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
+import { playExclusive } from '@/lib/audioFocus';
 import { getColoredOutlineButtonStyles } from '@/lib/coloredButtonStyles';
 
 /**
@@ -93,6 +94,11 @@ export function AudioPlayer({
       audioRef.current.addEventListener('error', () => {
         setIsPlaying(false);
       });
+
+      // Another player taking over pauses this element: reflect it in the button.
+      audioRef.current.addEventListener('pause', () => {
+        setIsPlaying(false);
+      });
     }
     return audioRef.current;
   }, [audioUrl, onEnded]);
@@ -107,7 +113,7 @@ export function AudioPlayer({
       audio.pause();
       setIsPlaying(false);
     } else {
-      audio.play()
+      playExclusive(audio)
         .then(() => {
           setIsPlaying(true);
           onPlayRef.current?.();
@@ -274,6 +280,10 @@ export function MultiAudioPlayer({ audios, size = 'md', hasColor = false }: Mult
         setAudioTimes(prev => new Map(prev).set(url, audio!.currentTime));
       });
 
+      audio.addEventListener('pause', () => {
+        setPlayingUrl(prev => (prev === url ? null : prev));
+      });
+
       audio.addEventListener('ended', () => {
         setPlayingUrl(null);
         setAudioTimes(prev => new Map(prev).set(url, 0));
@@ -295,7 +305,7 @@ export function MultiAudioPlayer({ audios, size = 'md', hasColor = false }: Mult
       }
 
       audio.playbackRate = playbackSpeed;
-      audio.play()
+      playExclusive(audio)
         .then(() => setPlayingUrl(url))
         .catch(() => setPlayingUrl(null));
     }
