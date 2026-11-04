@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react';
 import { format, isAfter, startOfDay } from 'date-fns';
-import { RotateCcw, Trash2, Check, FolderOpen, GripVertical } from 'lucide-react';
+import { RotateCcw, Trash2, Check, FolderOpen, GripVertical, Pin } from 'lucide-react';
 import { CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -158,38 +158,28 @@ export function HabitCard({
   const dayButtonSize = viewType === 'x3' ? 'h-5 w-5 text-[9px]' : 'h-7 w-7 text-xs';
   const today = startOfDay(new Date());
 
-  return (
-    <ColoredCard
-      color={habit.color}
-      data-habit-id={habit.id}
-      draggable={isDragEnabled && !showBulkCheckbox}
-      onDragStart={(event) => onDragStart?.(habit.id, event)}
-      onDragOver={(event) => onDragOver?.(habit.id, event)}
-      onDrop={onDrop}
-      onDragEnd={onDragEnd}
-      className={cn('rounded-2xl', showBulkCheckbox && 'cursor-pointer', isDragEnabled && !showBulkCheckbox && 'cursor-grab active:cursor-grabbing', isDragged && 'opacity-50')}
-      onClick={() => showBulkCheckbox && onBulkSelect?.(habit.id)}
-    >
-      <CardContent className="px-3 py-2">
-        <div className={cn('flex min-w-0 items-center', viewType === 'x3' ? 'gap-1' : 'gap-2')}>
+  // The card's parts, laid out one way for the list view (a single row) and another for
+  // `x2` (name and icons on a top row, progress and day buttons on a second one).
+  const twoRows = viewType === 'x2';
+  const dragGrip = (
+    <>
           {isDragEnabled && !showBulkCheckbox && (
             <GripVertical data-habit-drag-handle className="h-4 w-4 shrink-0 cursor-grab touch-none text-muted-foreground active:cursor-grabbing" aria-label="Reorder habit" />
           )}
-          {/*
-            * Name above, progress badges below. Side by side, the badges are nowrap and the
-            * seven day buttons do not shrink, so on a phone the name collapsed to nothing and
-            * the badges spilled over the day buttons, covering them (and their taps).
-            */}
-          <div className="flex min-w-0 flex-1 flex-col gap-1 overflow-hidden">
+    </>
+  );
+  const nameButton = (
             <button
               type="button"
-              className={cn('min-w-0 truncate text-left text-sm font-medium', textColorClass)}
+              className={cn('min-w-0 text-left text-sm font-medium', twoRows ? 'truncate' : 'line-clamp-2 break-words', textColorClass)}
               onClick={(event) => handleCardAction(event, () => onEdit(habit))}
               title={habit.name}
             >
               {highlightText(habit.name, searchQuery)}
             </button>
-
+  );
+  const badgesRow = (
+    <>
             {(habit.useUnlimitedTimes || habit.useNumberOfDays || habit.useTimesPerDay) && (
               <div className={cn('flex min-w-0 flex-wrap items-center', viewType === 'x3' ? 'gap-0.5' : 'gap-1.5')}>
                 {habit.useUnlimitedTimes && (
@@ -274,9 +264,15 @@ export function HabitCard({
                 )}
               </div>
             )}
-          </div>
-
-          {isFiled && <FolderOpen size={14} className={cn('shrink-0', iconColorClass)} />}
+    </>
+  );
+  const statusIcons = (
+    <>
+      {habit.pinned && <Pin size={14} className={cn('shrink-0', iconColorClass)} />}
+      {isFiled && <FolderOpen size={14} className={cn('shrink-0', iconColorClass)} />}
+    </>
+  );
+  const dayButtons = (
           <div className={cn('flex shrink-0 items-center', viewType === 'x3' ? 'gap-0.5' : 'gap-1')}>
             {weekDays.map((date, visualIndex) => {
               const dateKey = toDateKey(date);
@@ -343,7 +339,9 @@ export function HabitCard({
               );
             })}
           </div>
-
+  );
+  const actionMenu = (
+    <>
           {showBulkCheckbox ? (
             <BulkCheckbox />
           ) : (
@@ -357,7 +355,48 @@ export function HabitCard({
               onDelete={() => onDelete(habit.id)}
             />
           )}
-        </div>
+    </>
+  );
+
+  return (
+    <ColoredCard
+      color={habit.color}
+      data-habit-id={habit.id}
+      draggable={isDragEnabled && !showBulkCheckbox}
+      onDragStart={(event) => onDragStart?.(habit.id, event)}
+      onDragOver={(event) => onDragOver?.(habit.id, event)}
+      onDrop={onDrop}
+      onDragEnd={onDragEnd}
+      className={cn('rounded-2xl', showBulkCheckbox && 'cursor-pointer', isDragEnabled && !showBulkCheckbox && 'cursor-grab active:cursor-grabbing', isDragged && 'opacity-50')}
+      onClick={() => showBulkCheckbox && onBulkSelect?.(habit.id)}
+    >
+      <CardContent className="px-3 py-2">
+        {twoRows ? (
+          <div className="flex min-w-0 flex-col gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              {dragGrip}
+              <div className="flex min-w-0 flex-1 items-center">{nameButton}</div>
+              {statusIcons}
+              {actionMenu}
+            </div>
+            <div className="flex min-w-0 items-center justify-between gap-2">
+              <div className="flex min-w-0 flex-1 items-center">{badgesRow}</div>
+              {dayButtons}
+            </div>
+          </div>
+        ) : (
+          <div className="flex min-w-0 items-center gap-2">
+            {dragGrip}
+            {/* Name above, progress badges below: side by side the badges covered the day buttons. */}
+            <div className="flex min-w-0 flex-1 flex-col gap-1 overflow-hidden">
+              {nameButton}
+              {badgesRow}
+            </div>
+            {statusIcons}
+            {dayButtons}
+            {actionMenu}
+          </div>
+        )}
       </CardContent>
     </ColoredCard>
   );

@@ -105,8 +105,11 @@ export default function HabitTracker() {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   
   // Sort settings for habits tab
-  const [allHabitsViewType, setAllHabitsViewType] = useLocalStorage<ViewType>('habitsAllViewType', 'list');
-  const [archivedHabitsViewType, setArchivedHabitsViewType] = useLocalStorage<ViewType>('habitsArchivedViewType', 'list');
+  const [storedAllHabitsViewType, setAllHabitsViewType] = useLocalStorage<ViewType>('habitsAllViewType', 'list');
+  const [storedArchivedHabitsViewType, setArchivedHabitsViewType] = useLocalStorage<ViewType>('habitsArchivedViewType', 'list');
+  // Habits have no 3-per-row view: a saved `x3` is treated as `x2`.
+  const allHabitsViewType: ViewType = storedAllHabitsViewType === 'x3' ? 'x2' : storedAllHabitsViewType;
+  const archivedHabitsViewType: ViewType = storedArchivedHabitsViewType === 'x3' ? 'x2' : storedArchivedHabitsViewType;
   const [habitsSortType, setHabitsSortType] = useLocalStorage<HabitSortType>('habitsSortType', 'name');
   const [habitsSortDirection, setHabitsSortDirection] = useLocalStorage<HabitSortDirection>('habitsSortDirection', 'asc');
   const [habitsCustomOrder, setHabitsCustomOrder] = useLocalStorage<string[]>('habitsCustomOrder', []);
@@ -1256,7 +1259,7 @@ export default function HabitTracker() {
               </Card>
             ) : (
               <div
-                className={`${allHabitsViewType === 'x3' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : allHabitsViewType === 'x2' ? 'grid grid-cols-1 md:grid-cols-2' : 'grid grid-cols-1'} gap-2`}
+                className={`${allHabitsViewType === 'x2' ? 'grid grid-cols-1 md:grid-cols-2' : 'grid grid-cols-1'} gap-2`}
                 onPointerDown={handleHabitPointerDown}
                 onPointerMove={handleHabitPointerMove}
                 onPointerUp={handleHabitPointerUp}
@@ -1354,7 +1357,7 @@ export default function HabitTracker() {
                   </Card>
                 ) : (
                   <div
-                    className={`${archivedHabitsViewType === 'x3' ? 'grid grid-cols-3' : archivedHabitsViewType === 'x2' ? 'grid grid-cols-2' : 'grid grid-cols-1'} gap-2`}
+                    className={`${archivedHabitsViewType === 'x2' ? 'grid grid-cols-2' : 'grid grid-cols-1'} gap-2`}
                     onPointerDown={handleHabitPointerDown}
                     onPointerMove={handleHabitPointerMove}
                     onPointerUp={handleHabitPointerUp}

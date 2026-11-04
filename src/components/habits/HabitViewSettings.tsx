@@ -79,12 +79,12 @@ export function HabitViewSettings({
       <DropdownMenuContent align="end" className="w-48 bg-background border border-border">
         <DropdownMenuLabel>{t('view')}</DropdownMenuLabel>
         <DropdownMenuRadioGroup
-          value={viewType}
+          // Habits have no 3-per-row view; a saved `x3` is shown as `x2`.
+          value={viewType === 'x3' ? 'x2' : viewType}
           onValueChange={(value) => {
             if (isViewType(value)) onViewTypeChange(value);
           }}
         >
-          <DropdownMenuRadioItem value="x3" onSelect={(event) => event.preventDefault()}>{t('viewX3')}</DropdownMenuRadioItem>
           <DropdownMenuRadioItem value="x2" onSelect={(event) => event.preventDefault()}>{t('viewX2')}</DropdownMenuRadioItem>
           <DropdownMenuRadioItem value="list" onSelect={(event) => event.preventDefault()}>{t('viewList')}</DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>

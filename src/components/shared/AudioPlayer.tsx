@@ -3,6 +3,7 @@ import { Play, Pause } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { playExclusive } from '@/lib/audioFocus';
+import { readAudioDuration } from '@/lib/audioDuration';
 import { getColoredOutlineButtonStyles } from '@/lib/coloredButtonStyles';
 
 /**
@@ -62,6 +63,14 @@ export function AudioPlayer({
   const onPlayRef = useRef(onPlay);
   onPlayRef.current = onPlay;
 
+  // Show the total time right away when the note did not store it.
+  useEffect(() => {
+    if (initialDuration > 0) return;
+    let cancelled = false;
+    readAudioDuration(audioUrl).then((d) => { if (!cancelled && d > 0) setDuration(d); });
+    return () => { cancelled = true; };
+  }, [audioUrl, initialDuration]);
+
   // Cleanup audio on unmount
   useEffect(() => {
     return () => {
@@ -78,7 +87,7 @@ export function AudioPlayer({
 
       audioRef.current.addEventListener('loadedmetadata', () => {
         const d = audioRef.current?.duration || 0;
-        if (d > 0) setDuration(d);
+        if (d > 0 && Number.isFinite(d)) setDuration(d);
       });
 
       audioRef.current.addEventListener('timeupdate', () => {
@@ -249,6 +258,17 @@ export function MultiAudioPlayer({ audios, size = 'md', hasColor = false }: Mult
   const [audioTimes, setAudioTimes] = useState<Map<string, number>>(new Map());
   const [audioDurations, setAudioDurations] = useState<Map<string, number>>(new Map());
 
+  // Show each total time right away when the note did not store it.
+  useEffect(() => {
+    let cancelled = false;
+    audios.filter((a) => !(a.duration > 0)).forEach((a) => {
+      readAudioDuration(a.url).then((d) => {
+        if (!cancelled && d > 0) setAudioDurations((prev) => (prev.has(a.url) ? prev : new Map(prev).set(a.url, d)));
+      });
+    });
+    return () => { cancelled = true; };
+  }, [audios]);
+
   // Cleanup all audios on unmount
   useEffect(() => {
     // Capture the map itself in the effect body. Reading `audioRefs.current` inside the
@@ -273,7 +293,7 @@ export function MultiAudioPlayer({ audios, size = 'md', hasColor = false }: Mult
 
       audio.addEventListener('loadedmetadata', () => {
         const d = audio!.duration;
-        setAudioDurations(prev => new Map(prev).set(url, d));
+        if (Number.isFinite(d) && d > 0) setAudioDurations(prev => new Map(prev).set(url, d));
       });
 
       audio.addEventListener('timeupdate', () => {
@@ -289,7 +309,7 @@ export function MultiAudioPlayer({ audios, size = 'md', hasColor = false }: Mult
         setAudioTimes(prev => new Map(prev).set(url, 0));
       });
 
-      setAudioDurations(prev => new Map(prev).set(url, initialDuration));
+      if (initialDuration > 0) setAudioDurations(prev => new Map(prev).set(url, initialDuration));
     }
 
     if (isCurrentlyPlaying) {
