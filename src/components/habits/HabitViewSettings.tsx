@@ -1,4 +1,4 @@
-import { Settings, ChevronUp, GripVertical } from 'lucide-react';
+import { Settings, ChevronUp, GripVertical, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -93,14 +93,15 @@ export function HabitViewSettings({
         {(['name', 'dateCreated', 'dateModified', 'custom'] as const).map((type) => (
           <DropdownMenuItem
             key={type}
-            onSelect={(event) => event.preventDefault()}
+            // Custom closes the menu (dragging starts); the other options keep it open.
+            onSelect={(event) => { if (type !== 'custom') event.preventDefault(); }}
             onClick={() => handleSortClick(type)}
             className="flex items-center gap-2 cursor-pointer"
           >
             <div className="w-4 h-4 flex items-center justify-center">
               {sortType === type && (
                 type === 'custom'
-                  ? (customReorderingEnabled ? <GripVertical className="h-4 w-4" /> : null)
+                  ? (customReorderingEnabled ? <GripVertical className="h-4 w-4" /> : <Check className="h-4 w-4" />)
                   : <ChevronUp className={`h-4 w-4 transition-transform duration-200 ${sortDirection === 'desc' ? 'rotate-180' : ''}`} />
               )}
             </div>

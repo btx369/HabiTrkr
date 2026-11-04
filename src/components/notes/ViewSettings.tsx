@@ -1,4 +1,4 @@
-import { Settings, ChevronUp, GripVertical } from 'lucide-react';
+import { Settings, ChevronUp, GripVertical, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -120,15 +120,17 @@ export function ViewSettings({
             <span>{getSortLabel(type)}</span>
           </DropdownMenuItem>
         ))}
+        {/* Unlike the other options this one closes the menu: choosing Custom is the start of
+            dragging items around, not a setting to keep adjusting. Grip = drag mode is on;
+            check = Custom is the current order but drag mode is off. */}
         <DropdownMenuItem
-          onSelect={(event) => event.preventDefault()}
           onClick={() => handleSortClick('custom')}
           className="flex items-center gap-2 cursor-pointer"
         >
           <div className="w-4 h-4 flex items-center justify-center">
-            {sortType === 'custom' && customReorderingEnabled && (
-              <GripVertical className="h-4 w-4" />
-            )}
+            {sortType === 'custom' && (customReorderingEnabled
+              ? <GripVertical className="h-4 w-4" />
+              : <Check className="h-4 w-4" />)}
           </div>
           <span>{t('custom')}</span>
         </DropdownMenuItem>

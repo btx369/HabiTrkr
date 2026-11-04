@@ -734,7 +734,6 @@ export default function HabitTracker() {
   };
 
   const handleHabitDragStart = (habitId: string, event: React.DragEvent<HTMLDivElement>) => {
-    if (habits.find((h) => h.id === habitId)?.pinned) { event.preventDefault(); return; }
     const visibleItems = activeTab === 'archived' ? getArchivedHabitsFiltered() : filterHabits();
     setDraggedHabitId(habitId);
     draggedHabitIdRef.current = habitId;
@@ -775,10 +774,9 @@ export default function HabitTracker() {
   };
 
   const moveHabitInOrder = (order: string[], draggedId: string, targetId: string, beforeTarget: boolean) => {
-    // Pinned habits never move: they cannot be dragged, and a dragged habit cannot take a
-    // place above them. They stay at the top in the order they already have.
+    // Pinned habits always stay above the others: they reorder among themselves, and an
+    // unpinned habit cannot take a place above them.
     const pinnedIds = new Set(habits.filter((h) => h.pinned).map((h) => h.id));
-    if (pinnedIds.has(draggedId)) return order;
     const fromIndex = order.indexOf(draggedId);
     const targetIndex = order.indexOf(targetId);
     if (fromIndex < 0 || targetIndex < 0) return order;
@@ -814,7 +812,6 @@ export default function HabitTracker() {
     const card = target.closest('[data-habit-id]');
     const habitId = card?.getAttribute('data-habit-id');
     if (!habitId) return;
-    if (habits.find((h) => h.id === habitId)?.pinned) return; // pinned habits stay put
 
     const visibleItems = activeTab === 'archived' ? getArchivedHabitsFiltered() : filterHabits();
     const visibleIds = visibleItems.map((habit) => habit.id);

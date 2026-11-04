@@ -1430,8 +1430,6 @@ const hasTitle = (note.name || '').trim() !== '';
     startPos: { x: number; y: number },
     orderedItems: Note[] = []
   ) => {
-    // Pinned notes never move: they cannot be picked up.
-    if (orderedItems.find((n) => n.id === noteId)?.pinned) { setIsNoteSelected(null); return; }
     setDragStartPos(startPos);
     setCurrentDragPos(startPos);
     
@@ -1504,9 +1502,14 @@ const hasTitle = (note.name || '').trim() !== '';
       if (insertIndex === -1) {
         insertIndex = currentNotes.length;
       }
-      // Nothing can be dropped above a pinned note: pinned notes keep their places.
+      // Pinned notes always stay above the others: a pinned note can only be placed among
+      // the pinned ones, and an unpinned note only below them.
       const pinnedCount = currentNotes.filter((n) => n.pinned).length;
-      if (insertIndex < pinnedCount) insertIndex = pinnedCount;
+      if (currentNotes.find((n) => n.id === noteId)?.pinned) {
+        if (insertIndex > pinnedCount) insertIndex = pinnedCount;
+      } else if (insertIndex < pinnedCount) {
+        insertIndex = pinnedCount;
+      }
       
       setDragInsertIndex(insertIndex);
       dragInsertIndexRef.current = insertIndex;
@@ -1567,7 +1570,6 @@ const hasTitle = (note.name || '').trim() !== '';
   };
 
   const handleNativeNoteDragStart = (noteId: string, orderedItems: Note[], event: React.DragEvent<HTMLDivElement>) => {
-    if (orderedItems.find((n) => n.id === noteId)?.pinned) { event.preventDefault(); return; }
     const order = orderedItems.map((note) => note.id);
     draggedNoteRef.current = noteId;
     dragItemsRef.current = orderedItems;
@@ -1603,7 +1605,7 @@ const hasTitle = (note.name || '').trim() !== '';
       let insertIndex = targetIndex + (beforeTarget ? 0 : 1);
       if (fromIndex < insertIndex) insertIndex -= 1;
       next.splice(insertIndex, 0, draggedId);
-      // Pinned notes keep their places at the top whatever is dragged over them.
+      // Pinned notes stay above the others whatever is dragged.
       const pinnedIds = new Set(dragItemsRef.current.filter((n) => n.pinned).map((n) => n.id));
       const settled = [...next.filter((id) => pinnedIds.has(id)), ...next.filter((id) => !pinnedIds.has(id))];
       dragPreviewOrderRef.current = settled;
@@ -2001,7 +2003,7 @@ const hasTitle = (note.name || '').trim() !== '';
                 isArchived={options.isArchived}
                 searchQuery={searchQuery}
                 viewType={effectiveViewType}
-                draggable={customReorderingEnabled && !isBulkMode && !note.pinned}
+                draggable={customReorderingEnabled && !isBulkMode}
                 isDragged={draggedNote === note.id}
                 isDraggedOver={draggedOverNote === note.id}
                 isSelected={isNoteSelected === note.id}
