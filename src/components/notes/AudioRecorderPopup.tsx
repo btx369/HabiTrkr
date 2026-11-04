@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Mic, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FLOATING_ADD_POPUP_RIGHT } from '@/lib/floatingAdd';
@@ -15,13 +15,66 @@ export function AudioRecorderPopup({ isOpen, onRecordingComplete, onClose }: Aud
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const startedAtRef = useRef(0);
+  // True from the click until recording has really started. getUserMedia is async (the
+  // permission prompt can take seconds), so a second tap used to start a second recorder and
+  // a second timer; the first timer was orphaned and kept counting, in steps of 2 seconds.
+  const startingRef = useRef(false);
+  // The parent callbacks are replaced on every render; the recorder's onstop must call the
+  // latest ones, not the ones from the render in which recording started.
+  const onCompleteRef = useRef(onRecordingComplete);
+  const onCloseRef = useRef(onClose);
+  onCompleteRef.current = onRecordingComplete;
+  onCloseRef.current = onClose;
+
+  const clearTimer = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  const releaseStream = () => {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+  };
+
+  // Closed from outside (back button, unmount): stop everything and drop the take.
+  useEffect(() => {
+    if (isOpen) return;
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state !== 'inactive') {
+      recorder.onstop = null;
+      recorder.stop();
+    }
+    mediaRecorderRef.current = null;
+    clearTimer();
+    releaseStream();
+    startingRef.current = false;
+    setIsRecording(false);
+    setRecordingTime(0);
+  }, [isOpen]);
+
+  useEffect(() => () => {
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state !== 'inactive') {
+      recorder.onstop = null;
+      recorder.stop();
+    }
+    clearTimer();
+    releaseStream();
+  }, []);
 
   if (!isOpen) return null;
 
   const startRecording = async () => {
+    if (startingRef.current || mediaRecorderRef.current) return;
+    startingRef.current = true;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
       // Speech at 32 kbps is about 240 KB a minute, which matters because recordings are
       // stored in localStorage alongside everything else.
       const mediaRecorder = new MediaRecorder(stream, { audioBitsPerSecond: 32000 });
@@ -34,47 +87,51 @@ export function AudioRecorderPopup({ isOpen, onRecordingComplete, onClose }: Aud
       };
 
       mediaRecorder.onstop = () => {
+        releaseStream();
+        const seconds = Math.max(1, Math.round((Date.now() - startedAtRef.current) / 1000));
         // Label the data with the format the browser actually recorded (WebM on Chrome,
         // MP4 on Safari). Calling it WAV made Safari refuse to play it back.
         const mimeType = (mediaRecorder.mimeType || chunks[0]?.type || 'audio/webm').split(';')[0];
         const blob = new Blob(chunks, { type: mimeType });
-        
+
         // Convert to base64 for persistence
         const reader = new FileReader();
         reader.onloadend = () => {
-          const audioUrl = reader.result as string;
-          onRecordingComplete(audioUrl, recordingTime);
-          
-          // Cleanup
-          stream.getTracks().forEach(track => track.stop());
+          mediaRecorderRef.current = null;
+          startingRef.current = false;
           setRecordingTime(0);
-          if (timerRef.current) {
-            clearInterval(timerRef.current);
-          }
-          onClose();
+          onCompleteRef.current(reader.result as string, seconds);
+          onCloseRef.current();
         };
         reader.readAsDataURL(blob);
       };
 
       mediaRecorderRef.current = mediaRecorder;
+      startedAtRef.current = Date.now();
       mediaRecorder.start();
       setIsRecording(true);
+      setRecordingTime(0);
 
-      // Start timer
+      clearTimer();
+      // Derived from the clock, so a throttled or late tick can never skip or repeat a second.
       timerRef.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
-      }, 1000);
-
+        setRecordingTime(Math.floor((Date.now() - startedAtRef.current) / 1000));
+      }, 250);
     } catch (error) {
       console.error('Error starting recording:', error);
+      startingRef.current = false;
+      mediaRecorderRef.current = null;
+      releaseStream();
       alert(t('micAccessError'));
     }
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state !== 'inactive') {
+      clearTimer();
       setIsRecording(false);
+      recorder.stop();
     }
   };
 

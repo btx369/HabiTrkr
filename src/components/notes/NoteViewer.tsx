@@ -250,7 +250,7 @@ export function NoteViewer({
     
     // 1) Extract and preserve existing audio-note labels
     const audioNoteMap = new Map<string, string>();
-    const audioNoteRegex = /\[audionote:(.+):(.+?)\]/g;
+    const audioNoteRegex = /\[audionote:([^\]]+):([^:\]]*)\]/g;
     let audioNoteMatch;
     while ((audioNoteMatch = audioNoteRegex.exec(currentContent)) !== null) {
       audioNoteMap.set(audioNoteMatch[1], audioNoteMatch[2]);
@@ -1069,7 +1069,7 @@ export function NoteViewer({
     
     // First, extract all audionote markers into a map
     const audioNotes = new Map<string, string>();
-    const audioNoteRegex = /\[audionote:(.+):(.+?)\]/g;
+    const audioNoteRegex = /\[audionote:([^\]]+):([^:\]]*)\]/g;
     let noteMatch;
     while ((noteMatch = audioNoteRegex.exec(content)) !== null) {
       const url = noteMatch[1];
@@ -1080,7 +1080,7 @@ export function NoteViewer({
     
     
     // Then extract audio markers and match with their notes
-    const audioRegex = /\[audio:(.+):([\d.]+)\]/g;
+    const audioRegex = /\[audio:(.+?):([\d.]+)\]/g;
     let m;
     while ((m = audioRegex.exec(content)) !== null) {
       const url = m[1];

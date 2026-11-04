@@ -20,7 +20,7 @@ export const parseNoteContent = (content: string): ContentPart[] => {
   const cleanContent = content.replace(/\[audionote:.+?\]/g, '');
   
   // Create a combined regex to match both images and audio in order
-  const combinedRegex = /\[image:(.*?)\]|\[audio:(.+):([\d.]+)\]/g;
+  const combinedRegex = /\[image:(.*?)\]|\[audio:(.+?):([\d.]+)\]/g;
   let lastIndex = 0;
   let match;
 
