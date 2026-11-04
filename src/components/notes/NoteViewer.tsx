@@ -915,8 +915,12 @@ export function NoteViewer({
         try { lastInput.setSelectionRange?.(len, len); } catch { /* caret not settable on this input type */ }
         lastInput.scrollIntoView({ block: 'nearest' });
       }
-      setIsAddingNewItem(false); // Reset flag after focusing
     }, 50);
+    // The flag has to outlive the edit-mode focus effect, which looks at it 100ms after
+    // editing starts. It used to be cleared right after focusing the new row (at 50ms), so the
+    // effect then saw "not adding" and moved focus to the FIRST item, scrolling the list to
+    // the top. Clear it after that effect has run.
+    setTimeout(() => setIsAddingNewItem(false), 300);
   };
 
   const beginAddItem = () => {
