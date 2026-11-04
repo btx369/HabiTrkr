@@ -6,6 +6,7 @@ import {
   Edit,
   Trash2,
   MoreVertical,
+  GripVertical,
   PaletteIcon,
   FileText,
   List,
@@ -953,6 +954,73 @@ export function NoteViewer({
     setEditedItems(prev => prev.filter(item => item.id !== itemId));
   };
 
+  /**
+   * Drag-to-reorder for list items, as in Google Keep: hold the grip and move up or down.
+   * The grip captures the pointer, so the gesture keeps working while the row moves under
+   * the finger, and `touch-none` on it stops the page from scrolling instead. Rows are found
+   * by position, so only unchecked rows (which carry data-list-row) are drop targets.
+   */
+  const [draggingItemId, setDraggingItemId] = useState<string | null>(null);
+  const draggedOrderChangedRef = useRef(false);
+
+  const moveListItem = (fromId: string, toId: string) => {
+    const apply = (prev: ListItem[]) => {
+      const from = prev.findIndex(i => i.id === fromId);
+      const to = prev.findIndex(i => i.id === toId);
+      if (from < 0 || to < 0 || from === to) return prev;
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      draggedOrderChangedRef.current = true;
+      return next;
+    };
+    if (isEditingContent) setEditedItems(apply);
+    else setDisplayItems(apply);
+  };
+
+  const handleGripPointerDown = (e: React.PointerEvent<HTMLElement>, itemId: string) => {
+    if (readOnly) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    draggedOrderChangedRef.current = false;
+    setDraggingItemId(itemId);
+  };
+
+  const handleGripPointerMove = (e: React.PointerEvent<HTMLElement>) => {
+    if (!draggingItemId) return;
+    const rows = Array.from(document.querySelectorAll('[data-list-row]')) as HTMLElement[];
+    if (rows.length === 0) return;
+    // Nearest row to the pointer, so dragging past the first/last row still lands there.
+    let target = rows[0];
+    let best = Infinity;
+    for (const row of rows) {
+      const r = row.getBoundingClientRect();
+      const dist = e.clientY < r.top ? r.top - e.clientY : e.clientY > r.bottom ? e.clientY - r.bottom : 0;
+      if (dist < best) { best = dist; target = row; }
+    }
+    const overId = target.dataset.listRow;
+    if (overId && overId !== draggingItemId) moveListItem(draggingItemId, overId);
+    // Scroll the list when the finger nears its top or bottom edge.
+    const scroller = target.closest('.overflow-auto') as HTMLElement | null;
+    if (scroller) {
+      const sr = scroller.getBoundingClientRect();
+      if (e.clientY < sr.top + 48) scroller.scrollBy({ top: -14 });
+      else if (e.clientY > sr.bottom - 48) scroller.scrollBy({ top: 14 });
+    }
+  };
+
+  const handleGripPointerEnd = () => {
+    if (!draggingItemId) return;
+    setDraggingItemId(null);
+    // In view mode there is no Save button, so the new order is stored as soon as the drag ends.
+    // In edit mode it goes in with the rest of the edits.
+    if (!isEditingContent && draggedOrderChangedRef.current) {
+      saveIfEditable({ items: displayItemsRef.current } as Partial<Note>);
+    }
+    draggedOrderChangedRef.current = false;
+  };
+
   const handleListItemToggle = (itemId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (isEditingContent) {
@@ -1599,7 +1667,24 @@ export function NoteViewer({
             <div className="min-h-0 space-y-2 flex-1 overflow-auto">
               {/* Uncompleted items */}
               {uncompletedItems.map((item) => (
-                <div key={item.id} className="flex items-center gap-3 min-w-0 min-h-[2rem]">
+                <div
+                  key={item.id}
+                  data-list-row={item.id}
+                  className={`flex items-center gap-1 min-w-0 min-h-[2rem] ${draggingItemId === item.id ? 'rounded-md bg-hover opacity-80 shadow-sm' : ''}`}
+                >
+                  {!readOnly && (
+                    <span
+                      role="button"
+                      aria-label={t('dragToReorder')}
+                      onPointerDown={(e) => handleGripPointerDown(e, item.id)}
+                      onPointerMove={handleGripPointerMove}
+                      onPointerUp={handleGripPointerEnd}
+                      onPointerCancel={handleGripPointerEnd}
+                      className="flex h-8 w-6 flex-shrink-0 cursor-grab touch-none items-center justify-center text-muted-foreground active:cursor-grabbing"
+                    >
+                      <GripVertical size={20} />
+                    </span>
+                  )}
                   <Button
                     size="sm"
                     variant="outline"
