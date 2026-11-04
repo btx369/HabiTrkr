@@ -516,6 +516,7 @@ export default function HabitTracker() {
         habitIds: folder.id === folderId
           ? [...folder.habitIds.filter(id => !idsSet.has(id)), ...habitsToMove]
           : folder.habitIds.filter(id => !idsSet.has(id)),
+        ...(folder.id === folderId ? { lastHabitAddedAt: new Date().toISOString() } : {}),
       })));
       setIsMoveToFolderOpen(false);
       setHabitsToMove(null);
@@ -534,7 +535,7 @@ export default function HabitTracker() {
     // Add to new folder
     setHabitFolders((prev: HabitFolder[]) => prev.map(folder =>
       folder.id === folderId
-        ? { ...folder, habitIds: [...folder.habitIds, habitToMove] }
+        ? { ...folder, habitIds: [...folder.habitIds, habitToMove], lastHabitAddedAt: new Date().toISOString() }
         : folder
     ));
     
@@ -619,6 +620,9 @@ export default function HabitTracker() {
           comparison = new Date(aDate).getTime() - new Date(bDate).getTime();
           break;
         }
+        case 'recentlyAdded':
+          comparison = new Date(a.lastHabitAddedAt || a.createdAt).getTime() - new Date(b.lastHabitAddedAt || b.createdAt).getTime();
+          break;
         case 'habitCount':
           comparison = a.habitIds.length - b.habitIds.length;
           break;

@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-export type HabitFolderSortType = 'name' | 'dateCreated' | 'dateModified' | 'habitCount';
+export type HabitFolderSortType = 'name' | 'dateCreated' | 'dateModified' | 'recentlyAdded' | 'habitCount';
 export type HabitFolderSortDirection = 'asc' | 'desc';
 
 interface HabitFolderViewSettingsProps {
@@ -33,6 +33,7 @@ export function HabitFolderViewSettings({
       name: t('title'),
       dateCreated: t('dateCreated'),
       dateModified: t('dateModified'),
+      recentlyAdded: t('recentlyAdded'),
       habitCount: t('habitCount')
     };
     return labels[type];
@@ -63,7 +64,7 @@ export function HabitFolderViewSettings({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="bg-background border border-border">
         <DropdownMenuLabel>{t('sortBy')}</DropdownMenuLabel>
-        {(['name', 'dateCreated', 'dateModified', 'habitCount'] as const).map((type) => (
+        {(['name', 'dateCreated', 'dateModified', 'recentlyAdded', 'habitCount'] as const).map((type) => (
           <DropdownMenuItem
             key={type}
             onSelect={(event) => event.preventDefault()}

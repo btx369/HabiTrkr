@@ -8,6 +8,7 @@ export interface HabitFolder {
   archived: boolean;
   createdAt: string;
   modifiedAt?: string;
+  lastHabitAddedAt?: string; // When a habit was last put in the folder (for the "recently added" sort)
   autoImportEnabled?: boolean;
   autoImportTags?: string[];
 }

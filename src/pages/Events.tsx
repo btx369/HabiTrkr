@@ -521,7 +521,8 @@ export default function Events() {
           // Add event to target folder (avoid duplicates)
           return {
             ...folder,
-            eventIds: folder.eventIds.includes(eventId) ? folder.eventIds : [...folder.eventIds, eventId]
+            eventIds: folder.eventIds.includes(eventId) ? folder.eventIds : [...folder.eventIds, eventId],
+            lastEventAddedAt: folder.eventIds.includes(eventId) ? folder.lastEventAddedAt : new Date().toISOString()
           };
         } else {
           // Remove event from all other folders
@@ -550,7 +551,7 @@ export default function Events() {
           if (folder.id === folderId) {
             const existingIds = new Set(folder.eventIds);
             const newEventIds = [...folder.eventIds, ...selectedEventsForMove.filter(id => !existingIds.has(id))];
-            return { ...folder, eventIds: newEventIds };
+            return { ...folder, eventIds: newEventIds, lastEventAddedAt: newEventIds.length > folder.eventIds.length ? new Date().toISOString() : folder.lastEventAddedAt };
           } else {
             return { ...folder, eventIds: folder.eventIds.filter(id => !idsSet.has(id)) };
           }
@@ -740,6 +741,10 @@ export default function Events() {
           case 'dateModified': {
             // For now, use createdAt since we don't have modifiedAt field
             const result = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+            return folderSortDirection === 'asc' ? result : -result;
+          }
+          case 'recentlyAdded': {
+            const result = new Date(a.lastEventAddedAt || a.createdAt).getTime() - new Date(b.lastEventAddedAt || b.createdAt).getTime();
             return folderSortDirection === 'asc' ? result : -result;
           }
           case 'daysRemaining': {

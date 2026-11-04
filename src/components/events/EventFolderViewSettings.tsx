@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-export type EventFolderSortType = 'title' | 'dateCreated' | 'dateModified' | 'daysRemaining';
+export type EventFolderSortType = 'title' | 'dateCreated' | 'dateModified' | 'recentlyAdded' | 'daysRemaining';
 export type EventFolderSortDirection = 'asc' | 'desc';
 
 interface EventFolderViewSettingsProps {
@@ -35,6 +35,7 @@ export function EventFolderViewSettings({
       title: 'title',
       dateCreated: 'dateCreated',
       dateModified: 'dateModified',
+      recentlyAdded: 'recentlyAdded',
       daysRemaining: 'daysRemaining'
     };
     return t(labels[type]);
@@ -64,7 +65,7 @@ export function EventFolderViewSettings({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="bg-background border border-border">
         <DropdownMenuLabel>{t('sortBy')}</DropdownMenuLabel>
-        {(['title', 'dateCreated', 'dateModified', 'daysRemaining'] as const).map((type) => (
+        {(['title', 'dateCreated', 'dateModified', 'recentlyAdded', 'daysRemaining'] as const).map((type) => (
           <DropdownMenuItem
             key={type}
             onSelect={(event) => event.preventDefault()}

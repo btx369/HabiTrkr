@@ -90,7 +90,8 @@ export function autoImportEventToFolders(event: Event, eventFolders: EventFolder
     if (folderIdsToUpdate.includes(folder.id)) {
       return {
         ...folder,
-        eventIds: [...folder.eventIds, event.id]
+        eventIds: [...folder.eventIds, event.id],
+        lastEventAddedAt: new Date().toISOString()
       };
     }
     return folder;
