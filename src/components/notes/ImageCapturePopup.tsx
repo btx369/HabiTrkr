@@ -3,6 +3,7 @@ import { Camera, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { readImageForStorage } from '@/lib/imageCompression';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { FLOATING_ADD_POPUP_RIGHT } from '@/lib/floatingAdd';
 import { useTheme } from '@/contexts/ThemeContext';
 
 interface ImageCapturePopupProps {
@@ -44,7 +45,7 @@ export function ImageCapturePopup({ isOpen, onImageSelect, onClose }: ImageCaptu
     }
   };
 
-  const buttonClass = `h-10 px-6 rounded-full flex items-center gap-3 w-[120px] justify-start ${
+  const buttonClass = `h-10 px-6 rounded-full flex items-center gap-3 w-[120px] justify-center ${
     theme === 'dark' ? 'hover:bg-muted' : 'hover:bg-[hsl(30_8%_88%)]'
   }`;
 
@@ -53,7 +54,7 @@ export function ImageCapturePopup({ isOpen, onImageSelect, onClose }: ImageCaptu
       {/* Same scrim and buttons as the note-type popup it follows (no white card). */}
       <div className="fixed inset-0 bg-black/40 z-[100]" onClick={onClose} />
 
-      <div className="fixed bottom-[5.5rem] right-2 z-[110] flex flex-col gap-3">
+      <div style={{ right: FLOATING_ADD_POPUP_RIGHT }} className="fixed bottom-[5.5rem] z-[110] flex flex-col gap-3">
         <Button onClick={openCamera} variant="secondary" className={buttonClass}>
           <Camera size={20} />
           <span className="font-medium">{t('takePhoto')}</span>

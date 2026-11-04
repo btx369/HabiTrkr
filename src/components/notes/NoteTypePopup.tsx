@@ -2,6 +2,7 @@ import { FileText, List, Mic, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NoteType } from '@/types/note';
 import { useTheme } from '@/contexts/ThemeContext';
+import { FLOATING_ADD_POPUP_RIGHT } from '@/lib/floatingAdd';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface NoteTypePopupProps {
@@ -40,7 +41,7 @@ export function NoteTypePopup({ isOpen, onTypeSelect, onClose }: NoteTypePopupPr
       />
       
       {/* Popup */}
-      <div className="fixed bottom-[5.5rem] right-2 z-50 flex flex-col gap-3">
+      <div style={{ right: FLOATING_ADD_POPUP_RIGHT }} className="fixed bottom-[5.5rem] z-50 flex flex-col gap-3">
         {noteTypes.map(({ type, icon: Icon, label }) => (
             <Button
               key={type}
@@ -59,7 +60,7 @@ export function NoteTypePopup({ isOpen, onTypeSelect, onClose }: NoteTypePopupPr
                * `dark:` class outranks a plain `hover:` one and would kill the hover in the
                * dark theme — the same trap the editor footer buttons hit.
                */
-              className={`h-10 px-6 rounded-full flex items-center gap-3 w-[110px] justify-start ${
+              className={`h-10 px-6 rounded-full flex items-center gap-3 w-[120px] justify-center ${
                 theme === 'dark' ? 'hover:bg-muted' : 'hover:bg-[hsl(30_8%_88%)]'
               }`}
             >

@@ -1,6 +1,8 @@
 import { useState, useRef } from 'react';
 import { Mic, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { FLOATING_ADD_POPUP_RIGHT } from '@/lib/floatingAdd';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface AudioRecorderPopupProps {
   isOpen: boolean;
@@ -9,6 +11,7 @@ interface AudioRecorderPopupProps {
 }
 
 export function AudioRecorderPopup({ isOpen, onRecordingComplete, onClose }: AudioRecorderPopupProps) {
+  const { t } = useLanguage();
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -98,8 +101,8 @@ export function AudioRecorderPopup({ isOpen, onRecordingComplete, onClose }: Aud
       />
       
       {/* Popup */}
-      <div className="fixed bottom-40 right-4 z-[110] bg-card border rounded-2xl shadow-xl p-6 min-w-[200px]">
-        <div className="flex flex-col items-center gap-4">
+      <div style={{ right: FLOATING_ADD_POPUP_RIGHT }} className="fixed bottom-[5.5rem] z-[110] bg-card border rounded-2xl shadow-xl p-4 w-[200px]">
+        <div className="flex flex-col items-center gap-2">
           <Button
             onClick={handleRecordClick}
             className={`h-16 w-16 rounded-full flex items-center justify-center transition-all ${
@@ -120,7 +123,7 @@ export function AudioRecorderPopup({ isOpen, onRecordingComplete, onClose }: Aud
           
           {!isRecording && recordingTime === 0 && (
             <p className="text-sm text-muted-foreground text-center">
-              Tap to start recording
+              {t('tapToRecord')}
             </p>
           )}
         </div>
