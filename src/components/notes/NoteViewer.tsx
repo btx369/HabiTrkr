@@ -1339,6 +1339,14 @@ export function NoteViewer({
     );
   };
   
+  // Where a note's media markers currently live. A list renders them from the edit buffer
+  // when it has one and from the saved description otherwise; other notes use the buffer only
+  // while editing.
+  const currentAudioDescription = (): string =>
+    note.type === 'list'
+      ? (editedDescription || (note as ListNote).description || '')
+      : (isEditingContent ? editedDescription : (note.description || ''));
+
   const renderAudioList = (audios: { content: string; duration?: number; label?: string }[]) => (
     <div className="space-y-3">
       {audios.map((a, index) => {
@@ -1404,26 +1412,29 @@ export function NoteViewer({
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => {
-                    if (note.type === 'list') return;
-                    const currentDescription = isEditingContent ? editedDescription : (note.description || '');
+                    const currentDescription = currentAudioDescription();
                     const updatedDescription = deleteAudioAndNote(currentDescription, a.content, a.duration ?? 0);
                     
                     // ALWAYS update local state to ensure immediate UI update
                     setEditedDescription(updatedDescription);
                     const wasEditing = isEditingContent;
+                    const isList = note.type === 'list';
                     
-                    // Temporarily set editing mode to trigger UI update
-                    if (!wasEditing) {
+                    // Temporarily set editing mode to trigger UI update. A list keeps its own
+                    // edit buffers, so it is left alone.
+                    if (!wasEditing && !isList) {
                       setIsEditingContent(true);
                     }
                     
                     saveIfEditable({ description: updatedDescription });
                     
                     // Reset editing state after a brief delay to allow the save to complete
-                    setTimeout(() => {
-                      setIsEditingContent(false);
-                      setEditedDescription('');
-                    }, 100);
+                    if (!isList) {
+                      setTimeout(() => {
+                        setIsEditingContent(false);
+                        setEditedDescription('');
+                      }, 100);
+                    }
                     
                     toast.success(say('toastUpdated', 'noteViewerTitle'));
                   }}
@@ -1449,8 +1460,8 @@ export function NoteViewer({
                   if (e.key === 'Enter') {
                     e.preventDefault();
                     const trimmed = editingAudioText.trim();
-                    if (trimmed && note.type !== 'list') {
-                      const currentDescription = isEditingContent ? editedDescription : (note.description || '');
+                    if (trimmed) {
+                      const currentDescription = currentAudioDescription();
                       const updatedDescription = upsertAudioNote(
                         currentDescription,
                         a.content,
@@ -1484,8 +1495,8 @@ export function NoteViewer({
                 size="sm"
                 onClick={() => {
                   const trimmed = editingAudioText.trim();
-                  if (trimmed && note.type !== 'list') {
-                    const currentDescription = isEditingContent ? editedDescription : (note.description || '');
+                  if (trimmed) {
+                    const currentDescription = currentAudioDescription();
                     const updatedDescription = upsertAudioNote(
                       currentDescription,
                       a.content,
@@ -1622,47 +1633,9 @@ export function NoteViewer({
             {/* Render images at the top if present */}
             {listImages.length > 0 && renderImageGrid(listImages)}
             
-            {/* Render audio below images if present */}
-            {listAudioWithLabels.length > 0 && (
-              <div className="space-y-3 mb-4">
-                {listAudioWithLabels.map((audioItem, idx) => (
-                  <div key={idx} className="space-y-2">
-                    {/* Shared player for consistency with the cards and the text-note
-                        audio list; the native element had no speed control. */}
-                    <AudioPlayer
-                      hasColor={!isDefaultColor(note.color)}
-                      audioUrl={audioItem.content}
-                      initialDuration={audioItem.duration ?? 0}
-                      showSeeker
-                      showSpeedControl
-                    />
-                    {audioItem.label && (
-                      <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground px-1">
-                        <span className="flex-1 break-words">{audioItem.label}</span>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghostStatic" size="sm" className="h-6 w-6 p-0 flex-shrink-0 hover:bg-[var(--card-hover-color)] data-[state=open]:bg-[var(--card-hover-color)]">
-                              <MoreVertical size={20} />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="bg-background border border-border">
-                            <DropdownMenuItem onClick={() => {
-                              const updatedDesc = removeAudioFromContent(listDescription, audioItem.content);
-                              setEditedDescription(updatedDesc);
-                              const updatedNote = { ...note, description: updatedDesc } as ListNote;
-                              if (onSave) saveIfEditable(updatedNote);
-                            }}>
-                              <Trash2 size={20} className="mr-2" />
-                              {t('deleteRecording')}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* Same audio list (player, label, and the Add note / Delete menu) as the text and
+                image notes, so a recording looks and behaves the same in every note type. */}
+            {listAudioWithLabels.length > 0 && <div className="mb-4">{renderAudioList(listAudioWithLabels)}</div>}
             
             <div className="min-h-0 space-y-2 flex-1 overflow-auto">
               {/* Uncompleted items */}
@@ -2401,7 +2374,7 @@ export function NoteViewer({
               const scrollTop = viewport?.scrollTop ?? 0;
               const scrollLeft = viewport?.scrollLeft ?? 0;
               
-              const currentDesc = isEditingContent ? editedDescription : (note.description || '');
+              const currentDesc = currentAudioDescription();
               const newDesc = insertContentInOrder(currentDesc, audioMarker, 'audio');
               setEditedDescription(newDesc);
               
