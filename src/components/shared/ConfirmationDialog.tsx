@@ -85,8 +85,8 @@ export function ConfirmationDialog({
           : undefined}
       >
         <AlertDialogHeader className={compactDestructive ? 'px-6 pt-6 pb-5' : undefined}>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription className={compactDestructive ? 'whitespace-pre-line' : undefined}>
+          <AlertDialogTitle className="break-words">{title}</AlertDialogTitle>
+          <AlertDialogDescription className={compactDestructive ? 'whitespace-pre-line break-words' : 'break-words'}>
             {description}
           </AlertDialogDescription>
         </AlertDialogHeader>

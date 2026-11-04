@@ -67,7 +67,7 @@ export function AudioRecorderPopup({ isOpen, onRecordingComplete, onClose }: Aud
 
     } catch (error) {
       console.error('Error starting recording:', error);
-      alert('Could not access microphone. Please check permissions.');
+      alert(t('micAccessError'));
     }
   };
 
@@ -116,7 +116,7 @@ export function AudioRecorderPopup({ isOpen, onRecordingComplete, onClose }: Aud
           
           {isRecording && (
             <div className="text-center">
-              <div className="text-red-500 font-medium">Recording...</div>
+              <div className="text-red-500 font-medium">{t('recordingInProgress')}</div>
               <div className="text-sm text-muted-foreground">{formatTime(recordingTime)}</div>
             </div>
           )}

@@ -101,10 +101,17 @@ export function itemDisplayName(
   const name = (item.name ?? '').trim();
   if (name !== '') return name;
 
-  const body = (item.description ?? '').replace(/\s+/g, ' ').trim();
+  // Embedded media markers ([audio:data:...], [image:data:...]) carry the whole file as a
+  // data URL. Left in, they became the "name", which blew the confirmation dialog wider than
+  // the screen and pushed its buttons out of reach.
+  const body = (item.description ?? '')
+    .replace(/\[(?:audio|image|audionote):[^\]]*\]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
   if (body === '') return t('untitledItem');
 
-  const words = body.split(' ');
+  // A single huge "word" (a pasted URL, say) must not stretch the dialog either.
+  const words = body.split(' ').map((w) => (w.length > 30 ? `${w.slice(0, 30)}…` : w));
   const opening = words.slice(0, NAME_FROM_BODY_WORDS).join(' ');
   // An ellipsis marks this as a fragment, so a three-word note is not mistaken for a title
   // that simply happens to be three words long.
