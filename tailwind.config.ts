@@ -2,6 +2,12 @@ import type { Config } from "tailwindcss";
 import tailwindcssAnimate from "tailwindcss-animate";
 
 export default {
+	// Hover styles only where a real pointer can hover. On touch screens the browser keeps
+	// :hover on whatever was last tapped, so a row or a switch stayed grey after the tap
+	// until something else was touched.
+	future: {
+		hoverOnlyWhenSupported: true,
+	},
 	darkMode: ["class"],
 	content: [
 		"./pages/**/*.{ts,tsx}",

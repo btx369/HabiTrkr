@@ -54,7 +54,7 @@ try {
   await wait(page, 400);
   check('feedback dialog closes after send', !(await page.getByRole('dialog').count()), String(request?.url() ?? ''));
 
-  // Delete all data, scoped to HabiTrkr keys only
+  // Delete account, scoped to HabiTrkr keys only
   await page.goto(BASE + '/profile');
   await page.evaluate(() => {
     localStorage.setItem('notes', JSON.stringify([{ id: 'x', name: 'x', type: 'text', color: '#FFFFFF', createdAt: '', pinned: false, description: '' }]));
@@ -62,9 +62,9 @@ try {
   });
   await page.reload();
   await wait(page, 800);
-  await page.getByText('Delete all data', { exact: true }).click();
+  await page.getByText('Delete account', { exact: true }).click();
   await wait(page, 400);
-  await page.getByRole('alertdialog').getByRole('button', { name: 'Delete all data' }).click().catch(async () => page.getByRole('dialog').getByRole('button', { name: 'Delete all data' }).click());
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Delete account' }).click().catch(async () => page.getByRole('dialog').getByRole('button', { name: 'Delete account' }).click());
   await page.waitForLoadState('load');
   await wait(page, 1200);
   check('delete all data clears app data', (await store(page, 'notes')) === null && (await store(page, 'habitrkr.noteVault')) === null);

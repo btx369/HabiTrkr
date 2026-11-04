@@ -117,7 +117,8 @@ export function ConfirmationDialog({
           )}
           <AlertDialogAction
             onClick={handleConfirm}
-            className={`h-10 flex-1 rounded-full ${compactDestructive ? 'min-w-0' : ''} ${
+            // Long labels in some languages wrap inside the pill instead of spilling out of it.
+            className={`h-auto min-h-10 min-w-0 flex-1 whitespace-normal rounded-full py-2 leading-tight ${
               isImport || isModeChange || isRestore
                 ? 'bg-primary text-primary-foreground hover:bg-primary/90'
                 : 'bg-destructive text-destructive-foreground transition-none hover:bg-destructive active:bg-destructive focus:bg-destructive focus-visible:bg-destructive hover:shadow-none active:shadow-none'
