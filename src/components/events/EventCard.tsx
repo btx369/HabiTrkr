@@ -198,7 +198,7 @@ export function EventCard({
           ? "bg-black border-black" 
           : "border-muted-foreground bg-background/80 backdrop-blur-sm"
       )}>
-        {isBulkSelected && <Check size={14} className="text-white" />}
+        {isBulkSelected && <Check size={20} className="text-white" />}
       </div>
     </div>
   );
@@ -230,13 +230,13 @@ export function EventCard({
           </div>
           <div className="flex items-center gap-1">
             {isFiled && (
-              <FolderOpen size={14} className={`flex-shrink-0 ${iconColorClass}`} />
+              <FolderOpen size={20} className={`flex-shrink-0 ${iconColorClass}`} />
             )}
             {event.pinned && (
-              <Pin size={14} className={`flex-shrink-0 ${iconColorClass}`} />
+              <Pin size={20} className={`flex-shrink-0 ${iconColorClass}`} />
             )}
             {event.alertType && event.alertType !== 'none' && (
-              <BellRing size={14} className={`flex-shrink-0 ${iconColorClass}`} />
+              <BellRing size={20} className={`flex-shrink-0 ${iconColorClass}`} />
             )}
             {showBulkCheckbox ? (
               <BulkCheckbox />
@@ -253,7 +253,7 @@ export function EventCard({
                     else onRestore?.(event.id);
                   }}
                 >
-                  <RotateCcw size={14} />
+                  <RotateCcw size={20} />
                 </Button>
                 <Button 
                   aria-label={t('delete')}
@@ -262,7 +262,7 @@ export function EventCard({
                   className="rounded-full h-8 w-8" 
                   onClick={(e) => { e.stopPropagation(); onDelete?.(event.id); }}
                 >
-                  <Trash2 size={14} />
+                  <Trash2 size={20} />
                 </Button>
               </div>
             ) : (
@@ -295,7 +295,7 @@ export function EventCard({
           )}
           <div className="flex items-center justify-between gap-2">
             <div className={`flex items-center gap-2 text-sm ${textColorClass}`}>
-              <Calendar size={14} className={iconColorClass} />
+              <Calendar size={20} className={iconColorClass} />
               <span className={viewType !== 'list' ? 'truncate' : ''}>
                 {(() => {
                   // A recurring event shows its next occurrence, not the day it was first set

@@ -1174,12 +1174,12 @@ export default function HabitTracker() {
                 aria-label={t('selectItems')} 
                 variant="ghostStatic" 
                 size="icon"
-                className="rounded-full hover:bg-hover hover:text-foreground focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:!size-5 data-[state=open]:bg-hover data-[state=open]:text-foreground"
+                className="rounded-full hover:bg-hover hover:text-foreground focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:!size-6 data-[state=open]:bg-hover data-[state=open]:text-foreground"
                 data-state={isBulkMode ? "open" : "closed"}
                 onClick={(e) => { toggleBulkMode(); e.currentTarget.blur(); }}
                 onMouseDown={(e) => e.preventDefault()}
               >
-                <FileStack className="h-6 w-6" />
+                <FileStack />
               </Button>
               {activeTab === 'folders' ? (
                 <HabitFolderViewSettings
@@ -1216,13 +1216,13 @@ export default function HabitTracker() {
             {activeTab === 'habits' && (
               <div className="rounded-2xl bg-[hsl(var(--surface-card))] backdrop-blur-[12px] border border-foreground/10 shadow-[0_8px_32px_rgba(0,0,0,0.1)] px-1.5 py-1 mb-1">
                 <div className="flex items-center justify-between mb-0.5">
-                  <Button aria-label={t('previous')} variant="ghost" size="icon" className="h-8 w-8 text-foreground hover:bg-hover hover:text-foreground rounded-full [&_svg]:!size-4" onClick={() => setCurrentWeek(subWeeks(currentWeek, 1))}>
+                  <Button aria-label={t('previous')} variant="ghost" size="icon" className="h-9 w-9 text-foreground hover:bg-hover hover:text-foreground rounded-full [&_svg]:!size-6" onClick={() => setCurrentWeek(subWeeks(currentWeek, 1))}>
                     <ChevronLeft size={24} />
                   </Button>
                   <h3 className="text-sm font-medium">
                     {format(weekStart, 'MMM d', { locale: dateLocale })} - {format(addDays(weekStart, 6), 'MMM d, yyyy', { locale: dateLocale })}
                   </h3>
-                  <Button aria-label={t('next')} variant="ghost" size="icon" className="h-8 w-8 text-foreground hover:bg-hover hover:text-foreground rounded-full [&_svg]:!size-4" onClick={() => setCurrentWeek(addWeeks(currentWeek, 1))}>
+                  <Button aria-label={t('next')} variant="ghost" size="icon" className="h-9 w-9 text-foreground hover:bg-hover hover:text-foreground rounded-full [&_svg]:!size-6" onClick={() => setCurrentWeek(addWeeks(currentWeek, 1))}>
                     <ChevronRight size={24} />
                   </Button>
                 </div>

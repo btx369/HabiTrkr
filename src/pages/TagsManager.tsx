@@ -112,7 +112,7 @@ export default function TagsManager() {
       <div className="px-2 pb-8 space-y-4">
         {/* Search */}
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-muted-foreground" size={18} />
+          <Search className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-muted-foreground" size={20} />
           <Input
             placeholder={t('searchTags')}
             value={searchQuery}
@@ -133,7 +133,7 @@ export default function TagsManager() {
               <div key={tagData.tag}>
                 <div className="flex items-center justify-between p-4">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <Tag size={18} className="text-primary shrink-0" />
+                    <Tag size={20} className="text-primary shrink-0" />
                     <div className="flex-1 min-w-0">
                       {/* Same match highlighting the note and event cards use, so a search
                           behaves the same way wherever it appears in the app. */}
@@ -151,7 +151,7 @@ export default function TagsManager() {
                       onClick={() => handleEditClick(tagData.tag)}
                       className="h-8 w-8 text-muted-foreground hover:text-foreground"
                     >
-                      <Pencil size={16} />
+                      <Pencil size={20} />
                     </Button>
                     <Button
                       aria-label={t('delete')}
@@ -160,7 +160,7 @@ export default function TagsManager() {
                       onClick={() => handleDeleteClick(tagData)}
                       className="h-8 w-8 text-muted-foreground hover:text-destructive"
                     >
-                      <Trash2 size={16} />
+                      <Trash2 size={20} />
                     </Button>
                   </div>
                 </div>

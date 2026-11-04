@@ -137,7 +137,7 @@ export function NotePasswordDialog({ isOpen, mode, onClose, onSubmit, onBiometri
               onClick={handleBiometric}
               disabled={isBusy}
             >
-              <Fingerprint size={18} />
+              <Fingerprint size={20} />
               {t('useFingerprint')}
             </Button>
           )}

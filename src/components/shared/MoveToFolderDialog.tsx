@@ -84,7 +84,7 @@ export function MoveToFolderDialog<T extends MovableFolder>({
         <div className="flex justify-center w-full pt-3">
           <Button onClick={onCreateNewFolder} className="bg-black text-white hover:bg-black/90">
             {t('createNewFolder')}
-            <FolderPlus size={16} className="ml-2" />
+            <FolderPlus size={20} className="ml-2" />
           </Button>
         </div>
       }

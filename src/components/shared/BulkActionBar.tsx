@@ -263,7 +263,7 @@ export function BulkActionBar({
                     className="flex h-11 min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0 px-0.5 text-nav-foreground transition-all duration-300 ease-out hover:bg-white/10 hover:text-nav-foreground data-[state=open]:bg-white/10 md:min-w-[48px] md:basis-auto md:px-2"
                     disabled={selectedCount === 0}
                   >
-                    <Icon size={18} className="shrink-0 md:h-[22px] md:w-[22px]" />
+                    <Icon size={20} className="shrink-0 md:h-[22px] md:w-[22px]" />
                     <span className="whitespace-nowrap text-[9px] leading-tight md:text-xs">{resolveLabel(action.label)}</span>
                   </Button>
                 </PopoverTrigger>
@@ -293,7 +293,7 @@ export function BulkActionBar({
               disabled={!isSelectionAction && selectedCount === 0}
               aria-pressed={isSelectionAction ? isActionSelected(action.type) : undefined}
             >
-              <Icon size={18} className="shrink-0 md:h-[22px] md:w-[22px]" />
+              <Icon size={20} className="shrink-0 md:h-[22px] md:w-[22px]" />
               <span className="whitespace-nowrap text-[9px] leading-tight md:text-xs">{resolveLabel(action.label)}</span>
             </Button>
           );

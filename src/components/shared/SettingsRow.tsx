@@ -54,7 +54,7 @@ export function SettingsRow({ icon, label, value, onClick, rightElement, showChe
         * tap and set the same value a second time.
         */}
       {rightElement && <span onClick={(event) => event.stopPropagation()}>{rightElement}</span>}
-      {showChevron && <ChevronRight size={18} className="text-muted-foreground" />}
+      {showChevron && <ChevronRight size={20} className="text-muted-foreground" />}
     </div>
   );
 

@@ -109,7 +109,7 @@ export function ReminderDialog({ isOpen, onClose, reminder, onSave }: ReminderDi
                   onClick={() => save(at)}
                   className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm hover:bg-hover active:bg-hover"
                 >
-                  <Icon size={18} className="shrink-0 text-muted-foreground" />
+                  <Icon size={20} className="shrink-0 text-muted-foreground" />
                   <span className="flex-1">{t(PRESET_KEYS[preset])}</span>
                   <span className="text-muted-foreground">
                     {preset === 'nextWeek' ? format(at, 'EEE, p', { locale: dateLocale }) : format(at, 'p', { locale: dateLocale })}
@@ -129,13 +129,13 @@ export function ReminderDialog({ isOpen, onClose, reminder, onSave }: ReminderDi
                 onClick={() => setTimePickerOpen(true)}
                 className="h-10 w-full justify-start gap-2 rounded-md bg-muted text-sm"
               >
-                <Clock size={16} />
+                <Clock size={20} />
                 {time || t('setTime')}
               </Button>
             </div>
 
             <div className="flex items-center gap-3">
-              <Repeat size={16} className="shrink-0 text-muted-foreground" aria-hidden />
+              <Repeat size={20} className="shrink-0 text-muted-foreground" aria-hidden />
               <Select value={repeat} onValueChange={(v) => setRepeat(v as RepeatChoice)}>
                 <SelectTrigger className="h-10 flex-1 bg-muted text-sm" aria-label={t('reminderRepeat')}>
                   <SelectValue />
@@ -183,7 +183,7 @@ export function ReminderDialog({ isOpen, onClose, reminder, onSave }: ReminderDi
                   onClose();
                 }}
               >
-                <BellOff size={16} />
+                <BellOff size={20} />
                 {t('reminderRemove')}
               </Button>
             ) : (

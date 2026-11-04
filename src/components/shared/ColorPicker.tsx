@@ -27,7 +27,7 @@ export function ColorPicker({
   return (
     <div>
       <Label className="text-sm flex items-center gap-2">
-        {Icon && <Icon size={16} color={iconColor} />}
+        {Icon && <Icon size={20} color={iconColor} />}
         {resolvedLabel}
       </Label>
       <div className={singleRow

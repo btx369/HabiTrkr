@@ -234,7 +234,7 @@ export default function Profile() {
                     maxLength={30}
                   />
                   <Button size="sm" onClick={handleNameSave} className="rounded-full">
-                    <Check size={16} />
+                    <Check size={20} />
                   </Button>
                 </div>
               ) : (
@@ -336,7 +336,7 @@ export default function Profile() {
                       className="w-full flex items-center justify-between px-4 py-3 rounded-lg hover:bg-hover transition-colors"
                     >
                       <span>{nativeLanguageNames[lang]}</span>
-                      {language === lang && <Check className="h-4 w-4 text-primary" />}
+                      {language === lang && <Check className="h-5 w-5 text-primary" />}
                     </button>
                   ))}
                 </div>
@@ -360,7 +360,7 @@ export default function Profile() {
                       className="w-full flex items-center justify-between px-4 py-3 rounded-lg hover:bg-hover transition-colors"
                     >
                       <span>{t(day)}</span>
-                      {weekStartDay === day && <Check className="h-4 w-4 text-primary" />}
+                      {weekStartDay === day && <Check className="h-5 w-5 text-primary" />}
                     </button>
                   ))}
                 </div>
@@ -383,7 +383,7 @@ export default function Profile() {
                   className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full"
                   onClick={handleExport}
                 >
-                  <Download className="h-4 w-4 mr-1" /> {t('exportBackup')}
+                  <Download className="h-5 w-5 mr-1" /> {t('exportBackup')}
                 </Button>
                 <Button 
                   variant="default" 
@@ -391,7 +391,7 @@ export default function Profile() {
                   className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full"
                   onClick={handleImportClick}
                 >
-                  <Upload className="h-4 w-4 mr-1" /> {t('importBackup')}
+                  <Upload className="h-5 w-5 mr-1" /> {t('importBackup')}
                 </Button>
                 <input
                   ref={fileInputRef}

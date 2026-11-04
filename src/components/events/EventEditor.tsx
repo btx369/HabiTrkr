@@ -314,7 +314,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <Label className="text-sm flex items-center gap-2">
-              <CalendarClock size={16} color={ICON_COLOR} />
+              <CalendarClock size={20} color={ICON_COLOR} />
               {t('dateAndTime')}
             </Label>
             <div className="flex items-center gap-2">
@@ -369,7 +369,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
                    */
                   className="w-full h-10 text-sm bg-muted justify-start gap-2 rounded-md"
                 >
-                  <Clock size={16} color={ICON_COLOR} />
+                  <Clock size={20} color={ICON_COLOR} />
                   {formData.startTime || t('setTime')}
                 </Button>
               )}
@@ -396,7 +396,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
                   onClick={() => setIsEndTimePickerOpen(true)}
                   className={`w-full h-10 text-sm justify-start gap-2 rounded-md ${hasEndDateError ? 'bg-destructive/20 border-destructive/50' : 'bg-muted'}`}
                 >
-                  <Clock size={16} color={ICON_COLOR} />
+                  <Clock size={20} color={ICON_COLOR} />
                   {formData.endTime || t('setTime')}
                 </Button>
               )}
@@ -492,7 +492,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
         {/* Alert */}
         <div className="space-y-2">
           <Label className="text-sm flex items-center gap-2">
-            <Bell size={16} color={ICON_COLOR} />
+            <Bell size={20} color={ICON_COLOR} />
             {t('alert')}
           </Label>
           <Select

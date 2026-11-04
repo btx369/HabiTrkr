@@ -1188,15 +1188,15 @@ export function NoteViewer({
   const getTypeIcon = () => {
     switch (note.type) {
       case 'text':
-        return <FileText size={16} className="text-muted-foreground" />;
+        return <FileText size={20} className="text-muted-foreground" />;
       case 'list':
-        return <List size={16} className="text-muted-foreground" />;
+        return <List size={20} className="text-muted-foreground" />;
       case 'audio':
-        return <Mic size={16} className="text-muted-foreground" />;
+        return <Mic size={20} className="text-muted-foreground" />;
       case 'image':
-        return <ImageIcon size={16} className="text-muted-foreground" />;
+        return <ImageIcon size={20} className="text-muted-foreground" />;
       default:
-        return <FileText size={16} className="text-muted-foreground" />;
+        return <FileText size={20} className="text-muted-foreground" />;
     }
   };
 
@@ -1317,7 +1317,7 @@ export function NoteViewer({
                   className="h-8 w-8 p-0 self-center hover:bg-[var(--card-hover-color)] data-[state=open]:bg-[var(--card-hover-color)]"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <MoreVertical size={16} />
+                  <MoreVertical size={20} />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="z-[60] bg-background border border-border">
@@ -1327,7 +1327,7 @@ export function NoteViewer({
                     setEditingAudioText(a.label || '');
                   }}
                 >
-                  <Edit size={14} className="mr-2" />
+                  <Edit size={20} className="mr-2" />
                   {a.label ? t('editNote') : t('addNote')}
                 </DropdownMenuItem>
                 <DropdownMenuItem 
@@ -1357,7 +1357,7 @@ export function NoteViewer({
                   }}
                   className="text-destructive"
                 >
-                  <Trash2 size={14} className="mr-2" />
+                  <Trash2 size={20} className="mr-2" />
                   {t('delete')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -1439,7 +1439,7 @@ export function NoteViewer({
                   }
                 }}
               >
-                <Save size={14} />
+                <Save size={20} />
               </Button>
               <Button
                 size="sm"
@@ -1449,7 +1449,7 @@ export function NoteViewer({
                   setEditingAudioText('');
                 }}
               >
-                <X size={14} />
+                <X size={20} />
               </Button>
             </div>
           ) : (
@@ -1570,7 +1570,7 @@ export function NoteViewer({
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghostStatic" size="sm" className="h-6 w-6 p-0 flex-shrink-0 hover:bg-[var(--card-hover-color)] data-[state=open]:bg-[var(--card-hover-color)]">
-                              <MoreVertical size={14} />
+                              <MoreVertical size={20} />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="bg-background border border-border">
@@ -1580,7 +1580,7 @@ export function NoteViewer({
                               const updatedNote = { ...note, description: updatedDesc } as ListNote;
                               if (onSave) saveIfEditable(updatedNote);
                             }}>
-                              <Trash2 size={14} className="mr-2" />
+                              <Trash2 size={20} className="mr-2" />
                               {t('deleteRecording')}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -1642,7 +1642,7 @@ export function NoteViewer({
                   onClick={isEditingContent ? addListItem : beginAddItem}
                   className="h-8 w-full justify-start text-muted-foreground hover:bg-hover flex-shrink-0"
                 >
-                  <Plus size={16} className="mr-2" />
+                  <Plus size={20} className="mr-2" />
                   {t('addListItem')}
                 </Button>
                 
@@ -1955,9 +1955,9 @@ export function NoteViewer({
                   variant={iconButtonStyles.variant}
                   size="sm"
                   onClick={handleBackClick}
-                  className={`h-8 w-8 p-0 flex-shrink-0 rounded-full transition-colors duration-200 ${themedHoverStyles}`}
+                  className={`h-9 w-9 p-0 [&_svg]:!size-6 flex-shrink-0 rounded-full transition-colors duration-200 ${themedHoverStyles}`}
                 >
-              <ArrowLeft size={16} />
+              <ArrowLeft size={20} />
             </Button>
             {/* Save button for list notes when editing */}
             {isEditingContent && note.type === 'list' && (
@@ -1968,9 +1968,9 @@ export function NoteViewer({
                 onClick={() => {
                   saveContent();
                 }}
-                className="h-8 w-8 p-0 flex-shrink-0 hover:bg-hover rounded-full bg-primary/10"
+                className="h-9 w-9 p-0 [&_svg]:!size-6 flex-shrink-0 hover:bg-hover rounded-full bg-primary/10"
               >
-                <Check size={16} className="text-primary" />
+                <Check size={20} className="text-primary" />
               </Button>
             )}
             <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -1982,9 +1982,9 @@ export function NoteViewer({
                 onClick={handleSearchToggle}
                 // While searching the button is filled, like the open buttons of the action
                 // bar, so it is clear that tapping it again switches the search off.
-                className={`h-8 w-8 p-0 flex-shrink-0 rounded-full transition-colors duration-200 ${isSearching ? 'bg-black text-white hover:bg-black' : themedHoverStyles}`}
+                className={`h-9 w-9 p-0 [&_svg]:!size-6 flex-shrink-0 rounded-full transition-colors duration-200 ${isSearching ? 'bg-black text-white hover:bg-black' : themedHoverStyles}`}
               >
-                <Search size={16} />
+                <Search size={20} />
               </Button>
               {isSearching ? (
                 <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -2051,15 +2051,15 @@ export function NoteViewer({
                   ) : (
                     <>
                       <span className="text-muted-foreground/70 italic font-normal">Add a title</span>
-                      <Edit size={14} className="flex-shrink-0 text-muted-foreground/50" />
+                      <Edit size={20} className="flex-shrink-0 text-muted-foreground/50" />
                     </>
                   )}
                 </DialogTitle>
               )}
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
-              {note.pinned && <Pin size={16} className={iconColorClass} />}
-              {note.locked && <Lock size={16} className={iconColorClass} />}
+              {note.pinned && <Pin size={24} className={iconColorClass} />}
+              {note.locked && <Lock size={20} className={iconColorClass} />}
             </div>
           </div>
           {/*
@@ -2071,6 +2071,7 @@ export function NoteViewer({
           )}
           <div className="flex items-center gap-2 flex-shrink-0">
             <ItemActionMenu
+              large
               isPinned={note.pinned}
               isArchived={note.archived}
               isDeleted={false}
@@ -2095,9 +2096,9 @@ export function NoteViewer({
               size="sm"
               aria-label={t('close')}
                   onClick={handleCloseClick}
-              className={`h-8 w-8 p-0 rounded-full transition-colors duration-200 ${themedHoverStyles}`}
+              className={`h-9 w-9 p-0 [&_svg]:!size-6 rounded-full transition-colors duration-200 ${themedHoverStyles}`}
             >
-              <X size={14} />
+              <X size={20} />
             </Button>
           </div>
         </DialogHeader>

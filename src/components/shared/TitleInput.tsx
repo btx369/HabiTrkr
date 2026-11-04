@@ -51,7 +51,7 @@ export function TitleInput({
      */
     <div className="space-y-2">
       <Label htmlFor={id} className="text-sm flex items-center gap-2">
-        {Icon && <Icon size={16} color={iconColor} />}
+        {Icon && <Icon size={20} color={iconColor} />}
         {label}
         {required && <span className="text-destructive">*</span>}
         <span className={`text-xs ${getCounterColor()}`}>

@@ -56,7 +56,7 @@ export const BottomNavigation = ({ hidden = false }: BottomNavigationProps) => {
                       : "bg-transparent text-nav-icon group-hover:text-nav-icon-hover group-hover:bg-white/10"
                   )}
                 >
-                <Icon size={20} />
+                <Icon size={24} />
               </div>
             </button>
           );

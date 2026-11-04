@@ -190,7 +190,7 @@ export function TagEditor({
   return (
     <div className="space-y-2">
       <Label className={cn("text-sm flex items-center gap-2", hasNoteColor && iconColorClass)}>
-        {Icon && <Icon size={14} className={hasNoteColor ? iconColorClass : ''} style={!hasNoteColor && iconColor ? { color: iconColor } : {}} />}
+        {Icon && <Icon size={20} className={hasNoteColor ? iconColorClass : ''} style={!hasNoteColor && iconColor ? { color: iconColor } : {}} />}
         {t('tags')} <span className={cn(
           "text-xs font-normal",
           tags.length >= TAG_LIMIT 

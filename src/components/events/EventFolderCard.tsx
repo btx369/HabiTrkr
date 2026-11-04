@@ -117,7 +117,7 @@ export function EventFolderCard({
           ? "bg-black border-black" 
           : "border-muted-foreground bg-background/80 backdrop-blur-sm"
       )}>
-        {isBulkSelected && <Check size={14} className="text-white" />}
+        {isBulkSelected && <Check size={20} className="text-white" />}
       </div>
     </div>
   );
@@ -142,9 +142,9 @@ export function EventFolderCard({
                   }}
                 >
                   {isOpen ? (
-                    <ChevronDown size={14} className={iconColorClass} />
+                    <ChevronDown size={20} className={iconColorClass} />
                   ) : (
-                    <ChevronRight size={14} className={iconColorClass} />
+                    <ChevronRight size={20} className={iconColorClass} />
                   )}
                   <h4 className={`text-sm font-medium truncate flex-1 ${textColorClass}`}>{highlightText(folder.name, searchQuery)}</h4>
                 </div>
@@ -157,8 +157,8 @@ export function EventFolderCard({
               </p>
             </div>
             <div className="flex items-center gap-1">
-              {folder.pinned && <Pin size={14} className={iconColorClass} />}
-              <FolderOpen size={14} className={iconColorClass} />
+              {folder.pinned && <Pin size={20} className={iconColorClass} />}
+              <FolderOpen size={20} className={iconColorClass} />
               {showBulkCheckbox ? (
                 <BulkCheckbox />
               ) : (isArchived || isDeleted) ? (
@@ -174,7 +174,7 @@ export function EventFolderCard({
                       else onRestore?.(folder.id);
                     }}
                   >
-                    <RotateCcw size={14} />
+                    <RotateCcw size={20} />
                   </Button>
                   <Button 
                     aria-label={t('delete')}
@@ -183,7 +183,7 @@ export function EventFolderCard({
                     className="rounded-full h-8 w-8" 
                     onClick={(e) => { e.stopPropagation(); onDelete?.(folder.id); }}
                   >
-                    <Trash2 size={14} />
+                    <Trash2 size={20} />
                   </Button>
                 </div>
               ) : (

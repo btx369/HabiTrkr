@@ -85,7 +85,7 @@ export function TextFormattingBar({ onFormat, onClose, editor, noteColor }: Text
             onClick={() => onFormat('h1')}
             title="Heading 1"
           >
-            <Heading1 size={18} />
+            <Heading1 size={20} />
           </Button>
           <Button
             {...getButtonProps(isH2Active)}
@@ -93,7 +93,7 @@ export function TextFormattingBar({ onFormat, onClose, editor, noteColor }: Text
             onClick={() => onFormat('h2')}
             title="Heading 2"
           >
-            <Heading2 size={18} />
+            <Heading2 size={20} />
           </Button>
           <Button
             {...getButtonProps(!!isNormalActive)}
@@ -101,7 +101,7 @@ export function TextFormattingBar({ onFormat, onClose, editor, noteColor }: Text
             onClick={() => onFormat('normal')}
             title="Normal text"
           >
-            <Type size={18} />
+            <Type size={20} />
           </Button>
           <div className={`w-px h-6 mx-1 ${dividerClass}`} />
           <Button
@@ -110,7 +110,7 @@ export function TextFormattingBar({ onFormat, onClose, editor, noteColor }: Text
             onClick={() => onFormat('bold')}
             title="Bold"
           >
-            <Bold size={18} />
+            <Bold size={20} />
           </Button>
           <Button
             {...getButtonProps(isItalicActive)}
@@ -118,7 +118,7 @@ export function TextFormattingBar({ onFormat, onClose, editor, noteColor }: Text
             onClick={() => onFormat('italic')}
             title="Italic"
           >
-            <Italic size={18} />
+            <Italic size={20} />
           </Button>
           <Button
             {...getButtonProps(isUnderlineActive)}
@@ -126,7 +126,7 @@ export function TextFormattingBar({ onFormat, onClose, editor, noteColor }: Text
             onClick={() => onFormat('underline')}
             title="Underline"
           >
-            <Underline size={18} />
+            <Underline size={20} />
           </Button>
           <div className={`w-px h-6 mx-1 ${dividerClass}`} />
           <Button
@@ -135,7 +135,7 @@ export function TextFormattingBar({ onFormat, onClose, editor, noteColor }: Text
             className={`h-8 w-8 rounded-full p-0 ${themedHoverStyles}`}
             title="Clear formatting"
           >
-            <RemoveFormatting size={18} />
+            <RemoveFormatting size={20} />
           </Button>
         </div>
         {onClose && (
@@ -145,7 +145,7 @@ export function TextFormattingBar({ onFormat, onClose, editor, noteColor }: Text
             className={`h-8 w-8 rounded-full p-0 flex-shrink-0 ${themedHoverStyles}`}
             title="Close formatting bar"
           >
-            <X size={18} />
+            <X size={20} />
           </Button>
         )}
       </div>

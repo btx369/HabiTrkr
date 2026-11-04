@@ -24,7 +24,7 @@ export function ReminderIcon({ reminder, className }: { reminder: NoteReminder; 
   const Icon = overdue ? Bell : BellRing;
   return (
     <span role="img" aria-label={label} title={label} className="inline-flex" data-testid="note-reminder-icon">
-      <Icon size={14} className={cn(className, overdue && 'opacity-50')} />
+      <Icon size={20} className={cn(className, overdue && 'opacity-50')} />
     </span>
   );
 }

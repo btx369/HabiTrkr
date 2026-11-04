@@ -60,19 +60,19 @@ export function ImageActionMenu({
       <DropdownMenuContent align={align} className="bg-background border border-border">
         {onCopy && (
           <DropdownMenuItem onClick={(e) => handleAction(onCopy, e)}>
-            <Copy size={14} className="mr-2" />
+            <Copy size={20} className="mr-2" />
             Copy
           </DropdownMenuItem>
         )}
         {onDownload && (
           <DropdownMenuItem onClick={(e) => handleAction(onDownload, e)}>
-            <Download size={14} className="mr-2" />
+            <Download size={20} className="mr-2" />
             Download
           </DropdownMenuItem>
         )}
         {onShare && (
           <DropdownMenuItem onClick={(e) => handleAction(onShare, e)}>
-            <Share2 size={14} className="mr-2" />
+            <Share2 size={20} className="mr-2" />
             Share
           </DropdownMenuItem>
         )}
@@ -81,7 +81,7 @@ export function ImageActionMenu({
             onClick={(e) => handleAction(onDelete, e)}
             destructive
           >
-            <Trash2 size={14} className="mr-2" />
+            <Trash2 size={20} className="mr-2" />
             Delete
           </DropdownMenuItem>
         )}

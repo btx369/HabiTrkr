@@ -135,7 +135,7 @@ export const PinPadDialog = ({ isOpen, onClose, onSubmit, mode, title }: PinPadD
               aria-label="Delete last digit"
               type="button"
             >
-              <Delete size={16} />
+              <Delete size={20} />
             </Button>
           </div>
           

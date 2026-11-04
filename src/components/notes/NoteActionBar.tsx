@@ -83,7 +83,7 @@ export const NoteActionBar = ({
    * background inside mutually exclusive branches lets tailwind-merge drop the loser, which
    * is why `bg-transparent` appears only in the branch that needs it.
    */
-  const sizeStyles = 'h-9 w-9 rounded-full p-0';
+  const sizeStyles = 'h-9 w-9 rounded-full p-0 [&_svg]:!size-6';
   const restStyles = hasColor
     ? 'bg-transparent hover:bg-black/10'
     : 'bg-transparent hover:bg-hover';
@@ -107,24 +107,24 @@ export const NoteActionBar = ({
             className={`${sizeStyles} ${restStyles} ${openTriggerStyles}`}
             aria-label={t('add')}
           >
-            <Plus size={16} />
+            <Plus size={20} />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="center" side="top" className="bg-background border border-border">
           <DropdownMenuItem onClick={onTakePhoto} className="flex items-center gap-2">
-            <Camera size={16} />
+            <Camera size={20} />
             {t('takePhoto')}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={onAddImage} className="flex items-center gap-2">
-            <ImageIcon size={16} />
+            <ImageIcon size={20} />
             {t('addImage')}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={onStartRecording} className="flex items-center gap-2">
-            <Mic size={16} />
+            <Mic size={20} />
             {t('recording')}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={onAddTickBoxes} className="flex items-center gap-2">
-            <CheckSquare size={16} />
+            <CheckSquare size={20} />
             {t('tickBoxes')}
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -137,7 +137,7 @@ export const NoteActionBar = ({
             className={`${sizeStyles} ${restStyles} ${openTriggerStyles}`}
             aria-label={t('tags')}
           >
-            <Tag size={16} />
+            <Tag size={20} />
           </Button>
         </PopoverTrigger>
         <PopoverContent 
@@ -166,7 +166,7 @@ export const NoteActionBar = ({
           aria-label={t('reminder')}
           data-testid="note-remind-button"
         >
-          {hasReminder ? <BellRing size={16} /> : <Bell size={16} />}
+          {hasReminder ? <BellRing size={20} /> : <Bell size={20} />}
         </Button>
       )}
       
@@ -177,7 +177,7 @@ export const NoteActionBar = ({
           onClick={onTranscribeAudio}
           aria-label={t('transcribeAudio')}
         >
-          <Mic size={16} />
+          <Mic size={20} />
         </Button>
       )}
       
@@ -193,7 +193,7 @@ export const NoteActionBar = ({
           aria-label={t('textFormatting')}
           onClick={onToggleFormatting}
         >
-          <Type size={16} />
+          <Type size={20} />
         </Button>
       )}
     </div>

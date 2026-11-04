@@ -120,7 +120,7 @@ export function HabitCard({
           ? "bg-black border-black" 
           : "border-muted-foreground bg-background/80 backdrop-blur-sm"
       )}>
-        {isBulkSelected && <Check size={14} className="text-white" />}
+        {isBulkSelected && <Check size={20} className="text-white" />}
       </div>
     </div>
   );
@@ -164,7 +164,7 @@ export function HabitCard({
   const dragGrip = (
     <>
           {isDragEnabled && !showBulkCheckbox && (
-            <GripVertical data-habit-drag-handle className="h-4 w-4 shrink-0 cursor-grab touch-none text-muted-foreground active:cursor-grabbing" aria-label="Reorder habit" />
+            <GripVertical data-habit-drag-handle className="h-5 w-5 shrink-0 cursor-grab touch-none text-muted-foreground active:cursor-grabbing" aria-label="Reorder habit" />
           )}
     </>
   );
@@ -268,8 +268,8 @@ export function HabitCard({
   );
   const statusIcons = (
     <>
-      {habit.pinned && <Pin size={14} className={cn('shrink-0', iconColorClass)} />}
-      {isFiled && <FolderOpen size={14} className={cn('shrink-0', iconColorClass)} />}
+      {habit.pinned && <Pin size={20} className={cn('shrink-0', iconColorClass)} />}
+      {isFiled && <FolderOpen size={20} className={cn('shrink-0', iconColorClass)} />}
     </>
   );
   const dayButtons = (
@@ -454,7 +454,7 @@ export function ArchivedHabitCard({
           ? "bg-black border-black" 
           : "border-muted-foreground bg-background/80 backdrop-blur-sm"
       )}>
-        {isBulkSelected && <Check size={14} className="text-white" />}
+        {isBulkSelected && <Check size={20} className="text-white" />}
       </div>
     </div>
   );
@@ -480,16 +480,16 @@ export function ArchivedHabitCard({
             <h3 className="text-sm font-medium text-foreground">{highlightText(habit.name, searchQuery)}</h3>
           </div>
           <div className="flex items-center gap-2">
-            {isFiled && <FolderOpen size={14} className={iconColorClass} />}
+            {isFiled && <FolderOpen size={20} className={iconColorClass} />}
             {showBulkCheckbox ? (
               <BulkCheckbox />
             ) : (
               <>
                 <Button aria-label={t('restore')} size="icon" variant="outline" className="rounded-full h-8 w-8" onClick={() => onRestore(habit.id)}>
-                  <RotateCcw size={14} />
+                  <RotateCcw size={20} />
                 </Button>
                 <Button aria-label={t('delete')} size="icon" variant="destructive" className="rounded-full h-8 w-8" onClick={() => onDelete(habit.id)}>
-                  <Trash2 size={14} />
+                  <Trash2 size={20} />
                 </Button>
               </>
             )}

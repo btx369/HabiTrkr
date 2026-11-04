@@ -186,7 +186,7 @@ export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventV
                 onClick={() => onEdit(event)}
                 className={`${iconColorClass} ${editCloseButtonStyles}`}
               >
-                <Pencil size={16} className="mr-2" />
+                <Pencil size={20} className="mr-2" />
                 {t('edit')}
               </Button>
               <ResponsiveDialogTitle className={`text-lg font-semibold ${textColorClass} sr-only`}>
@@ -200,7 +200,7 @@ export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventV
                   onClick={() => onDelete(event)}
                   className={`${iconColorClass} ${iconButtonStyles.className} hover:bg-destructive/20 hover:text-destructive`}
                 >
-                  <Trash2 size={18} />
+                  <Trash2 size={20} />
                 </Button>
                 <Button
                   variant={iconButtonStyles.variant}
@@ -209,7 +209,7 @@ export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventV
                   onClick={onClose}
                   className={`${iconColorClass} ${editCloseButtonStyles}`}
                 >
-                  <X size={18} />
+                  <X size={20} />
                 </Button>
               </div>
             </div>
@@ -222,7 +222,7 @@ export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventV
 
           {/* Event Date(s) */}
           <div className={`flex items-start gap-2 ${mutedTextClass}`}>
-            <Calendar size={18} className="mt-0.5 shrink-0" />
+            <Calendar size={20} className="mt-0.5 shrink-0" />
             <div className="flex flex-col">
               {isSameDay ? (
                 <span className="text-sm">{formattedStartDate}</span>
@@ -244,12 +244,12 @@ export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventV
           {/* Event Time(s) or All Day badge */}
           {event.isAllDay || (!startTime && !endTime) ? (
             <div className={`flex items-center gap-2 ${mutedTextClass}`}>
-              <Clock size={18} />
+              <Clock size={20} />
               <span className="text-sm font-medium">{t('allDay')}</span>
             </div>
           ) : (startTime || endTime) && (
             <div className={`flex items-center gap-2 ${mutedTextClass}`}>
-              <Clock size={18} />
+              <Clock size={20} />
               <span className="text-sm">
                 {startTime && formatTime(startTime)}
                 {startTime && endTime && ' - '}
@@ -261,7 +261,7 @@ export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventV
           {/* Event Location */}
           {event.location && (
             <div className={`flex items-start gap-2 ${mutedTextClass}`}>
-              <MapPin size={18} className="mt-0.5 shrink-0" />
+              <MapPin size={20} className="mt-0.5 shrink-0" />
               <span className="text-sm">{event.location}</span>
             </div>
           )}
@@ -269,7 +269,7 @@ export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventV
           {/* Alert */}
           {alertText && (
             <div className={`flex items-center gap-2 ${mutedTextClass}`}>
-              <Bell size={18} />
+              <Bell size={20} />
               <span className="text-sm">{alertText}</span>
             </div>
           )}
@@ -299,7 +299,7 @@ export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventV
           {/* Recurrence Info */}
           {event.isRecurrent && recurrenceText && (
             <div className={`flex items-center gap-2 p-3 rounded-lg ${hasColor ? 'bg-[#000000]/10' : 'bg-muted'}`}>
-              <RefreshCw size={18} className={iconColorClass} />
+              <RefreshCw size={20} className={iconColorClass} />
               <span className={`text-sm ${textColorClass}`}>
                 {recurrenceText}
               </span>

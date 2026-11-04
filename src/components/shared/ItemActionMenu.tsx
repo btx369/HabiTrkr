@@ -28,6 +28,8 @@ interface ItemActionMenuProps {
   onShare?: () => void;
   onMoveToFolder?: () => void;
   size?: 'sm' | 'md';
+  /** Toolbar-sized trigger (24px icon), for headers. */
+  large?: boolean;
   /** Custom icon color class for the 3-dot menu icon */
   iconColorClass?: string;
   /** Custom hover class for the 3-dot menu button */
@@ -52,6 +54,7 @@ export function ItemActionMenu({
   onShare,
   onMoveToFolder,
   size = 'sm',
+  large = false,
   iconColorClass = 'text-foreground',
   hoverClass,
   children,
@@ -63,8 +66,9 @@ export function ItemActionMenu({
     action();
   };
 
-  const iconSize = size === 'sm' ? 12 : 14;
-  const buttonSize = size === 'sm' ? 'h-6 w-6' : 'h-7 w-7';
+  const iconSize = large ? 24 : size === 'sm' ? 12 : 20;
+  // `large`: toolbar use (note viewer header) at the 24px toolbar size; cards use 20px.
+  const buttonSize = large ? 'h-9 w-9 [&_svg]:!size-6' : size === 'sm' ? 'h-6 w-6' : 'h-7 w-7';
 
   return (
     <DropdownMenu>
@@ -101,7 +105,7 @@ export function ItemActionMenu({
           <>
             {onRestore && (
               <DropdownMenuItem onClick={(e) => handleAction(onRestore, e)}>
-                <ArchiveRestore size={14} className="mr-2" />
+                <ArchiveRestore size={20} className="mr-2" />
                 {t('restore')}
               </DropdownMenuItem>
             )}
@@ -110,7 +114,7 @@ export function ItemActionMenu({
                 onClick={(e) => handleAction(onDelete, e)}
                 destructive
               >
-                <Trash2 size={14} className="mr-2" />
+                <Trash2 size={20} className="mr-2" />
                 {t('delete')}
               </DropdownMenuItem>
             )}
@@ -119,7 +123,7 @@ export function ItemActionMenu({
           <>
             {onRestore && (
               <DropdownMenuItem onClick={(e) => handleAction(onRestore, e)}>
-                <ArchiveRestore size={14} className="mr-2" />
+                <ArchiveRestore size={20} className="mr-2" />
                 {t('restore')}
               </DropdownMenuItem>
             )}
@@ -128,7 +132,7 @@ export function ItemActionMenu({
                 onClick={(e) => handleAction(onDelete, e)}
                 destructive
               >
-                <Trash2 size={14} className="mr-2" />
+                <Trash2 size={20} className="mr-2" />
                 {t('delete')}
               </DropdownMenuItem>
             )}
@@ -138,57 +142,57 @@ export function ItemActionMenu({
             {isPinned ? (
               onUnpin && (
                 <DropdownMenuItem onClick={(e) => handleAction(onUnpin, e)}>
-                  <PinOff size={14} className="mr-2" />
+                  <PinOff size={20} className="mr-2" />
                   {t('unpin')}
                 </DropdownMenuItem>
               )
             ) : (
               onPin && (
                 <DropdownMenuItem onClick={(e) => handleAction(onPin, e)}>
-                  <Pin size={14} className="mr-2" />
+                  <Pin size={20} className="mr-2" />
                   {t('pin')}
                 </DropdownMenuItem>
               )
             )}
             {onEdit && (
               <DropdownMenuItem onClick={(e) => handleAction(onEdit, e)}>
-                <Edit3 size={14} className="mr-2" />
+                <Edit3 size={20} className="mr-2" />
                 {t('edit')}
               </DropdownMenuItem>
             )}
             {onLock && !isLocked && (
               <DropdownMenuItem onClick={(e) => handleAction(onLock, e)}>
-                <Lock size={14} className="mr-2" />
+                <Lock size={20} className="mr-2" />
                 {t('lock')}
               </DropdownMenuItem>
             )}
             {onUnlock && isLocked && (
               <DropdownMenuItem onClick={(e) => handleAction(onUnlock, e)}>
-                <Lock size={14} className="mr-2" />
+                <Lock size={20} className="mr-2" />
                 {t('unlock')}
               </DropdownMenuItem>
             )}
             {onShare && (
               <DropdownMenuItem onClick={(e) => handleAction(onShare, e)}>
-                <Share2 size={14} className="mr-2" />
+                <Share2 size={20} className="mr-2" />
                 {t('share')}
               </DropdownMenuItem>
             )}
             {onCopy && (
               <DropdownMenuItem onClick={(e) => handleAction(onCopy, e)}>
-                <Copy size={14} className="mr-2" />
+                <Copy size={20} className="mr-2" />
                 {t('copy')}
               </DropdownMenuItem>
             )}
             {onMoveToFolder && (
               <DropdownMenuItem onClick={(e) => handleAction(onMoveToFolder, e)}>
-                <FolderInput size={14} className="mr-2" />
+                <FolderInput size={20} className="mr-2" />
                 {t('move')}
               </DropdownMenuItem>
             )}
             {onArchive && (
               <DropdownMenuItem onClick={(e) => handleAction(onArchive, e)}>
-                <Archive size={14} className="mr-2" />
+                <Archive size={20} className="mr-2" />
                 {t('archive')}
               </DropdownMenuItem>
             )}
@@ -197,7 +201,7 @@ export function ItemActionMenu({
                 onClick={(e) => handleAction(onDelete, e)}
                 destructive
               >
-                <Trash2 size={14} className="mr-2" />
+                <Trash2 size={20} className="mr-2" />
                 {t('delete')}
               </DropdownMenuItem>
             )}

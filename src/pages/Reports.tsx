@@ -187,7 +187,7 @@ export default function Reports() {
                 {!withGoal && <p className="mt-3 text-sm text-muted-foreground">{t('reportsNoGoalHabits')}</p>}
               </ReportCard>
 
-              <ReportCard title={t('reportsToday')} icon={<Lightbulb size={16} />}>
+              <ReportCard title={t('reportsToday')} icon={<Lightbulb size={20} />}>
                 {stats.nudges.length === 0 ? (
                   <p className="text-sm text-muted-foreground">{t('reportsAllCaughtUp')}</p>
                 ) : (
@@ -198,7 +198,7 @@ export default function Reports() {
                         <li key={i}>
                           <button type="button" onClick={() => navigate(to)} className="flex w-full items-center justify-between gap-3 py-2.5 text-left text-sm text-foreground">
                             <span>{text}</span>
-                            <ChevronRight size={16} className="shrink-0 text-muted-foreground" />
+                            <ChevronRight size={20} className="shrink-0 text-muted-foreground" />
                           </button>
                         </li>
                       );
@@ -208,7 +208,7 @@ export default function Reports() {
               </ReportCard>
 
               {streaks.length > 0 && (
-                <ReportCard title={t('reportsStreaks')} icon={<Flame size={16} />}>
+                <ReportCard title={t('reportsStreaks')} icon={<Flame size={20} />}>
                   <div className="grid grid-cols-2 gap-2">
                     {streaks.map((r) => (
                       <div key={r.habit.id} className="rounded-2xl border border-border bg-muted/40 p-3">
@@ -220,11 +220,11 @@ export default function Reports() {
                 </ReportCard>
               )}
 
-              <ReportCard title={t('reportsUpcoming')} icon={<CalendarDays size={16} />}>
+              <ReportCard title={t('reportsUpcoming')} icon={<CalendarDays size={20} />}>
                 <UpcomingList upcoming={stats.upcoming} onOpen={() => navigate('/calendar')} />
               </ReportCard>
 
-              <ReportCard title={t('reportsNoteReminders')} icon={<BellRing size={16} />}>
+              <ReportCard title={t('reportsNoteReminders')} icon={<BellRing size={20} />}>
                 {stats.reminders.length === 0 ? (
                   <p className="text-sm text-muted-foreground">{t('reportsNoReminders')}</p>
                 ) : (
@@ -271,15 +271,15 @@ export default function Reports() {
                     </div>
                     <div className="flex items-center gap-1">
                       <button type="button" onClick={() => setOffset((o) => o + 1)} aria-label={t('reportsPrevious')} className="rounded-full p-1.5 hover:bg-hover">
-                        <ChevronLeft size={18} />
+                        <ChevronLeft size={20} />
                       </button>
                       <button type="button" onClick={() => setOffset((o) => Math.max(0, o - 1))} disabled={offset === 0} aria-label={t('reportsNext')} className="rounded-full p-1.5 hover:bg-hover disabled:opacity-30">
-                        <ChevronRight size={18} />
+                        <ChevronRight size={20} />
                       </button>
                     </div>
                   </div>
 
-                  <ReportCard title={periodLabel} icon={<Target size={16} />}>
+                  <ReportCard title={periodLabel} icon={<Target size={20} />}>
                     <div className="flex gap-2">
                       <StatTile label={t('reportsHabitsDone')} value={periodData.rate === null ? '–' : percent(periodData.rate)} />
                       <StatTile label={t('reportsCheckIns')} value={periodData.count} />
@@ -316,7 +316,7 @@ export default function Reports() {
                         {h.rate !== null && h.kind !== 'open' && <div className="mt-3"><ProgressBar value={h.rate} label={h.habit.name} /></div>}
                         {r && (
                           <div className="mt-3 flex items-center gap-4 text-sm">
-                            <span className="flex items-center gap-1.5 text-foreground"><Flame size={14} />{streakText(r)}</span>
+                            <span className="flex items-center gap-1.5 text-foreground"><Flame size={20} />{streakText(r)}</span>
                             <span className="text-muted-foreground">{t('reportsBest').replace('{count}', String(r.streak.best))}</span>
                           </div>
                         )}
@@ -354,7 +354,7 @@ export default function Reports() {
                 />
               </ReportCard>
 
-              <ReportCard title={t('reportsUpcoming')} icon={<CalendarDays size={16} />}>
+              <ReportCard title={t('reportsUpcoming')} icon={<CalendarDays size={20} />}>
                 <UpcomingList upcoming={stats.upcoming} onOpen={() => navigate('/calendar')} />
               </ReportCard>
             </TabsContent>

@@ -1274,12 +1274,12 @@ export default function Events() {
                 aria-label={t('selectItems')} 
                 variant="ghostStatic" 
                 size="icon"
-                className="rounded-full hover:bg-hover hover:text-foreground focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:!size-5 data-[state=open]:bg-hover data-[state=open]:text-foreground"
+                className="rounded-full hover:bg-hover hover:text-foreground focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:!size-6 data-[state=open]:bg-hover data-[state=open]:text-foreground"
                 data-state={isBulkMode ? "open" : "closed"}
                 onClick={(e) => { toggleBulkMode(); e.currentTarget.blur(); }}
                 onMouseDown={(e) => e.preventDefault()}
               >
-                <FileStack className="h-6 w-6" />
+                <FileStack />
               </Button>
               {activeTab === 'folders' ? (
                 <EventFolderViewSettings

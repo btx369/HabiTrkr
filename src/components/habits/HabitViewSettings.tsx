@@ -71,9 +71,9 @@ export function HabitViewSettings({
           aria-label={t('viewSettings')}
           variant="ghostStatic"
           size="icon"
-          className="text-foreground hover:bg-hover hover:text-foreground rounded-full data-[state=open]:bg-hover data-[state=open]:text-foreground focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:!size-5"
+          className="text-foreground hover:bg-hover hover:text-foreground rounded-full data-[state=open]:bg-hover data-[state=open]:text-foreground focus-visible:ring-0 focus-visible:ring-offset-0 [&_svg]:!size-6"
         >
-          <Settings className="h-6 w-6" />
+          <Settings />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="bg-background border border-border">
@@ -101,7 +101,7 @@ export function HabitViewSettings({
             <div className="w-4 h-4 flex items-center justify-center">
               {sortType === type && (
                 type === 'custom'
-                  ? (customReorderingEnabled ? <GripVertical className="h-4 w-4" /> : <Check className="h-4 w-4" />)
+                  ? (customReorderingEnabled ? <GripVertical className="h-5 w-5" /> : <Check className="h-5 w-5" />)
                   : <ChevronUp className={`h-4 w-4 transition-transform duration-200 ${sortDirection === 'desc' ? 'rotate-180' : ''}`} />
               )}
             </div>

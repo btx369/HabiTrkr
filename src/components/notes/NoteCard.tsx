@@ -436,7 +436,7 @@ export function NoteCard({
           ? "bg-black border-black" 
           : "border-muted-foreground bg-background/80 backdrop-blur-sm"
       )}>
-        {isBulkSelected && <Check size={14} className="text-white" />}
+        {isBulkSelected && <Check size={20} className="text-white" />}
       </div>
     </div>
   );
@@ -484,9 +484,9 @@ export function NoteCard({
             )}
             <div className="flex items-center gap-2 ml-auto flex-shrink-0">
               <div className="flex items-center gap-1">
-                {isFiled && <FolderOpen size={14} className={iconColorClass} />}
-                {note.pinned && <Pin size={14} className={iconColorClass} />}
-                {note.locked && <Lock size={14} className={iconColorClass} />}
+                {isFiled && <FolderOpen size={20} className={iconColorClass} />}
+                {note.pinned && <Pin size={20} className={iconColorClass} />}
+                {note.locked && <Lock size={20} className={iconColorClass} />}
                 {note.reminder && <ReminderIcon reminder={note.reminder} className={iconColorClass} />}
               </div>
               {showBulkCheckbox ? (
@@ -503,7 +503,7 @@ export function NoteCard({
                     else onRestore?.(note.id);
                   }}
                 >
-                  <RotateCcw size={14} />
+                  <RotateCcw size={20} />
                 </Button>
                 <Button aria-label={t('delete')} 
                   size="icon" 
@@ -511,7 +511,7 @@ export function NoteCard({
                   className="rounded-full h-8 w-8" 
                   onClick={(e) => { e.stopPropagation(); onDelete?.(note.id); }}
                 >
-                  <Trash2 size={14} />
+                  <Trash2 size={20} />
                 </Button>
               </div>
             ) : (
@@ -582,8 +582,8 @@ export function NoteCard({
               )}
               <div className="flex items-center gap-2 ml-auto flex-shrink-0">
                 <div className="flex items-center gap-1">
-                  {note.pinned && <Pin size={14} className={iconColorClass} />}
-                  {note.locked && <Lock size={14} className={iconColorClass} />}
+                  {note.pinned && <Pin size={20} className={iconColorClass} />}
+                  {note.locked && <Lock size={20} className={iconColorClass} />}
                 {note.reminder && <ReminderIcon reminder={note.reminder} className={iconColorClass} />}
                 </div>
                 {showBulkCheckbox ? (
@@ -600,7 +600,7 @@ export function NoteCard({
                       else onRestore?.(note.id);
                     }}
                   >
-                    <RotateCcw size={14} />
+                    <RotateCcw size={20} />
                   </Button>
                   <Button aria-label={t('delete')} 
                     size="icon" 
@@ -608,7 +608,7 @@ export function NoteCard({
                     className="rounded-full h-8 w-8" 
                     onClick={(e) => { e.stopPropagation(); onDelete?.(note.id); }}
                   >
-                    <Trash2 size={14} />
+                    <Trash2 size={20} />
                   </Button>
                 </div>
               ) : (
@@ -652,9 +652,9 @@ export function NoteCard({
               </div>
             </div>
             <div className="flex items-center gap-2 ml-auto flex-shrink-0">
-              {isFiled && <FolderOpen size={14} className={iconColorClass} />}
-              {note.pinned && <Pin size={14} className={iconColorClass} />}
-              {note.locked && <Lock size={14} className={iconColorClass} />}
+              {isFiled && <FolderOpen size={20} className={iconColorClass} />}
+              {note.pinned && <Pin size={20} className={iconColorClass} />}
+              {note.locked && <Lock size={20} className={iconColorClass} />}
                 {note.reminder && <ReminderIcon reminder={note.reminder} className={iconColorClass} />}
               {showBulkCheckbox ? (
                 <BulkCheckbox />
@@ -670,7 +670,7 @@ export function NoteCard({
                     else onRestore?.(note.id);
                   }}
                   >
-                    <RotateCcw size={14} />
+                    <RotateCcw size={20} />
                   </Button>
                   <Button aria-label={t('delete')} 
                     size="icon" 
@@ -678,7 +678,7 @@ export function NoteCard({
                     className="rounded-full h-8 w-8" 
                     onClick={(e) => { e.stopPropagation(); onDelete?.(note.id); }}
                   >
-                    <Trash2 size={14} />
+                    <Trash2 size={20} />
                   </Button>
                 </div>
               ) : (

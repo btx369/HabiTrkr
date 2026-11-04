@@ -116,14 +116,12 @@ export const Header = ({ showSearch = false, searchQuery = '', onSearchChange, p
            * forcing the glyph to 28px and overriding the `size={28}` attribute on the icon,
            * so the number in the JSX was decorative and editing it did nothing.
            *
-           * 20px is what the reference uses: grok.com renders a 20px glyph inside the same
-           * 40x40 button, and 28px in a 40px circle leaves only 6px of breathing room, which
-           * is what made the top bar read as heavy. The Button base sets `[&_svg]:size-4`;
+           * Header icons are 24px (the app-wide size for toolbar icons; cards use 20px). The Button base sets `[&_svg]:size-5`;
            * this is one step up from that, set explicitly.
            */
-          className={`text-foreground hover:bg-hover hover:text-foreground rounded-full shrink-0 transition-opacity duration-200 ${isSearchExpanded ? 'opacity-0 pointer-events-none w-0 p-0' : ''}`}
+          className={`text-foreground hover:bg-hover hover:text-foreground rounded-full shrink-0 [&_svg]:!size-6 transition-opacity duration-200 ${isSearchExpanded ? 'opacity-0 pointer-events-none w-0 p-0' : ''}`}
         >
-          <Search size={20} />
+          <Search size={24} />
           </Button>
         )}
         
@@ -131,7 +129,7 @@ export const Header = ({ showSearch = false, searchQuery = '', onSearchChange, p
         {showSearch && isSearchExpanded && (
           <div ref={searchContainerRef} className="flex-1 max-w-md animate-search-expand origin-left">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-foreground/70 h-4 w-4 z-20" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-foreground/70 h-5 w-5 z-20" />
               <TagAutocompleteInput
                 value={searchQuery}
                 onChange={(value) => onSearchChange?.(value)}
@@ -169,10 +167,10 @@ export const Header = ({ showSearch = false, searchQuery = '', onSearchChange, p
           size="icon"
           onClick={() => navigate('/profile')}
           aria-label={t('profile')}
-          /* Same 20px as the search button: the two are a pair and must match. */
-          className="text-foreground hover:bg-hover hover:text-foreground rounded-full shrink-0"
+          /* Same 24px as the search button: the two are a pair and must match. */
+          className="text-foreground hover:bg-hover hover:text-foreground rounded-full shrink-0 [&_svg]:!size-6"
         >
-          <UserRound size={20} />
+          <UserRound size={24} />
         </Button>
       </div>
     </div>

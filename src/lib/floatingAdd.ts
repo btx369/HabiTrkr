@@ -5,7 +5,7 @@
  * Its vertical centre matches the capsule's (58px tall, 16px off the bottom).
  */
 export const FLOATING_ADD_CLASS =
-  'fixed bottom-[21px] h-12 w-12 rounded-full z-50 px-0 py-0 bg-black text-white border border-nav-border hover:bg-black/90';
+  'fixed bottom-[21px] h-12 w-12 rounded-full z-50 px-0 py-0 bg-black text-white border border-nav-border hover:bg-black/90 [&_svg]:!size-6';
 
 export const FLOATING_ADD_STYLE = {
   left: 'min(calc(50% + 131px), calc(100% - 3.25rem))',
