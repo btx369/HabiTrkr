@@ -7,6 +7,7 @@ export interface Event {
   description?: string;
   color: string;
   createdAt: string;
+  modifiedAt?: string;
   isRecurrent: boolean;
   // Legacy fields for backwards compatibility
   date?: string; // ISO date string for the event date

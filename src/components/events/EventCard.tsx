@@ -182,6 +182,7 @@ export function EventCard({
   };
 
   const daysRemaining = calculateTimeRemaining(event);
+  const isX3 = viewType === 'x3';
 
   // Bulk selection checkbox component - renders inline, replacing the menu
   const BulkCheckbox = () => (
@@ -223,12 +224,17 @@ export function EventCard({
     >
       <CardHeader className="px-2 py-2">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <CardTitle className={`text-lg ${textColorClass} ${viewType !== 'list' ? 'truncate' : ''}`}>
-              {highlightText(event.name, searchQuery)}
-            </CardTitle>
-          </div>
-          <div className="flex items-center gap-1">
+          {/* 3 per row is too narrow for the title and up to three icons on one line (the
+              title was cut to a single letter), so there the title moves to its own line
+              below, as on the note cards. */}
+          {!isX3 && (
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <CardTitle className={`text-lg ${textColorClass} ${viewType !== 'list' ? 'truncate' : ''}`}>
+                {highlightText(event.name, searchQuery)}
+              </CardTitle>
+            </div>
+          )}
+          <div className="flex items-center gap-1 ml-auto">
             {isFiled && (
               <FolderOpen size={20} className={`flex-shrink-0 ${iconColorClass}`} />
             )}
@@ -286,15 +292,22 @@ export function EventCard({
           </div>
         </div>
       </CardHeader>
-      <CardContent className={`px-2 pb-2 pt-0 ${viewType !== 'list' ? 'py-2' : ''}`}>
+      <CardContent className={`px-2 pb-2 pt-0 ${viewType !== 'list' && !isX3 ? 'py-2' : ''}`}>
         <div className="space-y-2">
+          {isX3 && (
+            <CardTitle className={`text-sm font-semibold leading-tight truncate ${textColorClass}`}>
+              {highlightText(event.name, searchQuery)}
+            </CardTitle>
+          )}
           {event.description && (
             <p className={`${mutedTextColorClass} text-sm ${viewType !== 'list' ? 'line-clamp-2' : ''}`}>
               {highlightText(truncateText(event.description, getDescriptionLength()), searchQuery)}
             </p>
           )}
-          <div className="flex items-center justify-between gap-2">
-            <div className={`flex items-center gap-2 text-sm ${textColorClass}`}>
+          {/* In 3 per row the countdown badge goes under the date instead of beside it,
+              where it was clipped by the card edge. */}
+          <div className={isX3 ? 'flex flex-col items-start gap-1' : 'flex items-center justify-between gap-2'}>
+            <div className={`flex min-w-0 max-w-full items-center gap-2 ${isX3 ? 'text-xs' : 'text-sm'} ${textColorClass}`}>
               <Calendar size={20} className={iconColorClass} />
               <span className={viewType !== 'list' ? 'truncate' : ''}>
                 {(() => {
@@ -342,13 +355,14 @@ export function EventCard({
           </div>
           {/* Mobile: show recurrence on separate line */}
           {event.isRecurrent && event.recurrenceType && (
-            <div className="md:hidden">
+            <div className="md:hidden min-w-0">
               <Badge 
                 variant="outline" 
-                className={`text-xs ${badgeBorderClass} ${hasColor ? 'text-[#000000]' : ''}`}
+                className={`text-xs ${isX3 ? 'max-w-full' : ''} ${badgeBorderClass} ${hasColor ? 'text-[#000000]' : ''}`}
                 style={recurrenceBadgeStyle}
+                title={recurrenceText ?? undefined}
               >
-                {recurrenceText}
+                <span className={isX3 ? 'truncate' : ''}>{recurrenceText}</span>
               </Badge>
             </div>
           )}

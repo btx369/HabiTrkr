@@ -281,7 +281,8 @@ export default function Events() {
     
     const updatedEvent: Event = {
       ...selectedEvent,
-      ...eventData
+      ...eventData,
+      modifiedAt: new Date().toISOString(),
     };
 
     // Update tag usage tracking
@@ -464,7 +465,8 @@ export default function Events() {
             description: folderData.description,
             color: folderData.color,
             pinned: folderData.pinned,
-            archived: folderData.archived
+            archived: folderData.archived,
+            modifiedAt: new Date().toISOString(),
           }
         : folder
     ));
@@ -626,13 +628,14 @@ export default function Events() {
   // Search functionality
   //
   // Same shared evaluator as Notes, so `and`/`or` behave identically on both pages.
-  // Events only search their own name and description.
+  // Events search their name, description and location.
   const searchInEvent = (event: Event, query: string): boolean => {
     const expression = parseSearchExpression(query);
 
     const matchesText = (term: string): boolean =>
       event.name.toLowerCase().includes(term) ||
-      (event.description?.toLowerCase().includes(term) || false);
+      (event.description?.toLowerCase().includes(term) || false) ||
+      (event.location?.toLowerCase().includes(term) || false);
 
     return matchesSearchExpression(expression, event.tags, matchesText);
   };
@@ -702,8 +705,7 @@ export default function Events() {
           return sortDirection === 'asc' ? result : -result;
         }
         case 'dateModified': {
-          // For now, use createdAt since we don't have modifiedAt field
-          const result = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          const result = new Date(a.modifiedAt || a.createdAt).getTime() - new Date(b.modifiedAt || b.createdAt).getTime();
           return sortDirection === 'asc' ? result : -result;
         }
         case 'daysRemaining':
@@ -739,8 +741,7 @@ export default function Events() {
             return folderSortDirection === 'asc' ? result : -result;
           }
           case 'dateModified': {
-            // For now, use createdAt since we don't have modifiedAt field
-            const result = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+            const result = new Date(a.modifiedAt || a.createdAt).getTime() - new Date(b.modifiedAt || b.createdAt).getTime();
             return folderSortDirection === 'asc' ? result : -result;
           }
           case 'recentlyAdded': {

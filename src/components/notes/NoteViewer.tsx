@@ -1453,7 +1453,7 @@ export function NoteViewer({
                 value={editingAudioText}
                 onChange={(e) => setEditingAudioText(e.target.value)}
                 maxLength={25}
-                placeholder="Add a short note (max 25 chars)"
+                placeholder={t('audioLabelPlaceholder')}
                 className="flex-1 text-sm"
                 autoFocus
                 onKeyDown={(e) => {
@@ -2006,7 +2006,17 @@ export function NoteViewer({
             : {}),
         }}
         onInteractOutside={(e) => e.preventDefault()}
-        onEscapeKeyDown={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => {
+          // Radix only calls this when the viewer is the top layer, so open menus and dialogs
+          // inside it close first. Our own popups are not Radix layers: the keydown handler
+          // above closes those, one per press. Fields with their own Esc (title, search,
+          // audio label) cancel first; a second Esc then closes the note, saving it.
+          e.preventDefault();
+          if (showFormattingBar || isSearching || galleryOpen || showAudioRecorder || showImageCapturePopup || editingAudioUrl) return;
+          const active = document.activeElement;
+          if (active instanceof HTMLInputElement) return;
+          handleBackClick();
+        }}
       >
         <DialogHeader className={`flex-row items-center justify-between space-y-0 border-b px-3 flex-shrink-0 h-14 ${borderClass}`}>
           <DialogTitle className="sr-only" id="note-viewer-title">{t('noteViewerTitle')}</DialogTitle>
@@ -2054,7 +2064,7 @@ export function NoteViewer({
                     ref={searchInputRef}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search in note..."
+                    placeholder={t('searchInNote')}
                     className="text-sm h-8 px-2 border-none shadow-none focus-visible:ring-0 bg-transparent rounded-none flex-1 min-w-0"
                     onKeyDown={(e) => {
                       if (e.key === 'Escape') {

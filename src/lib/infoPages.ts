@@ -14,6 +14,9 @@ export interface InfoSection {
 
 type PageText = Record<'en' | 'pt', InfoSection[]>;
 
+/** Shown at the end of the Terms and Privacy pages. Change it whenever their text changes. */
+export const LEGAL_UPDATED = '2026-11-04';
+
 export const ABOUT: PageText = {
   en: [
     { heading: 'What HabiTrkr is', body: ['HabiTrkr keeps your habits, notes, events and calendar in one place. Everything is stored on your device; there is no account and no server.'] },

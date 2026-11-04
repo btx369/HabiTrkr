@@ -1,8 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const NotFound = () => {
   const location = useLocation();
+  const { t } = useLanguage();
 
   useEffect(() => {
     console.error(
@@ -11,15 +14,16 @@ const NotFound = () => {
     );
   }, [location.pathname]);
 
+  // Theme tokens, so the page follows light and dark mode like the rest of the app.
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">404</h1>
-        <p className="text-xl text-gray-600 mb-4">Oops! Page not found</p>
+        <h1 className="text-4xl font-bold mb-4 text-foreground">404</h1>
+        <p className="text-lg text-muted-foreground mb-6">{t('notFoundMessage')}</p>
         {/* A router Link, so "home" respects the base path (/HabiTrkr/ on GitHub Pages). */}
-        <Link to="/" className="text-blue-500 hover:text-blue-700 underline">
-          Return to Home
-        </Link>
+        <Button asChild>
+          <Link to="/">{t('backToHome')}</Link>
+        </Button>
       </div>
     </div>
   );

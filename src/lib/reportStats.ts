@@ -420,13 +420,15 @@ export function eventSummary(events: Event[], archived: Event[], now: Date, week
   const ws = startOfWeek(now, { weekStartsOn });
   const week = occurrencesBetween(events, ws, addDays(ws, 6));
   const today = startOfDay(now);
-  const all = [...events, ...archived];
+  // Only active events, like "this week" and the charts next to these tiles. Counting the
+  // archive too showed "One-off 4" with only 3 events on the page.
+  void archived;
   return {
-    total: all.length,
+    total: events.length,
     thisWeek: week.length,
     thisWeekPast: week.filter((o) => o.date < today).length,
-    recurring: all.filter((e) => e.isRecurrent).length,
-    oneOff: all.filter((e) => !e.isRecurrent).length,
+    recurring: events.filter((e) => e.isRecurrent).length,
+    oneOff: events.filter((e) => !e.isRecurrent).length,
   };
 }
 

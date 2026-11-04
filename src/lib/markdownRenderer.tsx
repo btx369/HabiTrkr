@@ -6,8 +6,18 @@ interface TextPart {
   content: string;
 }
 
-const processInlineFormatting = (text: string): ReactNode[] => {
+/**
+ * Inline markdown. `leaf` renders the plain text pieces; the search highlighter passes one so
+ * that matches are marked INSIDE the formatting. Highlighting first and formatting after split
+ * `**leite**` around the match and left the asterisks on screen.
+ */
+const processInlineFormatting = (text: string, leaf?: (plain: string) => ReactNode[]): ReactNode[] => {
   const result: ReactNode[] = [];
+  const pushPlain = (plain: string) => {
+    if (!plain) return;
+    if (leaf) result.push(...leaf(plain));
+    else result.push(plain);
+  };
   const currentIndex = 0;
   
   // Parse inline formatting: **bold**, *italic*, __underline__
@@ -32,17 +42,17 @@ const processInlineFormatting = (text: string): ReactNode[] => {
   matches.forEach((m, idx) => {
     // Add text before this match
     if (m.index > position) {
-      result.push(text.substring(position, m.index));
+      pushPlain(text.substring(position, m.index));
     }
     
     // Add formatted text (recursively process inner text for nested formatting)
     const key = `format-${idx}`;
     if (m.type === 'bold') {
-      result.push(<strong key={key}>{processInlineFormatting(m.text)}</strong>);
+      result.push(<strong key={key}>{processInlineFormatting(m.text, leaf)}</strong>);
     } else if (m.type === 'italic') {
-      result.push(<em key={key}>{processInlineFormatting(m.text)}</em>);
+      result.push(<em key={key}>{processInlineFormatting(m.text, leaf)}</em>);
     } else if (m.type === 'underline') {
-      result.push(<u key={key}>{processInlineFormatting(m.text)}</u>);
+      result.push(<u key={key}>{processInlineFormatting(m.text, leaf)}</u>);
     }
     
     // Update position
@@ -52,10 +62,11 @@ const processInlineFormatting = (text: string): ReactNode[] => {
   
   // Add remaining text
   if (position < text.length) {
-    result.push(text.substring(position));
+    pushPlain(text.substring(position));
   }
   
-  return result.length > 0 ? result : [text];
+  if (result.length > 0) return result;
+  return leaf ? leaf(text) : [text];
 };
 
 export const renderMarkdown = (text: string): ReactNode => {
@@ -110,18 +121,16 @@ export const renderMarkdownWithHighlight = (text: string, searchQuery: string): 
      * Splits on the search terms and renders them. Non-matching parts still get inline
      * markdown formatting applied, so `**bold**` keeps working next to a highlight.
      */
-    const processWithBoth = (text: string): ReactNode[] =>
-      splitBySearchTerms(text, searchQuery).map((segment, partIdx) => {
-        if (segment.matched) {
-          return (
-            <mark key={`h-${partIdx}`} className="bg-highlight text-foreground rounded-sm px-0 py-0">
-              {segment.text}
-            </mark>
-          );
-        }
-        return <span key={`s-${partIdx}`}>{processInlineFormatting(segment.text)}</span>;
+    let leafKey = 0;
+    const highlightLeaf = (plain: string): ReactNode[] =>
+      splitBySearchTerms(plain, searchQuery).map((segment) => {
+        const k = `h-${leafKey++}`;
+        return segment.matched
+          ? <mark key={k} className="bg-highlight text-foreground rounded-sm px-0 py-0">{segment.text}</mark>
+          : <span key={k}>{segment.text}</span>;
       });
-    
+    const processWithBoth = (text: string): ReactNode[] => processInlineFormatting(text, highlightLeaf);
+
     // Check for headings
     if (line.startsWith('# ')) {
       const content = line.slice(2);

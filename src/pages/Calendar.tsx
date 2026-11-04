@@ -140,7 +140,8 @@ export default function Calendar() {
     if (!searchQuery.trim()) return eventList;
     return eventList.filter(event => 
       event.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (event.description && event.description.toLowerCase().includes(searchQuery.toLowerCase()))
+      (event.description && event.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (event.location && event.location.toLowerCase().includes(searchQuery.toLowerCase()))
     );
   };
 
@@ -212,7 +213,7 @@ export default function Calendar() {
   const handleSaveEvent = (eventData: Omit<Event, 'id' | 'createdAt'>) => {
     if (!editingEvent) return;
     
-    const updatedEvent: Event = { ...editingEvent, ...eventData };
+    const updatedEvent: Event = { ...editingEvent, ...eventData, modifiedAt: new Date().toISOString() };
     const replace = (prev: Event[]) => prev.map(e => e.id === editingEvent.id ? updatedEvent : e);
     setEvents(replace);
     setArchivedEvents(replace);

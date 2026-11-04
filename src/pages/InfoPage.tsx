@@ -3,7 +3,7 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { settingsPanelClass } from '@/components/shared/SettingsRow';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { APP_VERSION } from '@/lib/appInfo';
-import { ABOUT, PRIVACY, TERMS, textFor } from '@/lib/infoPages';
+import { ABOUT, LEGAL_UPDATED, PRIVACY, TERMS, textFor } from '@/lib/infoPages';
 
 const PAGES = {
   about: { title: 'helpAbout', text: ABOUT },
@@ -37,6 +37,14 @@ export default function InfoPage({ page }: { page: keyof typeof PAGES }) {
               ))}
             </section>
           ))}
+          {page !== 'about' && (
+            <p className="border-t pt-4 text-xs text-muted-foreground">
+              {t('lastUpdated').replace(
+                '{date}',
+                new Date(`${LEGAL_UPDATED}T12:00:00`).toLocaleDateString(language, { day: 'numeric', month: 'long', year: 'numeric' }),
+              )}
+            </p>
+          )}
         </div>
       </div>
     </div>
