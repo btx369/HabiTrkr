@@ -694,12 +694,12 @@ export default function Events() {
   };
 
   // Filter events by category
-  const getAllEvents = () => {
-    // Show all events regardless of folder membership
-    const filteredEvents = filterEvents(events);
-    
-    // Sort events based on sortType
-    const sortedEvents = [...filteredEvents].sort((a, b) => {
+  const getAllEvents = () => sortEventList(filterEvents(events));
+
+  // The tab's sort, for the Events tab and the archive alike. The archive used to render
+  // `archivedEvents` as stored, so its "Sort by" did nothing.
+  function sortEventList(list: Event[]): Event[] {
+    const sortedEvents = [...list].sort((a, b) => {
       // Pinned events always come first
       if (a.pinned && !b.pinned) return -1;
       if (!a.pinned && b.pinned) return 1;
@@ -729,7 +729,7 @@ export default function Events() {
     });
     
     return sortedEvents;
-  };
+  }
 
   const getEventFolders = () => {
     return eventFolders
@@ -1373,7 +1373,7 @@ export default function Events() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <h3 className="text-lg font-medium">{t('archivedEvents')}</h3>
-                {renderEventList(archivedEvents, t('noArchivedEvents'), true)}
+                {renderEventList(sortEventList(archivedEvents), t('noArchivedEvents'), true)}
               </div>
               
               <div className="space-y-2">

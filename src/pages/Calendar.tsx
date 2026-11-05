@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { dateRange, longDate } from '@/lib/dateFormats';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { Layout } from '@/components/Layout';
@@ -97,6 +97,20 @@ export default function Calendar() {
   const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [deletingEvent, setDeletingEvent] = useState<Event | null>(null);
+  // Month grid width, to fit as many event dots in a day as the screen allows.
+  const monthGridRef = useRef<HTMLDivElement | null>(null);
+  const [monthGridWidth, setMonthGridWidth] = useState(0);
+  useEffect(() => {
+    const el = monthGridRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(([entry]) => setMonthGridWidth(entry.contentRect.width));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [viewMode]);
+  // Each dot takes 6px plus a 2px gap; keep 4px clear on each side of the cell.
+  const DOT_STEP = 8;
+  const dotsPerDay = Math.max(1, Math.floor((monthGridWidth / 7 - 8 + 2) / DOT_STEP));
+
   // Add button: a new event on the day being looked at.
   const [newEventDate, setNewEventDate] = useState<string | null>(null);
   
@@ -452,6 +466,7 @@ export default function Calendar() {
                 
                 {/* Calendar days */}
                 <div
+                  ref={monthGridRef}
                   // Compact fixed-height rows instead of stretching the grid to fill the screen.
                   className="grid grid-cols-7 auto-rows-[3.25rem] md:auto-rows-[4.75rem]"
                 >
@@ -485,8 +500,10 @@ export default function Calendar() {
                         {hasEvents && (
                           // Dots along the bottom of the cell, below the day number, so they never land
                           // inside today's black circle (they did once the rows were made compact).
-                          <div className="absolute bottom-1.5 md:bottom-2 left-1/2 -translate-x-1/2 flex gap-0.5">
-                            {dayEvents.slice(0, 3).map((event, idx) => {
+                          // As many dots as fit in the cell's width (5 on a phone, many more on a
+                          // desktop); when there are more events than room, the last place says +N.
+                          <div className="absolute bottom-1.5 md:bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-0.5">
+                            {dayEvents.slice(0, dayEvents.length > dotsPerDay ? dotsPerDay - 1 : dotsPerDay).map((event, idx) => {
                               const hasColor = event.color && event.color !== '#FFFFFF';
                               return (
                                 <div 
@@ -496,6 +513,9 @@ export default function Calendar() {
                                 />
                               );
                             })}
+                            {dayEvents.length > dotsPerDay && (
+                              <span className="text-[9px] font-semibold leading-none text-muted-foreground">+{dayEvents.length - dotsPerDay + 1}</span>
+                            )}
                           </div>
                         )}
                       </button>

@@ -1,4 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
+import { NAV_CAPSULE_STYLE } from '@/lib/floatingAdd';
 import { Notebook, CalendarPlus, Target, CalendarDays, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -23,7 +24,7 @@ export const BottomNavigation = ({ hidden = false }: BottomNavigationProps) => {
   if (hidden) return null;
 
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
+    <div className="fixed z-50" style={NAV_CAPSULE_STYLE}>
       {/*
         * Every colour here comes from the `nav` scrim tokens in index.css. The capsule is
         * intentionally dark in BOTH themes, which is why it does not reuse --primary or
