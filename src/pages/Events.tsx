@@ -103,10 +103,11 @@ export default function Events() {
   const [selectedEventForMove, setSelectedEventForMove] = useState<string | null>(null);
   const [selectedEventsForMove, setSelectedEventsForMove] = useState<string[] | null>(null);
   const [allEventsViewType, setAllEventsViewType] = useLocalStorage<ViewType>('eventsAllViewType', 'list');
-  const [archivedEventsViewType, setArchivedEventsViewType] = useLocalStorage<ViewType>('eventsArchivedViewType', 'list');
+  const [, setArchivedEventsViewType] = useLocalStorage<ViewType>('eventsArchivedViewType', 'list');
   
   // Computed viewType based on active tab for backward compatibility
-  const viewType = activeTab === 'archived' ? archivedEventsViewType : allEventsViewType;
+  // Folders and the archive are list-only (Bruno, 2026-11-05).
+  const viewType: ViewType = activeTab === 'archived' ? 'list' : allEventsViewType;
   const setViewType = activeTab === 'archived' ? setArchivedEventsViewType : setAllEventsViewType;
   const [allEventsSortType, setAllEventsSortType] = useLocalStorage<EventSortType>('eventsAllSortType', 'daysRemaining');
   const [allEventsSortDirection, setAllEventsSortDirection] = useLocalStorage<EventSortDirection>('eventsAllSortDirection', 'asc');
@@ -1315,6 +1316,7 @@ export default function Events() {
               ) : (
                 <EventViewSettings
                   viewType={viewType}
+                  showViewOptions={activeTab !== 'archived'}
                   sortType={sortType}
                   sortDirection={sortDirection}
                   onViewTypeChange={setViewType}

@@ -68,7 +68,7 @@ export function HabitFolderCreator({ isOpen, onClose, onSave }: HabitFolderCreat
         value={description}
         onChange={setDescription}
         placeholder={t('placeholderFolderDescription')}
-        maxLength={35}
+        maxLength={200}
         icon={FileText}
         iconColor={ICON_COLOR}
       />

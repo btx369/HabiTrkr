@@ -14,6 +14,8 @@ import { isDefaultColor } from '@/lib/cardColorStyles';
 import { getColoredIconClass, getColoredBorderClass } from '@/lib/coloredButtonStyles';
 
 const TAG_LIMIT = 20;
+/** Longest tag, the same 30 characters Manage tags allows when renaming one. */
+const TAG_MAX_LENGTH = 30;
 
 interface TagEditorProps {
   tags: string[];
@@ -137,6 +139,11 @@ export function TagEditor({
     if (newTags.length === 0) {
       setHasError(true);
       toast.error(t('toastTagMustStartWithHash'));
+      return;
+    }
+    if (newTags.some(tag => tag.length > TAG_MAX_LENGTH)) {
+      setHasError(true);
+      toast.error(t('toastTagTooLong').replace('{count}', String(TAG_MAX_LENGTH)));
       return;
     }
 

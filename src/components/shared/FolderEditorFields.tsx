@@ -28,7 +28,7 @@ export function FolderEditorFields({
   namePlaceholder,
   descriptionPlaceholder,
   nameMaxLength = 35,
-  descriptionMaxLength = 35
+  descriptionMaxLength = 200
 }: FolderEditorFieldsProps) {
   const { t } = useLanguage();
   // Defaulted here rather than in the parameter list, which cannot see the hook.

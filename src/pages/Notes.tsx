@@ -135,10 +135,11 @@ export default function Notes() {
     color: '#FFFFFF'
   });
   const [allNotesViewType, setAllNotesViewType] = useLocalStorage<ViewType>('notesAllViewType', 'list');
-  const [archivedNotesViewType, setArchivedNotesViewType] = useLocalStorage<ViewType>('notesArchivedViewType', 'list');
+  const [, setArchivedNotesViewType] = useLocalStorage<ViewType>('notesArchivedViewType', 'list');
   
   // Computed viewType based on active tab for backward compatibility
-  const viewType = activeTab === 'archived' ? archivedNotesViewType : allNotesViewType;
+  // Folders and the archive are list-only (Bruno, 2026-11-05).
+  const viewType: ViewType = activeTab === 'archived' ? 'list' : allNotesViewType;
   const setViewType = activeTab === 'archived' ? setArchivedNotesViewType : setAllNotesViewType;
 
   /**
@@ -151,7 +152,7 @@ export default function Notes() {
     const raw = new URLSearchParams(window.location.search).get('view');
     return raw === 'list' || raw === 'x2' || raw === 'x3' ? (raw as ViewType) : null;
   })();
-  const effectiveViewType = forcedViewType ?? viewType;
+  const effectiveViewType = activeTab === 'archived' ? 'list' : (forcedViewType ?? viewType);
   const [allNotesSortType, setAllNotesSortType] = useLocalStorage<SortType>('notesAllSortType', 'dateCreated');
   const [allNotesSortDirection, setAllNotesSortDirection] = useLocalStorage<SortDirection>('notesAllSortDirection', 'desc');
   const [archivedNotesSortType, setArchivedNotesSortType] = useLocalStorage<SortType>('notesArchivedSortType', 'dateCreated');
@@ -2399,6 +2400,7 @@ const hasTitle = (note.name || '').trim() !== '';
                 onViewTypeChange={setViewType}
                 customReorderingEnabled={customReorderingEnabled}
                 allowCustom={activeTab !== 'archived'}
+                showViewOptions={activeTab !== 'archived'}
                 onSortTypeChange={handleNotesSortTypeChange}
                 onSortDirectionChange={setSortDirection}
               />

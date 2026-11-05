@@ -22,6 +22,8 @@ interface HabitViewSettingsProps {
   sortDirection: HabitSortDirection;
   customReorderingEnabled: boolean;
   onViewTypeChange: (viewType: ViewType) => void;
+  /** Pick list/2/3 per row. Off where only the list view exists (folders, archives, habits). */
+  showViewOptions?: boolean;
   onSortTypeChange: (sortType: HabitSortType) => void;
   onSortDirectionChange: (direction: HabitSortDirection) => void;
 }
@@ -31,6 +33,7 @@ export function HabitViewSettings({
   sortType,
   sortDirection,
   customReorderingEnabled,
+  showViewOptions = true,
   onViewTypeChange,
   onSortTypeChange,
   onSortDirectionChange
@@ -77,6 +80,8 @@ export function HabitViewSettings({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="bg-background border border-border">
+        {showViewOptions && (
+          <>
         <DropdownMenuLabel>{t('view')}</DropdownMenuLabel>
         <DropdownMenuRadioGroup
           // Habits have no 3-per-row view; a saved `x3` is shown as `x2`.
@@ -89,6 +94,8 @@ export function HabitViewSettings({
           <DropdownMenuRadioItem value="list" onSelect={(event) => event.preventDefault()}>{t('viewList')}</DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
         <DropdownMenuSeparator />
+          </>
+        )}
         <DropdownMenuLabel>{t('sortBy')}</DropdownMenuLabel>
         {(['name', 'dateCreated', 'dateModified', 'custom'] as const).map((type) => (
           <DropdownMenuItem

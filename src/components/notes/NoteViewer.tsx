@@ -2092,6 +2092,7 @@ export function NoteViewer({
               ) : isEditingTitle ? (
                 <Input
                   ref={titleInputRef}
+                  maxLength={35}
                   value={editedTitle}
                   onChange={(e) => setEditedTitle(e.target.value)}
                   onBlur={saveTitle}

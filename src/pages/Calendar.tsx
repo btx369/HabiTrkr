@@ -467,9 +467,9 @@ export default function Calendar() {
                         onClick={() => setSelectedDate(day)}
                         onMouseDown={(e) => e.currentTarget.blur()}
                         className={cn(
-                          // Phone: the day number sits in the middle of the cell. From `md` (tablet, desktop) it
-                          // moves to the top-left corner, where there is room for it.
-                          "relative flex min-h-0 items-center justify-center md:items-start md:justify-start border-b border-r p-1 md:p-2 text-sm text-left transition-colors last:border-r-0",
+                          // Phone: the day number is centred near the top of the cell, leaving the bottom
+                          // for the dots. From `md` (tablet, desktop) it moves to the top-left corner.
+                          "relative flex min-h-0 items-start justify-center md:justify-start border-b border-r px-1 pt-1.5 pb-1 md:p-2 text-sm text-left transition-colors last:border-r-0",
                           "focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
                           isCurrentMonth ? "text-foreground" : "text-muted-foreground",
                           isToday(day) && "font-bold",
@@ -483,9 +483,9 @@ export default function Calendar() {
                           isSelected && !isToday(day) && "ring-2 ring-primary",
                         )}>{format(day, 'd')}</span>
                         {hasEvents && (
-                          // Dots sit around the middle of the cell, not on its bottom edge: just under the
-                          // centred number on a phone, in the centre of the cell from `md`.
-                          <div className="absolute left-1/2 top-[68%] md:top-1/2 -translate-x-1/2 md:-translate-y-1/2 flex gap-0.5">
+                          // Dots along the bottom of the cell, below the day number, so they never land
+                          // inside today's black circle (they did once the rows were made compact).
+                          <div className="absolute bottom-1.5 md:bottom-2 left-1/2 -translate-x-1/2 flex gap-0.5">
                             {dayEvents.slice(0, 3).map((event, idx) => {
                               const hasColor = event.color && event.color !== '#FFFFFF';
                               return (

@@ -23,6 +23,8 @@ interface EventViewSettingsProps {
   sortType: EventSortType;
   sortDirection: EventSortDirection;
   onViewTypeChange: (viewType: ViewType) => void;
+  /** Pick list/2/3 per row. Off where only the list view exists (folders, archives, habits). */
+  showViewOptions?: boolean;
   onSortTypeChange: (sortType: EventSortType) => void;
   onSortDirectionChange: (direction: EventSortDirection) => void;
 }
@@ -31,6 +33,7 @@ export function EventViewSettings({
   viewType,
   sortType,
   sortDirection,
+  showViewOptions = true,
   onViewTypeChange,
   onSortTypeChange,
   onSortDirectionChange
@@ -71,6 +74,8 @@ export function EventViewSettings({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="bg-background border border-border">
+        {showViewOptions && (
+          <>
         <DropdownMenuLabel>{t('view')}</DropdownMenuLabel>
         {/*
           Radix types this callback as `(value: string) => void`, so the value has to be
@@ -90,6 +95,8 @@ export function EventViewSettings({
         </DropdownMenuRadioGroup>
         
         <DropdownMenuSeparator />
+          </>
+        )}
         
         <DropdownMenuLabel>{t('sortBy')}</DropdownMenuLabel>
         {(['title', 'dateCreated', 'dateModified', 'daysRemaining'] as const).map((type) => (

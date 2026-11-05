@@ -23,6 +23,8 @@ interface ViewSettingsProps {
   sortType: SortType;
   sortDirection: SortDirection;
   customReorderingEnabled: boolean;
+  /** Pick list/2/3 per row. Off where only the list view exists (folders, archives, habits). */
+  showViewOptions?: boolean;
   /** Offer the hand-made Custom order. Off in the archive. */
   allowCustom?: boolean;
   onViewTypeChange: (viewType: ViewType) => void;
@@ -36,6 +38,7 @@ export function ViewSettings({
   sortDirection,
   customReorderingEnabled,
   allowCustom = true,
+  showViewOptions = true,
   onViewTypeChange,
   onSortTypeChange,
   onSortDirectionChange
@@ -85,6 +88,8 @@ export function ViewSettings({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="bg-background border border-border">
+        {showViewOptions && (
+          <>
         <DropdownMenuLabel>{t('view')}</DropdownMenuLabel>
         {/*
           Radix types this callback as `(value: string) => void`, so the value has to be
@@ -104,6 +109,8 @@ export function ViewSettings({
         </DropdownMenuRadioGroup>
         
         <DropdownMenuSeparator />
+          </>
+        )}
         
         <DropdownMenuLabel>{t('sortBy')}</DropdownMenuLabel>
         {(['title', 'dateCreated', 'dateModified'] as const).map((type) => (

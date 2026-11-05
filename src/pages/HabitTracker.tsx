@@ -110,11 +110,13 @@ export default function HabitTracker() {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   
   // Sort settings for habits tab
-  const [storedAllHabitsViewType, setAllHabitsViewType] = useLocalStorage<ViewType>('habitsAllViewType', 'list');
-  const [storedArchivedHabitsViewType, setArchivedHabitsViewType] = useLocalStorage<ViewType>('habitsArchivedViewType', 'list');
+  const [, setAllHabitsViewType] = useLocalStorage<ViewType>('habitsAllViewType', 'list');
+  const [, setArchivedHabitsViewType] = useLocalStorage<ViewType>('habitsArchivedViewType', 'list');
   // Habits have no 3-per-row view: a saved `x3` is treated as `x2`.
-  const allHabitsViewType: ViewType = storedAllHabitsViewType === 'x3' ? 'x2' : storedAllHabitsViewType;
-  const archivedHabitsViewType: ViewType = storedArchivedHabitsViewType === 'x3' ? 'x2' : storedArchivedHabitsViewType;
+  // Habits are list-only: a habit card needs the room for its seven day buttons
+  // (Bruno, 2026-11-05). Old saved choices are ignored.
+  const allHabitsViewType: ViewType = 'list';
+  const archivedHabitsViewType: ViewType = 'list';
   const [habitsSortType, setHabitsSortType] = useLocalStorage<HabitSortType>('habitsSortType', 'name');
   const [habitsSortDirection, setHabitsSortDirection] = useLocalStorage<HabitSortDirection>('habitsSortDirection', 'asc');
   const [habitsCustomOrder, setHabitsCustomOrder] = useLocalStorage<string[]>('habitsCustomOrder', []);
@@ -1262,6 +1264,7 @@ export default function HabitTracker() {
               ) : activeTab === 'archived' ? (
                 <HabitViewSettings
                   viewType={archivedHabitsViewType}
+                  showViewOptions={false}
                   sortType={archivedHabitsSortType}
                   sortDirection={archivedHabitsSortDirection}
                   customReorderingEnabled={archivedHabitsReorderingEnabled}
@@ -1272,6 +1275,7 @@ export default function HabitTracker() {
               ) : (
                 <HabitViewSettings
                   viewType={allHabitsViewType}
+                  showViewOptions={false}
                   sortType={habitsSortType}
                   sortDirection={habitsSortDirection}
                   customReorderingEnabled={habitsReorderingEnabled}
@@ -1330,7 +1334,7 @@ export default function HabitTracker() {
               </Card>
             ) : (
               <div
-                className={`${allHabitsViewType === 'x2' ? 'grid grid-cols-1 md:grid-cols-2' : 'grid grid-cols-1'} gap-2`}
+                className="grid grid-cols-1 gap-2"
                 onPointerDown={handleHabitPointerDown}
                 onPointerMove={handleHabitPointerMove}
                 onPointerUp={handleHabitPointerUp}
@@ -1432,7 +1436,7 @@ export default function HabitTracker() {
                   </Card>
                 ) : (
                   <div
-                    className={`${archivedHabitsViewType === 'x2' ? 'grid grid-cols-2' : 'grid grid-cols-1'} gap-2`}
+                    className="grid grid-cols-1 gap-2"
                     onPointerDown={handleHabitPointerDown}
                     onPointerMove={handleHabitPointerMove}
                     onPointerUp={handleHabitPointerUp}

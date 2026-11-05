@@ -100,7 +100,7 @@ export function NoteEditor({ note, isOpen, onClose, onSave }: NoteEditorProps) {
         value={formData.name}
         onChange={(value) => updateField('name', value)}
         placeholder={t('enterNoteTitle')}
-        maxLength={50}
+        maxLength={35}
         icon={NotebookPen}
         iconColor={ICON_COLOR}
       />
