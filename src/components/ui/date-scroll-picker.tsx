@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { shortDate } from '@/lib/dateFormats';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -298,7 +299,7 @@ interface DatePickerInputProps {
 }
 
 export function DatePickerInput({ value, onChange, className, id, label, icon: Icon, iconColor, iconPosition = 'right' }: DatePickerInputProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const dateLocale = useDateLocale();
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   
@@ -320,7 +321,7 @@ export function DatePickerInput({ value, onChange, className, id, label, icon: I
     const date = parseStoredDate(dateString) ?? new Date();
     // This was `toLocaleDateString('en-US', …)`, which printed "Oct 2, 2026" whatever
     // language the app was set to. 'PP' is date-fns' localised medium date.
-    return format(date, 'PP', { locale: dateLocale });
+    return shortDate(date, language, dateLocale);
   };
 
   const IconComponent = Icon || Calendar;

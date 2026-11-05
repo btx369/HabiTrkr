@@ -23,6 +23,8 @@ interface ViewSettingsProps {
   sortType: SortType;
   sortDirection: SortDirection;
   customReorderingEnabled: boolean;
+  /** Offer the hand-made Custom order. Off in the archive. */
+  allowCustom?: boolean;
   onViewTypeChange: (viewType: ViewType) => void;
   onSortTypeChange: (sortType: SortType) => void;
   onSortDirectionChange: (direction: SortDirection) => void;
@@ -33,6 +35,7 @@ export function ViewSettings({
   sortType,
   sortDirection,
   customReorderingEnabled,
+  allowCustom = true,
   onViewTypeChange,
   onSortTypeChange,
   onSortDirectionChange
@@ -123,6 +126,7 @@ export function ViewSettings({
         {/* Unlike the other options this one closes the menu: choosing Custom is the start of
             dragging items around, not a setting to keep adjusting. Grip = drag mode is on;
             check = Custom is the current order but drag mode is off. */}
+        {allowCustom && (
         <DropdownMenuItem
           onClick={() => handleSortClick('custom')}
           className="flex items-center gap-2 cursor-pointer"
@@ -134,6 +138,7 @@ export function ViewSettings({
           </div>
           <span>{t('custom')}</span>
         </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

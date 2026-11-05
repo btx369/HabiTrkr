@@ -3,6 +3,8 @@ import { EditorDialog } from '@/components/shared/EditorDialog';
 import { ColorPicker } from '@/components/shared/ColorPicker';
 import { TitleInput } from '@/components/shared/TitleInput';
 import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
+import { TagEditor } from '@/components/shared/TagEditor';
+import { useToastSettings } from '@/contexts/ToastContext';
 import { DaySelector } from '@/components/ui/day-selector';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -11,7 +13,7 @@ import { Habit } from '@/types/habit';
 import { getTodayKey } from '@/lib/dateUtils';
 import { useEditorForm } from '@/hooks/useEditorForm';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { NotebookPen, FileText, Palette } from 'lucide-react';
+import { NotebookPen, FileText, Palette, Hash } from 'lucide-react';
 
 const ICON_COLOR = 'currentColor';
 
@@ -25,6 +27,7 @@ interface HabitFormData {
   useTimesPerDay: boolean;
   timesPerDay: number | string;
   useUnlimitedTimes: boolean;
+  tags: string[];
 }
 
 interface HabitEditorProps {
@@ -44,11 +47,14 @@ const defaults: HabitFormData = {
   numberOfDaysPerWeek: 1,
   useTimesPerDay: false,
   timesPerDay: 1,
-  useUnlimitedTimes: false
+  useUnlimitedTimes: false,
+  tags: [],
 };
 
 export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'create' }: HabitEditorProps) {
   const { t } = useLanguage();
+  const { toast } = useToastSettings();
+  const [hasTagError, setHasTagError] = useState(false);
   const initialData = useMemo(() => 
     initialHabit ? {
       name: initialHabit.name,
@@ -59,7 +65,8 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
       numberOfDaysPerWeek: initialHabit.numberOfDaysPerWeek || 1,
       useTimesPerDay: initialHabit.useTimesPerDay || false,
       timesPerDay: initialHabit.timesPerDay || 1,
-      useUnlimitedTimes: initialHabit.useUnlimitedTimes || false
+      useUnlimitedTimes: initialHabit.useUnlimitedTimes || false,
+      tags: initialHabit.tags || [],
     } : null,
     [initialHabit]
   );
@@ -166,6 +173,10 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
 
   const handleSave = () => {
     if (!formData.name.trim()) return;
+    if (hasTagError) {
+      toast.error(t('toastPasteFixTag'));
+      return;
+    }
     
     onSave({
       name: formData.name,
@@ -180,7 +191,8 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
       timesPerDay: typeof formData.timesPerDay === 'string' 
         ? parseInt(formData.timesPerDay) || 1 
         : formData.timesPerDay,
-      useUnlimitedTimes: formData.useUnlimitedTimes
+      useUnlimitedTimes: formData.useUnlimitedTimes,
+      tags: formData.tags.length > 0 ? formData.tags : undefined,
     });
     handleClose();
   };
@@ -224,6 +236,16 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
         />
       )}
       
+      <TagEditor
+        tags={formData.tags}
+        onTagsChange={(tags) => setFormData(prev => ({ ...prev, tags }))}
+        onValidationChange={setHasTagError}
+        placeholder={t('placeholderAddTagsHabit')}
+        suggestionsLimit={100}
+        icon={Hash}
+        iconColor={ICON_COLOR}
+      />
+
       <ColorPicker 
         selectedColor={formData.color} 
         onColorChange={(color) => setFormData(prev => ({ ...prev, color }))}
@@ -233,7 +255,7 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
       />
       
       <div>
-        <Label className="text-sm">{mode === 'create' ? t('daysOfWeek') : t('activeDays')}</Label>
+        <Label className="text-sm">{t('daysOfWeek')}</Label>
         <DaySelector 
           selectedDays={formData.selectedDays}
           onDaysChange={(days) => setFormData(prev => ({ ...prev, selectedDays: days as boolean[] }))}

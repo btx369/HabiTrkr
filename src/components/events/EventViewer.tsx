@@ -1,4 +1,5 @@
 import { X, Pencil, Trash2, Calendar, RefreshCw, Clock, MapPin, Bell } from 'lucide-react';
+import { longDate } from '@/lib/dateFormats';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Event, AlertType, AlertCustomUnit } from '@/types/event';
@@ -100,11 +101,11 @@ export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventV
   const endTime = event.endTime;
 
   const formattedStartDate = startDate 
-    ? format(parseStoredDate(startDate) ?? new Date(), 'EEEE, MMMM d, yyyy', { locale: dateLocale })
+    ? longDate(parseStoredDate(startDate) ?? new Date(), language)
     : t('noDateSet');
 
   const formattedEndDate = endDate 
-    ? format(parseStoredDate(endDate) ?? new Date(), 'EEEE, MMMM d, yyyy', { locale: dateLocale })
+    ? longDate(parseStoredDate(endDate) ?? new Date(), language)
     : null;
 
   // Check if start and end dates are the same

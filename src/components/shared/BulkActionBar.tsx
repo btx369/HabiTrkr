@@ -82,6 +82,7 @@ const NOTES_ACTIONS: BulkAction[] = [
 
 const EVENTS_ACTIONS: BulkAction[] = [
   { type: 'all', icon: CheckCheck, label: 'all' },
+  { type: 'pin', icon: Pin, label: 'pin' },
   { type: 'share', icon: Share2, label: 'share' },
   { type: 'copy', icon: Copy, label: 'copy' },
   { type: 'move', icon: FolderInput, label: 'move' },
@@ -101,6 +102,8 @@ const FOLDERS_ACTIONS: BulkAction[] = [
 const HABITS_ACTIONS: BulkAction[] = [
   { type: 'all', icon: CheckCheck, label: 'all' },
   { type: 'pin', icon: Pin, label: 'pin' },
+  { type: 'share', icon: Share2, label: 'share' },
+  { type: 'copy', icon: Copy, label: 'copy' },
   { type: 'move', icon: FolderInput, label: 'move' },
   { type: 'color', icon: Palette, label: 'color' },
   { type: 'archive', icon: Archive, label: 'archive' },

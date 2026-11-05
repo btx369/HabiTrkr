@@ -8,6 +8,7 @@ import { Habit } from '@/types/habit';
 import { HabitCard, ArchivedHabitCard } from '@/components/habits/HabitCard';
 import { ItemActionMenu } from '@/components/shared/ItemActionMenu';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { countedNoun } from '@/lib/countedMessage';
 import { highlightText } from '@/lib/textHighlight';
 import { ColoredCard } from '@/components/shared/ColoredCard';
 import { isDefaultColor } from '@/lib/cardColorStyles';
@@ -27,6 +28,8 @@ interface HabitFolderCardProps {
   onArchiveHabit: (habitId: string) => void;
   onDeleteHabit: (habitId: string) => void;
   onPinHabit: (habitId: string) => void;
+  onCopyHabit?: (habitId: string) => void;
+  onShareHabit?: (habitId: string) => void;
   onRestoreHabit?: (habitId: string) => void;
   onPinFolder: (folderId: string) => void;
   onUnpinFolder: (folderId: string) => void;
@@ -53,6 +56,8 @@ export function HabitFolderCard({
   onEditHabit,
   onArchiveHabit,
   onDeleteHabit,
+  onCopyHabit,
+  onShareHabit,
   onPinHabit,
   onRestoreHabit,
   onPinFolder,
@@ -67,7 +72,7 @@ export function HabitFolderCard({
   isBulkSelected = false,
   onBulkSelect,
 }: HabitFolderCardProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const folderHabits = habits.filter(habit => folder.habitIds.includes(habit.id));
 
@@ -147,7 +152,7 @@ export function HabitFolderCard({
                 <p className={`text-xs ${mutedTextColorClass} mb-1 ml-6`}>{highlightText(folder.description, searchQuery)}</p>
               )}
               <p className={`text-xs ${mutedTextColorClass} ml-6`}>
-                {folderHabits.length} {t('habits')}
+                {countedNoun(t, language, 'habit', folderHabits.length)}
               </p>
             </div>
             <div className="flex items-center gap-1">
@@ -223,6 +228,8 @@ export function HabitFolderCard({
                         onArchive={onArchiveHabit}
                         onDelete={onDeleteHabit}
                         onPin={onPinHabit}
+                        onCopy={onCopyHabit}
+                        onShare={onShareHabit}
                         searchQuery={searchQuery}
                       />
                     )}

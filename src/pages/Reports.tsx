@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import { dateRange } from '@/lib/dateFormats';
 import { useNavigate } from 'react-router-dom';
 import { addDays, format, startOfDay, startOfWeek } from 'date-fns';
 import { BellRing, CalendarDays, ChevronLeft, ChevronRight, Flame, Lightbulb, Target } from 'lucide-react';
@@ -133,7 +134,7 @@ export default function Reports() {
     if (period === 'year') return String(from.getFullYear());
     if (period === 'month') return format(from, 'LLLL yyyy', { locale: dateLocale });
     if (offset === 0) return t('reportsThisWeek');
-    return `${format(from, 'd MMM', { locale: dateLocale })} – ${format(to, 'd MMM', { locale: dateLocale })}`;
+    return dateRange(from, to, language, dateLocale);
   })();
   const maxDayCount = Math.max(1, data.habits.length);
   const todayStart = startOfDay(now);

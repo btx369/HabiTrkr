@@ -47,6 +47,8 @@ interface EventEditorProps {
   onSave: (eventData: Omit<Event, 'id' | 'createdAt'>) => void;
   initialEvent?: Event | null;
   mode?: 'create' | 'edit';
+  /** Day a new event starts on (yyyy-MM-dd); today when left out. */
+  initialDate?: string;
 }
 
 /**
@@ -122,7 +124,7 @@ const defaults: EventFormData = {
   alertCustomUnit: 'minutes'
 };
 
-export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'create' }: EventEditorProps) {
+export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'create', initialDate }: EventEditorProps) {
   const [isCustomAlertOpen, setIsCustomAlertOpen] = useState(false);
   const [isStartTimePickerOpen, setIsStartTimePickerOpen] = useState(false);
   const [isEndTimePickerOpen, setIsEndTimePickerOpen] = useState(false);
@@ -156,9 +158,17 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
     [initialEvent]
   );
 
+  // Built when the editor opens, so a new event starts on the chosen day (Calendar) or on
+  // today, not on the day the app was loaded.
+  const formDefaults = useMemo<EventFormData>(() => {
+    const day = initialDate ?? getTodayKey();
+    return { ...defaults, startDate: day, endDate: day };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- recomputed on every open
+  }, [initialDate, isOpen]);
+
   const { formData, setFormData, resetForm } = useEditorForm<EventFormData>({
     initialData,
-    defaults,
+    defaults: formDefaults,
     isOpen
   });
 

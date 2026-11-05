@@ -139,7 +139,7 @@ export function updateTagUsage(oldTags: string[] = [], newTags: string[] = []): 
 }
 
 /** Collections whose items carry a `tags` list. */
-const TAGGED_COLLECTIONS = ['notes', 'archivedNotes', 'events', 'archivedEvents'];
+const TAGGED_COLLECTIONS = ['notes', 'archivedNotes', 'events', 'archivedEvents', 'habits', 'archivedHabits'];
 /** Folder lists whose auto-import rules name tags. */
 const FOLDER_COLLECTIONS = ['folders', 'archivedFolders', 'eventFolders', 'archivedEventFolders'];
 
@@ -246,6 +246,17 @@ export function getActiveTagsFromStorage(): string[] {
       }
     }
     
+    // Get tags from habits
+    const habitsStored = localStorage.getItem('habits');
+    if (habitsStored) {
+      const habits = JSON.parse(habitsStored);
+      if (Array.isArray(habits)) {
+        habits.forEach((habit: { tags?: string[] }) => {
+          if (Array.isArray(habit.tags)) habit.tags.forEach(tag => activeTags.add(tag.toLowerCase()));
+        });
+      }
+    }
+
     return Array.from(activeTags).sort();
   } catch (error) {
     console.error('Error getting active tags from storage:', error);

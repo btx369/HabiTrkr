@@ -512,3 +512,22 @@ export function insights(habits: Habit[], events: Event[], now: Date, weekStarts
   return out.slice(0, limit);
 }
 
+
+/* ------------------------------------------------------------------- share */
+
+/**
+ * What sharing a habit says: its result over the last 30 days, as in Reports. A habit with
+ * a goal gives done/expected ("30/30" for every day done); an open habit gives a count.
+ */
+export function habitShareSummary(habit: Habit, now: Date, weekStartsOn: WeekStart):
+  { kind: 'rate'; done: number; expected: number } | { kind: 'count'; count: number } {
+  const today = startOfDay(now);
+  const from = addDays(today, -29);
+  if (habitKind(habit) === 'open') {
+    let count = 0;
+    for (let d = from; d <= today; d = addDays(d, 1)) count += habit.completionCounts?.[toDateKey(d)] ?? 0;
+    return { kind: 'count', count };
+  }
+  const { done, expected } = completionBetween(habit, from, today, now, weekStartsOn);
+  return { kind: 'rate', done, expected };
+}

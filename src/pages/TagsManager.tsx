@@ -4,6 +4,7 @@ import { Tag, Search, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { countedSentence } from '@/lib/countedMessage';
 import { useToastSettings } from '@/contexts/ToastContext';
 import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 import { PageHeader } from '@/components/shared/PageHeader';
@@ -18,7 +19,7 @@ interface TagWithCount {
 
 export default function TagsManager() {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { toast } = useToastSettings();
 
   // This page renders its own full-height container instead of using <Layout>, so it has to
@@ -139,7 +140,7 @@ export default function TagsManager() {
                           behaves the same way wherever it appears in the app. */}
                       <span className="font-medium text-foreground">#{highlightText(tagData.tag, searchQuery)}</span>
                       <p className="text-xs text-muted-foreground">
-                        {t('usedIn')} {tagData.count} {t('items')}
+                        {countedSentence(t, language, 'tagUsedIn', tagData.count)}
                       </p>
                     </div>
                   </div>

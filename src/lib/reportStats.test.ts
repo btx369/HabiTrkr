@@ -5,6 +5,7 @@ import {
   completionBetween,
   eventsPerMonth,
   eventSummary,
+  habitShareSummary,
   insights,
   noteSummary,
   periodBounds,
@@ -176,5 +177,17 @@ describe('habits by week, month and year', () => {
     expect(year.buckets).toHaveLength(12);
     expect(year.buckets[9].count).toBe(2); // October
     expect(year.habits[0]).toMatchObject({ count: 3 });
+  });
+});
+
+describe('habitShareSummary', () => {
+  it('counts a daily habit done every day as n/n', () => {
+    const habit = { id: 'h', name: 'Água', color: '#FFFFFF', createdAt: '2026-10-01T00:00:00.000Z', activeDays: [true, true, true, true, true, true, true], completedDates: [] as string[] };
+    const now = new Date(2026, 10, 4, 12);
+    for (let i = 0; i < 30; i++) {
+      const d = new Date(2026, 10, 4 - i);
+      habit.completedDates.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+    }
+    expect(habitShareSummary(habit, now, 1)).toEqual({ kind: 'rate', done: 30, expected: 30 });
   });
 });

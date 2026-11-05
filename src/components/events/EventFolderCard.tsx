@@ -11,6 +11,7 @@ import { highlightText } from '@/lib/textHighlight';
 import { ColoredCard } from '@/components/shared/ColoredCard';
 import { isDefaultColor } from '@/lib/cardColorStyles';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { countedNoun } from '@/lib/countedMessage';
 import { getColoredIconClass } from '@/lib/coloredButtonStyles';
 import { cn } from '@/lib/utils';
 
@@ -35,6 +36,8 @@ interface EventFolderCardProps {
   isDeleted?: boolean;
   searchQuery?: string;
   onEditEvent?: (event: Event) => void;
+  /** Tapping an event opens its details; Edit is inside them. Falls back to the editor. */
+  onViewEvent?: (event: Event) => void;
   onArchiveEvent?: (eventId: string) => void;
   onDeleteEvent?: (eventId: string) => void;
   /*
@@ -67,6 +70,7 @@ export function EventFolderCard({
   isDeleted = false,
   searchQuery = '',
   onEditEvent,
+  onViewEvent,
   onArchiveEvent,
   onDeleteEvent,
   onCopyEvent,
@@ -75,7 +79,7 @@ export function EventFolderCard({
   isBulkSelected = false,
   onBulkSelect,
 }: EventFolderCardProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const folderEvents = events.filter(event => folder.eventIds.includes(event.id));
 
@@ -153,7 +157,7 @@ export function EventFolderCard({
                 <p className={`text-xs ${mutedTextColorClass} mb-1 ml-6`}>{highlightText(folder.description, searchQuery)}</p>
               )}
               <p className={`text-xs ${mutedTextColorClass} ml-6`}>
-                {folderEvents.length} events
+                {countedNoun(t, language, 'event', folderEvents.length)}
               </p>
             </div>
             <div className="flex items-center gap-1">
@@ -215,7 +219,7 @@ export function EventFolderCard({
                   <div key={event.id} className="scale-95">
                     <EventCard 
                       event={event} 
-                      onClick={() => onEditEvent?.(event)}
+                      onClick={() => (onViewEvent ?? onEditEvent)?.(event)}
                       onEdit={() => onEditEvent?.(event)}
                       onArchive={() => onArchiveEvent?.(event.id)}
                       onUnarchive={onRestoreEvent ? () => onRestoreEvent(event.id) : undefined}

@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
+import { dateRange, longDate } from '@/lib/dateFormats';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { Layout } from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,7 +16,10 @@ import { Event } from '@/types/event';
 import { EventFolder } from '@/types/eventFolder';
 import { cn } from '@/lib/utils';
 import { highlightText } from '@/lib/textHighlight';
-import { occursOn } from '@/lib/eventRecurrence';
+import { occursOn, hasEventEnded, daysUntilEvent } from '@/lib/eventRecurrence';
+import { toDateKey } from '@/lib/dateUtils';
+import { autoImportEventToFolders } from '@/lib/folderAutoImport';
+import { FLOATING_ADD_CLASS, FLOATING_ADD_STYLE } from '@/lib/floatingAdd';
 import { updateTagUsage } from '@/lib/tagStorage';
 import { cancelEventNotification, scheduleEventNotification } from '@/lib/notificationService';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
@@ -93,6 +97,8 @@ export default function Calendar() {
   const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [deletingEvent, setDeletingEvent] = useState<Event | null>(null);
+  // Add button: a new event on the day being looked at.
+  const [newEventDate, setNewEventDate] = useState<string | null>(null);
   
   const { toast } = useToastSettings();
   const { t, language } = useLanguage();
@@ -210,6 +216,27 @@ export default function Calendar() {
     setDeletingEvent(null);
   };
 
+  const handleAddClick = () => {
+    const day = viewMode === 'daily' ? currentDate : (selectedDate ?? currentDate);
+    setNewEventDate(toDateKey(day));
+  };
+
+  // Same steps as creating an event on the Events page.
+  const handleCreateEvent = (eventData: Omit<Event, 'id' | 'createdAt'>) => {
+    const newEvent: Event = { id: crypto.randomUUID(), createdAt: new Date().toISOString(), ...eventData };
+    setNewEventDate(null);
+    if (hasEventEnded(newEvent)) {
+      setArchivedEvents((prev: Event[]) => [...prev, newEvent]);
+      toast.success(say('toastAddedToArchive', 'events'));
+      return;
+    }
+    setEvents((prev: Event[]) => [...prev, newEvent].sort((a, b) => daysUntilEvent(a) - daysUntilEvent(b)));
+    if (newEvent.tags?.length) updateTagUsage([], newEvent.tags);
+    setEventFolders((prev: EventFolder[]) => autoImportEventToFolders(newEvent, prev));
+    if (newEvent.alertType && newEvent.alertType !== 'none') scheduleEventNotification(newEvent);
+    toast.success(say('toastAdded', 'events'));
+  };
+
   const handleSaveEvent = (eventData: Omit<Event, 'id' | 'createdAt'>) => {
     if (!editingEvent) return;
     
@@ -232,15 +259,15 @@ export default function Calendar() {
   // Get current period based on view mode
   const currentPeriod = useMemo(() => {
     if (viewMode === 'daily') {
-      return format(currentDate, 'EEEE, MMM d, yyyy', { locale: dateLocale });
+      return longDate(currentDate, language);
     } else if (viewMode === 'weekly') {
       const start = startOfWeek(currentDate, { weekStartsOn });
       const end = endOfWeek(currentDate, { weekStartsOn });
-      return `${format(start, 'MMM d', { locale: dateLocale })} - ${format(end, 'MMM d, yyyy', { locale: dateLocale })}`;
+      return dateRange(start, end, language, dateLocale);
     } else {
       return format(currentDate, 'MMMM yyyy', { locale: dateLocale });
     }
-  }, [currentDate, viewMode, weekStartsOn, dateLocale]);
+  }, [currentDate, viewMode, weekStartsOn, dateLocale, language]);
 
   // Weekly view data
   const weekStart = startOfWeek(currentDate, { weekStartsOn });
@@ -483,7 +510,7 @@ export default function Calendar() {
               <Card>
                 <CardHeader className="px-2 py-2">
                   <CardTitle className="text-lg">
-                    {format(selectedDate, 'EEEE, MMMM d, yyyy', { locale: dateLocale })}
+                    {longDate(selectedDate, language)}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="px-2 pb-2 pt-0">
@@ -529,6 +556,25 @@ export default function Calendar() {
         onClose={() => setViewingEvent(null)}
         onEdit={handleEditEvent}
         onDelete={handleDeleteEvent}
+      />
+
+      <Button
+        variant="ghostStatic"
+        size="icon"
+        aria-label={t('add')}
+        onClick={handleAddClick}
+        style={FLOATING_ADD_STYLE}
+        className={FLOATING_ADD_CLASS}
+      >
+        <Plus size={24} />
+      </Button>
+
+      <EventEditor
+        isOpen={!!newEventDate}
+        onClose={() => setNewEventDate(null)}
+        onSave={handleCreateEvent}
+        initialDate={newEventDate ?? undefined}
+        mode="create"
       />
 
       {/* Event Editor Dialog */}

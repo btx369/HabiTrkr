@@ -1,4 +1,5 @@
 import { useRef, useEffect } from 'react';
+import { longDate } from '@/lib/dateFormats';
 import { format, isAfter, startOfDay } from 'date-fns';
 import { RotateCcw, Trash2, Check, FolderOpen, GripVertical, Pin } from 'lucide-react';
 import { CardContent } from '@/components/ui/card';
@@ -40,6 +41,8 @@ interface HabitCardProps {
   onArchive: (habitId: string) => void;
   onDelete: (habitId: string) => void;
   onPin: (habitId: string) => void;
+  onCopy?: (habitId: string) => void;
+  onShare?: (habitId: string) => void;
   onMoveToFolder?: (habitId: string) => void;
   searchQuery?: string;
   showBulkCheckbox?: boolean;
@@ -66,6 +69,8 @@ export function HabitCard({
   onArchive,
   onDelete,
   onPin,
+  onCopy,
+  onShare,
   onMoveToFolder,
   searchQuery = '',
   showBulkCheckbox,
@@ -140,7 +145,7 @@ export function HabitCard({
   const hasReachedDailyLimit = habit.useTimesPerDay ? todayCount >= timesPerDay : isCompletedToday;
 
   // Use standardized color helpers
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const hasColor = !isDefaultColor(habit.color);
   const iconColorClass = getColoredIconClass(hasColor);
   const badgeBorderClass = getColoredBorderClass(hasColor, 100);
@@ -308,7 +313,7 @@ export function HabitCard({
                   key={date.toISOString()}
                   type="button"
                   disabled={isDisabled}
-                  aria-label={format(date, 'EEEE, MMMM d') + (isCompleted ? ', ' + t('done') : '')}
+                  aria-label={longDate(date, language) + (isCompleted ? ', ' + t('done') : '')}
                   aria-pressed={isCompleted}
                   onClick={(event) => {
                     event.stopPropagation();
@@ -353,6 +358,8 @@ export function HabitCard({
               onPin={() => onPin(habit.id)}
               onUnpin={() => onPin(habit.id)}
               onEdit={() => onEdit(habit)}
+              onCopy={onCopy ? () => onCopy(habit.id) : undefined}
+              onShare={onShare ? () => onShare(habit.id) : undefined}
               onMoveToFolder={() => onMoveToFolder?.(habit.id)}
               onArchive={() => onArchive(habit.id)}
               onDelete={() => onDelete(habit.id)}

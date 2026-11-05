@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
+import { dateRange } from '@/lib/dateFormats';
 import { Plus, ChevronLeft, ChevronRight, Target, FileStack } from 'lucide-react';
 import { format, addWeeks, subWeeks, startOfWeek, addDays, isSameDay, isSameWeek } from 'date-fns';
 import { Layout } from '@/components/Layout';
@@ -33,6 +34,10 @@ import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { getTodayKey, toDateKey } from '@/lib/dateUtils';
 import { cn } from '@/lib/utils';
 import { entitySentence } from '@/lib/entityToast';
+import { nextCopyName } from '@/lib/copyName';
+import { updateTagUsage } from '@/lib/tagStorage';
+import { parseSearchExpression, matchesSearchExpression } from '@/lib/tagParser';
+import { habitShareSummary } from '@/lib/reportStats';
 
 // Tab order for swipe navigation. Module-level so its identity is stable across
 // renders: declared inside the component it was rebuilt every render, which made it
@@ -326,6 +331,7 @@ export default function HabitTracker() {
       ...habitData
     };
     setHabits((prev: Habit[]) => [...prev, newHabit]);
+    if (newHabit.tags?.length) updateTagUsage([], newHabit.tags);
     setIsAddDialogOpen(false);
     toast.success(say('toastAdded', 'habits'));
   };
@@ -333,6 +339,7 @@ export default function HabitTracker() {
   const handleUpdateHabit = (habitData: Omit<Habit, 'id' | 'createdAt' | 'completedDates' | 'completionCounts'>) => {
     if (!selectedHabit) return;
     const dateStr = getTodayKey();
+    updateTagUsage(selectedHabit.tags || [], habitData.tags || []);
     
     setHabits((prev: Habit[]) => prev.map(habit => {
       if (habit.id !== selectedHabit.id) return habit;
@@ -359,6 +366,8 @@ export default function HabitTracker() {
   };
 
   const deleteHabit = (habitId: string, showToast = true) => {
+    const removed = habits.find(h => h.id === habitId) ?? archivedHabits.find(h => h.id === habitId);
+    if (removed?.tags?.length) updateTagUsage(removed.tags, []);
     setHabits((prev: Habit[]) => prev.filter(habit => habit.id !== habitId));
     setArchivedHabits((prev: Habit[]) => prev.filter(habit => habit.id !== habitId));
     // Remove from any folders
@@ -376,6 +385,53 @@ export default function HabitTracker() {
   };
 
   const confirmDeleteHabit = (habitId: string) => setHabitToDelete(habitId);
+
+  /** A copy is a new habit: same settings and tags, no history, not pinned. */
+  const copyHabits = (ids: string[]) => {
+    const taken = [...habits, ...archivedHabits].map(h => h.name);
+    const copies: Habit[] = habits.filter(h => ids.includes(h.id)).map(habit => {
+      const name = nextCopyName(habit.name, taken);
+      taken.push(name);
+      return {
+        ...habit,
+        id: crypto.randomUUID(),
+        name,
+        createdAt: new Date().toISOString(),
+        modifiedAt: undefined,
+        completedDates: [],
+        completionCounts: {},
+        pinned: false,
+      };
+    });
+    if (copies.length === 0) return;
+    setHabits((prev: Habit[]) => [...prev, ...copies]);
+    copies.forEach(c => { if (c.tags?.length) updateTagUsage([], c.tags); });
+    toast.success(copies.length === 1 ? say('toastCopied', 'habits') : countedSentence(t, language, 'bulkCopied', copies.length));
+  };
+
+  /** Sharing a habit sends its name and its result over the last 30 days, as in Reports. */
+  const habitShareLine = (habit: Habit): string => {
+    const summary = habitShareSummary(habit, new Date(), weekStartsOn);
+    const line = summary.kind === 'count'
+      ? t('habitShareOpen').replace('{count}', String(summary.count))
+      : t('habitShareRate')
+          .replace('{done}', String(summary.done))
+          .replace('{expected}', String(summary.expected))
+          .replace('{rate}', String(summary.expected ? Math.round((summary.done / summary.expected) * 100) : 0));
+    return `${habit.name}\n${line}`;
+  };
+
+  const shareHabits = (ids: string[]) => {
+    const text = habits.filter(h => ids.includes(h.id)).map(habitShareLine).join('\n\n');
+    if (!text) return;
+    if (navigator.share) {
+      navigator.share({ text }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(text)
+        .then(() => toast.success(t('toastContentCopied')))
+        .catch(() => toast.error(t('toastCopyFailed')));
+    }
+  };
   const confirmArchiveHabit = (habitId: string) => setHabitToArchive(habitId);
 
   const archiveHabit = (habitId: string, showToast = true) => {
@@ -547,9 +603,12 @@ export default function HabitTracker() {
 
   // Search and filter
   const searchInHabit = (habit: Habit, query: string): boolean => {
-    const searchTerm = query.toLowerCase();
-    return habit.name.toLowerCase().includes(searchTerm) || 
-           (habit.description?.toLowerCase().includes(searchTerm) || false);
+    // Same shared evaluator as Notes and Events, so #tags and `and`/`or` work here too.
+    const expression = parseSearchExpression(query);
+    const matchesText = (term: string): boolean =>
+      habit.name.toLowerCase().includes(term) ||
+      (habit.description?.toLowerCase().includes(term) || false);
+    return matchesSearchExpression(expression, habit.tags, matchesText);
   };
 
   const filterHabits = (): Habit[] => {
@@ -1002,6 +1061,14 @@ export default function HabitTracker() {
         }
         exitBulkMode();
         break;
+      case 'copy':
+        copyHabits(items);
+        exitBulkMode();
+        break;
+      case 'share':
+        shareHabits(items);
+        exitBulkMode();
+        break;
       case 'archive':
         if (requestBulkFolderAction('archive', items)) break;
         // Tab-aware archive: only archive items of the current tab type
@@ -1224,7 +1291,7 @@ export default function HabitTracker() {
                     <ChevronLeft size={24} />
                   </Button>
                   <h3 className="text-sm font-medium">
-                    {format(weekStart, 'MMM d', { locale: dateLocale })} - {format(addDays(weekStart, 6), 'MMM d, yyyy', { locale: dateLocale })}
+                    {dateRange(weekStart, addDays(weekStart, 6), language, dateLocale)}
                   </h3>
                   <Button aria-label={t('next')} variant="ghost" size="icon" className="h-9 w-9 text-foreground hover:bg-hover hover:text-foreground rounded-full [&_svg]:!size-6" onClick={() => setCurrentWeek(addWeeks(currentWeek, 1))}>
                     <ChevronRight size={24} />
@@ -1285,6 +1352,8 @@ export default function HabitTracker() {
                     onArchive={confirmArchiveHabit}
                     onDelete={confirmDeleteHabit}
                     onPin={pinHabit}
+                    onCopy={(id) => copyHabits([id])}
+                    onShare={(id) => shareHabits([id])}
                     onMoveToFolder={openMoveToFolder}
                     searchQuery={searchQuery}
                     showBulkCheckbox={isBulkMode}
@@ -1333,6 +1402,8 @@ export default function HabitTracker() {
                     onArchiveHabit={confirmArchiveHabit}
                     onDeleteHabit={confirmDeleteHabit}
                     onPinHabit={pinHabit}
+                    onCopyHabit={(id) => copyHabits([id])}
+                    onShareHabit={(id) => shareHabits([id])}
                     onPinFolder={pinFolder}
                     onUnpinFolder={unpinFolder}
                     onEditFolder={editFolder}
@@ -1422,6 +1493,8 @@ export default function HabitTracker() {
                         onArchiveHabit={confirmArchiveHabit}
                         onDeleteHabit={confirmDeleteHabit}
                         onPinHabit={pinHabit}
+                    onCopyHabit={(id) => copyHabits([id])}
+                    onShareHabit={(id) => shareHabits([id])}
                         onRestoreHabit={unarchiveHabit}
                         onPinFolder={pinFolder}
                         onUnpinFolder={unpinFolder}

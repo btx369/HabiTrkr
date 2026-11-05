@@ -22,6 +22,7 @@ import { EventFolderCard } from '@/components/events/EventFolderCard';
 import { EventFolderCreator } from '@/components/events/EventFolderCreator';
 import { EventFolderEditor } from '@/components/events/EventFolderEditor';
 import { EventEditor } from '@/components/events/EventEditor';
+import { EventViewer } from '@/components/events/EventViewer';
 import { MoveToFolderDialog } from '@/components/shared/MoveToFolderDialog';
 import { parseSearchExpression, matchesSearchExpression } from '@/lib/tagParser';
 import { updateTagUsage } from '@/lib/tagStorage';
@@ -59,6 +60,8 @@ export default function Events() {
   eventFoldersRef.current = eventFolders;
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  // Tapping an event shows its details first, as in the Calendar; Edit is inside them.
+  const [viewingEvent, setViewingEvent] = useState<Event | null>(null);
   const [selectedEventFolder, setSelectedEventFolder] = useState<EventFolder | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all-events');
@@ -142,7 +145,7 @@ export default function Events() {
 
 
   // Check if any dialog/editor is open - blocks swipe navigation
-  const isAnyDialogOpen = isAddDialogOpen || !!selectedEvent || isEventFolderCreatorOpen || 
+  const isAnyDialogOpen = isAddDialogOpen || !!selectedEvent || !!viewingEvent || isEventFolderCreatorOpen || 
     isEventFolderEditorOpen || isMoveToEventFolderOpen || deleteDialogOpen || archiveDialogOpen ||
     bulkDeleteDialogOpen || bulkArchiveDialogOpen || folderActions.dialog.open;
 
@@ -622,6 +625,11 @@ export default function Events() {
   };
 
   const openEventDetails = (event: Event) => {
+    setViewingEvent(event);
+  };
+
+  const openEventEditor = (event: Event) => {
+    setViewingEvent(null);
     setSelectedEvent(event);
   };
 
@@ -1120,7 +1128,7 @@ export default function Events() {
             key={event.id}
             event={event}
             onClick={() => isBulkMode ? toggleItem(event.id) : (isArchived ? null : openEventDetails(event))}
-            onEdit={() => openEventDetails(event)}
+            onEdit={() => openEventEditor(event)}
             onArchive={!isArchived ? confirmArchiveEvent : undefined}
             onUnarchive={isArchived ? unarchiveEvent : undefined}
             onDelete={deleteEvent}
@@ -1195,7 +1203,8 @@ export default function Events() {
             isArchived={isArchived}
             isDeleted={false}
             searchQuery={searchQuery}
-            onEditEvent={openEventDetails}
+            onEditEvent={openEventEditor}
+            onViewEvent={openEventDetails}
             onArchiveEvent={confirmArchiveEvent}
             onDeleteEvent={deleteEvent}
             onCopyEvent={copyEvent}
@@ -1252,6 +1261,15 @@ export default function Events() {
           onClose={() => setIsAddDialogOpen(false)}
           onSave={handleCreateEvent}
           mode="create"
+        />
+
+        {/* Event details (tap on a card) */}
+        <EventViewer
+          event={viewingEvent}
+          isOpen={!!viewingEvent}
+          onClose={() => setViewingEvent(null)}
+          onEdit={openEventEditor}
+          onDelete={(event) => { setViewingEvent(null); deleteEvent(event.id); }}
         />
 
         {/* Edit Event Dialog */}

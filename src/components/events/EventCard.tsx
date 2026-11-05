@@ -1,4 +1,5 @@
 import { useRef, useEffect } from 'react';
+import { shortDate } from '@/lib/dateFormats';
 import { Calendar, BellRing, Check, FolderOpen, Pin, RotateCcw, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -164,7 +165,7 @@ export function EventCard({
   // In the app's language and read as a local day (a bare `new Date(key)` is UTC).
   const formatEventDate = (key: string) => {
     const date = parseStoredDate(key);
-    return date ? format(date, 'P', { locale: dateLocale }) : key;
+    return date ? shortDate(date, language, dateLocale) : key;
   };
 
   const handleShare = () => {

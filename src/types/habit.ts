@@ -14,6 +14,7 @@ export interface Habit {
   useUnlimitedTimes?: boolean; // Whether to allow unlimited completions per day
   completionCounts?: Record<string, number>; // Map of date strings to completion counts for unlimited habits
   pinned?: boolean;
+  tags?: string[]; // Stored without #, like notes and events
   archived?: boolean;
   originalFolderId?: string; // Track original folder when habit is archived
 }

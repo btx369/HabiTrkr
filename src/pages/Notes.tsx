@@ -158,7 +158,11 @@ export default function Notes() {
   const [archivedNotesSortDirection, setArchivedNotesSortDirection] = useLocalStorage<SortDirection>('notesArchivedSortDirection', 'desc');
   
   // Computed sort values based on active tab
-  const sortType = activeTab === 'archived' ? archivedNotesSortType : allNotesSortType;
+  // The archive has no Custom order (like every other archive); an old saved choice of
+  // Custom there falls back to the default.
+  const sortType = activeTab === 'archived'
+    ? (archivedNotesSortType === 'custom' ? 'dateCreated' : archivedNotesSortType)
+    : allNotesSortType;
   const setSortType = activeTab === 'archived' ? setArchivedNotesSortType : setAllNotesSortType;
   const sortDirection = activeTab === 'archived' ? archivedNotesSortDirection : allNotesSortDirection;
   const setSortDirection = activeTab === 'archived' ? setArchivedNotesSortDirection : setAllNotesSortDirection;
@@ -2394,6 +2398,7 @@ const hasTitle = (note.name || '').trim() !== '';
                 sortDirection={sortDirection}
                 onViewTypeChange={setViewType}
                 customReorderingEnabled={customReorderingEnabled}
+                allowCustom={activeTab !== 'archived'}
                 onSortTypeChange={handleNotesSortTypeChange}
                 onSortDirectionChange={setSortDirection}
               />

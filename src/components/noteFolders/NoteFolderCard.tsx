@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { CardContent } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { countedNoun } from '@/lib/countedMessage';
 import { NoteFolder } from '@/types/noteFolder';
 import { Note } from '@/types/note';
 import { NoteCard } from '@/components/notes/NoteCard';
@@ -82,7 +83,7 @@ export function NoteFolderCard({
   isBulkSelected = false,
   onBulkSelect,
 }: NoteFolderCardProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const folderNotes = notes.filter(note => folder.noteIds.includes(note.id));
 
@@ -162,7 +163,7 @@ export function NoteFolderCard({
                 <p className={`text-xs ${mutedTextColorClass} mb-1 ml-6`}>{highlightText(folder.description, searchQuery)}</p>
               )}
               <p className={`text-xs ${mutedTextColorClass} ml-6`}>
-                {folderNotes.length} {t('notes')}
+                {countedNoun(t, language, 'note', folderNotes.length)}
               </p>
             </div>
             <div className="flex items-center gap-1">
