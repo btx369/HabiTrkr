@@ -1299,7 +1299,7 @@ export default function Events() {
               <TabsTrigger value="folders">{t('tabFolders')}</TabsTrigger>
               <TabsTrigger value="archived">{t('tabArchived')}</TabsTrigger>
             </SlidingTabsList>
-            <div className="flex items-center gap-1">
+            <div className="flex shrink-0 items-center gap-1">
               <Button
                 aria-label={t('selectItems')} 
                 variant="ghostStatic" 

@@ -39,24 +39,31 @@ const SlidingTabsList = React.forwardRef<
   React.useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-    
-    const activeIndex = values.indexOf(activeValue);
-    const triggers = container.querySelectorAll('[role="tab"]');
-    const activeTab = triggers[activeIndex] as HTMLElement;
-    
-    if (activeTab) {
-      setIndicatorStyle({
-        left: activeTab.offsetLeft,
-        width: activeTab.offsetWidth,
-      });
-    }
+
+    const measure = () => {
+      const activeIndex = values.indexOf(activeValue);
+      const triggers = container.querySelectorAll('[role="tab"]');
+      const activeTab = triggers[activeIndex] as HTMLElement;
+      if (activeTab) {
+        setIndicatorStyle({
+          left: activeTab.offsetLeft,
+          width: activeTab.offsetWidth,
+        });
+      }
+    };
+    measure();
+    // The tabs change width with the screen (narrower padding on small phones), the
+    // language and the web font arriving, so the indicator follows them.
+    const observer = new ResizeObserver(measure);
+    container.querySelectorAll('[role="tab"]').forEach((tab) => observer.observe(tab));
+    return () => observer.disconnect();
   }, [activeValue, values]);
 
   return (
     <TabsPrimitive.List
       ref={ref}
       className={cn(
-        "relative inline-flex h-10 items-center justify-center rounded-full p-1 text-muted-foreground",
+        "relative inline-flex h-10 min-w-0 items-center justify-center rounded-full p-1 text-muted-foreground",
         "bg-[hsl(var(--surface-card))]",
         "backdrop-blur-[12px]",
         "border border-foreground/10",
@@ -90,7 +97,7 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      "relative z-10 inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium ring-offset-background transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:text-white",
+      "relative z-10 inline-flex items-center justify-center whitespace-nowrap rounded-full px-2 py-1.5 text-[13px] min-[400px]:px-3 min-[400px]:text-sm font-medium ring-offset-background transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:text-white",
       className
     )}
     {...props}

@@ -3,6 +3,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/contexts/LanguageContext"
 
 const Dialog = DialogPrimitive.Root
 
@@ -34,6 +35,7 @@ const DialogContent = React.forwardRef<
     style?: React.CSSProperties;
   }
 >(({ className, children, hideCloseButton = false, style, ...props }, ref) => {
+  const { t } = useLanguage();
   const hasHeroAnimation = className?.includes('animate-hero');
   
   return (
@@ -54,7 +56,7 @@ const DialogContent = React.forwardRef<
         {!hideCloseButton && (
           <DialogPrimitive.Close className="absolute right-4 top-4 rounded-full opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
             <X className="h-5 w-5" />
-            <span className="sr-only">Close</span>
+            <span className="sr-only">{t('close')}</span>
           </DialogPrimitive.Close>
         )}
       </DialogPrimitive.Content>

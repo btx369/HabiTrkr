@@ -223,18 +223,17 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
         iconColor={ICON_COLOR}
       />
       
-      {mode === 'create' && (
-        <TitleInput
-          id="habit-description"
-          label={t('description')}
-          value={formData.description}
-          onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
-          placeholder={t('placeholderHabitDescription')}
-          maxLength={200}
-          icon={FileText}
-          iconColor={ICON_COLOR}
-        />
-      )}
+      {/* Editable after creation too: it was only offered when creating, then never again. */}
+      <TitleInput
+        id="habit-description"
+        label={t('description')}
+        value={formData.description}
+        onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
+        placeholder={t('placeholderHabitDescription')}
+        maxLength={200}
+        icon={FileText}
+        iconColor={ICON_COLOR}
+      />
       
       <TagEditor
         tags={formData.tags}

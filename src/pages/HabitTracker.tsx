@@ -1239,19 +1239,7 @@ export default function HabitTracker() {
               <TabsTrigger value="folders">{t('tabFolders')}</TabsTrigger>
               <TabsTrigger value="archived">{t('tabArchived')}</TabsTrigger>
             </SlidingTabsList>
-            <div className="flex items-center gap-1">
-              {showTodayButton && activeTab === 'habits' && (
-                /* A Button rather than a span: the span was not keyboard focusable and had
-                   no hover feedback, so nothing marked it as clickable. */
-                <Button
-                  variant="ghostStatic"
-                  size="sm"
-                  onClick={() => setCurrentWeek(new Date())}
-                  className="h-8 px-3 text-sm font-bold text-foreground rounded-full hover:bg-hover hover:text-foreground"
-                >
-                  {t('today')}
-                </Button>
-              )}
+            <div className="flex shrink-0 items-center gap-1">
               <Button
                 aria-label={t('selectItems')} 
                 variant="ghostStatic" 
@@ -1303,9 +1291,26 @@ export default function HabitTracker() {
                   <Button aria-label={t('previous')} variant="ghost" size="icon" className="h-9 w-9 text-foreground hover:bg-hover hover:text-foreground rounded-full [&_svg]:!size-6" onClick={() => setCurrentWeek(subWeeks(currentWeek, 1))}>
                     <ChevronLeft size={24} />
                   </Button>
-                  <h3 className="text-sm font-medium">
-                    {dateRange(weekStart, addDays(weekStart, 6), language, dateLocale)}
-                  </h3>
+                  {/*
+                    * Today sits by the week it returns from. In the header row beside the tabs
+                    * it pushed the settings button off a 360px screen in German, French,
+                    * Spanish, Dutch and Turkish, whose tab names are long.
+                    */}
+                  <div className="flex min-w-0 items-center gap-2">
+                    <h3 className="text-sm font-medium">
+                      {dateRange(weekStart, addDays(weekStart, 6), language, dateLocale)}
+                    </h3>
+                    {showTodayButton && (
+                      <Button
+                        variant="ghostStatic"
+                        size="sm"
+                        onClick={() => setCurrentWeek(new Date())}
+                        className="h-7 rounded-full border border-border px-2.5 text-xs font-bold text-foreground hover:bg-hover hover:text-foreground"
+                      >
+                        {t('today')}
+                      </Button>
+                    )}
+                  </div>
                   <Button aria-label={t('next')} variant="ghost" size="icon" className="h-9 w-9 text-foreground hover:bg-hover hover:text-foreground rounded-full [&_svg]:!size-6" onClick={() => setCurrentWeek(addWeeks(currentWeek, 1))}>
                     <ChevronRight size={24} />
                   </Button>
