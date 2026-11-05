@@ -79,6 +79,38 @@ export function folderAndCount(
   return t(baseKey).replace('{count_label}', label);
 }
 
+/**
+ * The question a bulk dialog asks: "Archive 2 notes?", "Delete 3 folders?".
+ *
+ * The bulk dialogs used to ask "Archive this item?" whatever was selected. When the
+ * selection mixes kinds (notes and folders in the archive) there is no single noun, so
+ * the generic "selected items" heading is kept for that case.
+ */
+export function selectionQuestion(
+  t: (key: string) => string,
+  language: Language,
+  key: 'confirmArchiveCount' | 'confirmDeleteCount',
+  fallbackKey: string,
+  counts: Partial<Record<EntityKind, number>>,
+): string {
+  const present = (Object.entries(counts) as [EntityKind, number][]).filter(([, n]) => n > 0);
+  if (present.length !== 1) return t(fallbackKey);
+  const [kind, n] = present[0];
+  return t(key).replace('{items}', countedNoun(t, language, kind, n));
+}
+
+/** "Moved to "Home"" for one item, "3 notes moved to "Home"" for several. */
+export function movedToFolder(
+  t: (key: string) => string,
+  language: Language,
+  kind: EntityKind,
+  count: number,
+  folderName: string,
+): string {
+  const key = count === 1 ? 'toastMovedToFolderOne' : 'toastMovedToFolderMany';
+  return t(key).replace('{items}', countedNoun(t, language, kind, count)).replace('{folder}', folderName);
+}
+
 /** How many words of a note's body stand in for a missing title. */
 const NAME_FROM_BODY_WORDS = 3;
 

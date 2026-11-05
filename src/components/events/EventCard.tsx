@@ -239,7 +239,7 @@ export function EventCard({
             {isFiled && (
               <FolderOpen size={20} className={`flex-shrink-0 ${iconColorClass}`} />
             )}
-            {event.pinned && (
+            {event.pinned && !isArchived && (
               <Pin size={20} className={`flex-shrink-0 ${iconColorClass}`} />
             )}
             {event.alertType && event.alertType !== 'none' && (

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToastSettings } from '@/contexts/ToastContext';
-import { folderAndCount, itemDisplayName, type EntityKind } from '@/lib/countedMessage';
+import { countedSentence, folderAndCount, itemDisplayName, type EntityKind } from '@/lib/countedMessage';
+import { entitySentence } from '@/lib/entityToast';
 import {
   planFolderAction,
   type FolderActionKind,
@@ -88,7 +89,18 @@ export function useFolderActions<I extends ItemWithId, F extends FolderWithIds>(
 }: FolderActionsConfig<I, F>) {
   const { t, language } = useLanguage();
   const { toast } = useToastSettings();
-  const [pending, setPending] = useState<{ kind: FolderActionKind; folderId: string } | null>(null);
+  /*
+   * What the dialog shows is captured when it opens. Reading it from the live folder blanked
+   * the dialog ('Archive ""?', "0 notes") during its closing animation, because by then the
+   * folder had been archived or deleted.
+   */
+  const [pending, setPending] = useState<{
+    kind: FolderActionKind;
+    folderId: string;
+    folderName: string;
+    itemCount: number;
+    open: boolean;
+  } | null>(null);
 
   const folderById = (folderId: string): F | undefined =>
     folders.find((folder) => folder.id === folderId) ?? archivedFolders.find((folder) => folder.id === folderId);
@@ -100,6 +112,11 @@ export function useFolderActions<I extends ItemWithId, F extends FolderWithIds>(
     archive: 'folderAndCountArchived',
     delete: 'folderAndCountDeleted',
     restore: 'folderAndCountRestored',
+  };
+  const bulkToastKey: Record<FolderActionKind, string> = {
+    archive: 'bulkArchived',
+    delete: 'bulkDeleted',
+    restore: 'bulkRestored',
   };
   const plainToastKey: Record<FolderActionKind, string> = {
     archive: 'toastArchived',
@@ -159,7 +176,8 @@ export function useFolderActions<I extends ItemWithId, F extends FolderWithIds>(
       const count = plan.affectedItemIds.length;
       toast.success(count > 0
         ? folderAndCount(t, language, toastKey[kind], itemKind, count)
-        : t(plainToastKey[kind]).replace('{entity}', t('tabFolders')));
+        // One folder: "Pasta arquivada", where the tab title gave "Pastas arquivado".
+        : entitySentence(t, language, plainToastKey[kind], 'tabFolders'));
     }
   };
 
@@ -180,7 +198,9 @@ export function useFolderActions<I extends ItemWithId, F extends FolderWithIds>(
     uniqueFolderIds.forEach((folderId) => apply(kind, scope, folderId, false));
     toast.success(itemCount > 0
       ? folderAndCount(t, language, toastKey[kind], itemKind, itemCount)
-      : t(plainToastKey[kind]).replace('{entity}', t('tabFolders')));
+      : selectedFolders.length === 1
+        ? entitySentence(t, language, plainToastKey[kind], 'tabFolders')
+        : countedSentence(t, language, bulkToastKey[kind], selectedFolders.length));
   };
 
   /**
@@ -206,31 +226,22 @@ export function useFolderActions<I extends ItemWithId, F extends FolderWithIds>(
       apply(kind, scopeWhenEmpty, folderId);
       return;
     }
-    setPending({ kind, folderId });
+    setPending({ kind, folderId, folderName: itemDisplayName(t, folder), itemCount: wouldMove, open: true });
   };
 
-  const close = () => setPending(null);
+  const close = () => setPending((prev) => (prev ? { ...prev, open: false } : prev));
 
-  const pendingFolder = pending ? folderById(pending.folderId) : undefined;
   const dialog: FolderActionDialogState = {
-    open: Boolean(pending && pendingFolder),
+    open: Boolean(pending?.open),
     kind: pending?.kind ?? 'archive',
-    folderName: pendingFolder ? itemDisplayName(t, pendingFolder) : '',
-    itemCount: pendingFolder
-      ? planFolderAction({
-          kind: pending!.kind,
-          scope: 'withItems',
-          folderItemIds: itemIdsOf(pendingFolder),
-          claimedElsewhere: idsClaimedElsewhere(pending!.folderId),
-          archivedIds: new Set(archivedItems.map((item) => item.id)),
-        }).affectedItemIds.length
-      : 0,
+    folderName: pending?.folderName ?? '',
+    itemCount: pending?.itemCount ?? 0,
     onFolderOnly: () => {
-      if (pending) apply(pending.kind, 'folderOnly', pending.folderId);
+      if (pending?.open) apply(pending.kind, 'folderOnly', pending.folderId);
       close();
     },
     onAll: () => {
-      if (pending) apply(pending.kind, 'withItems', pending.folderId);
+      if (pending?.open) apply(pending.kind, 'withItems', pending.folderId);
       close();
     },
     onOpenChange: (open: boolean) => { if (!open) close(); },

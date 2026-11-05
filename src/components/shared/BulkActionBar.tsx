@@ -54,6 +54,7 @@ interface BulkAction {
 const LABEL_KEYS = new Set([
   'all',
   'pin',
+  'unpin',
   'share',
   'copy',
   'makeACopy',
@@ -148,6 +149,8 @@ interface BulkActionBarProps {
   isAllItemsSelected?: boolean;    // For notes/events only in archived view
   isAllFoldersSelected?: boolean;  // For folders only in archived view
   selectedCount: number;
+  /** Every selected item is pinned, so the Pin button unpins them and says so. */
+  allPinned?: boolean;
   onAction: (action: BulkActionType, color?: string) => void;
   onClearSelection: () => void;
 }
@@ -159,6 +162,7 @@ export function BulkActionBar({
   isAllItemsSelected = false,
   isAllFoldersSelected = false,
   selectedCount,
+  allPinned = false,
   onAction,
   onClearSelection,
 }: BulkActionBarProps) {
@@ -233,6 +237,8 @@ export function BulkActionBar({
 
   return (
     <div 
+      // Marks the bar for index.css, which lifts toasts above it while it is shown.
+      data-bulk-bar=""
       className={cn(
         "fixed bottom-[88px] left-1/2 z-40 -translate-x-1/2"
       )}
@@ -293,7 +299,7 @@ export function BulkActionBar({
               aria-pressed={isSelectionAction ? isActionSelected(action.type) : undefined}
             >
               <Icon size={20} className="shrink-0 md:h-[22px] md:w-[22px]" />
-              <span className="whitespace-nowrap text-[9px] leading-tight md:text-xs">{resolveLabel(action.label)}</span>
+              <span className="whitespace-nowrap text-[9px] leading-tight md:text-xs">{resolveLabel(action.type === 'pin' && allPinned ? 'unpin' : action.label)}</span>
             </Button>
           );
         })}

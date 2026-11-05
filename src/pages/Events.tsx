@@ -16,7 +16,7 @@ import { EventFolder } from '@/types/eventFolder';
 import { useToastSettings } from '@/contexts/ToastContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { nextCopyName } from '@/lib/copyName';
-import { countedSentence, itemDisplayName, namedSentence } from '@/lib/countedMessage';
+import { movedToFolder, selectionQuestion, countedSentence, itemDisplayName, namedSentence } from '@/lib/countedMessage';
 import { EventCard } from '@/components/events/EventCard';
 import { EventFolderCard } from '@/components/events/EventFolderCard';
 import { EventFolderCreator } from '@/components/events/EventFolderCreator';
@@ -540,7 +540,7 @@ export default function Events() {
       })
     );
 
-    toast.success(say('toastUpdated', 'events'));
+    toast.success(movedToFolder(t, language, 'event', 1, eventFolders.find(folder => folder.id === folderId)?.name ?? ''));
   };
 
   const handleMoveToEventFolder = (eventId: string) => {
@@ -563,7 +563,7 @@ export default function Events() {
           }
         })
       );
-      toast.success(say('toastUpdated', 'events'));
+      toast.success(movedToFolder(t, language, 'event', selectedEventsForMove.length, eventFolders.find(folder => folder.id === folderId)?.name ?? ''));
       setSelectedEventsForMove(null);
       setIsMoveToEventFolderOpen(false);
       return;
@@ -891,6 +891,10 @@ export default function Events() {
   };
 
   // Handle bulk actions
+  /** Whether every selected item is pinned: the bulk Pin button then reads Unpin. */
+  const selectedPinnable = [...events, ...eventFolders].filter((item) => selectedItems.has(item.id));
+  const selectionAllPinned = selectedPinnable.length > 0 && selectedPinnable.every((item) => item.pinned);
+
   const handleBulkAction = (action: BulkActionType, color?: string) => {
     const ids = Array.from(selectedItems);
     const idSet = new Set(ids);
@@ -941,19 +945,20 @@ export default function Events() {
         }
         break;
       }
-      case 'pin':
-        // Batch update events - toggle pin state
+      case 'pin': {
+        // Pin the whole selection unless every item is pinned already; see Notes.tsx.
+        const pinned = !selectionAllPinned;
         setEvents(prev => prev.map(event => 
-          idSet.has(event.id) ? { ...event, pinned: !event.pinned } : event
+          idSet.has(event.id) ? { ...event, pinned } : event
         ));
-        // Batch update folders
         setEventFolders(prev => prev.map(folder => 
-          idSet.has(folder.id) ? { ...folder, pinned: !folder.pinned } : folder
+          idSet.has(folder.id) ? { ...folder, pinned } : folder
         ));
         clearSelection();
         exitBulkMode();
         toast.success(countedSentence(t, language, 'bulkUpdated', ids.length));
         break;
+      }
       case 'share':
         // Copy event names to clipboard
         const eventsToShare = events.filter(e => idSet.has(e.id));
@@ -998,7 +1003,7 @@ export default function Events() {
           setEventFolders(prev => prev.map(f => idSet.has(f.id) ? { ...f, color } : f));
           clearSelection();
           exitBulkMode();
-          toast.success(t('toastColorApplied').replace('{count}', String(ids.length)));
+          toast.success(countedSentence(t, language, 'toastColorApplied', ids.length));
         }
         break;
       case 'archive':
@@ -1446,16 +1451,20 @@ export default function Events() {
           onCreateNewFolder={handleCreateEventFolderFromDialog}
           itemIdsToMove={selectedEventsForMove ?? (selectedEventForMove ? [selectedEventForMove] : [])}
           getFolderItemIds={(folder) => folder.eventIds}
-          getItemCount={(folder) => folder.eventIds.length}
-          itemNoun={t('events')}
+          // Only active items count, as on the folder card itself.
+          getItemCount={(folder) => folder.eventIds.filter((id) => events.some((item) => item.id === id)).length}
+          itemKind="event"
         />
 
         {/* Bulk Archive Confirmation Dialog */}
         <ConfirmationDialog
           open={bulkArchiveDialogOpen}
           onOpenChange={setBulkArchiveDialogOpen}
-          title={t('archiveSelectedItems')}
-          description={t('confirmArchiveTitle')}
+          title={selectionQuestion(t, language, 'confirmArchiveCount', 'archiveSelectedItems', {
+            event: pendingBulkAction?.ids.filter(id => [...events, ...archivedEvents].some(item => item.id === id)).length ?? 0,
+            folder: pendingBulkAction?.ids.filter(id => [...eventFolders, ...archivedEventFolders].some(folder => folder.id === id)).length ?? 0,
+          })}
+          description={t('restoreLaterBody')}
           action="archive"
           onConfirm={() => {
             if (pendingBulkAction) {
@@ -1480,8 +1489,12 @@ export default function Events() {
                 );
                 setEvents(prev => prev.filter(e => !eventIdsToArchive.has(e.id)));
               } else {
-                // Batch archive events
-                const eventsToArchive = events.filter(e => idSet.has(e.id));
+                // Batch archive events, remembering each one's folder so a restore puts it back
+                // there, as the single archive and the notes page already do.
+                const eventsToArchive = events.filter(e => idSet.has(e.id)).map(event => ({
+                  ...event,
+                  originalFolderId: eventFolders.find(folder => folder.eventIds.includes(event.id))?.id,
+                }));
                 setArchivedEvents(prev => [...prev, ...eventsToArchive]);
                 setEvents(prev => prev.filter(e => !idSet.has(e.id)));
                 // Remove from folders
@@ -1503,7 +1516,10 @@ export default function Events() {
         <ConfirmationDialog
           open={bulkDeleteDialogOpen}
           onOpenChange={setBulkDeleteDialogOpen}
-          title={t('deleteSelectedItems')}
+          title={selectionQuestion(t, language, 'confirmDeleteCount', 'deleteSelectedItems', {
+            event: pendingBulkAction?.ids.filter(id => [...events, ...archivedEvents].some(item => item.id === id)).length ?? 0,
+            folder: pendingBulkAction?.ids.filter(id => [...eventFolders, ...archivedEventFolders].some(folder => folder.id === id)).length ?? 0,
+          })}
           description={t('confirmDeleteBody')}
           action="delete"
           onConfirm={() => {
@@ -1567,6 +1583,7 @@ export default function Events() {
           isAllItemsSelected={isAllArchivedEventsSelected}
           isAllFoldersSelected={isAllArchivedEventFoldersSelected}
           selectedCount={selectedItems.size}
+        allPinned={selectionAllPinned}
           onAction={handleBulkAction}
           onClearSelection={clearSelection}
         />

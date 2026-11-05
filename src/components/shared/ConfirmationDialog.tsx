@@ -8,6 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { useRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 export type ConfirmationAction = 'delete' | 'archive' | 'import' | 'mode-change' | 'restore';
@@ -49,6 +50,13 @@ export function ConfirmationDialog({
   secondaryAction,
 }: ConfirmationDialogProps) {
   const { t } = useLanguage();
+  /*
+   * The pages clear the item a dialog is about at the moment it closes, so the text read
+   * 'Delete ""?' for the length of the closing animation. While closed, the dialog keeps
+   * showing what it said when it was last open.
+   */
+  const shown = useRef({ title, description });
+  if (open) shown.current = { title, description };
   const isDelete = action === 'delete';
   const isArchive = action === 'archive';
   const isImport = action === 'import';
@@ -85,9 +93,9 @@ export function ConfirmationDialog({
           : undefined}
       >
         <AlertDialogHeader className={compactDestructive ? 'px-6 pt-6 pb-5' : undefined}>
-          <AlertDialogTitle className="break-words">{title}</AlertDialogTitle>
+          <AlertDialogTitle className="break-words">{shown.current.title}</AlertDialogTitle>
           <AlertDialogDescription className={compactDestructive ? 'whitespace-pre-line break-words' : 'break-words'}>
-            {description}
+            {shown.current.description}
           </AlertDialogDescription>
         </AlertDialogHeader>
         {/*

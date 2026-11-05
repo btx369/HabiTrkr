@@ -6,6 +6,7 @@ import { FolderCheck, FolderOpen, FolderPlus } from 'lucide-react';
 import { isDefaultColor } from '@/lib/cardColorStyles';
 import { getColoredIconClass } from '@/lib/coloredButtonStyles';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { countedNoun, type EntityKind } from '@/lib/countedMessage';
 
 /**
  * The fields this dialog actually needs from a folder.
@@ -37,7 +38,8 @@ interface MoveToFolderDialogProps<T extends MovableFolder> {
    * component guessing at `noteIds` / `eventIds` / `habitIds`.
    */
   getItemCount: (folder: T) => number;
-  itemNoun: string;
+  /** What the items are, for the count under each folder ("1 nota", "3 notas"). */
+  itemKind: EntityKind;
   emptyMessage?: string;
 }
 
@@ -59,10 +61,10 @@ export function MoveToFolderDialog<T extends MovableFolder>({
   itemIdsToMove,
   getFolderItemIds,
   getItemCount,
-  itemNoun,
+  itemKind,
   emptyMessage,
 }: MoveToFolderDialogProps<T>) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   return (
     <EditorDialog
       isOpen={isOpen}
@@ -133,7 +135,7 @@ export function MoveToFolderDialog<T extends MovableFolder>({
                           <p className="text-sm text-muted-foreground">{folder.description}</p>
                         )}
                         <p className="text-xs text-muted-foreground">
-                          {getItemCount(folder)} {itemNoun}
+                          {countedNoun(t, language, itemKind, getItemCount(folder))}
                         </p>
                       </div>
                       {isCurrentFolder ? (

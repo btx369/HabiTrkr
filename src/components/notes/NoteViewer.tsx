@@ -2341,7 +2341,7 @@ export function NoteViewer({
             setEditedDescription(mediaDescription.trim());
             if (onSave) {
               saveIfEditable(updatedNote);
-              toast.success(t('toastItemCount').replace('{count}', String(lines.length)));
+              toast.success(countedSentence(t, language, 'toastItemCount', lines.length));
             }
           }}
             onToggleFormatting={() => {

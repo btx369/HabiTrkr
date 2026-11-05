@@ -437,7 +437,7 @@ export function NoteCard({
             <div className="flex items-center gap-2 ml-auto flex-shrink-0">
               <div className="flex items-center gap-1">
                 {isFiled && <FolderOpen size={20} className={iconColorClass} />}
-                {note.pinned && <Pin size={20} className={iconColorClass} />}
+                {note.pinned && !isArchived && <Pin size={20} className={iconColorClass} />}
                 {note.reminder && <ReminderIcon reminder={note.reminder} className={iconColorClass} />}
               </div>
               {showBulkCheckbox ? (
@@ -540,7 +540,7 @@ export function NoteCard({
               <div className="flex items-center gap-2 ml-auto flex-shrink-0">
                 <div className="flex items-center gap-1">
                   {isFiled && <FolderOpen size={20} className={iconColorClass} />}
-                  {note.pinned && <Pin size={20} className={iconColorClass} />}
+                  {note.pinned && !isArchived && <Pin size={20} className={iconColorClass} />}
                 {note.reminder && <ReminderIcon reminder={note.reminder} className={iconColorClass} />}
                 </div>
                 {showBulkCheckbox ? (
@@ -610,7 +610,7 @@ export function NoteCard({
             </div>
             <div className="flex items-center gap-2 ml-auto flex-shrink-0">
               {isFiled && <FolderOpen size={20} className={iconColorClass} />}
-              {note.pinned && <Pin size={20} className={iconColorClass} />}
+              {note.pinned && !isArchived && <Pin size={20} className={iconColorClass} />}
                 {note.reminder && <ReminderIcon reminder={note.reminder} className={iconColorClass} />}
               {showBulkCheckbox ? (
                 <BulkCheckbox />

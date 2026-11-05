@@ -25,7 +25,7 @@ import { HabitFolderViewSettings, HabitFolderSortType, HabitFolderSortDirection 
 import { BulkActionBar, BulkActionType, BulkActionContext } from '@/components/shared/BulkActionBar';
 import { useToastSettings } from '@/contexts/ToastContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { countedSentence, itemDisplayName, namedSentence } from '@/lib/countedMessage';
+import { movedToFolder, selectionQuestion, countedSentence, itemDisplayName, namedSentence } from '@/lib/countedMessage';
 import { useDateLocale } from '@/lib/dateLocale';
 import { useWeekStart, getJsDayFromVisualIndex } from '@/contexts/WeekStartContext';
 import { FLOATING_ADD_CLASS, FLOATING_ADD_STYLE } from '@/lib/floatingAdd';
@@ -578,7 +578,7 @@ export default function HabitTracker() {
       })));
       setIsMoveToFolderOpen(false);
       setHabitsToMove(null);
-      toast.success(say('toastUpdated', 'habits'));
+      toast.success(movedToFolder(t, language, 'habit', habitsToMove.length, habitFolders.find(folder => folder.id === folderId)?.name ?? ''));
       return;
     }
 
@@ -600,7 +600,7 @@ export default function HabitTracker() {
     setIsMoveToFolderOpen(false);
     setHabitToMove(null);
         setHabitsToMove(null);
-    toast.success(say('toastUpdated', 'habits'));
+    toast.success(movedToFolder(t, language, 'habit', 1, habitFolders.find(folder => folder.id === folderId)?.name ?? ''));
   };
 
   // Search and filter
@@ -1023,7 +1023,14 @@ export default function HabitTracker() {
     return true;
   };
 
-  const handleBulkAction = (action: BulkActionType, color?: string) => {
+  /** Whether every selected item is pinned: the bulk Pin button then reads Unpin. */
+  const selectedPinnable = [...habits, ...habitFolders].filter((item) => selectedItems.has(item.id));
+  const selectionAllPinned = selectedPinnable.length > 0 && selectedPinnable.every((item) => item.pinned);
+
+  /** A bulk archive or delete of habits waits here for the same confirmation the other pages ask. */
+  const [pendingHabitBulk, setPendingHabitBulk] = useState<'archive' | 'delete' | null>(null);
+
+  const handleBulkAction = (action: BulkActionType, color?: string, confirmed = false) => {
     const items = Array.from(selectedItems);
     
     switch (action) {
@@ -1047,7 +1054,7 @@ export default function HabitTracker() {
           if (habitIds.length > 0) {
             const habitIdSet = new Set(habitIds);
             setHabits(prev => prev.map(habit =>
-              habitIdSet.has(habit.id) ? { ...habit, pinned: !habit.pinned } : habit
+              habitIdSet.has(habit.id) ? { ...habit, pinned: !selectionAllPinned } : habit
             ));
             toast.success(countedSentence(t, language, 'bulkUpdated', habitIds.length));
           }
@@ -1055,7 +1062,7 @@ export default function HabitTracker() {
           const folderIds = items.filter(id => habitFolders.some(folder => folder.id === id));
           const folderIdSet = new Set(folderIds);
           setHabitFolders(prev => prev.map(folder =>
-            folderIdSet.has(folder.id) ? { ...folder, pinned: !folder.pinned } : folder
+            folderIdSet.has(folder.id) ? { ...folder, pinned: !selectionAllPinned } : folder
           ));
           if (folderIds.length > 0) {
             toast.success(countedSentence(t, language, 'bulkUpdated', folderIds.length));
@@ -1073,6 +1080,7 @@ export default function HabitTracker() {
         break;
       case 'archive':
         if (requestBulkFolderAction('archive', items)) break;
+        if (activeTab === 'habits' && !confirmed) { setPendingHabitBulk('archive'); return; }
         // Tab-aware archive: only archive items of the current tab type
         if (activeTab === 'habits') {
           // Archive only habits, remove them from any folders
@@ -1115,6 +1123,7 @@ export default function HabitTracker() {
         break;
       case 'delete':
         if (requestBulkFolderAction('delete', items)) break;
+        if (activeTab !== 'folders' && !confirmed) { setPendingHabitBulk('delete'); return; }
         // Tab-aware delete
         if (activeTab === 'habits') {
           const habitIds = items.filter(id => habits.some(h => h.id === id));
@@ -1148,7 +1157,7 @@ export default function HabitTracker() {
               setHabits(prev => prev.map(habit =>
                 habitIdSet.has(habit.id) ? { ...habit, color } : habit
               ));
-              toast.success(t('toastColorApplied').replace('{count}', String(habitIds.length)));
+              toast.success(countedSentence(t, language, 'toastColorApplied', habitIds.length));
             }
           } else if (activeTab === 'folders') {
             const folderIds = items.filter(id => habitFolders.some(folder => folder.id === id));
@@ -1157,7 +1166,7 @@ export default function HabitTracker() {
               folderIdSet.has(folder.id) ? { ...folder, color } : folder
             ));
             if (folderIds.length > 0) {
-              toast.success(t('toastColorApplied').replace('{count}', String(folderIds.length)));
+              toast.success(countedSentence(t, language, 'toastColorApplied', folderIds.length));
             }
           }
         }
@@ -1528,7 +1537,7 @@ export default function HabitTracker() {
         onClick={handleAddButtonClick}
         /* Same hairline as the floating nav capsule; see the note in Notes.tsx. */
         style={FLOATING_ADD_STYLE}
-            className={cn(FLOATING_ADD_CLASS, activeTab === 'archived' && 'hidden')}
+            className={cn(FLOATING_ADD_CLASS, (activeTab === 'archived' || isBulkMode) && 'hidden')}
       >
         <Plus size={24} />
       </Button>
@@ -1541,6 +1550,7 @@ export default function HabitTracker() {
         isAllItemsSelected={activeTab === 'archived' ? isAllSelected(getArchivedHabitsFiltered().map(h => h.id)) : false}
         isAllFoldersSelected={activeTab === 'archived' ? isAllSelected(getArchivedFolders().map(f => f.id)) : false}
         selectedCount={selectedItems.size}
+        allPinned={selectionAllPinned}
         onAction={handleBulkAction}
         onClearSelection={clearSelection}
       />
@@ -1585,8 +1595,24 @@ export default function HabitTracker() {
         onCreateNewFolder={() => { setIsMoveToFolderOpen(false); setIsFolderCreatorOpen(true); }}
         itemIdsToMove={habitsToMove ?? (habitToMove ? [habitToMove] : [])}
         getFolderItemIds={(folder) => folder.habitIds}
-        getItemCount={(folder) => folder.habitIds.length}
-        itemNoun={t('habits')}
+        // Only active items count, as on the folder card itself.
+          getItemCount={(folder) => folder.habitIds.filter((id) => habits.some((item) => item.id === id)).length}
+        itemKind="habit"
+      />
+
+      <ConfirmationDialog
+        open={pendingHabitBulk !== null}
+        onOpenChange={(open) => !open && setPendingHabitBulk(null)}
+        title={selectionQuestion(t, language,
+          pendingHabitBulk === 'delete' ? 'confirmDeleteCount' : 'confirmArchiveCount',
+          pendingHabitBulk === 'delete' ? 'deleteSelectedItems' : 'archiveSelectedItems',
+          {
+            habit: [...selectedItems].filter(id => [...habits, ...archivedHabits].some(habit => habit.id === id)).length,
+            folder: [...selectedItems].filter(id => [...habitFolders, ...archivedHabitFolders].some(folder => folder.id === id)).length,
+          })}
+        description={pendingHabitBulk === 'delete' ? t('confirmDeleteBody') : t('restoreLaterBody')}
+        action={pendingHabitBulk ?? 'archive'}
+        onConfirm={() => { if (pendingHabitBulk) handleBulkAction(pendingHabitBulk, undefined, true); setPendingHabitBulk(null); }}
       />
 
       <ConfirmationDialog

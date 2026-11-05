@@ -25,6 +25,8 @@ function splitCopyName(name: string): { base: string; number?: number } {
  */
 export function nextCopyName(name: string, existingNames: readonly string[]): string {
   const { base } = splitCopyName(name);
+  // An untitled item stays untitled: numbering nothing gave a copy called " (1)".
+  if (base.trim() === '') return '';
   const taken = new Set(existingNames);
 
   for (let n = 1; n < 1000; n++) {

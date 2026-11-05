@@ -39,7 +39,7 @@ import { autoImportNoteToFolders } from '@/lib/folderAutoImport';
 import { parseSearchExpression, matchesSearchExpression } from '@/lib/tagParser';
 import { extractSearchableText } from '@/lib/noteSearchText';
 import { nextCopyName } from '@/lib/copyName';
-import { countedSentence, itemDisplayName, namedSentence } from '@/lib/countedMessage';
+import { movedToFolder, selectionQuestion, countedSentence, itemDisplayName, namedSentence } from '@/lib/countedMessage';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { useBulkSelection } from '@/hooks/useBulkSelection';
 import { BulkActionBar, BulkActionType, BulkActionContext } from '@/components/shared/BulkActionBar';
@@ -859,34 +859,40 @@ const hasTitle = (note.name || '').trim() !== '';
     }
   };
 
-  const shareNote = (noteId: string) => {
-    // Simple share functionality - copy note content to clipboard
-    const noteToShare = notes.find(note => note.id === noteId) || archivedNotes.find(note => note.id === noteId);
-    if (noteToShare) {
-      let shareText = noteToShare.name;
-      
-      switch (noteToShare.type) {
-        case 'text':
-          shareText += noteToShare.description ? `\n\n${noteToShare.description}` : '';
-          break;
-        case 'list':
-          const listItems = noteToShare.items.map(item => 
-            `${item.completed ? '✓' : '○'} ${item.text}`
-          ).join('\n');
-          if (listItems) shareText += `\n\n${listItems}`;
-          break;
-        case 'audio':
-        case 'image':
-          shareText += noteToShare.description ? `\n\n${noteToShare.description}` : '';
-          break;
+  /**
+   * The text a note shares as: its title, then what a reader sees in it.
+   *
+   * The raw description holds every image and audio as a base64 marker, so sharing it put
+   * thousands of encoded characters on the clipboard. Only the readable text goes now, and a
+   * locked note shares its title alone, because its content is what the lock hides.
+   */
+  const noteShareText = (note: Note): string => {
+    const parts = [note.name.trim()];
+    if (!note.locked) {
+      if (note.type === 'list') {
+        parts.push(note.items.map(item => `${item.completed ? '✓' : '○'} ${item.text}`).join('\n'));
+      } else {
+        // Bold, italic and underline marks are the editor's, not the reader's.
+        parts.push(extractSearchableText({ description: note.description }, { lowercase: false })
+          .replace(/\*\*(.+?)\*\*/g, '$1')
+          .replace(/__(.+?)__/g, '$1')
+          .replace(/\*(.+?)\*/g, '$1'));
       }
-      
-      navigator.clipboard.writeText(shareText).then(() => {
-        toast.success(t('toastContentCopied'));
-      }).catch(() => {
-        toast.error(t('toastCopyFailed'));
-      });
     }
+    return parts.filter(Boolean).join('\n\n');
+  };
+
+  const copyShareText = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      toast.success(t('toastContentCopied'));
+    }).catch(() => {
+      toast.error(t('toastCopyFailed'));
+    });
+  };
+
+  const shareNote = (noteId: string) => {
+    const noteToShare = notes.find(note => note.id === noteId) || archivedNotes.find(note => note.id === noteId);
+    if (noteToShare) copyShareText(noteShareText(noteToShare));
   };
 
   const addFolder = (folderData: Omit<NoteFolder, 'id' | 'createdAt' | 'noteIds'>, noteIdsToMove?: string[]) => {
@@ -973,7 +979,7 @@ const hasTitle = (note.name || '').trim() !== '';
       })
     );
 
-    toast.success(say('toastUpdated', 'noteViewerTitle'));
+    toast.success(movedToFolder(t, language, 'note', 1, folders.find(folder => folder.id === folderId)?.name ?? ''));
   };
 
   const handleMoveToFolder = (noteId: string) => {
@@ -1005,7 +1011,7 @@ const hasTitle = (note.name || '').trim() !== '';
           }
         })
       );
-      toast.success(say('toastUpdated', 'notes'));
+      toast.success(movedToFolder(t, language, 'note', selectedNoteForMove.length, folders.find(folder => folder.id === folderId)?.name ?? ''));
       setSelectedNoteForMove(null);
       setIsMoveToFolderOpen(false);
     }
@@ -2099,6 +2105,10 @@ const hasTitle = (note.name || '').trim() !== '';
   };
 
   // Handle bulk actions
+  /** Whether every selected item is pinned: the bulk Pin button then reads Unpin. */
+  const selectedPinnable = [...notes, ...folders].filter((item) => selectedItems.has(item.id));
+  const selectionAllPinned = selectedPinnable.length > 0 && selectedPinnable.every((item) => item.pinned);
+
   const handleBulkAction = (action: BulkActionType, color?: string) => {
     const ids = Array.from(selectedItems);
     const idSet = new Set(ids);
@@ -2149,20 +2159,21 @@ const hasTitle = (note.name || '').trim() !== '';
         }
         break;
       }
-      case 'pin':
-        // Batch update notes - toggle pin state
+      case 'pin': {
+        // One state for the whole selection: pin them all unless every one is pinned already.
+        // Flipping each item on its own unpinned the pinned half of a mixed selection.
+        const pinned = !selectionAllPinned;
         setNotes(prev => prev.map(note => 
-          idSet.has(note.id) ? { ...note, pinned: !note.pinned } : note
+          idSet.has(note.id) ? { ...note, pinned } : note
         ));
-        // Batch update folders
         setFolders(prev => prev.map(folder => 
-          idSet.has(folder.id) ? { ...folder, pinned: !folder.pinned } : folder
+          idSet.has(folder.id) ? { ...folder, pinned } : folder
         ));
         clearSelection();
         exitBulkMode();
         toast.success(countedSentence(t, language, 'bulkUpdated', ids.length));
         break;
-        break;
+      }
       case 'lock':
         // For bulk lock, we'll lock all selected notes
         ids.forEach(id => {
@@ -2268,6 +2279,14 @@ const hasTitle = (note.name || '').trim() !== '';
         toast.success(countedSentence(t, language, 'bulkRestored', ids.length));
         break;
       }
+      case 'share': {
+        // The bulk bar offered Share, but nothing handled it.
+        const shared = notes.filter(note => idSet.has(note.id)).map(noteShareText).filter(Boolean);
+        if (shared.length > 0) copyShareText(shared.join('\n\n---\n\n'));
+        clearSelection();
+        exitBulkMode();
+        break;
+      }
       case 'copy':
         // Batch copy notes
         const takenNames = [...notes, ...archivedNotes].map(n => n.name);
@@ -2300,7 +2319,7 @@ const hasTitle = (note.name || '').trim() !== '';
           setFolders(prev => prev.map(f => idSet.has(f.id) ? { ...f, color } : f));
           clearSelection();
           exitBulkMode();
-          toast.success(t('toastColorApplied').replace('{count}', String(ids.length)));
+          toast.success(countedSentence(t, language, 'toastColorApplied', ids.length));
         }
         break;
     }
@@ -2548,8 +2567,9 @@ const hasTitle = (note.name || '').trim() !== '';
         onCreateNewFolder={handleCreateFolderFromDialog}
         itemIdsToMove={selectedNoteForMove ?? []}
         getFolderItemIds={(folder) => folder.noteIds}
-        getItemCount={(folder) => folder.noteIds.length}
-        itemNoun={t('notes')}
+        // Only active items count, as on the folder card itself.
+          getItemCount={(folder) => folder.noteIds.filter((id) => notes.some((item) => item.id === id)).length}
+        itemKind="note"
       />
 
       {/* Delete Confirmation Dialog */}
@@ -2597,8 +2617,11 @@ const hasTitle = (note.name || '').trim() !== '';
       <ConfirmationDialog
         open={bulkArchiveDialogOpen}
         onOpenChange={setBulkArchiveDialogOpen}
-        title={t('archiveSelectedItems')}
-        description={t('confirmArchiveTitle')}
+        title={selectionQuestion(t, language, 'confirmArchiveCount', 'archiveSelectedItems', {
+            note: pendingBulkAction?.ids.filter(id => [...notes, ...archivedNotes].some(item => item.id === id)).length ?? 0,
+            folder: pendingBulkAction?.ids.filter(id => [...folders, ...archivedFolders].some(folder => folder.id === id)).length ?? 0,
+          })}
+          description={t('restoreLaterBody')}
         action="archive"
         onConfirm={() => {
           if (pendingBulkAction) {
@@ -2651,7 +2674,10 @@ const hasTitle = (note.name || '').trim() !== '';
       <ConfirmationDialog
         open={bulkDeleteDialogOpen}
         onOpenChange={setBulkDeleteDialogOpen}
-        title={t('deleteSelectedItems')}
+        title={selectionQuestion(t, language, 'confirmDeleteCount', 'deleteSelectedItems', {
+            note: pendingBulkAction?.ids.filter(id => [...notes, ...archivedNotes].some(item => item.id === id)).length ?? 0,
+            folder: pendingBulkAction?.ids.filter(id => [...folders, ...archivedFolders].some(folder => folder.id === id)).length ?? 0,
+          })}
         description={t('confirmDeleteBody')}
         action="delete"
         onConfirm={() => {
@@ -2729,6 +2755,7 @@ const hasTitle = (note.name || '').trim() !== '';
         isAllItemsSelected={isAllArchivedNotesSelected}
         isAllFoldersSelected={isAllArchivedFoldersSelected}
         selectedCount={selectedItems.size}
+        allPinned={selectionAllPinned}
         onAction={handleBulkAction}
         onClearSelection={clearSelection}
       />
