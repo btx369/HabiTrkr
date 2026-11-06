@@ -25,6 +25,7 @@ interface HabitFolderCardProps {
   onMarkUnlimitedDone: (habitId: string) => void;
   onUndoCompletion: (habitId: string) => void;
   onEditHabit: (habit: Habit) => void;
+  onViewHabit?: (habit: Habit) => void;
   onArchiveHabit: (habitId: string) => void;
   onDeleteHabit: (habitId: string) => void;
   onPinHabit: (habitId: string) => void;
@@ -54,6 +55,7 @@ export function HabitFolderCard({
   onMarkUnlimitedDone,
   onUndoCompletion,
   onEditHabit,
+  onViewHabit,
   onArchiveHabit,
   onDeleteHabit,
   onCopyHabit,
@@ -225,6 +227,7 @@ export function HabitFolderCard({
                         onMarkUnlimitedDone={onMarkUnlimitedDone}
                         onUndoCompletion={onUndoCompletion}
                         onEdit={onEditHabit}
+                        onView={onViewHabit}
                         onArchive={onArchiveHabit}
                         onDelete={onDeleteHabit}
                         onPin={onPinHabit}

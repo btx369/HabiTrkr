@@ -36,6 +36,9 @@ import { getTodayKey, toDateKey } from '@/lib/dateUtils';
 import { cn } from '@/lib/utils';
 import { entitySentence } from '@/lib/entityToast';
 import { nextCopyName } from '@/lib/copyName';
+import { HabitViewer } from '@/components/habits/HabitViewer';
+import { fileCopiesBesideOriginals } from '@/lib/copyIntoFolder';
+import { useCopyFolderQuestion, CopyFolderQuestionDialog } from '@/components/shared/CopyFolderQuestion';
 import { updateTagUsage } from '@/lib/tagStorage';
 import { parseSearchExpression, matchesSearchExpression } from '@/lib/tagParser';
 
@@ -86,10 +89,13 @@ export default function HabitTracker() {
   // Folder state
   const [habitFolders, setHabitFolders] = useLocalStorage<HabitFolder[]>('habitFolders', []);
   const [archivedHabitFolders, setArchivedHabitFolders] = useLocalStorage<HabitFolder[]>('archivedHabitFolders', []);
+  const copyQuestion = useCopyFolderQuestion(habitFolders, HABIT_FOLDER_IDS.idsOf);
   
   // Dialog state
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedHabit, setSelectedHabit] = useState<Habit | null>(null);
+  // The habit open in the read-only view, by id so it follows edits and completions.
+  const [viewingHabitId, setViewingHabitId] = useState<string | null>(null);
   const [habitToDelete, setHabitToDelete] = useState<string | null>(null);
   const [habitToArchive, setHabitToArchive] = useState<string | null>(null);
   
@@ -186,8 +192,8 @@ export default function HabitTracker() {
   });
 
   // Check if any dialog is open - blocks swipe navigation
-  const isAnyDialogOpen = isAddDialogOpen || !!selectedHabit || !!habitToDelete || 
-    !!habitToArchive || folderActions.dialog.open ||
+  const isAnyDialogOpen = isAddDialogOpen || !!selectedHabit || !!viewingHabitId || !!habitToDelete || 
+    !!habitToArchive || folderActions.dialog.open || !!copyQuestion.dialog.pending?.open ||
     isFolderCreatorOpen || isFolderEditorOpen || isMoveToFolderOpen;
 
   // Tab swipe navigation
@@ -391,9 +397,12 @@ export default function HabitTracker() {
   const confirmDeleteHabit = (habitId: string) => setHabitToDelete(habitId);
 
   /** A copy is a new habit: same settings and tags, no history, not pinned. */
-  const copyHabits = (ids: string[]) => {
+  const copyHabits = (ids: string[]) => copyQuestion.copyWithQuestion(ids, (keep) => copyHabitsNow(ids, keep));
+
+  const copyHabitsNow = (ids: string[], keepInFolder: boolean) => {
+    const originals = habits.filter(h => ids.includes(h.id));
     const taken = [...habits, ...archivedHabits].map(h => h.name);
-    const copies: Habit[] = habits.filter(h => ids.includes(h.id)).map(habit => {
+    const copies: Habit[] = originals.map(habit => {
       const name = nextCopyName(habit.name, taken);
       taken.push(name);
       return {
@@ -409,6 +418,9 @@ export default function HabitTracker() {
     });
     if (copies.length === 0) return;
     setHabits((prev: Habit[]) => [...prev, ...copies]);
+    if (keepInFolder) {
+      setHabitFolders((prev: HabitFolder[]) => fileCopiesBesideOriginals(originals.map((h, i) => [h.id, copies[i].id]), prev, HABIT_FOLDER_IDS));
+    }
     copies.forEach(c => { if (c.tags?.length) updateTagUsage([], c.tags); });
     toast.success(copies.length === 1 ? say('toastCopied', 'habits') : bulkSentence(t, language, 'Copied', { habit: copies.length }));
   };
@@ -481,7 +493,11 @@ export default function HabitTracker() {
     if (showToast) toast.success(say('toastRestored', 'habits'));
   };
 
-  const openHabitDetails = (habit: Habit) => setSelectedHabit(habit);
+  /** Edit, from the card's menu or the viewer's Edit button. */
+  const openHabitDetails = (habit: Habit) => { setViewingHabitId(null); setSelectedHabit(habit); };
+  /** A tap on a habit opens its read-only view, as notes and events do. */
+  const viewHabit = (habit: Habit) => setViewingHabitId(habit.id);
+  const viewingHabit = viewingHabitId ? habits.find(h => h.id === viewingHabitId) ?? null : null;
 
   // Folder CRUD operations
   const handleCreateFolder = (folderData: Omit<HabitFolder, 'id' | 'createdAt' | 'habitIds'>) => {
@@ -1348,6 +1364,7 @@ export default function HabitTracker() {
                     onMarkUnlimitedDone={markUnlimitedHabitDone}
                     onUndoCompletion={undoHabitCompletion}
                     onEdit={openHabitDetails}
+                    onView={viewHabit}
                     onArchive={confirmArchiveHabit}
                     onDelete={confirmDeleteHabit}
                     onPin={pinHabit}
@@ -1397,6 +1414,7 @@ export default function HabitTracker() {
                     onMarkUnlimitedDone={markUnlimitedHabitDone}
                     onUndoCompletion={undoHabitCompletion}
                     onEditHabit={openHabitDetails}
+                    onViewHabit={viewHabit}
                     onArchiveHabit={confirmArchiveHabit}
                     onDeleteHabit={confirmDeleteHabit}
                     onPinHabit={pinHabit}
@@ -1487,6 +1505,7 @@ export default function HabitTracker() {
                         onMarkUnlimitedDone={markUnlimitedHabitDone}
                         onUndoCompletion={undoHabitCompletion}
                         onEditHabit={openHabitDetails}
+                        onViewHabit={viewHabit}
                         onArchiveHabit={confirmArchiveHabit}
                         onDeleteHabit={confirmDeleteHabit}
                         onPinHabit={pinHabit}
@@ -1544,6 +1563,14 @@ export default function HabitTracker() {
         onClose={() => setIsAddDialogOpen(false)}
         onSave={handleCreateHabit}
         mode="create"
+      />
+
+      <HabitViewer
+        habit={viewingHabit}
+        isOpen={!!viewingHabit}
+        onClose={() => setViewingHabitId(null)}
+        onEdit={openHabitDetails}
+        onDelete={(habit) => { setViewingHabitId(null); confirmDeleteHabit(habit.id); }}
       />
 
       <HabitEditor
@@ -1618,6 +1645,7 @@ export default function HabitTracker() {
 
       {/* One dialog for archiving, deleting and restoring a folder, shared with the other pages. */}
       <FolderActionDialog {...folderActions.dialog} itemKind="habit" />
+      <CopyFolderQuestionDialog {...copyQuestion.dialog} />
       <FolderActionDialog
         open={Boolean(pendingBulkFolderAction)}
         kind={pendingBulkFolderAction?.kind ?? 'archive'}

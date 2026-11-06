@@ -40,6 +40,8 @@ import { parseSearchExpression, matchesSearchExpression } from '@/lib/tagParser'
 import { extractSearchableText } from '@/lib/noteSearchText';
 import { isShareableNote, noteShareText, shareText } from '@/lib/share';
 import { nextCopyName } from '@/lib/copyName';
+import { fileCopiesBesideOriginals } from '@/lib/copyIntoFolder';
+import { useCopyFolderQuestion, CopyFolderQuestionDialog } from '@/components/shared/CopyFolderQuestion';
 import { bulkSentence, colorSentence, movedToFolder, selectionQuestion, countedSentence, itemDisplayName, namedSentence } from '@/lib/countedMessage';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { useBulkSelection } from '@/hooks/useBulkSelection';
@@ -60,6 +62,7 @@ export default function Notes() {
   const [archivedNotes, setArchivedNotes] = useLocalStorage<Note[]>('archivedNotes', [], { toStorage: (list) => sealNotesForStorage(list, 'archivedNotes') });
   const [folders, setFolders] = useLocalStorage<NoteFolder[]>('folders', []);
   const [archivedFolders, setArchivedFolders] = useLocalStorage<NoteFolder[]>('archivedFolders', []);
+  const copyQuestion = useCopyFolderQuestion(folders, NOTE_FOLDER_IDS.idsOf);
 
   // Notes locked before PINs were hashed still hold the PIN in plain text. Hash them once,
   // as soon as Notes opens, rather than waiting for each to be unlocked.
@@ -236,7 +239,7 @@ export default function Notes() {
   const isAnyDialogOpen = isNoteViewerOpen || isFolderCreatorOpen || isFolderEditorOpen || 
     isMoveToFolderOpen || showNoteTypePopup || showImageCapturePopup || showAudioRecorderPopup ||
     deleteDialogOpen || archiveDialogOpen || showPinPad || isNoteColorEditorOpen ||
-    bulkDeleteDialogOpen || bulkArchiveDialogOpen || folderActions.dialog.open;
+    bulkDeleteDialogOpen || bulkArchiveDialogOpen || folderActions.dialog.open || !!copyQuestion.dialog.pending?.open;
 
   // Tab swipe navigation
   const handleSwipeLeft = useCallback(() => {
@@ -845,7 +848,14 @@ const hasTitle = (note.name || '').trim() !== '';
     toast.success(say('toastUnpinned', 'noteViewerTitle'));
   };
 
-  const copyNote = (noteId: string) => {
+  /** With "Sim", each copy joins the folder its original is in. */
+  const fileCopies = (pairs: Array<[string, string]>, keepInFolder: boolean) => {
+    if (keepInFolder) setFolders(prev => fileCopiesBesideOriginals(pairs, prev, NOTE_FOLDER_IDS));
+  };
+
+  const copyNote = (noteId: string) => copyQuestion.copyWithQuestion([noteId], (keep) => copyNoteNow(noteId, keep));
+
+  const copyNoteNow = (noteId: string, keepInFolder: boolean) => {
     const noteToCopy = notes.find(note => note.id === noteId) || archivedNotes.find(note => note.id === noteId);
     if (noteToCopy) {
       const copiedNote: Note = {
@@ -856,6 +866,7 @@ const hasTitle = (note.name || '').trim() !== '';
         pinned: false
       };
       setNotes((prev: Note[]) => [...prev, copiedNote]);
+      fileCopies([[noteToCopy.id, copiedNote.id]], keepInFolder);
       toast.success(say('toastCopied', 'noteViewerTitle'));
     }
   };
@@ -2279,25 +2290,30 @@ const hasTitle = (note.name || '').trim() !== '';
         exitBulkMode();
         break;
       }
-      case 'copy':
-        // Batch copy notes
-        const takenNames = [...notes, ...archivedNotes].map(n => n.name);
-        const copiedNotes = notes.filter(n => idSet.has(n.id)).map(note => {
-          const copyName = nextCopyName(note.name, takenNames);
-          takenNames.push(copyName);
-          return {
-            ...note,
-            id: crypto.randomUUID(),
-            name: copyName,
-            createdAt: new Date().toISOString(),
-            pinned: false,
-          };
-        });
-        setNotes(prev => [...prev, ...copiedNotes]);
+      case 'copy': {
+        // Batch copy notes; when some are in folders, ask first whether the copies stay there.
+        const originals = notes.filter(n => idSet.has(n.id));
         clearSelection();
         exitBulkMode();
-        toast.success(bulkSentence(t, language, 'Copied', { note: copiedNotes.length }));
+        copyQuestion.copyWithQuestion(originals.map(n => n.id), (keepInFolder) => {
+          const takenNames = [...notes, ...archivedNotes].map(n => n.name);
+          const copiedNotes = originals.map(note => {
+            const copyName = nextCopyName(note.name, takenNames);
+            takenNames.push(copyName);
+            return {
+              ...note,
+              id: crypto.randomUUID(),
+              name: copyName,
+              createdAt: new Date().toISOString(),
+              pinned: false,
+            };
+          });
+          setNotes(prev => [...prev, ...copiedNotes]);
+          fileCopies(originals.map((note, i) => [note.id, copiedNotes[i].id]), keepInFolder);
+          toast.success(bulkSentence(t, language, 'Copied', { note: copiedNotes.length }));
+        });
         break;
+      }
       case 'move':
         if (ids.length > 0) {
           setSelectedNoteForMove(ids);
@@ -2714,6 +2730,7 @@ const hasTitle = (note.name || '').trim() !== '';
         * action on everything the folder holds.
         */}
       <FolderActionDialog {...folderActions.dialog} itemKind="note" />
+      <CopyFolderQuestionDialog {...copyQuestion.dialog} />
       <FolderActionDialog
         open={Boolean(pendingBulkFolderAction)}
         kind={pendingBulkFolderAction?.kind ?? 'archive'}

@@ -38,6 +38,8 @@ interface HabitCardProps {
   onMarkUnlimitedDone: (habitId: string) => void;
   onUndoCompletion: (habitId: string) => void;
   onEdit: (habit: Habit) => void;
+  /** A tap on the habit opens its read-only view; Edit stays in the menu. */
+  onView?: (habit: Habit) => void;
   onArchive: (habitId: string) => void;
   onDelete: (habitId: string) => void;
   onPin: (habitId: string) => void;
@@ -66,6 +68,7 @@ export function HabitCard({
   onMarkUnlimitedDone,
   onUndoCompletion,
   onEdit,
+  onView,
   onArchive,
   onDelete,
   onPin,
@@ -181,7 +184,7 @@ export function HabitCard({
             <button
               type="button"
               className={cn('flex min-w-0 flex-col text-left', textColorClass)}
-              onClick={(event) => handleCardAction(event, () => onEdit(habit))}
+              onClick={(event) => handleCardAction(event, () => (onView ?? onEdit)(habit))}
             >
               <span className={cn('min-w-0 text-sm font-medium', twoRows ? 'truncate' : 'line-clamp-2 break-words')}>
                 {highlightText(habit.name, searchQuery)}

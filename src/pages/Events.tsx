@@ -16,6 +16,8 @@ import { EventFolder } from '@/types/eventFolder';
 import { useToastSettings } from '@/contexts/ToastContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { nextCopyName } from '@/lib/copyName';
+import { fileCopiesBesideOriginals } from '@/lib/copyIntoFolder';
+import { useCopyFolderQuestion, CopyFolderQuestionDialog } from '@/components/shared/CopyFolderQuestion';
 import { bulkSentence, colorSentence, movedToFolder, selectionQuestion, countedSentence, itemDisplayName, namedSentence } from '@/lib/countedMessage';
 import { EventCard } from '@/components/events/EventCard';
 import { EventFolderCard } from '@/components/events/EventFolderCard';
@@ -54,6 +56,7 @@ export default function Events() {
   const [archivedEvents, setArchivedEvents] = useLocalStorage<Event[]>('archivedEvents', []);
   const [eventFolders, setEventFolders] = useLocalStorage<EventFolder[]>('eventFolders', []);
   const [archivedEventFolders, setArchivedEventFolders] = useLocalStorage<EventFolder[]>('archivedEventFolders', []);
+  const copyQuestion = useCopyFolderQuestion(eventFolders, EVENT_FOLDER_IDS.idsOf);
 
   // Latest eventFolders for the auto-archive effect, which must read them without
   // depending on them (it writes to the same state, so a dependency would loop).
@@ -149,7 +152,7 @@ export default function Events() {
   // Check if any dialog/editor is open - blocks swipe navigation
   const isAnyDialogOpen = isAddDialogOpen || !!selectedEvent || !!viewingEvent || isEventFolderCreatorOpen || 
     isEventFolderEditorOpen || isMoveToEventFolderOpen || deleteDialogOpen || archiveDialogOpen ||
-    bulkDeleteDialogOpen || bulkArchiveDialogOpen || folderActions.dialog.open;
+    bulkDeleteDialogOpen || bulkArchiveDialogOpen || folderActions.dialog.open || !!copyQuestion.dialog.pending?.open;
 
   // Tab swipe navigation
   const handleSwipeLeft = useCallback(() => {
@@ -418,7 +421,14 @@ export default function Events() {
   };
 
 
-  const copyEvent = (eventId: string) => {
+  /** With "Sim", each copy joins the folder its original is in. */
+  const fileCopies = (pairs: Array<[string, string]>, keepInFolder: boolean) => {
+    if (keepInFolder) setEventFolders(prev => fileCopiesBesideOriginals(pairs, prev, EVENT_FOLDER_IDS));
+  };
+
+  const copyEvent = (eventId: string) => copyQuestion.copyWithQuestion([eventId], (keep) => copyEventNow(eventId, keep));
+
+  const copyEventNow = (eventId: string, keepInFolder: boolean) => {
     const eventToCopy = events.find(event => event.id === eventId) || archivedEvents.find(event => event.id === eventId);
     if (eventToCopy) {
       const copiedEvent: Event = {
@@ -438,6 +448,7 @@ export default function Events() {
           return timeRemainingA - timeRemainingB;
         });
       });
+      fileCopies([[eventToCopy.id, copiedEvent.id]], keepInFolder);
       toast.success(say('toastCopied', 'events'));
     }
   };
@@ -998,25 +1009,30 @@ export default function Events() {
         clearSelection();
         exitBulkMode();
         break;
-      case 'copy':
-        // Batch copy events
-        const takenNames = [...events, ...archivedEvents].map(e => e.name);
-        const copiedEvents = events.filter(e => idSet.has(e.id)).map(event => {
-          const copyName = nextCopyName(event.name, takenNames);
-          takenNames.push(copyName);
-          return {
-            ...event,
-            id: crypto.randomUUID(),
-            name: copyName,
-            createdAt: new Date().toISOString(),
-            pinned: false,
-          };
-        });
-        setEvents(prev => [...prev, ...copiedEvents]);
+      case 'copy': {
+        // Batch copy events; when some are in folders, ask first whether the copies stay there.
+        const originals = events.filter(e => idSet.has(e.id));
         clearSelection();
         exitBulkMode();
-        toast.success(bulkSentence(t, language, 'Copied', { event: copiedEvents.length }));
+        copyQuestion.copyWithQuestion(originals.map(e => e.id), (keepInFolder) => {
+          const takenNames = [...events, ...archivedEvents].map(e => e.name);
+          const copiedEvents = originals.map(event => {
+            const copyName = nextCopyName(event.name, takenNames);
+            takenNames.push(copyName);
+            return {
+              ...event,
+              id: crypto.randomUUID(),
+              name: copyName,
+              createdAt: new Date().toISOString(),
+              pinned: false,
+            };
+          });
+          setEvents(prev => [...prev, ...copiedEvents]);
+          fileCopies(originals.map((event, i) => [event.id, copiedEvents[i].id]), keepInFolder);
+          toast.success(bulkSentence(t, language, 'Copied', { event: copiedEvents.length }));
+        });
         break;
+      }
       case 'move':
         if (ids.length > 0) {
           setSelectedEventsForMove(ids);
@@ -1588,6 +1604,7 @@ export default function Events() {
 
         {/* The folder dialog, shared with the notes and habits pages. */}
         <FolderActionDialog {...folderActions.dialog} itemKind="event" />
+        <CopyFolderQuestionDialog {...copyQuestion.dialog} />
         <FolderActionDialog
           open={Boolean(pendingBulkFolderAction)}
           kind={pendingBulkFolderAction?.kind ?? 'archive'}
