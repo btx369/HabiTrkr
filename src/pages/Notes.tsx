@@ -38,6 +38,7 @@ import { updateTagUsage } from '@/lib/tagStorage';
 import { autoImportExisting, autoImportNoteToFolders, NOTE_FOLDER_IDS } from '@/lib/folderAutoImport';
 import { parseSearchExpression, matchesSearchExpression } from '@/lib/tagParser';
 import { extractSearchableText } from '@/lib/noteSearchText';
+import { isShareableNote, noteShareText, shareText } from '@/lib/share';
 import { nextCopyName } from '@/lib/copyName';
 import { movedToFolder, selectionQuestion, countedSentence, itemDisplayName, namedSentence } from '@/lib/countedMessage';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
@@ -859,40 +860,16 @@ const hasTitle = (note.name || '').trim() !== '';
     }
   };
 
-  /**
-   * The text a note shares as: its title, then what a reader sees in it.
-   *
-   * The raw description holds every image and audio as a base64 marker, so sharing it put
-   * thousands of encoded characters on the clipboard. Only the readable text goes now, and a
-   * locked note shares its title alone, because its content is what the lock hides.
-   */
-  const noteShareText = (note: Note): string => {
-    const parts = [note.name.trim()];
-    if (!note.locked) {
-      if (note.type === 'list') {
-        parts.push(note.items.map(item => `${item.completed ? '✓' : '○'} ${item.text}`).join('\n'));
-      } else {
-        // Bold, italic and underline marks are the editor's, not the reader's.
-        parts.push(extractSearchableText({ description: note.description }, { lowercase: false })
-          .replace(/\*\*(.+?)\*\*/g, '$1')
-          .replace(/__(.+?)__/g, '$1')
-          .replace(/\*(.+?)\*/g, '$1'));
-      }
-    }
-    return parts.filter(Boolean).join('\n\n');
+  const shareFeedback = {
+    copied: () => toast.success(t('toastContentCopied')),
+    failed: () => toast.error(t('toastCopyFailed')),
   };
 
-  const copyShareText = (text: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      toast.success(t('toastContentCopied'));
-    }).catch(() => {
-      toast.error(t('toastCopyFailed'));
-    });
-  };
-
+  /** The phone's share sheet with the note's text; locked notes are not shared. */
   const shareNote = (noteId: string) => {
-    const noteToShare = notes.find(note => note.id === noteId) || archivedNotes.find(note => note.id === noteId);
-    if (noteToShare) copyShareText(noteShareText(noteToShare));
+    const note = notes.find(n => n.id === noteId) || archivedNotes.find(n => n.id === noteId);
+    if (!note || !isShareableNote(note)) return;
+    void shareText({ title: note.name, text: noteShareText(note) }, shareFeedback);
   };
 
   const addFolder = (folderData: Omit<NoteFolder, 'id' | 'createdAt' | 'noteIds'>, noteIdsToMove?: string[]) => {
@@ -1862,6 +1839,7 @@ const hasTitle = (note.name || '').trim() !== '';
             onPinNote={pinNote}
             onUnpinNote={unpinNote}
             onCopyNote={copyNote}
+            onShareNote={shareNote}
             onMoveToFolder={handleMoveToFolder}
             onOpenNote={openNoteViewer}
             onLockNote={handleLockNote}
@@ -2021,7 +1999,7 @@ const hasTitle = (note.name || '').trim() !== '';
                 onPin={options.onPin}
                 onUnpin={options.onUnpin}
                 onCopy={options.onCopy}
-                onShare={() => {}}
+                onShare={shareNote}
                 onMoveToFolder={options.onMove}
                 onLock={options.onLock}
                 onUnlock={options.onUnlock}
@@ -2289,8 +2267,8 @@ const hasTitle = (note.name || '').trim() !== '';
       }
       case 'share': {
         // The bulk bar offered Share, but nothing handled it.
-        const shared = notes.filter(note => idSet.has(note.id)).map(noteShareText).filter(Boolean);
-        if (shared.length > 0) copyShareText(shared.join('\n\n---\n\n'));
+        const shared = notes.filter(note => idSet.has(note.id) && isShareableNote(note)).map(noteShareText).filter(Boolean);
+        if (shared.length > 0) void shareText({ text: shared.join('\n\n') }, shareFeedback);
         clearSelection();
         exitBulkMode();
         break;

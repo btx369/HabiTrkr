@@ -230,11 +230,11 @@ export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventV
               ) : (
                 <>
                   <span className="text-sm">
-                    <span className="font-medium">Start:</span> {formattedStartDate}
+                    <span className="font-medium">{t('start')}:</span> {formattedStartDate}
                   </span>
                   {formattedEndDate && (
                     <span className="text-sm">
-                      <span className="font-medium">End:</span> {formattedEndDate}
+                      <span className="font-medium">{t('end')}:</span> {formattedEndDate}
                     </span>
                   )}
                 </>

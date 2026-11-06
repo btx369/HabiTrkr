@@ -336,50 +336,6 @@ export function NoteCard({
     }
   };
 
-  const handleShare = () => {
-    if (navigator.share) {
-      let shareText = '';
-      
-      switch (note.type) {
-        case 'text':
-          shareText = `${note.name}\n\n${note.description}`;
-          break;
-        case 'list':
-          shareText = `${note.name}\n\n${note.items.map(item => `${item.completed ? '✓' : '○'} ${item.text}`).join('\n')}`;
-          break;
-        case 'audio':
-          shareText = `${note.name}\n\nAudio note (${formatDuration(note.duration)})`;
-          break;
-        case 'image':
-          shareText = `${note.name}\n\nImage note`;
-          break;
-      }
-      
-      navigator.share({
-        title: note.name,
-        text: shareText,
-      });
-    } else {
-      let shareText = '';
-      
-      switch (note.type) {
-        case 'text':
-          shareText = `${note.name}\n\n${note.description}`;
-          break;
-        case 'list':
-          shareText = `${note.name}\n\n${note.items.map(item => `${item.completed ? '✓' : '○'} ${item.text}`).join('\n')}`;
-          break;
-        case 'audio':
-          shareText = `${note.name}\n\nAudio note (${formatDuration(note.duration)})`;
-          break;
-        case 'image':
-          shareText = `${note.name}\n\nImage note`;
-          break;
-      }
-      
-      navigator.clipboard.writeText(shareText);
-    }
-  };
 
   // Bulk selection checkbox component - renders inline, replacing the menu
   const BulkCheckbox = () => (
@@ -479,7 +435,7 @@ export function NoteCard({
                 onRestore={isDeleted && onRestore ? () => onRestore(note.id) : (isArchived || note.archived) && (onUnarchive || onRestore) ? () => (onUnarchive ? onUnarchive(note.id) : onRestore!(note.id)) : undefined}
                 onLock={onLock ? () => onLock(note.id) : undefined}
                 onUnlock={onUnlock ? () => onUnlock(note.id) : undefined}
-                onShare={onShare ? handleShare : undefined}
+                onShare={onShare && !note.locked ? () => onShare(note.id) : undefined}
                 onCopy={onCopy ? () => onCopy(note.id) : undefined}
                 onMoveToFolder={onMoveToFolder ? () => onMoveToFolder(note.id) : undefined}
                 size="sm"
@@ -582,7 +538,7 @@ export function NoteCard({
                   onRestore={isDeleted && onRestore ? () => onRestore(note.id) : (isArchived || note.archived) && (onUnarchive || onRestore) ? () => (onUnarchive ? onUnarchive(note.id) : onRestore!(note.id)) : undefined}
                   onLock={onLock ? () => onLock(note.id) : undefined}
                   onUnlock={onUnlock ? () => onUnlock(note.id) : undefined}
-                  onShare={onShare ? handleShare : undefined}
+                  onShare={onShare && !note.locked ? () => onShare(note.id) : undefined}
                   onCopy={onCopy ? () => onCopy(note.id) : undefined}
                   onMoveToFolder={onMoveToFolder ? () => onMoveToFolder(note.id) : undefined}
                   size="sm"
@@ -651,7 +607,7 @@ export function NoteCard({
                   onRestore={isDeleted && onRestore ? () => onRestore(note.id) : (isArchived || note.archived) && (onUnarchive || onRestore) ? () => (onUnarchive ? onUnarchive(note.id) : onRestore!(note.id)) : undefined}
                   onLock={onLock ? () => onLock(note.id) : undefined}
                   onUnlock={onUnlock ? () => onUnlock(note.id) : undefined}
-                  onShare={onShare ? handleShare : undefined}
+                  onShare={onShare && !note.locked ? () => onShare(note.id) : undefined}
                   onCopy={onCopy ? () => onCopy(note.id) : undefined}
                   onMoveToFolder={onMoveToFolder ? () => onMoveToFolder(note.id) : undefined}
                   size="sm"

@@ -48,6 +48,7 @@ interface EventFolderCardProps {
    * without ever being used or passed in — dead props left behind by a refactor.
    */
   onCopyEvent?: (eventId: string) => void;
+  onShareEvent?: (eventId: string) => void;
   onMoveEventToFolder?: (eventId: string) => void;
   /** Bulk selection props */
   showBulkCheckbox?: boolean;
@@ -74,6 +75,7 @@ export function EventFolderCard({
   onArchiveEvent,
   onDeleteEvent,
   onCopyEvent,
+  onShareEvent,
   onMoveEventToFolder,
   showBulkCheckbox = false,
   isBulkSelected = false,
@@ -225,6 +227,7 @@ export function EventFolderCard({
                       onUnarchive={onRestoreEvent ? () => onRestoreEvent(event.id) : undefined}
                       onDelete={() => onDeleteEvent?.(event.id)}
                       onCopy={() => onCopyEvent?.(event.id)}
+                      onShare={onShareEvent}
                       onMoveToFolder={() => onMoveEventToFolder?.(event.id)}
                       isDeleted={isDeleted}
                       isArchived={isArchived}

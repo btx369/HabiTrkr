@@ -38,7 +38,6 @@ import { entitySentence } from '@/lib/entityToast';
 import { nextCopyName } from '@/lib/copyName';
 import { updateTagUsage } from '@/lib/tagStorage';
 import { parseSearchExpression, matchesSearchExpression } from '@/lib/tagParser';
-import { habitShareSummary } from '@/lib/reportStats';
 
 // Tab order for swipe navigation. Module-level so its identity is stable across
 // renders: declared inside the component it was rebuilt every render, which made it
@@ -414,29 +413,7 @@ export default function HabitTracker() {
     toast.success(copies.length === 1 ? say('toastCopied', 'habits') : countedSentence(t, language, 'bulkCopied', copies.length));
   };
 
-  /** Sharing a habit sends its name and its result over the last 30 days, as in Reports. */
-  const habitShareLine = (habit: Habit): string => {
-    const summary = habitShareSummary(habit, new Date(), weekStartsOn);
-    const line = summary.kind === 'count'
-      ? t('habitShareOpen').replace('{count}', String(summary.count))
-      : t('habitShareRate')
-          .replace('{done}', String(summary.done))
-          .replace('{expected}', String(summary.expected))
-          .replace('{rate}', String(summary.expected ? Math.round((summary.done / summary.expected) * 100) : 0));
-    return `${habit.name}\n${line}`;
-  };
 
-  const shareHabits = (ids: string[]) => {
-    const text = habits.filter(h => ids.includes(h.id)).map(habitShareLine).join('\n\n');
-    if (!text) return;
-    if (navigator.share) {
-      navigator.share({ text }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(text)
-        .then(() => toast.success(t('toastContentCopied')))
-        .catch(() => toast.error(t('toastCopyFailed')));
-    }
-  };
   const confirmArchiveHabit = (habitId: string) => setHabitToArchive(habitId);
 
   const archiveHabit = (habitId: string, showToast = true) => {
@@ -1082,10 +1059,6 @@ export default function HabitTracker() {
         copyHabits(items);
         exitBulkMode();
         break;
-      case 'share':
-        shareHabits(items);
-        exitBulkMode();
-        break;
       case 'archive':
         if (requestBulkFolderAction('archive', items)) break;
         if (activeTab === 'habits' && !confirmed) { setPendingHabitBulk('archive'); return; }
@@ -1379,7 +1352,6 @@ export default function HabitTracker() {
                     onDelete={confirmDeleteHabit}
                     onPin={pinHabit}
                     onCopy={(id) => copyHabits([id])}
-                    onShare={(id) => shareHabits([id])}
                     onMoveToFolder={openMoveToFolder}
                     searchQuery={searchQuery}
                     showBulkCheckbox={isBulkMode}
@@ -1429,7 +1401,6 @@ export default function HabitTracker() {
                     onDeleteHabit={confirmDeleteHabit}
                     onPinHabit={pinHabit}
                     onCopyHabit={(id) => copyHabits([id])}
-                    onShareHabit={(id) => shareHabits([id])}
                     onPinFolder={pinFolder}
                     onUnpinFolder={unpinFolder}
                     onEditFolder={editFolder}
@@ -1520,7 +1491,6 @@ export default function HabitTracker() {
                         onDeleteHabit={confirmDeleteHabit}
                         onPinHabit={pinHabit}
                     onCopyHabit={(id) => copyHabits([id])}
-                    onShareHabit={(id) => shareHabits([id])}
                         onRestoreHabit={unarchiveHabit}
                         onPinFolder={pinFolder}
                         onUnpinFolder={unpinFolder}

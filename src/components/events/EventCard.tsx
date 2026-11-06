@@ -168,19 +168,6 @@ export function EventCard({
     return date ? shortDate(date, language, dateLocale) : key;
   };
 
-  const handleShare = () => {
-    const eventDateStr = event.startDate || event.date;
-    const shareText = `${event.name}${event.description ? '\n\n' + event.description : ''}${eventDateStr ? '\n\n' + formatEventDate(eventDateStr) : ''}`;
-    
-    if (navigator.share) {
-      navigator.share({
-        title: event.name,
-        text: shareText,
-      });
-    } else {
-      navigator.clipboard.writeText(shareText);
-    }
-  };
 
   const daysRemaining = calculateTimeRemaining(event);
   const isX3 = viewType === 'x3';
@@ -282,7 +269,7 @@ export function EventCard({
                 onRestore={isArchived && onUnarchive ? () => onUnarchive(event.id) : (isDeleted && onRestore ? () => onRestore(event.id) : undefined)}
                 onDelete={onDelete ? () => onDelete(event.id) : undefined}
                 onCopy={onCopy ? () => onCopy(event.id) : undefined}
-                onShare={onShare ? handleShare : undefined}
+                onShare={onShare ? () => onShare(event.id) : undefined}
                 onMoveToFolder={onMoveToFolder ? () => onMoveToFolder(event.id) : undefined}
                 onPin={onPin ? () => onPin(event.id) : undefined}
                 onUnpin={onUnpin ? () => onUnpin(event.id) : undefined}

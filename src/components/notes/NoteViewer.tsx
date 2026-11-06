@@ -1050,51 +1050,6 @@ export function NoteViewer({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleShare = () => {
-    if (navigator.share) {
-      let shareText = '';
-      
-      switch (note.type) {
-        case 'text':
-          shareText = `${note.name}\n\n${note.description}`;
-          break;
-        case 'list':
-          shareText = `${note.name}\n\n${note.items.map(item => `${item.completed ? '✓' : '○'} ${item.text}`).join('\n')}`;
-          break;
-        case 'audio':
-          shareText = `${note.name}\n\nAudio note (${formatDuration(note.duration)})`;
-          break;
-        case 'image':
-          shareText = `${note.name}\n\nImage note`;
-          break;
-      }
-      
-      navigator.share({
-        title: note.name,
-        text: shareText,
-      });
-    } else {
-      // Fallback for browsers that don't support Web Share API
-      let shareText = '';
-      
-      switch (note.type) {
-        case 'text':
-          shareText = `${note.name}\n\n${note.description}`;
-          break;
-        case 'list':
-          shareText = `${note.name}\n\n${note.items.map(item => `${item.completed ? '✓' : '○'} ${item.text}`).join('\n')}`;
-          break;
-        case 'audio':
-          shareText = `${note.name}\n\nAudio note (${formatDuration(note.duration)})`;
-          break;
-        case 'image':
-          shareText = `${note.name}\n\nImage note`;
-          break;
-      }
-      
-      navigator.clipboard.writeText(shareText);
-    }
-  };
 
   const handleCameraCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -2168,7 +2123,8 @@ export function NoteViewer({
               onRestore={onUnarchive ? () => onUnarchive(note.id) : undefined}
               onLock={onLock ? () => onLock(note.id) : undefined}
               onUnlock={onUnlock ? () => onUnlock(note.id) : undefined}
-              onShare={onShare ? () => onShare(note.id) : undefined}
+              // A locked note is not shared: its content is what the lock hides.
+              onShare={onShare && !note.locked ? () => onShare(note.id) : undefined}
               onCopy={onCopy ? () => onCopy(note.id) : undefined}
               onMoveToFolder={onMoveToFolder ? () => onMoveToFolder(note.id) : undefined}
               size="md"

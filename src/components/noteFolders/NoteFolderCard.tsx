@@ -24,6 +24,7 @@ interface NoteFolderCardProps {
   onPinNote: (noteId: string) => void;
   onUnpinNote: (noteId: string) => void;
   onCopyNote: (noteId: string) => void;
+  onShareNote?: (noteId: string) => void;
   onMoveToFolder: (noteId: string) => void;
   onOpenNote: (note: Note) => void;
   onLockNote: (noteId: string) => void;
@@ -66,6 +67,7 @@ export function NoteFolderCard({
   onPinNote,
   onUnpinNote,
   onCopyNote,
+  onShareNote,
   onMoveToFolder,
   onOpenNote,
   onLockNote,
@@ -230,7 +232,7 @@ export function NoteFolderCard({
                       onPin={onPinNote}
                       onUnpin={onUnpinNote}
                       onCopy={onCopyNote}
-                      onShare={() => {}}
+                      onShare={onShareNote}
                       onMoveToFolder={onMoveToFolder}
                       onLock={onLockNote}
                       onUnlock={onUnlockNote}

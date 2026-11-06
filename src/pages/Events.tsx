@@ -31,9 +31,7 @@ import { daysUntilEvent, hasEventEnded } from '@/lib/eventRecurrence';
 import { discardPendingUndo } from '@/lib/undoManager';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { useBulkSelection } from '@/hooks/useBulkSelection';
-import { parseStoredDate } from '@/lib/dateUtils';
-import { shortDate } from '@/lib/dateFormats';
-import { useDateLocale } from '@/lib/dateLocale';
+import { eventShareText, eventsIcsFile, shareText } from '@/lib/share';
 import { BulkActionBar, BulkActionType, BulkActionContext } from '@/components/shared/BulkActionBar';
 import { FLOATING_ADD_CLASS, FLOATING_ADD_STYLE } from '@/lib/floatingAdd';
 import { cn } from '@/lib/utils';
@@ -906,6 +904,24 @@ export default function Events() {
   const selectedPinnable = [...events, ...eventFolders].filter((item) => selectedItems.has(item.id));
   const selectionAllPinned = selectedPinnable.length > 0 && selectedPinnable.every((item) => item.pinned);
 
+  const shareEvents = (list: Event[]) => {
+    if (list.length === 0) return;
+    void shareText({
+      title: list.length === 1 ? list[0].name : undefined,
+      text: list.map(event => eventShareText(event, t, language)).join('\n\n'),
+      files: [eventsIcsFile(list)],
+    }, {
+      copied: () => toast.success(t('toastContentCopied')),
+      failed: () => toast.error(t('toastCopyFailed')),
+    });
+  };
+
+  /** The phone's share sheet: the event as text, plus a calendar file to add it with. */
+  const shareEvent = (eventId: string) => {
+    const event = events.find(e => e.id === eventId) ?? archivedEvents.find(e => e.id === eventId);
+    if (event) shareEvents([event]);
+  };
+
   const handleBulkAction = (action: BulkActionType, color?: string) => {
     const ids = Array.from(selectedItems);
     const idSet = new Set(ids);
@@ -971,19 +987,8 @@ export default function Events() {
         break;
       }
       case 'share':
-        // The same text a single event shares (name, description, date), one event per block.
-        const eventsToShare = events.filter(e => idSet.has(e.id));
-        const shareText = eventsToShare.map(e => {
-          const key = e.startDate || e.date;
-          const date = key ? parseStoredDate(key) : null;
-          return [e.name, e.description, date ? shortDate(date, language, dateLocale) : key]
-            .filter(Boolean).join('\n');
-        }).join('\n\n');
-        navigator.clipboard.writeText(shareText).then(() => {
-          toast.success(t('toastContentCopied'));
-        }).catch(() => {
-          toast.error(t('toastCopyFailed'));
-        });
+        // The same text a single event shares, one event per block, with one calendar file.
+        shareEvents(events.filter(e => idSet.has(e.id)));
         clearSelection();
         exitBulkMode();
         break;
@@ -1155,7 +1160,7 @@ export default function Events() {
             onUnarchive={isArchived ? unarchiveEvent : undefined}
             onDelete={deleteEvent}
             onCopy={copyEvent}
-            onShare={() => {}}
+            onShare={shareEvent}
             onMoveToFolder={!isArchived ? handleMoveToEventFolder : undefined}
             onPin={!isArchived ? pinEvent : undefined}
             onUnpin={!isArchived ? unpinEvent : undefined}
@@ -1230,6 +1235,7 @@ export default function Events() {
             onArchiveEvent={confirmArchiveEvent}
             onDeleteEvent={deleteEvent}
             onCopyEvent={copyEvent}
+            onShareEvent={shareEvent}
             onMoveEventToFolder={(eventId) => {
               setSelectedEventForMove(eventId);
               setIsMoveToEventFolderOpen(true);
@@ -1244,7 +1250,6 @@ export default function Events() {
   };
 
   const { t, language } = useLanguage();
-  const dateLocale = useDateLocale();
   // Toast copy is a translated sentence plus a translated entity noun. Both halves are
   // resolved here so the `{entity}` substitution is written once instead of at every toast.
   const say = (key: string, entity: string) => entitySentence(t, language, key, entity);

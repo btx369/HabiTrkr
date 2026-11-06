@@ -12,7 +12,7 @@ import type { Language } from '@/contexts/LanguageContext';
  *   dateRange  a week: "2–8 nov 2026" / "Nov 2 – 8, 2026"
  */
 
-const intlLocale = (language: Language): string =>
+export const intlLocale = (language: Language): string =>
   language === 'pt' ? 'pt-PT' : language === 'zh' ? 'zh-CN' : language;
 
 /**
