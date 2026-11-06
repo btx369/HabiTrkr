@@ -16,7 +16,7 @@ import { EventFolder } from '@/types/eventFolder';
 import { useToastSettings } from '@/contexts/ToastContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { nextCopyName } from '@/lib/copyName';
-import { movedToFolder, selectionQuestion, countedSentence, itemDisplayName, namedSentence } from '@/lib/countedMessage';
+import { bulkSentence, colorSentence, movedToFolder, selectionQuestion, countedSentence, itemDisplayName, namedSentence } from '@/lib/countedMessage';
 import { EventCard } from '@/components/events/EventCard';
 import { EventFolderCard } from '@/components/events/EventFolderCard';
 import { EventFolderCreator } from '@/components/events/EventFolderCreator';
@@ -922,6 +922,12 @@ export default function Events() {
     if (event) shareEvents([event]);
   };
 
+  /** How many of these ids are events and how many are folders, for the bulk toasts. */
+  const kindCounts = (ids: string[]) => ({
+    event: ids.filter(id => [...events, ...archivedEvents].some(item => item.id === id)).length,
+    folder: ids.filter(id => [...eventFolders, ...archivedEventFolders].some(folder => folder.id === id)).length,
+  });
+
   const handleBulkAction = (action: BulkActionType, color?: string) => {
     const ids = Array.from(selectedItems);
     const idSet = new Set(ids);
@@ -983,7 +989,7 @@ export default function Events() {
         ));
         clearSelection();
         exitBulkMode();
-        toast.success(countedSentence(t, language, 'bulkUpdated', ids.length));
+        toast.success(bulkSentence(t, language, 'Updated', kindCounts(ids)));
         break;
       }
       case 'share':
@@ -1009,7 +1015,7 @@ export default function Events() {
         setEvents(prev => [...prev, ...copiedEvents]);
         clearSelection();
         exitBulkMode();
-        toast.success(countedSentence(t, language, 'bulkCopied', copiedEvents.length));
+        toast.success(bulkSentence(t, language, 'Copied', { event: copiedEvents.length }));
         break;
       case 'move':
         if (ids.length > 0) {
@@ -1024,7 +1030,7 @@ export default function Events() {
           setEventFolders(prev => prev.map(f => idSet.has(f.id) ? { ...f, color } : f));
           clearSelection();
           exitBulkMode();
-          toast.success(countedSentence(t, language, 'toastColorApplied', ids.length));
+          toast.success(colorSentence(t, language, kindCounts(ids)));
         }
         break;
       case 'archive':
@@ -1117,7 +1123,7 @@ export default function Events() {
 
         clearSelection();
         exitBulkMode();
-        toast.success(countedSentence(t, language, 'bulkRestored', ids.length));
+        toast.success(bulkSentence(t, language, 'Restored', kindCounts(ids)));
         break;
       }
     }
@@ -1527,7 +1533,7 @@ export default function Events() {
               }
               clearSelection();
               exitBulkMode();
-              toast.success(countedSentence(t, language, 'bulkArchived', ids.length));
+              toast.success(bulkSentence(t, language, 'Archived', kindCounts(ids)));
             }
             setPendingBulkAction(null);
           }}
@@ -1573,7 +1579,7 @@ export default function Events() {
               }
               clearSelection();
               exitBulkMode();
-              toast.success(countedSentence(t, language, 'bulkDeleted', ids.length));
+              toast.success(bulkSentence(t, language, 'Deleted', kindCounts(ids)));
             }
             setPendingBulkAction(null);
           }}

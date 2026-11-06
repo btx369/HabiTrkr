@@ -40,7 +40,7 @@ import { parseSearchExpression, matchesSearchExpression } from '@/lib/tagParser'
 import { extractSearchableText } from '@/lib/noteSearchText';
 import { isShareableNote, noteShareText, shareText } from '@/lib/share';
 import { nextCopyName } from '@/lib/copyName';
-import { movedToFolder, selectionQuestion, countedSentence, itemDisplayName, namedSentence } from '@/lib/countedMessage';
+import { bulkSentence, colorSentence, movedToFolder, selectionQuestion, countedSentence, itemDisplayName, namedSentence } from '@/lib/countedMessage';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { useBulkSelection } from '@/hooks/useBulkSelection';
 import { BulkActionBar, BulkActionType, BulkActionContext } from '@/components/shared/BulkActionBar';
@@ -2095,6 +2095,12 @@ const hasTitle = (note.name || '').trim() !== '';
   const selectedPinnable = [...notes, ...folders].filter((item) => selectedItems.has(item.id));
   const selectionAllPinned = selectedPinnable.length > 0 && selectedPinnable.every((item) => item.pinned);
 
+  /** How many of these ids are notes and how many are folders, for the bulk toasts. */
+  const kindCounts = (ids: string[]) => ({
+    note: ids.filter(id => [...notes, ...archivedNotes].some(item => item.id === id)).length,
+    folder: ids.filter(id => [...folders, ...archivedFolders].some(folder => folder.id === id)).length,
+  });
+
   const handleBulkAction = (action: BulkActionType, color?: string) => {
     const ids = Array.from(selectedItems);
     const idSet = new Set(ids);
@@ -2157,7 +2163,7 @@ const hasTitle = (note.name || '').trim() !== '';
         ));
         clearSelection();
         exitBulkMode();
-        toast.success(countedSentence(t, language, 'bulkUpdated', ids.length));
+        toast.success(bulkSentence(t, language, 'Updated', kindCounts(ids)));
         break;
       }
       case 'lock':
@@ -2262,7 +2268,7 @@ const hasTitle = (note.name || '').trim() !== '';
 
         clearSelection();
         exitBulkMode();
-        toast.success(countedSentence(t, language, 'bulkRestored', ids.length));
+        toast.success(bulkSentence(t, language, 'Restored', kindCounts(ids)));
         break;
       }
       case 'share': {
@@ -2290,7 +2296,7 @@ const hasTitle = (note.name || '').trim() !== '';
         setNotes(prev => [...prev, ...copiedNotes]);
         clearSelection();
         exitBulkMode();
-        toast.success(countedSentence(t, language, 'bulkCopied', copiedNotes.length));
+        toast.success(bulkSentence(t, language, 'Copied', { note: copiedNotes.length }));
         break;
       case 'move':
         if (ids.length > 0) {
@@ -2305,7 +2311,7 @@ const hasTitle = (note.name || '').trim() !== '';
           setFolders(prev => prev.map(f => idSet.has(f.id) ? { ...f, color } : f));
           clearSelection();
           exitBulkMode();
-          toast.success(countedSentence(t, language, 'toastColorApplied', ids.length));
+          toast.success(colorSentence(t, language, kindCounts(ids)));
         }
         break;
     }
@@ -2649,7 +2655,7 @@ const hasTitle = (note.name || '').trim() !== '';
             }
             clearSelection();
             exitBulkMode();
-            toast.success(countedSentence(t, language, 'bulkArchived', ids.length));
+            toast.success(bulkSentence(t, language, 'Archived', kindCounts(ids)));
           }
           setPendingBulkAction(null);
         }}
@@ -2695,7 +2701,7 @@ const hasTitle = (note.name || '').trim() !== '';
             }
             clearSelection();
             exitBulkMode();
-            toast.success(countedSentence(t, language, 'bulkDeleted', ids.length));
+            toast.success(bulkSentence(t, language, 'Deleted', kindCounts(ids)));
           }
           setPendingBulkAction(null);
         }}

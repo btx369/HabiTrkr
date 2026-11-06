@@ -99,6 +99,54 @@ export function selectionQuestion(
   return t(key).replace('{items}', countedNoun(t, language, kind, n));
 }
 
+const GENDER_KEYS: Record<EntityKind, string> = {
+  note: 'entityNoteGender',
+  event: 'entityEventGender',
+  habit: 'entityHabitGender',
+  folder: 'entityFolderGender',
+};
+
+export type BulkAction = 'Archived' | 'Deleted' | 'Restored' | 'Copied' | 'Updated';
+const BULK_FALLBACK: Record<BulkAction, string> = {
+  Archived: 'bulkArchived',
+  Deleted: 'bulkDeleted',
+  Restored: 'bulkRestored',
+  Copied: 'bulkCopied',
+  Updated: 'bulkUpdated',
+};
+
+/**
+ * "2 notas arquivadas", "3 eventos eliminados": a bulk toast that names what was acted on,
+ * with the participle agreeing in number and gender. A selection mixing kinds (notes and
+ * folders) has no one noun and keeps "2 itens arquivados".
+ */
+export function bulkSentence(
+  t: (key: string) => string,
+  language: Language,
+  action: BulkAction,
+  counts: Partial<Record<EntityKind, number>>,
+): string {
+  const present = (Object.entries(counts) as [EntityKind, number][]).filter(([, n]) => n > 0);
+  const total = present.reduce((sum, [, n]) => sum + n, 0);
+  if (present.length !== 1) return countedSentence(t, language, BULK_FALLBACK[action], total);
+  const [kind, n] = present[0];
+  const feminine = t(GENDER_KEYS[kind]) === 'f' ? 'F' : '';
+  const key = `bulkKind${action}${needsPluralForm(n, language) ? 'Many' : 'One'}${feminine}`;
+  return t(key).replace('{items}', countedNoun(t, language, kind, n));
+}
+
+/** "Cor aplicada a 2 notas"; a mixed selection keeps "a 2 itens". */
+export function colorSentence(
+  t: (key: string) => string,
+  language: Language,
+  counts: Partial<Record<EntityKind, number>>,
+): string {
+  const present = (Object.entries(counts) as [EntityKind, number][]).filter(([, n]) => n > 0);
+  const total = present.reduce((sum, [, n]) => sum + n, 0);
+  if (present.length !== 1) return countedSentence(t, language, 'toastColorApplied', total);
+  return t('toastColorAppliedTo').replace('{items}', countedNoun(t, language, present[0][0], present[0][1]));
+}
+
 /** "Moved to "Home"" for one item, "3 notes moved to "Home"" for several. */
 export function movedToFolder(
   t: (key: string) => string,

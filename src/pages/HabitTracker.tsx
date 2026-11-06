@@ -26,7 +26,7 @@ import { BulkActionBar, BulkActionType, BulkActionContext } from '@/components/s
 import { useToastSettings } from '@/contexts/ToastContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { autoImportExisting, autoImportHabitToFolders, HABIT_FOLDER_IDS } from '@/lib/folderAutoImport';
-import { movedToFolder, selectionQuestion, countedSentence, itemDisplayName, namedSentence } from '@/lib/countedMessage';
+import { bulkSentence, colorSentence, movedToFolder, selectionQuestion, countedSentence, itemDisplayName, namedSentence } from '@/lib/countedMessage';
 import { useDateLocale } from '@/lib/dateLocale';
 import { useWeekStart, getJsDayFromVisualIndex } from '@/contexts/WeekStartContext';
 import { FLOATING_ADD_CLASS, FLOATING_ADD_STYLE } from '@/lib/floatingAdd';
@@ -410,7 +410,7 @@ export default function HabitTracker() {
     if (copies.length === 0) return;
     setHabits((prev: Habit[]) => [...prev, ...copies]);
     copies.forEach(c => { if (c.tags?.length) updateTagUsage([], c.tags); });
-    toast.success(copies.length === 1 ? say('toastCopied', 'habits') : countedSentence(t, language, 'bulkCopied', copies.length));
+    toast.success(copies.length === 1 ? say('toastCopied', 'habits') : bulkSentence(t, language, 'Copied', { habit: copies.length }));
   };
 
 
@@ -1041,7 +1041,7 @@ export default function HabitTracker() {
             setHabits(prev => prev.map(habit =>
               habitIdSet.has(habit.id) ? { ...habit, pinned: !selectionAllPinned } : habit
             ));
-            toast.success(countedSentence(t, language, 'bulkUpdated', habitIds.length));
+            toast.success(bulkSentence(t, language, 'Updated', { habit: habitIds.length }));
           }
         } else if (activeTab === 'folders') {
           const folderIds = items.filter(id => habitFolders.some(folder => folder.id === id));
@@ -1050,7 +1050,7 @@ export default function HabitTracker() {
             folderIdSet.has(folder.id) ? { ...folder, pinned: !selectionAllPinned } : folder
           ));
           if (folderIds.length > 0) {
-            toast.success(countedSentence(t, language, 'bulkUpdated', folderIds.length));
+            toast.success(bulkSentence(t, language, 'Updated', { folder: folderIds.length }));
           }
         }
         exitBulkMode();
@@ -1068,7 +1068,7 @@ export default function HabitTracker() {
           const habitIds = items.filter(id => habits.some(h => h.id === id));
           habitIds.forEach(id => archiveHabit(id, false));
           if (habitIds.length > 0) {
-            toast.success(countedSentence(t, language, 'bulkArchived', habitIds.length));
+            toast.success(bulkSentence(t, language, 'Archived', { habit: habitIds.length }));
           }
         } else if (activeTab === 'folders') {
           // Archive only folders (and their contained habits)
@@ -1097,7 +1097,7 @@ export default function HabitTracker() {
           });
           standaloneHabitIds.forEach(id => unarchiveHabit(id, false));
           if (standaloneHabitIds.length > 0) {
-            toast.success(countedSentence(t, language, 'bulkRestored', standaloneHabitIds.length));
+            toast.success(bulkSentence(t, language, 'Restored', { habit: standaloneHabitIds.length }));
           }
         }
         exitBulkMode();
@@ -1110,7 +1110,7 @@ export default function HabitTracker() {
           const habitIds = items.filter(id => habits.some(h => h.id === id));
           habitIds.forEach(id => deleteHabit(id, false));
           if (habitIds.length > 0) {
-            toast.success(countedSentence(t, language, 'bulkDeleted', habitIds.length));
+            toast.success(bulkSentence(t, language, 'Deleted', { habit: habitIds.length }));
           }
         } else if (activeTab === 'folders') {
           items.forEach(id => {
@@ -1121,7 +1121,7 @@ export default function HabitTracker() {
           const habitIds = items.filter(id => archivedHabits.some(h => h.id === id));
           habitIds.forEach(id => deleteHabit(id, false));
           if (habitIds.length > 0) {
-            toast.success(countedSentence(t, language, 'bulkDeleted', habitIds.length));
+            toast.success(bulkSentence(t, language, 'Deleted', { habit: habitIds.length }));
           }
           items.forEach(id => {
             if (archivedHabitFolders.find(f => f.id === id)) folderActions.applyFolderAction('delete', 'withItems', id);
@@ -1138,7 +1138,7 @@ export default function HabitTracker() {
               setHabits(prev => prev.map(habit =>
                 habitIdSet.has(habit.id) ? { ...habit, color } : habit
               ));
-              toast.success(countedSentence(t, language, 'toastColorApplied', habitIds.length));
+              toast.success(colorSentence(t, language, { habit: habitIds.length }));
             }
           } else if (activeTab === 'folders') {
             const folderIds = items.filter(id => habitFolders.some(folder => folder.id === id));
@@ -1147,7 +1147,7 @@ export default function HabitTracker() {
               folderIdSet.has(folder.id) ? { ...folder, color } : folder
             ));
             if (folderIds.length > 0) {
-              toast.success(countedSentence(t, language, 'toastColorApplied', folderIds.length));
+              toast.success(colorSentence(t, language, { folder: folderIds.length }));
             }
           }
         }
