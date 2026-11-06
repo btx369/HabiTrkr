@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useState, ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from 'react';
 // Language context for internationalization
 import { getLocalStorageString, setLocalStorageString } from '@/lib/localStorageUtils';
 import { LANGUAGE_KEY } from '@/lib/storageKeys';
@@ -6688,6 +6688,11 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     const validLanguages: Language[] = ['en', 'pt', 'es', 'fr', 'de', 'it', 'nl', 'pl', 'tr', 'ja', 'zh', 'ko'];
     return validLanguages.includes(saved as Language) ? (saved as Language) : 'en';
   });
+
+  // Keep <html lang> in step so screen readers, spellcheck and hyphenation use the right language.
+  useEffect(() => {
+    document.documentElement.lang = language === 'pt' ? 'pt-PT' : language === 'zh' ? 'zh-CN' : language;
+  }, [language]);
 
   const handleSetLanguage = (newLanguage: Language) => {
     setLanguage(newLanguage);

@@ -337,6 +337,7 @@ export default function Profile() {
               rightElement={
                 <Switch 
                   checked={theme === 'dark'} 
+                  aria-label={t('theme')}
                   onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
                   className="border-foreground/70 data-[state=unchecked]:bg-card data-[state=unchecked]:border-foreground/70 dark:data-[state=unchecked]:bg-muted [&_[data-state=unchecked]]:bg-foreground"
                   thumbClassName="data-[state=unchecked]:translate-x-0.5"
@@ -352,6 +353,7 @@ export default function Profile() {
               rightElement={
                 <Switch 
                   checked={toastsEnabled} 
+                  aria-label={t('notifications')}
                   onCheckedChange={setToastsEnabled}
                   className="border-foreground/70 data-[state=unchecked]:bg-card data-[state=unchecked]:border-foreground/70 dark:data-[state=unchecked]:bg-muted [&_[data-state=unchecked]]:bg-foreground"
                   thumbClassName="data-[state=unchecked]:translate-x-0.5"
