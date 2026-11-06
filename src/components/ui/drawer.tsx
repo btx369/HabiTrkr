@@ -41,7 +41,15 @@ DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName
 const DrawerContent = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content> & { style?: React.CSSProperties }
->(({ className, children, style, ...props }, ref) => {
+>(({ className, children, style, onInteractOutside, ...props }, ref) => {
+  // A tap on a toast (Undo, swipe away) is not a tap outside the sheet; see dialog.tsx.
+  const handleInteractOutside: typeof onInteractOutside = (event) => {
+    if ((event.target as Element | null)?.closest?.('[data-sonner-toaster]')) {
+      event.preventDefault()
+      return
+    }
+    onInteractOutside?.(event)
+  }
   // While the keyboard is open the sheet is limited to, and lifted above, the visible area;
   // with the keyboard closed nothing is overridden, so it always returns to normal.
   const keyboard = useKeyboardViewport(true)
@@ -60,6 +68,7 @@ const DrawerContent = React.forwardRef<
       )}
       style={{ ...style, ...keyboardStyle }}
       {...props}
+      onInteractOutside={handleInteractOutside}
     >
       <div className={cn(
         "mx-auto mt-4 h-2 w-[100px] rounded-full shrink-0",

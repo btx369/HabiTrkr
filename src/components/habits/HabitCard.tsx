@@ -180,10 +180,18 @@ export function HabitCard({
   const nameButton = (
             <button
               type="button"
-              className={cn('min-w-0 text-left text-sm font-medium', twoRows ? 'truncate' : 'line-clamp-2 break-words', textColorClass)}
+              className={cn('flex min-w-0 flex-col text-left', textColorClass)}
               onClick={(event) => handleCardAction(event, () => onEdit(habit))}
             >
-              {highlightText(habit.name, searchQuery)}
+              <span className={cn('min-w-0 text-sm font-medium', twoRows ? 'truncate' : 'line-clamp-2 break-words')}>
+                {highlightText(habit.name, searchQuery)}
+              </span>
+              {/* The description could be written but was never shown anywhere. */}
+              {habit.description && (
+                <span className={cn('min-w-0 truncate text-xs', hasColor ? 'text-[#000000]/70' : 'text-muted-foreground')}>
+                  {highlightText(habit.description, searchQuery)}
+                </span>
+              )}
             </button>
   );
   const badgesRow = (
@@ -487,7 +495,10 @@ export function ArchivedHabitCard({
             {isDragEnabled && !showBulkCheckbox && (
               <GripVertical data-habit-drag-handle className="mt-0.5 h-5 w-5 shrink-0 cursor-grab touch-none text-muted-foreground active:cursor-grabbing" aria-label={t('reorderHabit')} />
             )}
-            <h3 className="text-sm font-medium text-foreground">{highlightText(habit.name, searchQuery)}</h3>
+            <div className="min-w-0">
+              <h3 className="text-sm font-medium text-foreground">{highlightText(habit.name, searchQuery)}</h3>
+              {habit.description && <p className="truncate text-xs text-muted-foreground">{habit.description}</p>}
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {isFiled && <FolderOpen size={20} className={iconColorClass} />}

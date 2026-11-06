@@ -8,6 +8,7 @@ import { parseTagsFromInput } from '@/lib/tagParser';
 import { getTopTags } from '@/lib/tagStorage';
 import { TagSuggestions } from '@/components/shared/TagSuggestions';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { TAG_MAX_LENGTH } from '@/lib/tagLimits';
 
 interface TagInputFieldProps {
   tags: string[];
@@ -34,7 +35,8 @@ export function TagInputField({
   }, [showSuggestions]);
 
   const handleAddTags = () => {
-    const newTags = parseTagsFromInput(tagInput);
+    // The same 15-character limit as tags on items; longer ones are left out.
+    const newTags = parseTagsFromInput(tagInput).filter(tag => tag.length <= TAG_MAX_LENGTH);
     if (newTags.length === 0) return;
 
     const updatedTags = [...new Set([...tags, ...newTags])];

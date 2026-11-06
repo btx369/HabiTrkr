@@ -26,9 +26,9 @@ import { EventViewer } from '@/components/events/EventViewer';
 import { MoveToFolderDialog } from '@/components/shared/MoveToFolderDialog';
 import { parseSearchExpression, matchesSearchExpression } from '@/lib/tagParser';
 import { updateTagUsage } from '@/lib/tagStorage';
-import { autoImportEventToFolders } from '@/lib/folderAutoImport';
+import { autoImportEventToFolders, autoImportExisting, EVENT_FOLDER_IDS } from '@/lib/folderAutoImport';
 import { daysUntilEvent, hasEventEnded } from '@/lib/eventRecurrence';
-import { takePendingUndo } from '@/lib/undoManager';
+import { discardPendingUndo } from '@/lib/undoManager';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { useBulkSelection } from '@/hooks/useBulkSelection';
 import { parseStoredDate } from '@/lib/dateUtils';
@@ -211,7 +211,7 @@ export default function Events() {
 
         // No Undo here: this effect would archive the same events again straight away,
         // so the button could only ever appear to do nothing. Drop the pending rollback.
-        takePendingUndo();
+        discardPendingUndo();
         toast.success(countedSentence(t, language, 'autoArchivedEvents', pastEvents.length));
       }
     };
@@ -473,10 +473,15 @@ export default function Events() {
             color: folderData.color,
             pinned: folderData.pinned,
             archived: folderData.archived,
+            // The rule was edited but never saved, so auto-import never did anything.
+            autoImportEnabled: folderData.autoImportEnabled,
+            autoImportTags: folderData.autoImportTags,
             modifiedAt: new Date().toISOString(),
           }
         : folder
     ));
+    // Events that already carry the tag join now, not only the ones tagged later.
+    setEventFolders((prev: EventFolder[]) => autoImportExisting(selectedEventFolder.id, events, prev, EVENT_FOLDER_IDS));
     setSelectedEventFolder(null);
     setIsEventFolderEditorOpen(false);
     toast.success(say('toastUpdated', 'tabFolders'));
@@ -884,6 +889,9 @@ export default function Events() {
     const selectedItemIds = ids.filter(id => !folderIdSet.has(id));
     const selectedFolders = folderCollection.filter(folder => folderIdSet.has(folder.id));
     const itemCount = new Set(selectedFolders.flatMap(folder => folder.eventIds)).size;
+    // Empty folders alongside selected items: the ordinary bulk dialog asks once for all of
+    // them. Going straight ahead deleted the selected items with no question at all.
+    if (itemCount === 0 && selectedItemIds.length > 0) return false;
     const pending = { kind, folderIds, selectedItemIds };
     if (itemCount === 0) {
       finishBulkFolderAction(pending, 'withItems');

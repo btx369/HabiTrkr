@@ -19,8 +19,10 @@ import {
   Lock,
   Search,
   ChevronDown,
-  Pin
+  Pin,
+  FolderOpen
 } from 'lucide-react';
+import { useIsFiled } from '@/contexts/FolderMembershipContext';
 import { useToastSettings } from '@/contexts/ToastContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -126,6 +128,7 @@ export function NoteViewer({
 }: NoteViewerProps) {
   const { toast } = useToastSettings();
   const { t, language } = useLanguage();
+  const isFiled = useIsFiled(note?.id ?? '');
   // Toast copy is a translated sentence plus a translated entity noun. Both halves are
   // resolved here so the `{entity}` substitution is written once instead of at every toast.
   const say = (key: string, entity: string) => t(key).replace('{entity}', t(entity));
@@ -2137,7 +2140,9 @@ export function NoteViewer({
               )}
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
-              {note.pinned && <Pin size={24} className={iconColorClass} />}
+              {/* The same status icons as the note's card, in the same order: folder, then pin. */}
+              {isFiled && <FolderOpen size={24} className={iconColorClass} />}
+              {note.pinned && !note.archived && <Pin size={24} className={iconColorClass} />}
               {note.locked && <Lock size={20} className={iconColorClass} />}
             </div>
           </div>

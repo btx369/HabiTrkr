@@ -4,6 +4,7 @@ import { ColorPicker } from '@/components/shared/ColorPicker';
 import { TitleInput } from '@/components/shared/TitleInput';
 import { EditorDialog } from '@/components/shared/EditorDialog';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { AutoImportSection } from '@/components/shared/AutoImportSection';
 import { NotebookPen, FileText, Palette } from 'lucide-react';
 
 const ICON_COLOR = 'currentColor';
@@ -20,12 +21,16 @@ export function HabitFolderEditor({ isOpen, onClose, onSave, folder }: HabitFold
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [color, setColor] = useState('#FFFFFF');
+  const [autoImportEnabled, setAutoImportEnabled] = useState(false);
+  const [autoImportTags, setAutoImportTags] = useState<string[]>([]);
 
   useEffect(() => {
     if (folder && isOpen) {
       setName(folder.name);
       setDescription(folder.description || '');
       setColor(folder.color);
+      setAutoImportEnabled(folder.autoImportEnabled || false);
+      setAutoImportTags(folder.autoImportTags || []);
     }
   }, [folder, isOpen]);
 
@@ -36,6 +41,8 @@ export function HabitFolderEditor({ isOpen, onClose, onSave, folder }: HabitFold
       name: name.trim(),
       description: description.trim() || undefined,
       color,
+      autoImportEnabled,
+      autoImportTags: autoImportTags.length > 0 ? autoImportTags : undefined,
       modifiedAt: new Date().toISOString(),
     });
     
@@ -46,6 +53,8 @@ export function HabitFolderEditor({ isOpen, onClose, onSave, folder }: HabitFold
     setName('');
     setDescription('');
     setColor('#FFFFFF');
+    setAutoImportEnabled(false);
+    setAutoImportTags([]);
     onClose();
   };
 
@@ -87,6 +96,14 @@ export function HabitFolderEditor({ isOpen, onClose, onSave, folder }: HabitFold
         icon={Palette}
         iconColor={ICON_COLOR}
         singleRow
+      />
+
+      <AutoImportSection
+        enabled={autoImportEnabled}
+        onEnabledChange={setAutoImportEnabled}
+        tags={autoImportTags}
+        onTagsChange={setAutoImportTags}
+        placeholder={t('placeholderAddTagsHabit')}
       />
     </EditorDialog>
   );

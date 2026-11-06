@@ -27,7 +27,7 @@ import { NoteFolderEditor } from '@/components/noteFolders/NoteFolderEditor';
 import { MoveToFolderDialog } from '@/components/shared/MoveToFolderDialog';
 import { PinPadDialog } from '@/components/notes/PinPadDialog';
 import { LockChoiceDialog } from '@/components/notes/LockChoiceDialog';
-import { takePendingUndo } from '@/lib/undoManager';
+import { discardPendingUndo } from '@/lib/undoManager';
 import { syncNoteReminders } from '@/lib/notificationService';
 import { NotePasswordDialog, NotePasswordMode, NotePasswordValues } from '@/components/notes/NotePasswordDialog';
 import { createVault, hasBiometric, hasVault, isPasswordNote, isVaultUnlocked, lockVault, openNote, sealNote, sealNotesForStorage, unlockVault, unlockVaultWithBiometric, VAULT_ATTEMPTS_ID } from '@/lib/noteVault';
@@ -35,7 +35,7 @@ import { clearPinFailures, createPinFields,getPinLockoutRemaining, recordPinFail
 import { NoteEditor } from '@/components/notes/NoteEditor';
 import { highlightText } from '@/lib/textHighlight';
 import { updateTagUsage } from '@/lib/tagStorage';
-import { autoImportNoteToFolders } from '@/lib/folderAutoImport';
+import { autoImportExisting, autoImportNoteToFolders, NOTE_FOLDER_IDS } from '@/lib/folderAutoImport';
 import { parseSearchExpression, matchesSearchExpression } from '@/lib/tagParser';
 import { extractSearchableText } from '@/lib/noteSearchText';
 import { nextCopyName } from '@/lib/copyName';
@@ -926,10 +926,15 @@ const hasTitle = (note.name || '').trim() !== '';
             color: folderData.color,
             pinned: folderData.pinned,
             archived: folderData.archived,
+            // The rule was edited but never saved, so auto-import never did anything.
+            autoImportEnabled: folderData.autoImportEnabled,
+            autoImportTags: folderData.autoImportTags,
             modifiedAt: new Date().toISOString()
           }
         : folder
     ));
+    // Notes that already carry the tag join now, not only the ones tagged later.
+    setFolders((prev: NoteFolder[]) => autoImportExisting(selectedFolder.id, notes, prev, NOTE_FOLDER_IDS));
     setSelectedFolder(null);
     setIsFolderEditorOpen(false);
     toast.success(say('toastUpdated', 'tabFolders'));
@@ -1046,7 +1051,7 @@ const hasTitle = (note.name || '').trim() !== '';
       setUnlockedNoteIds(prev => prev.filter(id => id !== noteId));
       // No Undo: re-locking a password note needs its key, which is gone by the time the
       // button could be pressed. Locking again from the menu is the way back.
-      takePendingUndo();
+      discardPendingUndo();
       toast.success(t('noteUnlockedToast'));
       return;
     }
@@ -1061,7 +1066,7 @@ const hasTitle = (note.name || '').trim() !== '';
         note.id === noteId ? withoutPin(note) : note
       ));
       setUnlockedNoteIds(prev => prev.filter(id => id !== noteId));
-      takePendingUndo(); // see the note on Undo above
+      discardPendingUndo(); // see the note on Undo above
       toast.success(t('noteUnlockedToast'));
     };
   };
@@ -1195,7 +1200,7 @@ const hasTitle = (note.name || '').trim() !== '';
       (window as any).pendingNoteToView = open((window as any).pendingNoteToView);
     }
     // Decrypting is not a change the user made, so the toast must not offer to undo it.
-    takePendingUndo();
+    discardPendingUndo();
     completeUnlock();
   };
 
@@ -2095,6 +2100,9 @@ const hasTitle = (note.name || '').trim() !== '';
     const selectedItemIds = ids.filter(id => !folderIdSet.has(id));
     const selectedFolders = folderCollection.filter(folderId => folderIdSet.has(folderId.id));
     const itemCount = new Set(selectedFolders.flatMap(folder => folder.noteIds)).size;
+    // Empty folders alongside selected items: the ordinary bulk dialog asks once for all of
+    // them. Going straight ahead deleted the selected items with no question at all.
+    if (itemCount === 0 && selectedItemIds.length > 0) return false;
     const pending = { kind, folderIds, selectedItemIds };
     if (itemCount === 0) {
       finishBulkFolderAction(pending, 'withItems');

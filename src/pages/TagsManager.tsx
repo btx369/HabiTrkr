@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { TAG_MAX_LENGTH } from '@/lib/tagLimits';
 import { useNavigate } from 'react-router-dom';
 import { Tag, Search, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -69,7 +70,7 @@ export default function TagsManager() {
       return;
     }
 
-    if (trimmedName.length > 30) {
+    if (trimmedName.length > TAG_MAX_LENGTH) {
       toast.error(t('tagNameTooLong'));
       return;
     }
@@ -208,11 +209,11 @@ export default function TagsManager() {
               value={newTagName}
               onChange={(e) => setNewTagName(e.target.value.toLowerCase().replace(/\s/g, '-'))}
               placeholder={t('tagName')}
-              maxLength={30}
+              maxLength={TAG_MAX_LENGTH}
               className="bg-background"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              {newTagName.length}/30
+              {newTagName.length}/{TAG_MAX_LENGTH}
             </p>
           </div>
         </div>

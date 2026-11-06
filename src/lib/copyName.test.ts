@@ -7,8 +7,8 @@ describe('nextCopyName', () => {
     expect(nextCopyName('Thing (1)', ['Thing', 'Thing (1)'])).toBe('Thing (2)');
   });
 
-  it('leaves an untitled item untitled', () => {
-    expect(nextCopyName('', [''])).toBe('');
-    expect(nextCopyName('  ', [])).toBe('');
+  it('numbers an untitled copy without a leading space', () => {
+    expect(nextCopyName('', [''])).toBe('(1)');
+    expect(nextCopyName('(1)', ['', '(1)'])).toBe('(2)');
   });
 });

@@ -25,6 +25,7 @@ import { HabitFolderViewSettings, HabitFolderSortType, HabitFolderSortDirection 
 import { BulkActionBar, BulkActionType, BulkActionContext } from '@/components/shared/BulkActionBar';
 import { useToastSettings } from '@/contexts/ToastContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { autoImportExisting, autoImportHabitToFolders, HABIT_FOLDER_IDS } from '@/lib/folderAutoImport';
 import { movedToFolder, selectionQuestion, countedSentence, itemDisplayName, namedSentence } from '@/lib/countedMessage';
 import { useDateLocale } from '@/lib/dateLocale';
 import { useWeekStart, getJsDayFromVisualIndex } from '@/contexts/WeekStartContext';
@@ -334,6 +335,7 @@ export default function HabitTracker() {
     };
     setHabits((prev: Habit[]) => [...prev, newHabit]);
     if (newHabit.tags?.length) updateTagUsage([], newHabit.tags);
+    setHabitFolders((prev: HabitFolder[]) => autoImportHabitToFolders(newHabit, prev));
     setIsAddDialogOpen(false);
     toast.success(say('toastAdded', 'habits'));
   };
@@ -342,6 +344,7 @@ export default function HabitTracker() {
     if (!selectedHabit) return;
     const dateStr = getTodayKey();
     updateTagUsage(selectedHabit.tags || [], habitData.tags || []);
+    setHabitFolders((prev: HabitFolder[]) => autoImportHabitToFolders({ ...selectedHabit, ...habitData }, prev));
     
     setHabits((prev: Habit[]) => prev.map(habit => {
       if (habit.id !== selectedHabit.id) return habit;
@@ -534,6 +537,8 @@ export default function HabitTracker() {
     setHabitFolders((prev: HabitFolder[]) => prev.map(folder =>
       folder.id === selectedFolder.id ? { ...folder, ...folderData } : folder
     ));
+    // Habits that already carry the tag join now, not only the ones tagged later.
+    setHabitFolders((prev: HabitFolder[]) => autoImportExisting(selectedFolder.id, habits, prev, HABIT_FOLDER_IDS));
     setSelectedFolder(null);
     setIsFolderEditorOpen(false);
     toast.success(say('toastUpdated', 'tabFolders'));
@@ -1014,6 +1019,9 @@ export default function HabitTracker() {
     const selectedItemIds = ids.filter(id => !folderIdSet.has(id));
     const selectedFolders = folderCollection.filter(folder => folderIdSet.has(folder.id));
     const itemCount = new Set(selectedFolders.flatMap(folder => folder.habitIds)).size;
+    // Empty folders alongside selected items: the ordinary bulk dialog asks once for all of
+    // them. Going straight ahead deleted the selected items with no question at all.
+    if (itemCount === 0 && selectedItemIds.length > 0) return false;
     const pending = { kind, folderIds, selectedItemIds };
     if (itemCount === 0) {
       finishBulkFolderAction(pending, 'withItems');

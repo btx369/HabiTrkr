@@ -25,12 +25,12 @@ function splitCopyName(name: string): { base: string; number?: number } {
  */
 export function nextCopyName(name: string, existingNames: readonly string[]): string {
   const { base } = splitCopyName(name);
-  // An untitled item stays untitled: numbering nothing gave a copy called " (1)".
-  if (base.trim() === '') return '';
+  // An untitled item's copy is just "(1)", so it can be told apart from the original.
+  const prefix = base.trim() === '' ? '' : `${base} `;
   const taken = new Set(existingNames);
 
   for (let n = 1; n < 1000; n++) {
-    const candidate = `${base} (${n})`;
+    const candidate = `${prefix}(${n})`;
     if (!taken.has(candidate)) return candidate;
   }
   // A thousand copies of one item is not a real case; fall back to the old behaviour rather

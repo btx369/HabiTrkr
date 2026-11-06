@@ -1,7 +1,5 @@
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { usePremiumAccount } from '@/hooks/usePremiumAccount';
-import { PremiumPrompt } from '@/components/shared/PremiumPrompt';
 import { TagInputField } from '@/components/shared/TagInputField';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -20,12 +18,9 @@ export function AutoImportSection({
   onTagsChange,
   placeholder
 }: AutoImportSectionProps) {
-  const [premiumAccount] = usePremiumAccount();
   const { t } = useLanguage();
-
-  if (!premiumAccount.isPremium) {
-    return <PremiumPrompt feature={t('autoImportByTags')} />;
-  }
+  // Planned as a Premium feature; open to everyone until Premium exists. To gate it, show
+  // <PremiumPrompt feature={t('autoImportByTags')} /> when usePremiumAccount() is not premium.
 
   return (
     <div className="space-y-3 p-4 bg-muted rounded-lg">

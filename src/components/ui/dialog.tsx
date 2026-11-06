@@ -34,8 +34,20 @@ const DialogContent = React.forwardRef<
     hideCloseButton?: boolean;
     style?: React.CSSProperties;
   }
->(({ className, children, hideCloseButton = false, style, ...props }, ref) => {
+>(({ className, children, hideCloseButton = false, style, onInteractOutside, ...props }, ref) => {
   const { t } = useLanguage();
+  /*
+   * A toast is outside the dialog, so tapping its Undo or swiping it away counted as a tap
+   * outside and would close the dialog. Toasts are left out of that, and index.css lets them
+   * take pointer events while a modal dialog has turned them off for the rest of the page.
+   */
+  const handleInteractOutside: typeof onInteractOutside = (event) => {
+    if ((event.target as Element | null)?.closest?.('[data-sonner-toaster]')) {
+      event.preventDefault();
+      return;
+    }
+    onInteractOutside?.(event);
+  };
   const hasHeroAnimation = className?.includes('animate-hero');
   
   return (
@@ -51,6 +63,7 @@ const DialogContent = React.forwardRef<
         )}
         style={style}
         {...props}
+        onInteractOutside={handleInteractOutside}
       >
         {children}
         {!hideCloseButton && (

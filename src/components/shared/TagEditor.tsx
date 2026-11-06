@@ -13,9 +13,8 @@ import { cn } from '@/lib/utils';
 import { isDefaultColor } from '@/lib/cardColorStyles';
 import { getColoredIconClass, getColoredBorderClass } from '@/lib/coloredButtonStyles';
 
-const TAG_LIMIT = 20;
-/** Longest tag, the same 30 characters Manage tags allows when renaming one. */
-const TAG_MAX_LENGTH = 30;
+import { PREMIUM_TAG_LIMIT, TAG_MAX_LENGTH, tagLimitFor } from '@/lib/tagLimits';
+import { usePremiumAccount } from '@/hooks/usePremiumAccount';
 
 interface TagEditorProps {
   tags: string[];
@@ -48,6 +47,12 @@ export function TagEditor({
   const [suggestion, setSuggestion] = useState('');
   const { toast } = useToastSettings();
   const { t } = useLanguage();
+  // 5 tags per item, 25 with Premium.
+  const [premiumAccount] = usePremiumAccount();
+  const TAG_LIMIT = tagLimitFor(premiumAccount.isPremium);
+  const limitMessage = () => premiumAccount.isPremium
+    ? t('toastTagLimit').replace('{count}', String(TAG_LIMIT))
+    : t('toastTagLimitPremium').replace('{count}', String(TAG_LIMIT)).replace('{premium}', String(PREMIUM_TAG_LIMIT));
   useEffect(() => {
     // Get only tags that are currently in use, excluding ones already on this note
     const activeTags = getActiveTagsFromStorage();
@@ -131,7 +136,7 @@ export function TagEditor({
     
     // Check tag limit
     if (tags.length >= TAG_LIMIT) {
-      toast.error(t('toastTagLimit').replace('{count}', String(TAG_LIMIT)));
+      toast.error(limitMessage());
       return;
     }
     
@@ -159,7 +164,7 @@ export function TagEditor({
     const tagsToAdd = newTags.slice(0, availableSlots);
     
     if (tagsToAdd.length < newTags.length) {
-      toast.warning(t('toastTagLimit').replace('{count}', String(TAG_LIMIT)));
+      toast.warning(limitMessage());
     }
 
     const updatedTags = [...new Set([...tags, ...tagsToAdd])];
@@ -177,7 +182,7 @@ export function TagEditor({
   const handleSuggestionClick = (tag: string) => {
     if (tags.includes(tag)) return;
     if (tags.length >= TAG_LIMIT) {
-      toast.error(t('toastTagLimit').replace('{count}', String(TAG_LIMIT)));
+      toast.error(limitMessage());
       return;
     }
     onTagsChange([...tags, tag]);

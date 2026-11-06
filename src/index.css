@@ -358,3 +358,11 @@ audio::-moz-media-controls {
 body:has([data-bulk-bar]) [data-sonner-toaster][data-y-position='bottom'] {
   bottom: calc(156px + env(safe-area-inset-bottom)) !important;
 }
+
+/*
+ * A modal dialog sets `pointer-events: none` on the page behind it, toasts included, so
+ * Undo and swipe-to-dismiss did nothing while a note was open. Toasts always take taps.
+ */
+[data-sonner-toaster] [data-sonner-toast] {
+  pointer-events: auto !important;
+}
