@@ -230,7 +230,7 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
         value={formData.description}
         onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
         placeholder={t('placeholderHabitDescription')}
-        maxLength={200}
+        maxLength={100}
         icon={FileText}
         iconColor={ICON_COLOR}
       />

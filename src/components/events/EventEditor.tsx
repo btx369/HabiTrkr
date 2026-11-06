@@ -543,7 +543,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
           value={formData.description}
           onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
           placeholder={t('placeholderEventDescription')}
-          maxLength={200}
+          maxLength={100}
           icon={NotebookText}
           iconColor={ICON_COLOR}
         />

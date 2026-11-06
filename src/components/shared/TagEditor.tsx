@@ -76,6 +76,8 @@ export function TagEditor({
     }
   }, [tagInput, allTags]);
 
+  const currentTagLength = (tagInput.trim().split(/\s+/).pop() ?? '').replace(/^#+/, '').length;
+
   const getCurrentTagWord = (input: string): string => {
     const hashMatch = input.match(/#(\w*)$/);
     if (hashMatch) {
@@ -111,6 +113,11 @@ export function TagEditor({
       value = '#' + value;
     }
     
+    // A tag stops at 30 characters: typing past it does nothing, as in the title field.
+    if (value.split(/\s+/).some(word => word.replace(/^#+/, '').length > TAG_MAX_LENGTH)) {
+      return;
+    }
+
     setTagInput(value);
     
     // Validate and show/hide error
@@ -198,19 +205,21 @@ export function TagEditor({
     <div className="space-y-2">
       <Label className={cn("text-sm flex items-center gap-2", hasNoteColor && iconColorClass)}>
         {Icon && <Icon size={20} className={hasNoteColor ? iconColorClass : ''} style={!hasNoteColor && iconColor ? { color: iconColor } : {}} />}
+        {/* Like Title and Description: how long the tag being typed is, out of 30. */}
         {t('tags')} <span className={cn(
           "text-xs font-normal",
-          tags.length >= TAG_LIMIT 
-            ? "text-destructive" 
-            : hasNoteColor 
-              ? "text-[#000000]/60" 
-              : "text-muted-foreground"
-        )}>{tags.length}/{TAG_LIMIT}</span>
+          currentTagLength >= TAG_MAX_LENGTH
+            ? "text-destructive"
+            : currentTagLength >= Math.floor(TAG_MAX_LENGTH * 0.85)
+              ? "text-orange-500"
+              : hasNoteColor
+                ? "text-[#000000]/60"
+                : "text-muted-foreground"
+        )}>{currentTagLength}/{TAG_MAX_LENGTH}</span>
       </Label>
       
-      {/* Current Tags */}
-      {tags.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+      {/* Current tags, followed by how many of the 20 allowed are used. */}
+      <div className="flex flex-wrap items-center gap-2">
           {tags.map((tag, index) => (
             <Badge
               key={`${tag}-${index}`}
@@ -232,8 +241,15 @@ export function TagEditor({
               </button>
             </Badge>
           ))}
-        </div>
-      )}
+        <span className={cn(
+          "text-xs",
+          tags.length >= TAG_LIMIT
+            ? "text-destructive"
+            : hasNoteColor
+              ? "text-[#000000]/60"
+              : "text-muted-foreground"
+        )}>{tags.length}/{TAG_LIMIT}</span>
+      </div>
 
       {/* Tag Input */}
       <div className={cn(

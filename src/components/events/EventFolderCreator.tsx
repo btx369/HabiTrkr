@@ -70,7 +70,7 @@ export function EventFolderCreator({ isOpen, onClose, onSave, eventIdsToMove }: 
         value={formData.description}
         onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
         placeholder={t('placeholderFolderDescription')}
-        maxLength={200}
+        maxLength={100}
         icon={FileText}
         iconColor={ICON_COLOR}
       />
