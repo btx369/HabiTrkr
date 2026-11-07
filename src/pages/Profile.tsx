@@ -32,6 +32,7 @@ import { Switch } from '@/components/ui/switch';
 import { PROFILE_AVATAR_KEY, PROFILE_NAME_KEY } from '@/lib/storageKeys';
 import { applyBackup, BackupError, createBackup, readBackup } from '@/lib/backup';
 import { clearAllAppData } from '@/lib/backup';
+import { flushMedia } from '@/lib/mediaStore';
 import { FeedbackDialog } from '@/components/shared/FeedbackDialog';
 import { SettingsDivider, SettingsRow, SettingsSection, settingsPanelClass } from '@/components/shared/SettingsRow';
 import {
@@ -67,8 +68,9 @@ export default function Profile() {
   const [deleteAllOpen, setDeleteAllOpen] = useState(false);
 
   // Apagar todos os dados: everything this app stored on this device, then a fresh start.
-  const handleDeleteAllData = () => {
+  const handleDeleteAllData = async () => {
     clearAllAppData();
+    await flushMedia();
     window.location.replace(import.meta.env.BASE_URL);
   };
 
@@ -122,6 +124,7 @@ export default function Profile() {
         throw new BackupError('invalid');
       }
       applyBackup(readBackup(parsed));
+      await flushMedia();
       toast.success(t('importSuccess'));
       setTimeout(() => window.location.reload(), 600);
     } catch (err) {
