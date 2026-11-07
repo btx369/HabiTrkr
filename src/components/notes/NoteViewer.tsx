@@ -604,6 +604,10 @@ export function NoteViewer({
     }
   }, [isEditingContent, note?.type]);
 
+  // Declared before the early return below: hooks must run on every render.
+  const [draggingItemId, setDraggingItemId] = useState<string | null>(null);
+  const draggedOrderChangedRef = useRef(false);
+
   if (!note) return null;
 
   const handleBackClick = () => {
@@ -963,8 +967,6 @@ export function NoteViewer({
    * the finger, and `touch-none` on it stops the page from scrolling instead. Rows are found
    * by position, so only unchecked rows (which carry data-list-row) are drop targets.
    */
-  const [draggingItemId, setDraggingItemId] = useState<string | null>(null);
-  const draggedOrderChangedRef = useRef(false);
 
   const moveListItem = (fromId: string, toId: string) => {
     const apply = (prev: ListItem[]) => {
