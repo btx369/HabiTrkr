@@ -1334,6 +1334,7 @@ export default function HabitTracker() {
             {habits.length === 0 && habitFolders.length === 0 ? (
               <Card>
                 <CardContent className="text-center py-8">
+                  <p className="mb-4 px-4 text-sm text-muted-foreground">{t('emptyHintHabits')}</p>
                   <Button 
                     onClick={() => setIsAddDialogOpen(true)}
                     className="h-10 px-8 text-sm font-medium rounded-full bg-black text-white hover:bg-black/90"

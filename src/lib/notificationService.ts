@@ -13,24 +13,36 @@ import type { Note } from '@/types/note';
  *
  * This used to use the start date only, so a recurring event got one reminder ever. It
  * now walks the occurrences from today and returns the first reminder still ahead.
- * (Only one is scheduled per event; the next is scheduled when the app reopens.)
+ * (On the web only the next one is armed, and the one after it when it fires; native phones schedule several ahead.)
  */
-const getNotificationTime = (event: Event): Date | null => {
-  if (!event.alertType || event.alertType === 'none') return null;
+const getNotificationTimes = (event: Event, max: number): Date[] => {
+  if (!event.alertType || event.alertType === 'none') return [];
 
   const now = new Date();
+  const times: Date[] = [];
   let from = now;
-  for (let attempt = 0; attempt < 400; attempt++) {
+  for (let attempt = 0; attempt < 400 && times.length < max; attempt++) {
     const occurrence = getNextOccurrenceStart(event, from);
-    if (!occurrence) return null;
+    if (!occurrence) break;
     const alertAt = getAlertTimeForOccurrence(event, toDateKey(occurrence));
-    if (!alertAt) return null;
-    if (alertAt > now) return alertAt;
-    if (!event.isRecurrent) return null;
+    if (!alertAt) break;
+    if (alertAt > now) times.push(alertAt);
+    if (!event.isRecurrent) break;
     from = addDays(occurrence, getEventSpanDays(event) + 1);
   }
-  return null;
+  return times;
 };
+
+const getNotificationTime = (event: Event): Date | null => getNotificationTimes(event, 1)[0] ?? null;
+
+/**
+ * Native phones keep scheduled notifications even when the app is closed, but nothing runs
+ * to arm the next occurrence after one fires. So the next few occurrences of a recurring
+ * event are scheduled together, each with its own id.
+ */
+const NATIVE_OCCURRENCES = 8;
+const occurrenceNotificationId = (eventId: string, index: number): number =>
+  index === 0 ? getNotificationId(eventId) : (getNotificationId(eventId) + index) % 2147483647;
 
 const getAlertTimeForOccurrence = (event: Event, eventDate: string): Date | null => {
   // For all-day events, use 9:00 AM as the default time for more practical alerts
@@ -143,7 +155,6 @@ export const scheduleEventNotification = async (event: Event): Promise<void> => 
     return;
   }
   
-  const notificationId = getNotificationId(event.id);
   const eventTime = event.startTime || event.time;
   
   const body = eventTime 
@@ -151,20 +162,20 @@ export const scheduleEventNotification = async (event: Event): Promise<void> => 
     : event.location || translateNow('eventReminder');
   
   if (Capacitor.isNativePlatform()) {
+    const times = getNotificationTimes(event, event.isRecurrent ? NATIVE_OCCURRENCES : 1);
     const options: ScheduleOptions = {
-      notifications: [
-        {
-          id: notificationId,
-          title: event.name,
-          body,
-          schedule: { at: notificationTime },
-          sound: 'default',
-          actionTypeId: 'EVENT_REMINDER',
-          extra: { eventId: event.id }
-        }
-      ]
+      notifications: times.map((at, index) => ({
+        id: occurrenceNotificationId(event.id, index),
+        title: event.name,
+        body,
+        schedule: { at },
+        sound: 'default',
+        actionTypeId: 'EVENT_REMINDER',
+        extra: { eventId: event.id },
+      })),
     };
-    
+    // Rescheduling replaces what was there, including occurrences that no longer apply.
+    await cancelEventNotification(event.id);
     await LocalNotifications.schedule(options);
     console.log('Scheduled native notification for:', event.name, 'at', notificationTime);
   } else {
@@ -203,10 +214,11 @@ export const scheduleEventNotification = async (event: Event): Promise<void> => 
 
 // Cancel a scheduled notification
 export const cancelEventNotification = async (eventId: string): Promise<void> => {
-  const notificationId = getNotificationId(eventId);
   
   if (Capacitor.isNativePlatform()) {
-    await LocalNotifications.cancel({ notifications: [{ id: notificationId }] });
+    await LocalNotifications.cancel({
+      notifications: Array.from({ length: NATIVE_OCCURRENCES }, (_, index) => ({ id: occurrenceNotificationId(eventId, index) })),
+    });
     console.log('Cancelled native notification for event:', eventId);
   } else {
     // Cancel web setTimeout

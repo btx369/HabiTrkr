@@ -1939,6 +1939,8 @@ const hasTitle = (note.name || '').trim() !== '';
             {searchQuery.trim() ? (
               <p className="text-muted-foreground">{t('noMatchingNotes')}</p>
             ) : (
+              <>
+              <p className="mb-4 px-4 text-sm text-muted-foreground">{t('emptyHintNotes')}</p>
               <Button 
                 onClick={handleAddButtonClick}
                 className="h-10 px-8 text-sm font-medium rounded-full bg-black text-white hover:bg-black/90"
@@ -1946,6 +1948,7 @@ const hasTitle = (note.name || '').trim() !== '';
                 {t('createNote')}
                 <Notebook className="ml-2" size={20} />
               </Button>
+              </>
             )}
           </CardContent>
         </Card>
