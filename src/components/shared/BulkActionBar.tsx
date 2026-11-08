@@ -269,7 +269,7 @@ export function BulkActionBar({
                     disabled={selectedCount === 0}
                   >
                     <Icon size={20} className="shrink-0 md:h-[22px] md:w-[22px]" />
-                    <span className="whitespace-nowrap text-[9px] leading-tight md:text-xs">{resolveLabel(action.label)}</span>
+                    <span className="whitespace-nowrap text-[10px] leading-tight md:text-xs">{resolveLabel(action.label)}</span>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-3" align="center" side="top">
@@ -299,7 +299,7 @@ export function BulkActionBar({
               aria-pressed={isSelectionAction ? isActionSelected(action.type) : undefined}
             >
               <Icon size={20} className="shrink-0 md:h-[22px] md:w-[22px]" />
-              <span className="whitespace-nowrap text-[9px] leading-tight md:text-xs">{resolveLabel(action.type === 'pin' && allPinned ? 'unpin' : action.label)}</span>
+              <span className="whitespace-nowrap text-[10px] leading-tight md:text-xs">{resolveLabel(action.type === 'pin' && allPinned ? 'unpin' : action.label)}</span>
             </Button>
           );
         })}

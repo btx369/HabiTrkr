@@ -1285,7 +1285,7 @@ export default function HabitTracker() {
             {activeTab === 'habits' && (
               <div className="rounded-2xl bg-[hsl(var(--surface-card))] backdrop-blur-[12px] border border-foreground/10 shadow-[0_8px_32px_rgba(0,0,0,0.1)] px-1.5 py-1 mb-1">
                 <div className="flex items-center justify-between mb-0.5">
-                  <Button aria-label={t('previous')} variant="ghost" size="icon" className="h-9 w-9 text-foreground hover:bg-hover hover:text-foreground rounded-full [&_svg]:!size-6" onClick={() => setCurrentWeek(subWeeks(currentWeek, 1))}>
+                  <Button aria-label={t('previous')} variant="ghost" size="icon" className="relative h-9 w-9 text-foreground hover:bg-hover hover:text-foreground rounded-full [&_svg]:!size-6 after:absolute after:-inset-1 after:content-['']" onClick={() => setCurrentWeek(subWeeks(currentWeek, 1))}>
                     <ChevronLeft size={24} />
                   </Button>
                   {/*
@@ -1308,7 +1308,7 @@ export default function HabitTracker() {
                       </Button>
                     )}
                   </div>
-                  <Button aria-label={t('next')} variant="ghost" size="icon" className="h-9 w-9 text-foreground hover:bg-hover hover:text-foreground rounded-full [&_svg]:!size-6" onClick={() => setCurrentWeek(addWeeks(currentWeek, 1))}>
+                  <Button aria-label={t('next')} variant="ghost" size="icon" className="relative h-9 w-9 text-foreground hover:bg-hover hover:text-foreground rounded-full [&_svg]:!size-6 after:absolute after:-inset-1 after:content-['']" onClick={() => setCurrentWeek(addWeeks(currentWeek, 1))}>
                     <ChevronRight size={24} />
                   </Button>
                 </div>
@@ -1334,6 +1334,7 @@ export default function HabitTracker() {
             {habits.length === 0 && habitFolders.length === 0 ? (
               <Card>
                 <CardContent className="text-center py-8">
+                  <p className="mb-4 px-4 text-sm text-muted-foreground">{t('emptyHintHabits')}</p>
                   <Button 
                     onClick={() => setIsAddDialogOpen(true)}
                     className="h-10 px-8 text-sm font-medium rounded-full bg-black text-white hover:bg-black/90"

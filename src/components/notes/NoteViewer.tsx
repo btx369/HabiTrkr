@@ -604,6 +604,10 @@ export function NoteViewer({
     }
   }, [isEditingContent, note?.type]);
 
+  // Declared before the early return below: hooks must run on every render.
+  const [draggingItemId, setDraggingItemId] = useState<string | null>(null);
+  const draggedOrderChangedRef = useRef(false);
+
   if (!note) return null;
 
   const handleBackClick = () => {
@@ -637,36 +641,6 @@ export function NoteViewer({
         }
       }, 0);
     }
-  };
-
-  const handleCloseClick = () => {
-    // If this is a new note and hasn't been saved yet, don't save it
-    if (isNewNote) {
-      // Just close without saving - the note was never added to the notes array
-      setIsEditingTitle(false);
-      setIsEditingContent(false);
-      setEditedTitle('');
-      setEditedDescription('');
-      setEditedItems([]);
-      // Reset popup states
-      setShowAudioRecorder(false);
-      setShowImageCapturePopup(false);
-      setShowFormattingBar(false);
-      onClose();
-      return;
-    }
-    
-    // For existing notes, discard any pending changes
-    setIsEditingTitle(false);
-    setIsEditingContent(false);
-    setEditedTitle('');
-    setEditedDescription('');
-    setEditedItems([]);
-    // Reset popup states
-    setShowAudioRecorder(false);
-    setShowImageCapturePopup(false);
-    setShowFormattingBar(false);
-    onClose();
   };
 
   const startEditingTitle = () => {
@@ -963,8 +937,6 @@ export function NoteViewer({
    * the finger, and `touch-none` on it stops the page from scrolling instead. Rows are found
    * by position, so only unchecked rows (which carry data-list-row) are drop targets.
    */
-  const [draggingItemId, setDraggingItemId] = useState<string | null>(null);
-  const draggedOrderChangedRef = useRef(false);
 
   const moveListItem = (fromId: string, toId: string) => {
     const apply = (prev: ListItem[]) => {
@@ -2131,15 +2103,6 @@ export function NoteViewer({
               hoverClass={themedHoverStyles}
               iconColorClass={hasColor ? 'text-[#000000]' : 'text-foreground'}
             />
-            <Button
-              variant={iconButtonStyles.variant}
-              size="sm"
-              aria-label={t('close')}
-                  onClick={handleCloseClick}
-              className={`h-9 w-9 p-0 [&_svg]:!size-6 rounded-full transition-colors duration-200 ${themedHoverStyles}`}
-            >
-              <X size={20} />
-            </Button>
           </div>
         </DialogHeader>
         

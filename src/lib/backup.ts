@@ -22,6 +22,7 @@ import {
   THEME_KEY,
   WEEK_START_KEY,
 } from './storageKeys';
+import { clearMedia, dehydrateText, hydrateText, MEDIA_KEYS } from './mediaStore';
 
 export const BACKUP_VERSION = 2;
 
@@ -65,7 +66,8 @@ export function createBackup(): BackupFileV2 {
     // Only HabiTrkr's keys: the published origin can hold other sites' data too.
     if (key === null || NOT_BACKED_UP.has(key) || !isAppKey(key)) continue;
     const value = localStorage.getItem(key);
-    if (value !== null) data[key] = value;
+    // Media lives in IndexedDB; the file must carry it so a backup is complete on its own.
+    if (value !== null) data[key] = (MEDIA_KEYS as readonly string[]).includes(key) ? hydrateText(value) : value;
   }
   return { app: 'habitrkr', version: BACKUP_VERSION, exportedAt: new Date().toISOString(), data };
 }
@@ -130,6 +132,8 @@ export function readBackup(file: unknown): Record<string, string> {
  * older backup never wipes data it did not know about.
  */
 export function applyBackup(entries: Record<string, string>): void {
+  // Move the backup's photos and recordings into IndexedDB so they do not fill localStorage.
+  for (const key of MEDIA_KEYS) if (key in entries) entries[key] = dehydrateText(entries[key]);
   const previous = new Map<string, string | null>();
   for (const key of Object.keys(entries)) previous.set(key, localStorage.getItem(key));
 
@@ -161,5 +165,6 @@ export function clearAllAppData(): void {
     if (key !== null && isAppKey(key)) keys.push(key);
   }
   keys.forEach((key) => localStorage.removeItem(key));
+  void clearMedia();
   sessionStorage.removeItem('notificationTimeouts');
 }

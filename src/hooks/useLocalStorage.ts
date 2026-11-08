@@ -2,6 +2,9 @@ import { useRef, useState } from 'react';
 import { getLocalStorageItem, setLocalStorageItem } from '@/lib/localStorageUtils';
 import { registerUndo } from '@/lib/undoManager';
 import { isAppKey } from '@/lib/storageKeys';
+import { dehydrateValue, hydrateValue, MEDIA_KEYS } from '@/lib/mediaStore';
+
+const carriesMedia = (key: string) => (MEDIA_KEYS as readonly string[]).includes(key);
 
 interface UseLocalStorageOptions<T> {
   /**
@@ -21,10 +24,15 @@ export function useLocalStorage<T>(
     console.warn(`useLocalStorage: "${key}" is not registered in storageKeys.ts; backups and "Delete all data" will skip it.`);
   }
   const [storedValue, setStoredValue] = useState<T>(() => {
-    return getLocalStorageItem(key, initialValue);
+    const stored = getLocalStorageItem(key, initialValue);
+    return carriesMedia(key) ? hydrateValue(stored) : stored;
   });
   const storedValueRef = useRef(storedValue);
-  const persist = (value: T) => setLocalStorageItem(key, toStorage ? toStorage(value) : value);
+  const persist = (value: T) => {
+    const prepared = toStorage ? toStorage(value) : value;
+    // Photos and recordings go to IndexedDB; the stored collection keeps only references.
+    setLocalStorageItem(key, carriesMedia(key) ? dehydrateValue(prepared) : prepared);
+  };
 
   const setValue = (value: T | ((prev: T) => T)) => {
     const previousValue = storedValueRef.current;

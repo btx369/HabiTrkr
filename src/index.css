@@ -186,6 +186,9 @@ All colors MUST be HSL.
    * The page/raised gap is what makes the layering visible without strong borders.
    */
   .dark {
+    /* The capsule is black on a near-black page: a lighter edge and icons keep it from vanishing. */
+    --nav-border: 0 0% 30%;
+    --nav-icon: 0 0% 58%;
     --background: 30 6% 7%;
     --foreground: 0 0% 99%;
 
