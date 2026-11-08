@@ -161,7 +161,7 @@ export function AudioPlayer({
   const buttonSize = size === 'sm' || compact ? 'h-6 w-6' : 'h-8 w-8';
   const iconSize = size === 'sm' || compact ? 10 : 12;
   const speedButtonClass = compact
-    ? 'h-6 px-1.5 text-[10px]'
+    ? 'h-6 px-1.5 text-[11px]'
     : 'h-8 px-2 text-xs';
 
   return (
@@ -221,7 +221,7 @@ export function AudioPlayer({
         * nothing pushed the button across — it drifted left and looked unanchored. From `sm`
         * up the seeker takes the free space itself and this has no effect.
         */}
-      <span className={`${compact ? 'text-[10px]' : 'text-xs'} text-muted-foreground flex-shrink-0 tabular-nums ${showSeeker ? '' : 'ml-auto sm:ml-0'}`}>
+      <span className={`${compact ? 'text-[11px]' : 'text-xs'} text-muted-foreground flex-shrink-0 tabular-nums ${showSeeker ? '' : 'ml-auto sm:ml-0'}`}>
         {formatDuration(Math.floor(currentTime))}/{formatDuration(Math.floor(duration))}
       </span>
 
@@ -361,7 +361,7 @@ export function MultiAudioPlayer({ audios, size = 'md', hasColor = false }: Mult
   const buttonSize = size === 'sm' ? 'h-6 w-6' : 'h-8 w-8';
   const iconSize = size === 'sm' ? 10 : 12;
   const speedStyles = getColoredOutlineButtonStyles(hasColor);
-  const speedButtonClass = size === 'sm' ? 'h-6 px-1.5 text-[10px]' : 'h-8 px-2 text-xs';
+  const speedButtonClass = size === 'sm' ? 'h-6 px-1.5 text-[11px]' : 'h-8 px-2 text-xs';
 
   return (
     <div className="flex flex-col gap-2">
@@ -400,7 +400,7 @@ export function MultiAudioPlayer({ audios, size = 'md', hasColor = false }: Mult
 
             {/* Elapsed/total, and `ml-auto` to park the speed button on the right edge once
                 the seeker is hidden below `sm`. Same reasoning as AudioPlayer above. */}
-            <span className={`${size === 'sm' ? 'text-[10px]' : 'text-xs'} text-muted-foreground flex-shrink-0 tabular-nums`}>
+            <span className={`${size === 'sm' ? 'text-[11px]' : 'text-xs'} text-muted-foreground flex-shrink-0 tabular-nums`}>
               {formatDuration(Math.floor(currentTime))}/{formatDuration(Math.floor(duration))}
             </span>
 

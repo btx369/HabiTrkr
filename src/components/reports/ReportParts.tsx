@@ -53,14 +53,14 @@ export function BarChart({ bars, height = 96 }: { bars: Bar[]; height?: number }
     <div className="flex items-end gap-1.5" style={{ height: height + 36 }} role="img" aria-label={bars.map((b) => `${b.label}: ${b.display}`).join(', ')}>
       {bars.map((bar) => (
         <div key={bar.label} className="flex min-w-0 flex-1 flex-col items-center justify-end gap-1">
-          <span className="text-[10px] leading-none text-muted-foreground">{bar.value === null ? '' : bar.display}</span>
+          <span className="text-[11px] leading-none text-muted-foreground">{bar.value === null ? '' : bar.display}</span>
           <div className="flex w-full items-end" style={{ height }}>
             <div
               className={cn('w-full rounded-t-md', bar.highlight ? 'bg-foreground' : 'bg-foreground/35', bar.value === null && 'bg-transparent')}
               style={{ height: bar.value === null ? 0 : Math.max(3, Math.round(bar.value * height)) }}
             />
           </div>
-          <span className="w-full truncate text-center text-[10px] leading-none text-muted-foreground">{bar.label}</span>
+          <span className="w-full truncate text-center text-[11px] leading-none text-muted-foreground">{bar.label}</span>
         </div>
       ))}
     </div>
@@ -78,7 +78,7 @@ export function Heatmap({ weeks, rowLabels, compact = false }: {
   return (
     <div className={compact ? 'flex gap-[2px]' : 'flex gap-1'} role="img" aria-label={rowLabels.join(', ')}>
       {rowLabels.length > 0 && (
-        <div className="flex flex-col gap-1 pr-1 text-[9px] text-muted-foreground">
+        <div className="flex flex-col gap-1 pr-1 text-[11px] text-muted-foreground">
           {rowLabels.map((label, i) => (
             <span key={i} className="flex h-4 items-center">{i % 2 === 0 ? label : ''}</span>
           ))}
@@ -114,7 +114,7 @@ export function MonthGrid({ weeks, dayLabels }: {
   return (
     <div className="mx-auto grid max-w-sm grid-cols-7 gap-1" role="img" aria-label={dayLabels.join(', ')}>
       {dayLabels.map((label, i) => (
-        <span key={`h${i}`} className="pb-1 text-center text-[10px] text-muted-foreground">{label}</span>
+        <span key={`h${i}`} className="pb-1 text-center text-[11px] text-muted-foreground">{label}</span>
       ))}
       {weeks.flat().map((cell, i) =>
         cell ? (

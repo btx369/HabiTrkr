@@ -261,7 +261,7 @@ export function NoteCard({
                   className={`w-full object-cover rounded-md ${viewType === 'x3' ? 'h-20' : 'h-28'}`}
                 />
                 {images.length > 1 && (
-                  <span className="absolute bottom-1 right-1 rounded-full bg-black/60 px-1.5 text-[10px] font-medium leading-4 text-white">
+                  <span className="absolute bottom-1 right-1 rounded-full bg-black/60 px-1.5 text-[11px] font-medium leading-4 text-white">
                     +{images.length - 1}
                   </span>
                 )}
