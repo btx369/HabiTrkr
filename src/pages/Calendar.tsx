@@ -404,6 +404,10 @@ export default function Calendar() {
                   <CardHeader className="px-2 py-2">
                     <div className="flex items-center justify-between">
                       <h3 className="font-semibold text-lg">{dayOfWeek}</h3>
+                      {/* An empty day stays on one line instead of taking a full card. */}
+                      {dayEvents.length === 0 && (
+                        <p className="ml-3 mr-auto min-w-0 truncate text-sm text-muted-foreground">{t('noEvents')}</p>
+                      )}
                       <span className={cn(
                         "text-2xl font-bold",
                         isToday(day) ? "text-primary" : "text-muted-foreground"
@@ -412,10 +416,8 @@ export default function Calendar() {
                       </span>
                     </div>
                   </CardHeader>
-                  <CardContent className="px-2 pb-2 pt-0">
-                    {dayEvents.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">{t('noEvents')}</p>
-                    ) : (
+                  {dayEvents.length > 0 && <CardContent className="px-2 pb-2 pt-0">
+                    {(
                       <div className="space-y-2">
                         {[...dayEvents].sort((a, b) => {
                           // All-day events first
@@ -442,7 +444,7 @@ export default function Calendar() {
                         ))}
                       </div>
                     )}
-                  </CardContent>
+                  </CardContent>}
                 </Card>
               );
             })}
