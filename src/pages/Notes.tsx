@@ -1877,7 +1877,7 @@ const hasTitle = (note.name || '').trim() !== '';
     return (
       <div className="space-y-4">
         <div className="space-y-2">
-          <h3 className="text-lg font-medium">{t('archivedNotes')}</h3>
+          <h2 className="text-lg font-medium">{t('archivedNotes')}</h2>
           {archivedNotes.length > 0 ? renderNoteList(archivedNotes, {
             onEdit: openNoteEditor,
             onUnarchive: unarchiveNote,
@@ -1901,7 +1901,7 @@ const hasTitle = (note.name || '').trim() !== '';
         </div>
         
         <div className="space-y-2">
-          <h3 className="text-lg font-medium">{t('archivedFolders')}</h3>
+          <h2 className="text-lg font-medium">{t('archivedFolders')}</h2>
           {archivedFolders.length > 0 ? renderFolderList(archivedFolders, true) : (
             <Card>
               <CardContent className="text-center py-8">

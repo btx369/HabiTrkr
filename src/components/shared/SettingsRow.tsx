@@ -7,7 +7,7 @@ export const settingsPanelClass = 'bg-card border border-border shadow-[var(--su
 export function SettingsSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h3 className="text-sm font-medium text-muted-foreground mb-2 px-2">{title}</h3>
+      <h2 className="text-sm font-medium text-muted-foreground mb-2 px-2">{title}</h2>
       <div className={`${settingsPanelClass} overflow-hidden`}>{children}</div>
     </div>
   );

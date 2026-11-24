@@ -31,7 +31,7 @@ export default function InfoPage({ page }: { page: keyof typeof PAGES }) {
         <div className={`${settingsPanelClass} space-y-5 p-5`}>
           {textFor(text, language).map((section) => (
             <section key={section.heading} className="space-y-2">
-              <h3 className="text-base font-semibold text-foreground">{section.heading}</h3>
+              <h2 className="text-base font-semibold text-foreground">{section.heading}</h2>
               {section.body.map((paragraph) => (
                 <p key={paragraph} className="text-sm leading-relaxed text-muted-foreground">{paragraph}</p>
               ))}

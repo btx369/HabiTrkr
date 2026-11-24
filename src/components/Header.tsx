@@ -104,6 +104,8 @@ export const Header = ({ showSearch = false, searchQuery = '', onSearchChange, p
         * The content offset in Layout (`pt-16`) is unchanged: it still clears the shorter bar.
         */}
       <div className="mx-auto flex max-w-3xl items-center justify-between py-2 px-2 gap-3">
+        {/* Pages without search keep an empty slot so the title stays centred between the two sides. */}
+        {!showSearch && <div className="w-10 shrink-0" aria-hidden="true" />}
         {/* Left: Search Button (always visible when showSearch is true) */}
         {showSearch && (
         <Button

@@ -151,7 +151,7 @@ export default function TagsManager() {
                       variant="ghost"
                       size="icon"
                       onClick={() => handleEditClick(tagData.tag)}
-                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                      className="h-10 w-10 text-muted-foreground hover:text-foreground"
                     >
                       <Pencil size={20} />
                     </Button>
@@ -160,7 +160,7 @@ export default function TagsManager() {
                       variant="ghost"
                       size="icon"
                       onClick={() => handleDeleteClick(tagData)}
-                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      className="h-10 w-10 text-muted-foreground hover:text-destructive"
                     >
                       <Trash2 size={20} />
                     </Button>
@@ -175,7 +175,7 @@ export default function TagsManager() {
         ) : (
           <div className="bg-[hsl(var(--glass-bg))] backdrop-blur-xl border border-[hsl(var(--glass-border))] rounded-[20px] p-8 text-center">
             <Tag size={48} className="mx-auto mb-4 text-muted-foreground/50" />
-            <h3 className="font-medium text-foreground mb-2">{t('noTagsYet')}</h3>
+            <h2 className="font-medium text-foreground mb-2">{t('noTagsYet')}</h2>
             <p className="text-sm text-muted-foreground">{t('noTagsDescription')}</p>
           </div>
         )}

@@ -34,9 +34,9 @@ export function PageHeader({ title, onBack, trailing }: PageHeaderProps) {
         size="icon"
         onClick={onBack}
         aria-label={t('back')}
-        className="text-foreground hover:bg-hover hover:text-foreground rounded-full shrink-0"
+        className="text-foreground hover:bg-hover hover:text-foreground rounded-full shrink-0 [&_svg]:!size-6"
       >
-        <ChevronLeft size={20} />
+        <ChevronLeft size={24} />
       </Button>
 
       <div className="flex-1 flex items-center justify-center min-w-0">

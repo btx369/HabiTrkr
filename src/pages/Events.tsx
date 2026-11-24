@@ -1421,12 +1421,12 @@ export default function Events() {
           <TabsContent value="archived" className="mt-14 space-y-2">
             <div className="space-y-4">
               <div className="space-y-2">
-                <h3 className="text-lg font-medium">{t('archivedEvents')}</h3>
+                <h2 className="text-lg font-medium">{t('archivedEvents')}</h2>
                 {renderEventList(sortEventList(archivedEvents), t('noArchivedEvents'), true)}
               </div>
               
               <div className="space-y-2">
-                <h3 className="text-lg font-medium">{t('archivedFolders')}</h3>
+                <h2 className="text-lg font-medium">{t('archivedFolders')}</h2>
                 {renderEventFolderList(archivedEventFolders, t('noArchivedFolders'), true)}
               </div>
             </div>

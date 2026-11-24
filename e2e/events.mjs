@@ -143,10 +143,10 @@ try {
   check('calendar hides archived past event outside its week', !weekText.includes('Old dinner'));
   await page.getByRole('tab', { name: 'Month' }).click();
   await wait(page, 600);
-  await page.getByRole('tab', { name: 'Day' }).click();
+  await page.getByRole('tab', { name: 'Today' }).click();
   await wait(page, 600);
   const dayText = await page.locator('#root').innerText();
-  check('calendar day view shows timed event', dayText.includes('Dentist check-up'), dayText.slice(0, 300));
+  check('calendar Today view shows timed event', dayText.includes('Dentist check-up'), dayText.slice(0, 300));
   await page.getByRole('button', { name: 'Next' }).click();
   await wait(page, 400);
   await page.getByRole('button', { name: 'Previous' }).click();

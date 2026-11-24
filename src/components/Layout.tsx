@@ -84,9 +84,11 @@ export const Layout = ({
         onSearchChange={onSearchChange}
         pageTitle={pageTitle}
       />
-      <main {...swipeProps} className={cn("mx-auto min-h-[100dvh] w-full max-w-3xl pt-16 px-2", isBulkMode ? "pb-36" : "pb-20")}>
+      <main {...swipeProps} className={cn("mx-auto min-h-[100dvh] w-full max-w-3xl pt-16 px-2", isBulkMode ? "pb-44" : "pb-28")}>
         {children}
       </main>
+      {/* A soft fade under the floating bar, so the last card does not end in a hard cut behind it. */}
+      {!hideBottomNav && <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 bottom-0 z-30 h-24 bg-gradient-to-t from-background via-background/70 to-transparent" />}
       <BottomNavigation hidden={hideBottomNav} />
     </div>
   );

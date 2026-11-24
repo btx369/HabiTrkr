@@ -164,7 +164,7 @@ export function HabitCard({
   } : {};
   const coloredButtonClass = hasColor ? 'border hover:opacity-80' : 'border-foreground text-foreground';
 
-  const dayButtonSize = viewType === 'x3' ? 'h-5 w-5 text-[11px]' : 'h-7 w-7 text-xs';
+  const dayButtonSize = viewType === 'x3' ? 'h-5 w-5 text-[11px]' : 'h-7 w-7 text-xs sm:h-8 sm:w-8';
   const today = startOfDay(new Date());
 
   // The card's parts, laid out one way for the list view (a single row) and another for
@@ -191,7 +191,7 @@ export function HabitCard({
               </span>
               {/* The description could be written but was never shown anywhere. */}
               {habit.description && (
-                <span className={cn('min-w-0 truncate text-xs', hasColor ? 'text-cocoa/70' : 'text-muted-foreground')}>
+                <span className={cn('min-w-0 truncate text-xs', hasColor ? 'text-cocoa/90' : 'text-muted-foreground')}>
                   {highlightText(habit.description, searchQuery)}
                 </span>
               )}
@@ -206,7 +206,7 @@ export function HabitCard({
                     <Badge
                       variant="outline"
                       aria-label={t('timesToday').replace('{count}', String(todayCount))}
-                      className={cn('block max-w-full truncate whitespace-nowrap', viewType === 'x3' ? 'h-5 px-1 text-[11px]' : 'h-6 px-2 text-[11px]', badgeBorderClass, hasColor && 'text-cocoa')}
+                      className={cn('block max-w-full truncate whitespace-nowrap', viewType === 'x3' ? 'h-5 px-1 text-xs' : 'h-6 px-2 text-xs', badgeBorderClass, hasColor && 'text-cocoa')}
                     >
                       {todayCount}x{viewType !== 'x3' && ` ${t('today')}`}
                     </Badge>
@@ -226,7 +226,7 @@ export function HabitCard({
                       size="icon"
                       variant="outline"
                       aria-label="+1"
-                      className={cn('shrink-0 rounded-full text-[11px]', viewType === 'x3' ? 'h-5 w-5' : 'h-6 w-6', coloredButtonClass)}
+                      className={cn('shrink-0 rounded-full text-xs', viewType === 'x3' ? 'h-5 w-5' : 'h-6 w-6', coloredButtonClass)}
                       style={coloredButtonStyle}
                       onClick={(event) => handleCardAction(event, () => onMarkUnlimitedDone(habit.id))}
                     >
@@ -239,7 +239,7 @@ export function HabitCard({
                   <Badge
                     variant="outline"
                     aria-label={t('daysThisWeek').replace('{done}', String(weeklyCompletions)).replace('{total}', String(habit.numberOfDaysPerWeek || 1))}
-                    className={cn('block h-6 max-w-full truncate whitespace-nowrap px-2 text-[11px] leading-6', viewType === 'x3' && 'h-5 px-1 text-[11px]', badgeBorderClass, hasColor && 'text-cocoa')}
+                    className={cn('block h-6 max-w-full truncate whitespace-nowrap px-2 text-xs leading-6', viewType === 'x3' && 'h-5 px-1 text-xs', badgeBorderClass, hasColor && 'text-cocoa')}
                   >
                     {viewType === 'x3'
                       ? `${weeklyCompletions}/${habit.numberOfDaysPerWeek || 1}`
@@ -258,7 +258,7 @@ export function HabitCard({
                     <Badge
                       variant="outline"
                       aria-label={t('timesTodayOf').replace('{done}', String(todayCount)).replace('{total}', String(timesPerDay))}
-                      className={cn('block max-w-full truncate whitespace-nowrap', viewType === 'x3' ? 'h-5 px-1 text-[11px]' : 'h-6 px-2 text-[11px]', badgeBorderClass, hasColor && 'text-cocoa')}
+                      className={cn('block max-w-full truncate whitespace-nowrap', viewType === 'x3' ? 'h-5 px-1 text-xs' : 'h-6 px-2 text-xs', badgeBorderClass, hasColor && 'text-cocoa')}
                     >
                       {viewType === 'x3' ? `${todayCount}/${timesPerDay}` : (
                         <>
@@ -499,7 +499,7 @@ export function ArchivedHabitCard({
               <GripVertical data-habit-drag-handle className="mt-0.5 h-5 w-5 shrink-0 cursor-grab touch-none text-muted-foreground active:cursor-grabbing" aria-label={t('reorderHabit')} />
             )}
             <div className="min-w-0">
-              <h3 className="text-sm font-medium text-foreground">{highlightText(habit.name, searchQuery)}</h3>
+              <h2 className="text-sm font-medium text-foreground">{highlightText(habit.name, searchQuery)}</h2>
               {habit.description && <p className="truncate text-xs text-muted-foreground">{habit.description}</p>}
             </div>
           </div>

@@ -3,6 +3,20 @@
 @tailwind utilities;
 
 /*
+ * Atkinson Hyperlegible Next draws every zero with a slash, with no OpenType switch to
+ * turn it off. In dates and times ("10:00", "2026") that reads as a glitch, so the digits
+ * 0-9 alone come from Nunito (already bundled for headings); letters stay in Atkinson.
+ */
+@font-face {
+  font-family: 'Plain Digits';
+  font-style: normal;
+  font-weight: 200 1000;
+  font-display: swap;
+  src: url('../node_modules/@fontsource-variable/nunito/files/nunito-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0030-0039;
+}
+
+/*
  * Sonner on phones (≤600px) pins every toast to `left: 0` of a toaster that is
  * `width: 100%` but starts at the left offset, so it overflows the viewport by that
  * offset on the right. Our toasts are `w-fit`, so they ended up hugging the left edge.
@@ -38,7 +52,7 @@ All colors MUST be HSL.
    */
   :root {
     --font-display: 'Nunito Variable', 'Atkinson Hyperlegible Next', system-ui, sans-serif;
-    --font-body: 'Atkinson Hyperlegible Next', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --font-body: 'Plain Digits', 'Atkinson Hyperlegible Next', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
     --background: 37 56% 96%;
     --foreground: 14 17% 20%;
@@ -102,14 +116,14 @@ All colors MUST be HSL.
     --glass-bg: 37 56% 96% / 0.8;
     --glass-border: 0 0% 100% / 0.5;
 
-    /* The capsule and bulk bar stay dark cocoa in both themes. */
-    --nav-bg: 18 17% 15%;
-    --nav-border: 18 12% 25%;
+    /* The capsule and bulk bar: a light surface in the light theme, a raised dark one in the dark theme. */
+    --nav-bg: 40 70% 99%;
+    --nav-border: 30 22% 84%;
     --nav-active: 150 32% 36%;
     --nav-active-foreground: 0 0% 100%;
-    --nav-icon: 30 15% 70%;
-    --nav-icon-hover: 36 40% 92%;
-    --nav-foreground: 36 40% 94%;
+    --nav-icon: 14 10% 38%;
+    --nav-icon-hover: 14 17% 20%;
+    --nav-foreground: 14 17% 20%;
 
     /* A soft sunrise glow at the top of the page. */
     --paper-glow: 34 85% 72% / 0.16;
@@ -178,6 +192,7 @@ All colors MUST be HSL.
     --nav-active-foreground: 24 14% 9%;
     --nav-icon: 30 14% 70%;
     --nav-icon-hover: 36 38% 94%;
+    --nav-foreground: 36 38% 94%;
 
     --paper-glow: 34 80% 60% / 0.07;
   }

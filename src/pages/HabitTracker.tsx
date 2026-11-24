@@ -30,6 +30,7 @@ import { bulkSentence, colorSentence, movedToFolder, selectionQuestion, countedS
 import { useDateLocale } from '@/lib/dateLocale';
 import { useWeekStart, getJsDayFromVisualIndex } from '@/contexts/WeekStartContext';
 import { FLOATING_ADD_CLASS, FLOATING_ADD_STYLE } from '@/lib/floatingAdd';
+import { toggleCompletion, markDone, markUnlimitedDone, undoCompletion } from '@/lib/habitCompletion';
 import { useBulkSelection } from '@/hooks/useBulkSelection';
 import { useSwipeGesture } from '@/hooks/useSwipeGesture';
 import { getTodayKey, toDateKey } from '@/lib/dateUtils';
@@ -226,101 +227,15 @@ export default function HabitTracker() {
   };
 
   const toggleHabitCompletion = (habitId: string, date: Date) => {
-    const dateStr = toDateKey(date);
-    setHabits((prev: Habit[]) => prev.map(habit => {
-      if (habit.id === habitId) {
-        const isCompleted = habit.completedDates.includes(dateStr);
-        const newCompletedDates = isCompleted
-          ? habit.completedDates.filter(d => d !== dateStr)
-          : [...habit.completedDates, dateStr];
-        if (!habit.useTimesPerDay) return { ...habit, completedDates: newCompletedDates };
-
-        // A "times per day" habit keeps a counter beside the tick. Toggling a past day
-        // used to change only the tick, leaving "✓" with a count of 0, or an unticked
-        // day still counting 3. Keep the two in step: done means the full target.
-        const { [dateStr]: _previous, ...otherCounts } = habit.completionCounts ?? {};
-        return {
-          ...habit,
-          completedDates: newCompletedDates,
-          completionCounts: isCompleted ? otherCounts : { ...otherCounts, [dateStr]: habit.timesPerDay || 1 },
-        };
-      }
-      return habit;
-    }));
+    const dateKey = toDateKey(date);
+    setHabits((prev: Habit[]) => toggleCompletion(prev, habitId, dateKey));
   };
 
-  const markHabitDoneToday = (habitId: string) => {
-    const dateStr = getTodayKey();
-    setHabits((prev: Habit[]) => prev.map(habit => {
-      if (habit.id === habitId) {
-        if (habit.useTimesPerDay) {
-          const currentCount = habit.completionCounts?.[dateStr] || 0;
-          const timesPerDay = habit.timesPerDay || 1;
-          const newCount = currentCount + 1;
-          const shouldMarkCompleted = newCount >= timesPerDay && !habit.completedDates.includes(dateStr);
-          
-          return {
-            ...habit,
-            completionCounts: { ...habit.completionCounts, [dateStr]: newCount },
-            completedDates: shouldMarkCompleted 
-              ? [...habit.completedDates, dateStr] 
-              : habit.completedDates
-          };
-        }
-        
-        const isCompleted = habit.completedDates.includes(dateStr);
-        if (!isCompleted) {
-          return { ...habit, completedDates: [...habit.completedDates, dateStr] };
-        }
-      }
-      return habit;
-    }));
-  };
+  const markHabitDoneToday = (habitId: string) => setHabits((prev: Habit[]) => markDone(prev, habitId, getTodayKey()));
 
-  const markUnlimitedHabitDone = (habitId: string) => {
-    const dateStr = getTodayKey();
-    setHabits((prev: Habit[]) => prev.map(habit => {
-      if (habit.id === habitId) {
-        const currentCount = habit.completionCounts?.[dateStr] || 0;
-        return {
-          ...habit,
-          completionCounts: { ...habit.completionCounts, [dateStr]: currentCount + 1 }
-        };
-      }
-      return habit;
-    }));
-  };
+  const markUnlimitedHabitDone = (habitId: string) => setHabits((prev: Habit[]) => markUnlimitedDone(prev, habitId, getTodayKey()));
 
-  const undoHabitCompletion = (habitId: string) => {
-    const dateStr = getTodayKey();
-    setHabits((prev: Habit[]) => prev.map(habit => {
-      if (habit.id === habitId) {
-        const currentCount = habit.completionCounts?.[dateStr] || 0;
-        
-        if (currentCount > 0) {
-          const newCount = currentCount - 1;
-          const timesPerDay = habit.timesPerDay || 1;
-          const shouldRemoveCompleted = habit.useTimesPerDay && newCount < timesPerDay && habit.completedDates.includes(dateStr);
-          
-          return {
-            ...habit,
-            completionCounts: { ...habit.completionCounts, [dateStr]: newCount },
-            completedDates: shouldRemoveCompleted 
-              ? habit.completedDates.filter(d => d !== dateStr)
-              : habit.completedDates
-          };
-        }
-        
-        if (!habit.useTimesPerDay && !habit.useUnlimitedTimes && habit.completedDates.includes(dateStr)) {
-          return {
-            ...habit,
-            completedDates: habit.completedDates.filter(d => d !== dateStr)
-          };
-        }
-      }
-      return habit;
-    }));
-  };
+  const undoHabitCompletion = (habitId: string) => setHabits((prev: Habit[]) => undoCompletion(prev, habitId, getTodayKey()));
 
   // Habit CRUD operations
   // Helper to append items without duplicates (by id)
@@ -1294,9 +1209,9 @@ export default function HabitTracker() {
                     * Spanish, Dutch and Turkish, whose tab names are long.
                     */}
                   <div className="flex min-w-0 items-center gap-2">
-                    <h3 className="text-sm font-medium">
+                    <h2 className="text-sm font-medium">
                       {dateRange(weekStart, addDays(weekStart, 6), language, dateLocale)}
-                    </h3>
+                    </h2>
                     {showTodayButton && (
                       <Button
                         variant="ghostStatic"
@@ -1438,7 +1353,7 @@ export default function HabitTracker() {
             <div className="space-y-4">
               {/* Archived Habits Section - filtered to exclude habits in archived folders */}
               <div className="space-y-2">
-                <h3 className="text-lg font-medium">{t('archivedHabits')}</h3>
+                <h2 className="text-lg font-medium">{t('archivedHabits')}</h2>
                 {getArchivedHabitsFiltered().length === 0 ? (
                   <Card>
                     <CardContent className="text-center py-8">
@@ -1478,7 +1393,7 @@ export default function HabitTracker() {
               
               {/* Archived Folders Section */}
               <div className="space-y-2">
-                <h3 className="text-lg font-medium">{t('archivedFolders')}</h3>
+                <h2 className="text-lg font-medium">{t('archivedFolders')}</h2>
                 {getArchivedFolders().length === 0 ? (
                   <Card>
                     <CardContent className="text-center py-8">

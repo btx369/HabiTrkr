@@ -240,16 +240,17 @@ export function BulkActionBar({
       // Marks the bar for index.css, which lifts toasts above it while it is shown.
       data-bulk-bar=""
       className={cn(
-        "fixed bottom-[88px] left-1/2 z-40 -translate-x-1/2"
+        "fixed bottom-[76px] left-1/2 z-40 -translate-x-1/2"
       )}
     >
-      <div className="flex w-max max-w-[calc(100vw-16px)] items-center justify-center gap-2 rounded-full border border-nav-border bg-nav p-2">
+      {/* On a phone the actions sit in a 5-column grid (two rows for notes), so every label can stay 12px; from md up they are one capsule row. */}
+      <div className="grid w-[calc(100vw-16px)] max-w-[26rem] grid-cols-5 items-center gap-1 rounded-3xl border border-nav-border bg-nav p-1.5 shadow-[0_6px_18px_-10px_hsl(var(--cocoa)/0.45)] md:flex md:w-max md:max-w-[calc(100vw-16px)] md:justify-center md:gap-2 md:rounded-full md:p-2">
         {selectedCount > 0 && (
           <Button
             variant="ghostStatic"
             onClick={onClearSelection}
             aria-label={t('clearSelection')}
-            className="flex h-11 min-w-[44px] items-center justify-center gap-1 px-1.5 text-nav-foreground transition-all duration-300 ease-out hover:bg-white/10 hover:text-nav-foreground"
+            className="flex h-11 min-w-[44px] items-center justify-center gap-1 px-1.5 text-nav-foreground transition-all duration-300 ease-out hover:bg-foreground/10 hover:text-nav-foreground"
           >
             <X size={15} />
             <span className="text-xs font-medium">{selectedCount}</span>
@@ -265,11 +266,11 @@ export function BulkActionBar({
               <PopoverTrigger asChild>
                   <Button
                     variant="ghostStatic"
-                    className="flex h-11 min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0 px-0.5 text-nav-foreground transition-all duration-300 ease-out hover:bg-white/10 hover:text-nav-foreground data-[state=open]:bg-white/10 md:min-w-[48px] md:basis-auto md:px-2"
+                    className="flex h-12 min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0 px-0.5 text-nav-foreground transition-colors duration-200 ease-out hover:bg-foreground/10 hover:text-nav-foreground data-[state=open]:bg-foreground/10 md:min-w-[48px] md:basis-auto md:px-2"
                     disabled={selectedCount === 0}
                   >
                     <Icon size={20} className="shrink-0 md:h-[22px] md:w-[22px]" />
-                    <span className="whitespace-nowrap text-[11px] leading-tight md:text-xs">{resolveLabel(action.label)}</span>
+                    <span className="max-w-full truncate text-xs leading-4">{resolveLabel(action.label)}</span>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-3" align="center" side="top">
@@ -288,18 +289,18 @@ export function BulkActionBar({
               key={action.type}
               variant="ghost"
               className={cn(
-                "flex h-11 min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0 px-2.5 transition-all duration-300 ease-out md:min-w-[48px] md:basis-auto md:px-2",
+                "flex h-12 min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0 px-1 transition-colors duration-200 ease-out md:min-w-[48px] md:basis-auto md:px-2",
                 isSelectionAction && isActionSelected(action.type) && "bg-nav-active hover:bg-nav-active",
                 action.type === 'delete'
-                  ? "text-destructive hover:text-destructive hover:bg-white/10"
-                  : "text-nav-foreground hover:text-nav-foreground hover:bg-white/10 data-[state=open]:bg-white/10"
+                  ? "text-destructive hover:text-destructive hover:bg-foreground/10"
+                  : "text-nav-foreground hover:text-nav-foreground hover:bg-foreground/10 data-[state=open]:bg-foreground/10"
               )}
               onClick={() => onAction(action.type)}
               disabled={!isSelectionAction && selectedCount === 0}
               aria-pressed={isSelectionAction ? isActionSelected(action.type) : undefined}
             >
               <Icon size={20} className="shrink-0 md:h-[22px] md:w-[22px]" />
-              <span className="whitespace-nowrap text-[11px] leading-tight md:text-xs">{resolveLabel(action.type === 'pin' && allPinned ? 'unpin' : action.label)}</span>
+              <span className="max-w-full truncate text-xs leading-4">{resolveLabel(action.type === 'pin' && allPinned ? 'unpin' : action.label)}</span>
             </Button>
           );
         })}

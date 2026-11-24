@@ -21,7 +21,7 @@ Soft, warm, paper-like. Linen page with a faint sunrise glow, creamy cards, gene
 | Destructive (Barro) | `destructive` | #AB4336 | #E57A6C |
 | Muted surface | `muted` | #EEE7DD | #322D29 |
 | Border / input | `border` / `input` | #E4DBCD / #CDBFAC | #413935 / #544B45 |
-| Nav capsule | `nav` | #2D2420 | #362F2B |
+| Nav capsule | `nav` | #FEFBF6 | #362F2B |
 
 Contrast: text on page 12:1, secondary text 6.2:1 (5.4:1 on muted), white on leaf 5.6:1, cocoa on sun 5.2:1, white on Barro 5.9:1.
 
@@ -45,7 +45,7 @@ Scale: 11 / 12 / 14 / 16 / 20 / 24 (page titles) / 30 (stat numbers).
 - **Tabs / segmented control:** round track, selected pill in leaf.
 - **Done habit day:** filled leaf circle with a check; today: sun circle; missed: neutral outline (no red).
 - **Calendar dots** (event / reminder / habit) sit below the day circle.
-- **Floating nav capsule:** dark cocoa in both themes, active tab in leaf.
+- **Floating nav capsule:** a light, small capsule in the light theme (card colour, soft border, 36 px buttons with 22 px icons), a raised dark one in the dark theme; active tab in leaf. The bulk-action bar shares its tokens. Digits 0-9 come from Nunito (`Plain Digits` in index.css) because Atkinson draws a slashed zero.
 - **Inputs:** `muted` fill, `input` border, visible 2 px leaf focus ring. Time pickers are wheel style.
 
 ## 6. Anti-patterns (do not do these in this app)

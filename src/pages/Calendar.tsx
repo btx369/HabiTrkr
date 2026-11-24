@@ -6,7 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, SlidingTabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CalendarEventItem } from '@/components/calendar/CalendarEventItem';
-import { CalendarDayView } from '@/components/calendar/CalendarDayView';
+import { CalendarTodayView } from '@/components/calendar/CalendarTodayView';
+import { Habit } from '@/types/habit';
+import { Note } from '@/types/note';
+import { toggleCompletion, markDone, markUnlimitedDone, undoCompletion } from '@/lib/habitCompletion';
+import { getTodayKey } from '@/lib/dateUtils';
 import { EventViewer } from '@/components/events/EventViewer';
 import { EventEditor } from '@/components/events/EventEditor';
 import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
@@ -88,6 +92,9 @@ export default function Calendar() {
   const [archivedEvents, setArchivedEvents] = useLocalStorage<Event[]>('archivedEvents', []);
   const [eventFolders, setEventFolders] = useLocalStorage<EventFolder[]>('eventFolders', []);
   const [, setArchivedEventFolders] = useLocalStorage<EventFolder[]>('archivedEventFolders', []);
+  const [habits, setHabits] = useLocalStorage<Habit[]>('habits', []);
+  // Only titles, colours and reminder times are read; nothing here writes to the notes.
+  const [notes] = useLocalStorage<Note[]>('notes', []);
   const [viewMode, setViewMode] = useState<ViewMode>('weekly');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
@@ -107,8 +114,8 @@ export default function Calendar() {
     observer.observe(el);
     return () => observer.disconnect();
   }, [viewMode]);
-  // Each dot takes 6px plus a 2px gap; keep 4px clear on each side of the cell.
-  const DOT_STEP = 8;
+  // Each dot takes 8px plus a 2px gap; keep 4px clear on each side of the cell.
+  const DOT_STEP = 10;
   const dotsPerDay = Math.max(1, Math.floor((monthGridWidth / 7 - 8 + 2) / DOT_STEP));
 
   // Add button: a new event on the day being looked at.
@@ -329,13 +336,13 @@ export default function Calendar() {
               activeValue={viewMode} 
               values={['daily', 'weekly', 'monthly']}
             >
-              <TabsTrigger value="daily">{t('dayView')}</TabsTrigger>
+              <TabsTrigger value="daily" onClick={goToToday}>{t('today')}</TabsTrigger>
               <TabsTrigger value="weekly">{t('weekView')}</TabsTrigger>
               <TabsTrigger value="monthly">{t('monthView')}</TabsTrigger>
             </SlidingTabsList>
           </Tabs>
           
-          {showTodayButton && (
+          {showTodayButton && viewMode !== 'daily' && (
             /*
              * A Button, not a span with `cursor-pointer`. As a span it was not focusable
              * from the keyboard and had no hover feedback at all, so nothing marked it as
@@ -377,18 +384,24 @@ export default function Calendar() {
         {/* Calendar content - Daily view */}
         {viewMode === 'daily' && (
           <div className="mt-2">
-          <CalendarDayView
-            currentDate={currentDate}
+          <CalendarTodayView
+            date={currentDate}
             events={filterEvents(getEventsForDate(currentDate))}
+            habits={habits}
+            notes={notes}
             searchQuery={searchQuery}
             onViewEvent={handleViewEvent}
+            onToggleHabit={(id, day) => setHabits((prev: Habit[]) => toggleCompletion(prev, id, toDateKey(day)))}
+            onMarkDone={(id) => setHabits((prev: Habit[]) => markDone(prev, id, getTodayKey()))}
+            onMarkUnlimitedDone={(id) => setHabits((prev: Habit[]) => markUnlimitedDone(prev, id, getTodayKey()))}
+            onUndo={(id) => setHabits((prev: Habit[]) => undoCompletion(prev, id, getTodayKey()))}
           />
           </div>
         )}
 
         {/* Calendar content - Weekly view */}
         {viewMode === 'weekly' && (
-          <div className="space-y-2 mt-2">
+          <div className="space-y-2 mt-2 md:grid md:grid-cols-2 md:items-start md:gap-2 md:space-y-0">
             {filteredWeekDays.map(day => {
               const dayEvents = filterEvents(getEventsForDate(day));
               // The full day name here, not the abbreviation: this is a per-day heading with
@@ -403,7 +416,7 @@ export default function Calendar() {
                 )}>
                   <CardHeader className="px-2 py-2">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-lg">{dayOfWeek}</h3>
+                      <h2 className="font-semibold text-lg">{dayOfWeek}</h2>
                       <span className={cn(
                         "text-2xl font-bold",
                         isToday(day) ? "text-primary" : "text-muted-foreground"
@@ -508,13 +521,13 @@ export default function Calendar() {
                               return (
                                 <div 
                                   key={idx}
-                                  className={cn("w-1.5 h-1.5 rounded-full", !hasColor && "bg-primary")}
+                                  className={cn("w-2 h-2 rounded-full", !hasColor && "bg-primary")}
                                   style={hasColor ? { backgroundColor: event.color } : undefined}
                                 />
                               );
                             })}
                             {dayEvents.length > dotsPerDay && (
-                              <span className="text-[11px] font-semibold leading-none text-muted-foreground">+{dayEvents.length - dotsPerDay + 1}</span>
+                              <span className="text-xs font-semibold leading-none text-muted-foreground">+{dayEvents.length - dotsPerDay + 1}</span>
                             )}
                           </div>
                         )}

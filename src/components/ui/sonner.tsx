@@ -16,8 +16,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
       className="toaster group"
       // Above the bottom navigation bar (16px from the edge, 56px tall) and the Add button,
       // which toasts used to cover for a few seconds.
-      offset={{ bottom: 'calc(88px + env(safe-area-inset-bottom))' }}
-      mobileOffset={{ bottom: 'calc(88px + env(safe-area-inset-bottom))' }}
+      offset={{ bottom: 'calc(76px + env(safe-area-inset-bottom))' }}
+      mobileOffset={{ bottom: 'calc(76px + env(safe-area-inset-bottom))' }}
       /*
        * A sensible width instead of a fixed one.
        *

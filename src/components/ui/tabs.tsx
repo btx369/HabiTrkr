@@ -79,7 +79,7 @@ const SlidingTabsList = React.forwardRef<
           style={{
             left: indicatorStyle.left,
             width: indicatorStyle.width,
-            transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+            transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
           }}
         />
         {/* Tab triggers (rendered above the indicator) */}

@@ -105,7 +105,7 @@ export function EventFolderCard({
   // Use standardized color helpers
   const hasColor = !isDefaultColor(folder.color);
   const iconColorClass = getColoredIconClass(hasColor);
-  const mutedTextColorClass = hasColor ? 'text-cocoa/70' : 'text-muted-foreground';
+  const mutedTextColorClass = hasColor ? 'text-cocoa/90' : 'text-muted-foreground';
   const textColorClass = hasColor ? 'text-cocoa' : 'text-foreground';
 
   // Bulk selection checkbox component - renders inline, replacing the menu

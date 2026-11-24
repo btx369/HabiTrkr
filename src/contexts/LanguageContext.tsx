@@ -29,6 +29,8 @@ interface LanguageContextType {
 
 const translations = {
   en: {
+    'reminders': 'Reminders',
+    'nothingPlanned': 'Nothing planned for this day',
     'settings': 'Settings',
     'search': 'Search',
     'theme': 'Theme',
@@ -587,6 +589,8 @@ const translations = {
     'reportsDailyActivity': 'Activity',
   },
   pt: {
+    'reminders': 'Lembretes',
+    'nothingPlanned': 'Nada planeado para este dia',
     'settings': 'Definições',
     'search': 'Pesquisar',
     'theme': 'Tema',
@@ -1154,6 +1158,8 @@ const translations = {
     'reportsDailyActivity': 'Atividade',
   },
   es: {
+    'reminders': 'Recordatorios',
+    'nothingPlanned': 'Nada previsto para este día',
     'settings': 'Configuración',
     'search': 'Buscar',
     'theme': 'Tema',
@@ -1721,6 +1727,8 @@ const translations = {
     'reportsDailyActivity': 'Actividad',
   },
   fr: {
+    'reminders': 'Rappels',
+    'nothingPlanned': 'Rien de prévu ce jour-là',
     'settings': 'Paramètres',
     'search': 'Rechercher',
     'theme': 'Thème',
@@ -2288,6 +2296,8 @@ const translations = {
     'reportsDailyActivity': 'Activité',
   },
   de: {
+    'reminders': 'Erinnerungen',
+    'nothingPlanned': 'Für diesen Tag ist nichts geplant',
     'settings': 'Einstellungen',
     'search': 'Suchen',
     'theme': 'Thema',
@@ -2846,6 +2856,8 @@ const translations = {
     'reportsDailyActivity': 'Aktivität',
   },
   it: {
+    'reminders': 'Promemoria',
+    'nothingPlanned': 'Niente in programma per questo giorno',
     'settings': 'Impostazioni',
     'search': 'Cerca',
     'theme': 'Tema',
@@ -3413,6 +3425,8 @@ const translations = {
     'reportsDailyActivity': 'Attività',
   },
   nl: {
+    'reminders': 'Herinneringen',
+    'nothingPlanned': 'Niets gepland voor deze dag',
     'settings': 'Instellingen',
     'search': 'Zoeken',
     'theme': 'Thema',
@@ -3955,6 +3969,8 @@ const translations = {
     'reportsDailyActivity': 'Activiteit',
   },
   pl: {
+    'reminders': 'Przypomnienia',
+    'nothingPlanned': 'Nic nie zaplanowano na ten dzień',
     'settings': 'Ustawienia',
     'search': 'Szukaj',
     'theme': 'Motyw',
@@ -4497,6 +4513,8 @@ const translations = {
     'reportsDailyActivity': 'Aktywność',
   },
   tr: {
+    'reminders': 'Hatırlatıcılar',
+    'nothingPlanned': 'Bu gün için planlanmış bir şey yok',
     'settings': 'Ayarlar',
     'search': 'Ara',
     'theme': 'Tema',
@@ -5039,6 +5057,8 @@ const translations = {
     'reportsDailyActivity': 'Etkinlik',
   },
   ja: {
+    'reminders': 'リマインダー',
+    'nothingPlanned': 'この日の予定はありません',
     'settings': '設定',
     'search': '検索',
     'theme': 'テーマ',
@@ -5581,6 +5601,8 @@ const translations = {
     'reportsDailyActivity': 'アクティビティ',
   },
   zh: {
+    'reminders': '提醒',
+    'nothingPlanned': '这一天没有安排',
     'settings': '设置',
     'search': '搜索',
     'theme': '主题',
@@ -6123,6 +6145,8 @@ const translations = {
     'reportsDailyActivity': '活动',
   },
   ko: {
+    'reminders': '알림',
+    'nothingPlanned': '이 날은 예정된 일정이 없습니다',
     'settings': '설정',
     'search': '검색',
     'theme': '테마',

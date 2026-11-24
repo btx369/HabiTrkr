@@ -219,7 +219,7 @@ export default {
 			'shake': 'shake 0.5s ease-in-out',
 			'hero-expand': 'hero-expand 0.25s cubic-bezier(0.32, 0.72, 0, 1) forwards',
 			'hero-collapse': 'hero-collapse 0.2s cubic-bezier(0.32, 0, 0.67, 0) forwards',
-			'search-expand': 'search-expand 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards'
+			'search-expand': 'search-expand 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards'
 		}
 		}
 	},

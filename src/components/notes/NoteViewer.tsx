@@ -604,6 +604,10 @@ export function NoteViewer({
     }
   }, [isEditingContent, note?.type]);
 
+  // Declared before the early return below so hooks run in the same order on every render.
+  const [draggingItemId, setDraggingItemId] = useState<string | null>(null);
+  const draggedOrderChangedRef = useRef(false);
+
   if (!note) return null;
 
   const handleBackClick = () => {
@@ -963,8 +967,6 @@ export function NoteViewer({
    * the finger, and `touch-none` on it stops the page from scrolling instead. Rows are found
    * by position, so only unchecked rows (which carry data-list-row) are drop targets.
    */
-  const [draggingItemId, setDraggingItemId] = useState<string | null>(null);
-  const draggedOrderChangedRef = useRef(false);
 
   const moveListItem = (fromId: string, toId: string) => {
     const apply = (prev: ListItem[]) => {
@@ -1943,7 +1945,7 @@ export function NoteViewer({
       <DialogContent 
         hideCloseButton 
         className={`fixed inset-0 w-full max-w-none h-full max-h-none m-0 !rounded-none flex flex-col p-0 border-0 translate-x-0 translate-y-0 left-0 top-0 data-[state=open]:animate-hero-expand data-[state=closed]:animate-hero-collapse ${
-          hasColor ? 'text-cocoa [&_.text-muted-foreground]:text-cocoa/70 [&_.text-foreground]:text-cocoa' : ''
+          hasColor ? 'text-cocoa [&_.text-muted-foreground]:text-cocoa/90 [&_.text-foreground]:text-cocoa' : ''
         }`}
         // `--card-hover-color` is set here for the same reason ColoredCard sets it:
         // the action menu (⋮) inside styles its hover with that variable. Without it the
@@ -2131,20 +2133,11 @@ export function NoteViewer({
               hoverClass={themedHoverStyles}
               iconColorClass={hasColor ? 'text-cocoa' : 'text-foreground'}
             />
-            <Button
-              variant={iconButtonStyles.variant}
-              size="sm"
-              aria-label={t('close')}
-                  onClick={handleCloseClick}
-              className={`h-9 w-9 p-0 [&_svg]:!size-6 rounded-full transition-colors duration-200 ${themedHoverStyles}`}
-            >
-              <X size={20} />
-            </Button>
           </div>
         </DialogHeader>
         
         <ScrollArea ref={scrollAreaRootRef} className="flex-1 h-full w-full" scrollbarClassName={hasColor ? 'bg-black/30' : 'bg-foreground/20'} style={{ overflowAnchor: 'none' }}>
-          <div className="h-full w-full box-border py-3 px-3 flex flex-col items-stretch max-w-full space-y-3" style={{ overflowAnchor: 'none' }}>
+          <div className="h-full w-full box-border py-3 px-3 flex flex-col items-stretch max-w-full md:max-w-3xl md:mx-auto md:px-6 space-y-3" style={{ overflowAnchor: 'none' }}>
             {renderNoteContent()}
             {note.reminder && (
               <div className="pt-1">

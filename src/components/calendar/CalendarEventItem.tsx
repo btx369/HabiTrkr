@@ -47,7 +47,7 @@ export function CalendarEventItem({
   const eventBorderClass = hasColor ? 'border-black/10 dark:border-black/10' : 'border-border';
   const badgeBorderClass = getColoredBorderClass(hasColor, 100);
   const textColorClass = hasColor ? 'text-cocoa' : 'text-foreground';
-  const mutedTextClass = hasColor ? 'text-cocoa/70' : 'text-muted-foreground';
+  const mutedTextClass = hasColor ? 'text-cocoa/90' : 'text-muted-foreground';
 
   return (
     <div 

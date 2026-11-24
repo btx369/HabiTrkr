@@ -304,7 +304,7 @@ export default function Profile() {
 
         {/* Account Section */}
         <div>
-          <h3 className="text-sm font-medium text-muted-foreground mb-2 px-2">{t('account')}</h3>
+          <h2 className="text-sm font-medium text-muted-foreground mb-2 px-2">{t('account')}</h2>
           <div className={`${profilePanelClass} overflow-hidden`}>
             <SettingsRow
               icon={<Shield size={20} />}
@@ -317,13 +317,14 @@ export default function Profile() {
               icon={<Tag size={20} />}
               label={t('tags')}
               onClick={() => navigate('/tags')}
+              showChevron
             />
           </div>
         </div>
 
         {/* Preferences Section */}
         <div>
-          <h3 className="text-sm font-medium text-muted-foreground mb-2 px-2">{t('preferences')}</h3>
+          <h2 className="text-sm font-medium text-muted-foreground mb-2 px-2">{t('preferences')}</h2>
           <div className={`${profilePanelClass} overflow-hidden`}>
             <SettingsRow
               icon={theme === 'dark' ? <Moon size={20} /> : <Sun size={20} />}
@@ -377,7 +378,7 @@ export default function Profile() {
                 <DialogHeader>
                   <DialogTitle className="text-center">{t('language')}</DialogTitle>
                 </DialogHeader>
-                <div className="max-h-[50vh] overflow-y-auto no-scrollbar">
+                <div className="max-h-[50vh] overflow-y-auto [scrollbar-width:thin]">
                   {(Object.keys(nativeLanguageNames) as Language[]).map((lang) => (
                     <button
                       key={lang}

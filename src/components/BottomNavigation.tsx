@@ -25,12 +25,8 @@ export const BottomNavigation = ({ hidden = false }: BottomNavigationProps) => {
 
   return (
     <div className="fixed z-50" style={NAV_CAPSULE_STYLE}>
-      {/*
-        * Every colour here comes from the `nav` scrim tokens in index.css. The capsule is
-        * intentionally dark in BOTH themes, which is why it does not reuse --primary or
-        * --foreground: those invert with the theme and would turn it white in dark mode.
-        */}
-      <div className="flex items-center justify-center gap-2 p-2 bg-nav border border-nav-border rounded-full">
+      {/* Every colour here comes from the `nav` tokens in index.css: a light capsule in the light theme, a raised dark one in the dark theme. */}
+      <div className="flex items-center justify-center gap-1 p-1.5 bg-nav border border-nav-border rounded-full shadow-[0_6px_18px_-10px_hsl(var(--cocoa)/0.45)]">
         {navItems.map(({ path, icon: Icon, label }) => {
           const isActive = location.pathname === path;
           return (
@@ -51,13 +47,13 @@ export const BottomNavigation = ({ hidden = false }: BottomNavigationProps) => {
             >
                 <div
                   className={cn(
-                    "flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300 ease-out",
+                    "flex items-center justify-center w-9 h-9 rounded-full transition-colors duration-200 ease-out",
                     isActive 
                       ? "bg-nav-active text-nav-active-foreground" 
-                      : "bg-transparent text-nav-icon group-hover:text-nav-icon-hover group-hover:bg-white/10"
+                      : "bg-transparent text-nav-icon group-hover:text-nav-icon-hover group-hover:bg-foreground/10"
                   )}
                 >
-                <Icon size={24} />
+                <Icon size={22} />
               </div>
             </button>
           );

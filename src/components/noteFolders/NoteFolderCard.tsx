@@ -112,7 +112,7 @@ export function NoteFolderCard({
   // Use standardized color helpers for consistent styling
   const hasColor = !isDefaultColor(folder.color);
   const iconColorClass = getColoredIconClass(hasColor);
-  const mutedTextColorClass = hasColor ? 'text-cocoa/70' : 'text-muted-foreground';
+  const mutedTextColorClass = hasColor ? 'text-cocoa/90' : 'text-muted-foreground';
 
   // Bulk selection checkbox component - renders inline, replacing the menu
   const BulkCheckbox = () => (

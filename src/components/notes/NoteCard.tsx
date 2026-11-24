@@ -117,7 +117,7 @@ export function NoteCard({
   // Use standardized color helpers for consistent styling
   const hasColor = !isDefaultColor(note.color);
   const textColorClass = hasColor ? 'text-cocoa' : 'text-foreground';
-  const mutedTextColorClass = hasColor ? 'text-cocoa/70' : 'text-muted-foreground';
+  const mutedTextColorClass = hasColor ? 'text-cocoa/90' : 'text-muted-foreground';
   const iconColorClass = getColoredIconClass(hasColor);
   // A note filed in a folder says so on its card, on every list it appears in.
   const isFiled = useIsFiled(note.id);
@@ -261,7 +261,7 @@ export function NoteCard({
                   className={`w-full object-cover rounded-md ${viewType === 'x3' ? 'h-20' : 'h-28'}`}
                 />
                 {images.length > 1 && (
-                  <span className="absolute bottom-1 right-1 rounded-full bg-black/60 px-1.5 text-[11px] font-medium leading-4 text-white">
+                  <span className="absolute bottom-1 right-1 rounded-full bg-black/60 px-1.5 text-xs font-medium leading-4 text-white">
                     +{images.length - 1}
                   </span>
                 )}
