@@ -117,6 +117,13 @@ export const ScrollColumn = ({
   };
 
   const handleItemClick = (index: number) => {
+    // A tap lands within ~100ms of the finger lifting, while `isScrollingRef` still says a
+    // touch is in progress, which made the effect above skip its scroll: the value changed
+    // but the column stayed where it was. Scroll to the tapped row here, and let go of the
+    // touch flag first so the scroll-end snap can run afterwards.
+    isScrollingRef.current = false;
+    if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+    containerRef.current?.scrollTo({ top: index * itemHeight, behavior: 'smooth' });
     onSelectionChange(index);
   };
 

@@ -342,7 +342,7 @@ export default function Calendar() {
             </SlidingTabsList>
           </Tabs>
           
-          {showTodayButton && viewMode !== 'daily' && (
+          {showTodayButton && (
             /*
              * A Button, not a span with `cursor-pointer`. As a span it was not focusable
              * from the keyboard and had no hover feedback at all, so nothing marked it as

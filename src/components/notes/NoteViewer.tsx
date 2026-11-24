@@ -1944,7 +1944,7 @@ export function NoteViewer({
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent 
         hideCloseButton 
-        className={`fixed inset-0 w-full max-w-none h-full max-h-none m-0 !rounded-none flex flex-col p-0 border-0 translate-x-0 translate-y-0 left-0 top-0 data-[state=open]:animate-hero-expand data-[state=closed]:animate-hero-collapse ${
+        className={`fixed inset-0 w-full max-w-none h-full max-h-none m-0 !rounded-none flex flex-col p-0 border-0 translate-x-0 translate-y-0 left-0 top-0 data-[state=open]:animate-hero-expand data-[state=closed]:animate-hero-collapse md:inset-auto md:left-1/2 md:top-1/2 md:h-[min(46rem,calc(100dvh-4rem))] md:w-[min(44rem,calc(100vw-4rem))] md:-translate-x-1/2 md:-translate-y-1/2 md:!rounded-[20px] md:border md:data-[state=open]:animate-none md:data-[state=closed]:animate-none overflow-hidden ${
           hasColor ? 'text-cocoa [&_.text-muted-foreground]:text-cocoa/90 [&_.text-foreground]:text-cocoa' : ''
         }`}
         // `--card-hover-color` is set here for the same reason ColoredCard sets it:
@@ -2137,7 +2137,7 @@ export function NoteViewer({
         </DialogHeader>
         
         <ScrollArea ref={scrollAreaRootRef} className="flex-1 h-full w-full" scrollbarClassName={hasColor ? 'bg-black/30' : 'bg-foreground/20'} style={{ overflowAnchor: 'none' }}>
-          <div className="h-full w-full box-border py-3 px-3 flex flex-col items-stretch max-w-full md:max-w-3xl md:mx-auto md:px-6 space-y-3" style={{ overflowAnchor: 'none' }}>
+          <div className="h-full w-full box-border py-3 px-3 flex flex-col items-stretch max-w-full space-y-3" style={{ overflowAnchor: 'none' }}>
             {renderNoteContent()}
             {note.reminder && (
               <div className="pt-1">
