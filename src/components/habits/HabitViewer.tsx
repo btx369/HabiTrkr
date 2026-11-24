@@ -135,7 +135,7 @@ export function HabitViewer({ habit, isOpen, onClose, onEdit, onDelete }: HabitV
           {habit.tags && habit.tags.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {habit.tags.map((tag) => (
-                <Badge key={tag} variant="outline" className={borderClass}>#{tag}</Badge>
+                <Badge key={tag} variant="outline" className={`${borderClass} ${textColorClass}`}>#{tag}</Badge>
               ))}
             </div>
           )}

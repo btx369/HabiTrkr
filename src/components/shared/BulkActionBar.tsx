@@ -266,11 +266,11 @@ export function BulkActionBar({
               <PopoverTrigger asChild>
                   <Button
                     variant="ghostStatic"
-                    className="flex h-12 min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0 px-0.5 text-nav-foreground transition-colors duration-200 ease-out hover:bg-foreground/10 hover:text-nav-foreground data-[state=open]:bg-foreground/10 md:min-w-[48px] md:basis-auto md:px-2"
+                    className="flex h-14 min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0 px-0.5 text-nav-foreground transition-colors duration-200 ease-out hover:bg-foreground/10 hover:text-nav-foreground data-[state=open]:bg-foreground/10 md:min-w-[48px] md:basis-auto md:px-2"
                     disabled={selectedCount === 0}
                   >
                     <Icon size={20} className="shrink-0 md:h-[22px] md:w-[22px]" />
-                    <span className="max-w-full truncate text-xs leading-4">{resolveLabel(action.label)}</span>
+                    <span className="max-w-full truncate text-xs leading-5">{resolveLabel(action.label)}</span>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-3" align="center" side="top">
@@ -289,7 +289,7 @@ export function BulkActionBar({
               key={action.type}
               variant="ghost"
               className={cn(
-                "flex h-12 min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0 px-1 transition-colors duration-200 ease-out md:min-w-[48px] md:basis-auto md:px-2",
+                "flex h-14 min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-0 px-1 py-0 transition-colors duration-200 ease-out md:min-w-[48px] md:basis-auto md:px-2",
                 isSelectionAction && isActionSelected(action.type) && "bg-nav-active hover:bg-nav-active",
                 action.type === 'delete'
                   ? "text-destructive hover:text-destructive hover:bg-foreground/10"
@@ -300,7 +300,7 @@ export function BulkActionBar({
               aria-pressed={isSelectionAction ? isActionSelected(action.type) : undefined}
             >
               <Icon size={20} className="shrink-0 md:h-[22px] md:w-[22px]" />
-              <span className="max-w-full truncate text-xs leading-4">{resolveLabel(action.type === 'pin' && allPinned ? 'unpin' : action.label)}</span>
+              <span className="max-w-full truncate text-xs leading-5">{resolveLabel(action.type === 'pin' && allPinned ? 'unpin' : action.label)}</span>
             </Button>
           );
         })}

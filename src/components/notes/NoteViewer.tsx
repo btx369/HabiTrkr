@@ -2011,7 +2011,7 @@ export function NoteViewer({
       <DialogContent 
         hideCloseButton 
         className={`fixed inset-0 w-full max-w-none h-full max-h-none m-0 !rounded-none flex flex-col p-0 border-0 translate-x-0 translate-y-0 left-0 top-0 data-[state=open]:animate-hero-expand data-[state=closed]:animate-hero-collapse md:inset-auto md:left-1/2 md:top-1/2 md:h-[min(46rem,calc(100dvh-4rem))] md:w-[min(44rem,calc(100vw-4rem))] md:-translate-x-1/2 md:-translate-y-1/2 md:!rounded-[20px] md:border md:data-[state=open]:animate-none md:data-[state=closed]:animate-none overflow-hidden ${
-          hasColor ? 'text-cocoa [&_.text-muted-foreground]:text-cocoa/90 [&_.text-foreground]:text-cocoa' : ''
+          hasColor ? 'text-cocoa [&_.text-muted-foreground]:text-cocoa/90 [&_.text-foreground]:text-cocoa [&_button.border-input]:bg-transparent [&_button.border-input]:border-cocoa/40' : ''
         }`}
         // `--card-hover-color` is set here for the same reason ColoredCard sets it:
         // the action menu (⋮) inside styles its hover with that variable. Without it the

@@ -60,7 +60,7 @@ export function BarChart({ bars, height = 96 }: { bars: Bar[]; height?: number }
               style={{ height: bar.value === null ? 0 : Math.max(3, Math.round(bar.value * height)) }}
             />
           </div>
-          <span className="w-full truncate text-center text-xs leading-none text-muted-foreground">{bar.label}</span>
+          <span className="w-full truncate text-center text-xs leading-4 text-muted-foreground">{bar.label}</span>
         </div>
       ))}
     </div>

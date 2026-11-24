@@ -289,7 +289,7 @@ export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventV
                 <Badge 
                   key={index} 
                   variant="outline"
-                  className={borderClass}
+                  className={`${borderClass} ${textColorClass}`}
                 >
                   #{tag}
                 </Badge>
