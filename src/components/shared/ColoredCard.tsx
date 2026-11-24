@@ -57,7 +57,7 @@ function getHoverColor(hexColor: string, isDark: boolean): string {
  * Applies the colour as a translucent background and forces black text when a colour is applied.
  */
 export const ColoredCard = React.forwardRef<HTMLDivElement, ColoredCardProps>(
-  ({ color, useFallback = false, className, children, ...props }, ref) => {
+  ({ color, useFallback = false, className, children, onKeyDown, ...props }, ref) => {
     const hasColor = !isDefaultColor(color);
     const { theme } = useTheme();
     const isDark = theme === 'dark';
@@ -82,6 +82,7 @@ export const ColoredCard = React.forwardRef<HTMLDivElement, ColoredCardProps>(
         ref={ref}
         className={cn(
           hasColor && "border-black/10",
+          props.onClick && "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           /*
            * No tap or click animation. This carried `transition-transform duration-150`
            * for a "subtle scale on tap" that no longer exists — the scale itself was
@@ -101,6 +102,24 @@ export const ColoredCard = React.forwardRef<HTMLDivElement, ColoredCardProps>(
           className
         )}
         style={glassStyles}
+        {...(props.onClick
+          ? {
+              /*
+               * A card that opens something has to be reachable and operable from the keyboard,
+               * not just by touch: Tab focuses it, Enter or Space activates it. Only keys
+               * pressed on the card itself count, so typing in a control inside it is left alone.
+               */
+              tabIndex: 0,
+              onKeyDown: (event: React.KeyboardEvent<HTMLDivElement>) => {
+                onKeyDown?.(event);
+                if (event.defaultPrevented || event.target !== event.currentTarget) return;
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  event.currentTarget.click();
+                }
+              },
+            }
+          : { onKeyDown })}
         {...props}
       >
         {children}

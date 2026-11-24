@@ -24,7 +24,7 @@ export const BottomNavigation = ({ hidden = false }: BottomNavigationProps) => {
   if (hidden) return null;
 
   return (
-    <div className="fixed z-50" style={NAV_CAPSULE_STYLE}>
+    <nav aria-label="HabiTrkr" className="fixed z-50" style={NAV_CAPSULE_STYLE}>
       {/* Every colour here comes from the `nav` tokens in index.css: a light capsule in the light theme, a raised dark one in the dark theme. */}
       <div className="flex items-center justify-center gap-1 p-1.5 bg-nav border border-nav-border rounded-full shadow-[0_6px_18px_-10px_hsl(var(--cocoa)/0.45)]">
         {navItems.map(({ path, icon: Icon, label }) => {
@@ -59,6 +59,6 @@ export const BottomNavigation = ({ hidden = false }: BottomNavigationProps) => {
           );
         })}
       </div>
-    </div>
+    </nav>
   );
 };

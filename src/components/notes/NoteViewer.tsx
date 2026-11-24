@@ -689,8 +689,8 @@ export function NoteViewer({
     } else if (note.type === 'list') {
       setEditedItems([...note.items]);
       // Store which list item was clicked for proper focus handling
+      if (itemId) setClickedListItemId(itemId);
       if (itemId && event) {
-        setClickedListItemId(itemId);
         // Calculate cursor position within the clicked list item text
         const container = event.currentTarget as HTMLElement;
         const idx = getCaretIndexFromPoint(container, event.clientX, event.clientY);
@@ -1238,15 +1238,27 @@ export function NoteViewer({
     if (images.length === 1) {
       return (
         <div 
-          className="block w-full max-w-full cursor-pointer"
+          className="block w-full max-w-full cursor-pointer rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          role="button"
+          tabIndex={0}
+          aria-label={t('noteImageAlt')}
           onClick={(e) => {
             e.stopPropagation();
             openGallery(0);
           }}
+          onKeyDown={(e) => {
+            if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+              e.preventDefault();
+              e.stopPropagation();
+              openGallery(0);
+            }
+          }}
         >
           <img
             src={images[0]}
-            alt={t('noteImageAlt')}
+            alt=""
+            loading="lazy"
+            decoding="async"
             className="block w-full h-auto rounded-lg"
           />
         </div>
@@ -1259,15 +1271,27 @@ export function NoteViewer({
           {images.map((img, idx) => (
             <div 
               key={idx}
-              className="cursor-pointer"
+              className="cursor-pointer rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              role="button"
+              tabIndex={0}
+              aria-label={`${t('noteImageAlt')} ${idx + 1}`}
               onClick={(e) => {
                 e.stopPropagation();
                 openGallery(idx);
               }}
+              onKeyDown={(e) => {
+                if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  openGallery(idx);
+                }
+              }}
             >
               <img
                 src={img}
-                alt={`Note image ${idx + 1}`}
+                alt=""
+                loading="lazy"
+                decoding="async"
                 className="w-full h-48 object-cover rounded-lg"
               />
             </div>
@@ -1282,15 +1306,27 @@ export function NoteViewer({
         {images.map((img, idx) => (
           <div 
             key={idx}
-            className="cursor-pointer"
+            className="cursor-pointer rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            role="button"
+            tabIndex={0}
+            aria-label={`${t('noteImageAlt')} ${idx + 1}`}
             onClick={(e) => {
               e.stopPropagation();
               openGallery(idx);
             }}
+            onKeyDown={(e) => {
+              if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+                e.preventDefault();
+                e.stopPropagation();
+                openGallery(idx);
+              }
+            }}
           >
             <img
               src={img}
-              alt={`Note image ${idx + 1}`}
+              alt=""
+                loading="lazy"
+                decoding="async"
               className="w-full h-32 object-cover rounded-lg"
             />
           </div>
@@ -1558,8 +1594,16 @@ export function NoteViewer({
               </div>
             ) : (
               <div 
-                className="w-full max-w-full min-w-0 flex flex-col space-y-3 cursor-text pr-3"
+                className="w-full max-w-full min-w-0 flex flex-col space-y-3 cursor-text pr-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
                 onClick={(e) => startEditingContent(e)}
+                tabIndex={readOnly ? undefined : 0}
+                onKeyDown={(e) => {
+                  // Keyboard way into editing; keys pressed on something inside are not ours.
+                  if (e.target === e.currentTarget && e.key === 'Enter') {
+                    e.preventDefault();
+                    startEditingContent();
+                  }
+                }}
               >
                 {images.length > 0 && renderImageGrid(images)}
                 {audioWithLabels.length > 0 && renderAudioList(audioWithLabels)}
@@ -1650,6 +1694,9 @@ export function NoteViewer({
                   ) : (
                      <span 
                        className="text-sm leading-none break-words flex-1 min-w-0 cursor-pointer hover:bg-hover p-1 min-h-[1.75rem] flex items-center"
+                       role="button"
+                       tabIndex={readOnly ? undefined : 0}
+                       onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); startEditingContent(undefined, item.id); } }}
                        onClick={(e) => startEditingContent(e, item.id)}
                       >
                        {highlightText(item.text, searchQuery)}
@@ -1721,6 +1768,9 @@ export function NoteViewer({
                           ) : (
                              <span 
                                className="text-sm leading-none line-through text-muted-foreground break-words flex-1 min-w-0 cursor-pointer hover:bg-hover p-1 flex items-center"
+                               role="button"
+                               tabIndex={readOnly ? undefined : 0}
+                               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); startEditingContent(undefined, item.id); } }}
                                onClick={(e) => startEditingContent(e, item.id)}
                              >
                               {highlightText(item.text, searchQuery)}
@@ -1798,8 +1848,16 @@ export function NoteViewer({
               </div>
             ) : (
               <div 
-                className="w-full max-w-full min-w-0 flex flex-col space-y-3 cursor-text pr-3"
+                className="w-full max-w-full min-w-0 flex flex-col space-y-3 cursor-text pr-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
                 onClick={(e) => startEditingContent(e)}
+                tabIndex={readOnly ? undefined : 0}
+                onKeyDown={(e) => {
+                  // Keyboard way into editing; keys pressed on something inside are not ours.
+                  if (e.target === e.currentTarget && e.key === 'Enter') {
+                    e.preventDefault();
+                    startEditingContent();
+                  }
+                }}
               >
                 {audioImages.length > 0 && renderImageGrid(audioImages)}
                 {audioWithLabelsAudio.length > 0 && renderAudioList(audioWithLabelsAudio)}
@@ -1872,8 +1930,16 @@ export function NoteViewer({
               </div>
             ) : (
               <div 
-                className="w-full max-w-full min-w-0 flex flex-col space-y-3 cursor-text pr-3"
+                className="w-full max-w-full min-w-0 flex flex-col space-y-3 cursor-text pr-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
                 onClick={(e) => startEditingContent(e)}
+                tabIndex={readOnly ? undefined : 0}
+                onKeyDown={(e) => {
+                  // Keyboard way into editing; keys pressed on something inside are not ours.
+                  if (e.target === e.currentTarget && e.key === 'Enter') {
+                    e.preventDefault();
+                    startEditingContent();
+                  }
+                }}
               >
                 {imageWithLabelsAudio.length > 0 && renderAudioList(imageWithLabelsAudio)}
                 {imageTextContent ? (

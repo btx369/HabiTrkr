@@ -278,6 +278,8 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
             <div className="flex gap-3 mt-2">
               <Input 
                 type="number" 
+                inputMode="numeric"
+                aria-label={t('daysPerWeek')}
                 min="1" 
                 max="7"
                 value={formData.numberOfDaysPerWeek} 
@@ -315,6 +317,8 @@ export function HabitEditor({ isOpen, onClose, onSave, initialHabit, mode = 'cre
               <div className="flex gap-3 mt-2">
                 <Input 
                   type="number" 
+                  inputMode="numeric"
+                  aria-label={t('timesPerDay')}
                   min="1" 
                   max="999"
                   value={formData.timesPerDay} 

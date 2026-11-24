@@ -112,6 +112,17 @@ export function EventFolderCard({
   const BulkCheckbox = () => (
     <div 
       className={shouldAnimateCheckbox ? "animate-in zoom-in-50 duration-300" : ""}
+      role="checkbox"
+      aria-checked={isBulkSelected}
+      aria-label={t('selectItems')}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          onBulkSelect?.(folder.id);
+        }
+      }}
       onClick={(e) => {
         e.stopPropagation();
         onBulkSelect?.(folder.id);
@@ -131,7 +142,7 @@ export function EventFolderCard({
   return (
     <ColoredCard 
       color={folder.color}
-      className="transition-all group relative"
+      className="transition-[background-color,border-color,color,opacity,box-shadow,transform] group relative"
     >
       <Collapsible open={isOpen} onOpenChange={showBulkCheckbox ? undefined : setIsOpen}>
         <CardContent className="px-2 py-2">

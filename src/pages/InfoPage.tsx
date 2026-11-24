@@ -20,7 +20,7 @@ export default function InfoPage({ page }: { page: keyof typeof PAGES }) {
   return (
     <div className="paper min-h-screen">
       <PageHeader title={t(title)} onBack={() => navigate(-1)} />
-      <div className="mx-auto max-w-3xl px-2 pb-8 space-y-4">
+      <main id="main-content" tabIndex={-1} className="focus:outline-none mx-auto max-w-3xl px-2 pb-8 space-y-4">
         {page === 'about' && (
           <div className={`${settingsPanelClass} flex flex-col items-center gap-1 p-6 text-center`}>
             <img src={`${import.meta.env.BASE_URL}icon-192.png`} alt="" className="h-16 w-16 rounded-2xl" />
@@ -46,7 +46,7 @@ export default function InfoPage({ page }: { page: keyof typeof PAGES }) {
             </p>
           )}
         </div>
-      </div>
+      </main>
     </div>
   );
 }

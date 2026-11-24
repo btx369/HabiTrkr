@@ -98,6 +98,7 @@ export function CustomAlertDialog({
             <Input
               id="alert-value"
               type="number"
+              inputMode="numeric"
               min={1}
               max={currentMax}
               value={value}

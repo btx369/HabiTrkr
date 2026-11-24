@@ -176,6 +176,17 @@ export function EventCard({
   const BulkCheckbox = () => (
     <div 
       className={shouldAnimateCheckbox ? "animate-in zoom-in-50 duration-300" : ""}
+      role="checkbox"
+      aria-checked={isBulkSelected}
+      aria-label={t('selectItems')}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          onBulkSelect?.(event.id);
+        }
+      }}
       onClick={(e) => {
         e.stopPropagation();
         onBulkSelect?.(event.id);
@@ -204,7 +215,7 @@ export function EventCard({
     <ColoredCard 
       color={event.color}
       className={cn(
-        "transition-all cursor-pointer relative",
+        "transition-[background-color,border-color,color,opacity,box-shadow,transform] cursor-pointer relative",
         getCardHeight()
       )}
       onClick={handleCardClick}

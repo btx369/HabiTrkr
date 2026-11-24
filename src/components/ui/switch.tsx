@@ -32,7 +32,7 @@ const Switch = React.forwardRef<
        * the knob so the knob keeps a visible 2px inset at the top and bottom, which is what
        * stops it looking like it is about to fall out.
        */
-      "peer inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border border-border/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-switch-on data-[state=checked]:border-switch-on data-[state=unchecked]:bg-muted-foreground/40 hover:data-[state=unchecked]:bg-muted-foreground/50 hover:data-[state=checked]:bg-switch-on/90",
+      "hit-area peer inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border border-border/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-switch-on data-[state=checked]:border-switch-on data-[state=unchecked]:bg-muted-foreground/40 hover:data-[state=unchecked]:bg-muted-foreground/50 hover:data-[state=checked]:bg-switch-on/90",
       className
     )}
     {...props}

@@ -111,7 +111,7 @@ export default function TagsManager() {
       <PageHeader title={t('manageTags')} onBack={() => navigate(-1)} />
 
       {/* Content */}
-      <div className="mx-auto max-w-3xl px-2 pb-8 space-y-4">
+      <main id="main-content" tabIndex={-1} className="focus:outline-none mx-auto max-w-3xl px-2 pb-8 space-y-4">
         {/* Search */}
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-muted-foreground" size={20} />
@@ -179,7 +179,7 @@ export default function TagsManager() {
             <p className="text-sm text-muted-foreground">{t('noTagsDescription')}</p>
           </div>
         )}
-      </div>
+      </main>
 
       {/* Rename Dialog */}
       <EditorDialog

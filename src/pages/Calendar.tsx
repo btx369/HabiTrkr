@@ -336,9 +336,9 @@ export default function Calendar() {
               activeValue={viewMode} 
               values={['daily', 'weekly', 'monthly']}
             >
-              <TabsTrigger value="daily" onClick={goToToday}>{t('today')}</TabsTrigger>
-              <TabsTrigger value="weekly">{t('weekView')}</TabsTrigger>
-              <TabsTrigger value="monthly">{t('monthView')}</TabsTrigger>
+              <TabsTrigger value="daily" aria-controls={undefined} onClick={goToToday}>{t('today')}</TabsTrigger>
+              <TabsTrigger value="weekly" aria-controls={undefined}>{t('weekView')}</TabsTrigger>
+              <TabsTrigger value="monthly" aria-controls={undefined}>{t('monthView')}</TabsTrigger>
             </SlidingTabsList>
           </Tabs>
           
@@ -411,7 +411,7 @@ export default function Calendar() {
               
               return (
                 <Card key={day.toISOString()} className={cn(
-                  "transition-all",
+                  "transition-[background-color,border-color,color,opacity,box-shadow,transform]",
                   isToday(day) && "ring-2 ring-primary"
                 )}>
                   <CardHeader className="px-2 py-2">

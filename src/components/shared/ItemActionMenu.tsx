@@ -89,7 +89,7 @@ export function ItemActionMenu({
            * with the shared veil; the coloured path holds its full opacity, since its
            * resting look already comes from --card-hover-color.
            */
-          className={`group ${buttonSize} p-0 hover:text-current ${
+          className={`group hit-area ${buttonSize} p-0 hover:text-current ${
             hoverClass
               ? `transition-colors duration-200 data-[state=open]:bg-[var(--card-hover-color)] ${hoverClass}`
               : 'transition-colors hover:bg-hover data-[state=open]:bg-hover'

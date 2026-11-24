@@ -153,6 +153,7 @@ export function ReminderDialog({ isOpen, onClose, reminder, onSave }: ReminderDi
                 <span>{t('repeatEvery')}</span>
                 <Input
                   type="number"
+                  inputMode="numeric"
                   min={1}
                   max={99}
                   value={everyN}

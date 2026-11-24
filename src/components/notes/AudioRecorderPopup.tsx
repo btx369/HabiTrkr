@@ -162,7 +162,7 @@ export function AudioRecorderPopup({ isOpen, onRecordingComplete, onClose }: Aud
         <div className="flex flex-col items-center gap-2">
           <Button
             onClick={handleRecordClick}
-            className={`h-16 w-16 rounded-full flex items-center justify-center transition-all ${
+            className={`h-16 w-16 rounded-full flex items-center justify-center transition-[background-color,border-color,color,opacity,box-shadow,transform] ${
               isRecording 
                 ? 'bg-red-500 hover:bg-red-600 text-white' 
                 : 'bg-primary hover:bg-primary/90 text-primary-foreground'

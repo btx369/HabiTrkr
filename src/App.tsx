@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ToastProvider } from "@/contexts/ToastContext";
 import { WeekStartProvider } from "@/contexts/WeekStartContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import HabitTracker from "./pages/HabitTracker";
 import { scheduleStoredEventNotifications, scheduleStoredNoteReminders } from "./lib/notificationService";
 import { useLanguage } from "./contexts/LanguageContext";
@@ -51,7 +52,26 @@ const ReminderScheduler = () => {
   return null;
 };
 
+/** First tab stop on every screen: lets keyboard and screen-reader users jump past the header. */
+function SkipLink() {
+  const { t } = useLanguage();
+  return (
+    <a
+      href="#main-content"
+      className="skip-link"
+      onClick={(event) => {
+        // A hash link would change the route's URL; focus the content region instead.
+        event.preventDefault();
+        document.getElementById('main-content')?.focus();
+      }}
+    >
+      {t('skipToContent')}
+    </a>
+  );
+}
+
 const App = () => (
+  <ErrorBoundary>
   <QueryClientProvider client={queryClient}>
     {/* Do not pass storageKey here: the default comes from THEME_KEY, and overriding
         it silently reintroduces an old key name that the migration has already moved
@@ -62,6 +82,7 @@ const App = () => (
           <ToastProvider>
             <TooltipProvider>
               <ReminderScheduler />
+              <SkipLink />
               <Toaster />
               <Sonner />
               {/* BASE_URL is "/" normally and "/HabiTrkr/" on GitHub Pages (see vite.config.ts). */}
@@ -92,6 +113,7 @@ const App = () => (
       </LanguageProvider>
     </ThemeProvider>
   </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

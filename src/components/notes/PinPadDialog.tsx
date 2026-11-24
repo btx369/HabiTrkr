@@ -86,7 +86,7 @@ export const PinPadDialog = ({ isOpen, onClose, onSubmit, mode, title }: PinPadD
             {[0, 1, 2, 3].map(index => (
               <div
                 key={index}
-                className={`flex h-4 w-4 items-center justify-center rounded-full transition-all duration-200 ${
+                className={`flex h-4 w-4 items-center justify-center rounded-full transition-[background-color,border-color,color,opacity,box-shadow,transform] duration-200 ${
                   isShaking ? 'bg-destructive/15 ring-2 ring-destructive/70' : pin[index] ? 'bg-primary ring-2 ring-primary/20' : 'border-2 border-muted-foreground/35'
                 }`}
               >

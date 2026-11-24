@@ -1,3 +1,4 @@
+import { cloneElement, isValidElement } from 'react';
 import { ChevronRight } from 'lucide-react';
 
 /** The rounded panel that groups settings rows (Profile, Security, ...). */
@@ -53,7 +54,14 @@ export function SettingsRow({ icon, label, value, onClick, rightElement, showChe
         * setting once, and without this the row's own click handler would run on the same
         * tap and set the same value a second time.
         */}
-      {rightElement && <span onClick={(event) => event.stopPropagation()}>{rightElement}</span>}
+      {rightElement && (
+        <span onClick={(event) => event.stopPropagation()}>
+          {/* A switch has no text of its own: it is named after the row it sits in. */}
+          {isValidElement<{ 'aria-label'?: string }>(rightElement) && !rightElement.props['aria-label']
+            ? cloneElement(rightElement, { 'aria-label': label })
+            : rightElement}
+        </span>
+      )}
       {showChevron && <ChevronRight size={20} className="text-muted-foreground" />}
     </div>
   );
@@ -79,7 +87,7 @@ export function SettingsRow({ icon, label, value, onClick, rightElement, showChe
   if (onClick) {
     // text-sm on the button itself, not just inside it: the wrapper was still computing to
     // the 16px body size, which is what a text measurement of the row reports.
-    return <button onClick={onClick} className={`w-full text-left text-sm focus:outline-none ${rowClass} ${rowHover}`}>{labelSide}{valueSide}</button>;
+    return <button onClick={onClick} className={`w-full text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${rowClass} ${rowHover}`}>{labelSide}{valueSide}</button>;
   }
   return <div className={rowClass}>{labelSide}{valueSide}</div>;
 }

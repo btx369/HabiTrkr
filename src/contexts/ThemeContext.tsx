@@ -44,6 +44,10 @@ export function ThemeProvider({
 
     root.classList.remove('light', 'dark')
     root.classList.add(theme)
+    // Native scrollbars and form controls follow the theme, and the browser/status bar takes the
+    // page colour (these are the --background values in index.css).
+    root.style.colorScheme = theme
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#1a1614' : '#fbf6ef')
   }, [theme])
 
   const value = {

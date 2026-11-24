@@ -38,7 +38,7 @@ export function ColorPicker({
           onClick={() => onColorChange('#FFFFFF')}
           aria-label={t('noColor')}
           aria-pressed={selectedColor === '#FFFFFF' || selectedColor === ''}
-          className={`${singleRow ? 'w-6 h-6' : 'w-8 h-8'} rounded-full border-2 flex items-center justify-center bg-white transition-all ${
+          className={`${singleRow ? 'w-6 h-6' : 'w-8 h-8'} rounded-full border-2 flex items-center justify-center bg-white transition-[background-color,border-color,color,opacity,box-shadow,transform] ${
             selectedColor === '#FFFFFF' || selectedColor === ''
               ? 'border-foreground scale-110' 
               : 'border-border'
@@ -52,7 +52,7 @@ export function ColorPicker({
             type="button"
             aria-label={`${resolvedLabel} ${index + 1}`}
             aria-pressed={selectedColor === color}
-            className={`${singleRow ? 'w-6 h-6' : 'w-8 h-8'} rounded-full border-2 transition-all ${
+            className={`${singleRow ? 'w-6 h-6' : 'w-8 h-8'} rounded-full border-2 transition-[background-color,border-color,color,opacity,box-shadow,transform] ${
               selectedColor === color 
                 ? 'border-foreground scale-110' 
                 : 'border-border'

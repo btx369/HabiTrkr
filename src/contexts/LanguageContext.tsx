@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useState, ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from 'react';
 // Language context for internationalization
 import { getLocalStorageString, setLocalStorageString } from '@/lib/localStorageUtils';
 import { LANGUAGE_KEY } from '@/lib/storageKeys';
@@ -587,6 +587,10 @@ const translations = {
     'reportsNext': 'Next',
     'reportsCheckIns': 'Check-ins',
     'reportsDailyActivity': 'Activity',
+    'skipToContent': 'Skip to content',
+    'errorTitle': 'Something went wrong',
+    'errorBody': 'Your data is safe on this device. Reload the app to continue.',
+    'errorReload': 'Reload',
   },
   pt: {
     'reminders': 'Lembretes',
@@ -1156,6 +1160,10 @@ const translations = {
     'reportsNext': 'Seguinte',
     'reportsCheckIns': 'Registos',
     'reportsDailyActivity': 'Atividade',
+    'skipToContent': 'Saltar para o conteúdo',
+    'errorTitle': 'Algo correu mal',
+    'errorBody': 'Os seus dados estão seguros neste dispositivo. Recarregue a app para continuar.',
+    'errorReload': 'Recarregar',
   },
   es: {
     'reminders': 'Recordatorios',
@@ -1725,6 +1733,10 @@ const translations = {
     'reportsNext': 'Siguiente',
     'reportsCheckIns': 'Registros',
     'reportsDailyActivity': 'Actividad',
+    'skipToContent': 'Saltar al contenido',
+    'errorTitle': 'Algo salió mal',
+    'errorBody': 'Tus datos están a salvo en este dispositivo. Recarga la app para continuar.',
+    'errorReload': 'Recargar',
   },
   fr: {
     'reminders': 'Rappels',
@@ -2294,6 +2306,10 @@ const translations = {
     'reportsNext': 'Suivant',
     'reportsCheckIns': 'Validations',
     'reportsDailyActivity': 'Activité',
+    'skipToContent': 'Aller au contenu',
+    'errorTitle': 'Un problème est survenu',
+    'errorBody': 'Vos données sont en sécurité sur cet appareil. Rechargez l’app pour continuer.',
+    'errorReload': 'Recharger',
   },
   de: {
     'reminders': 'Erinnerungen',
@@ -2854,6 +2870,10 @@ const translations = {
     'reportsNext': 'Weiter',
     'reportsCheckIns': 'Einträge',
     'reportsDailyActivity': 'Aktivität',
+    'skipToContent': 'Zum Inhalt springen',
+    'errorTitle': 'Etwas ist schiefgelaufen',
+    'errorBody': 'Deine Daten sind auf diesem Gerät sicher. Lade die App neu, um fortzufahren.',
+    'errorReload': 'Neu laden',
   },
   it: {
     'reminders': 'Promemoria',
@@ -3423,6 +3443,10 @@ const translations = {
     'reportsNext': 'Successivo',
     'reportsCheckIns': 'Registrazioni',
     'reportsDailyActivity': 'Attività',
+    'skipToContent': 'Vai al contenuto',
+    'errorTitle': 'Qualcosa è andato storto',
+    'errorBody': 'I tuoi dati sono al sicuro su questo dispositivo. Ricarica l’app per continuare.',
+    'errorReload': 'Ricarica',
   },
   nl: {
     'reminders': 'Herinneringen',
@@ -3967,6 +3991,10 @@ const translations = {
     'reportsNext': 'Volgende',
     'reportsCheckIns': 'Afvinkingen',
     'reportsDailyActivity': 'Activiteit',
+    'skipToContent': 'Naar inhoud springen',
+    'errorTitle': 'Er ging iets mis',
+    'errorBody': 'Je gegevens staan veilig op dit apparaat. Laad de app opnieuw om door te gaan.',
+    'errorReload': 'Opnieuw laden',
   },
   pl: {
     'reminders': 'Przypomnienia',
@@ -4511,6 +4539,10 @@ const translations = {
     'reportsNext': 'Następny',
     'reportsCheckIns': 'Odhaczenia',
     'reportsDailyActivity': 'Aktywność',
+    'skipToContent': 'Przejdź do treści',
+    'errorTitle': 'Coś poszło nie tak',
+    'errorBody': 'Twoje dane są bezpieczne na tym urządzeniu. Załaduj aplikację ponownie, aby kontynuować.',
+    'errorReload': 'Załaduj ponownie',
   },
   tr: {
     'reminders': 'Hatırlatıcılar',
@@ -5055,6 +5087,10 @@ const translations = {
     'reportsNext': 'Sonraki',
     'reportsCheckIns': 'İşaretlemeler',
     'reportsDailyActivity': 'Etkinlik',
+    'skipToContent': 'İçeriğe geç',
+    'errorTitle': 'Bir şeyler ters gitti',
+    'errorBody': 'Verileriniz bu cihazda güvende. Devam etmek için uygulamayı yeniden yükleyin.',
+    'errorReload': 'Yeniden yükle',
   },
   ja: {
     'reminders': 'リマインダー',
@@ -5599,6 +5635,10 @@ const translations = {
     'reportsNext': '次へ',
     'reportsCheckIns': '達成回数',
     'reportsDailyActivity': 'アクティビティ',
+    'skipToContent': '本文へスキップ',
+    'errorTitle': '問題が発生しました',
+    'errorBody': 'データはこの端末に安全に保存されています。アプリを再読み込みして続けてください。',
+    'errorReload': '再読み込み',
   },
   zh: {
     'reminders': '提醒',
@@ -6143,6 +6183,10 @@ const translations = {
     'reportsNext': '下一个',
     'reportsCheckIns': '打卡次数',
     'reportsDailyActivity': '活动',
+    'skipToContent': '跳到内容',
+    'errorTitle': '出了点问题',
+    'errorBody': '你的数据安全地保存在此设备上。请重新加载应用以继续。',
+    'errorReload': '重新加载',
   },
   ko: {
     'reminders': '알림',
@@ -6687,6 +6731,10 @@ const translations = {
     'reportsNext': '다음',
     'reportsCheckIns': '체크인',
     'reportsDailyActivity': '활동',
+    'skipToContent': '본문으로 건너뛰기',
+    'errorTitle': '문제가 발생했습니다',
+    'errorBody': '데이터는 이 기기에 안전하게 저장되어 있습니다. 앱을 다시 불러와 계속하세요.',
+    'errorReload': '다시 불러오기',
   }
 };
 
@@ -6708,10 +6756,21 @@ interface LanguageProviderProps {
 
 export function LanguageProvider({ children }: LanguageProviderProps) {
   const [language, setLanguage] = useState<Language>(() => {
-    const saved = getLocalStorageString(LANGUAGE_KEY, 'en');
     const validLanguages: Language[] = ['en', 'pt', 'es', 'fr', 'de', 'it', 'nl', 'pl', 'tr', 'ja', 'zh', 'ko'];
-    return validLanguages.includes(saved as Language) ? (saved as Language) : 'en';
+    const saved = getLocalStorageString(LANGUAGE_KEY, '');
+    if (validLanguages.includes(saved as Language)) return saved as Language;
+    // First visit: follow the browser's language preference (not the IP), English otherwise.
+    const preferred = (typeof navigator !== 'undefined' ? navigator.languages ?? [navigator.language] : [])
+      .map((code) => (code ?? '').slice(0, 2).toLowerCase())
+      .find((code) => validLanguages.includes(code as Language));
+    return (preferred as Language | undefined) ?? 'en';
   });
+
+  // Screen readers, hyphenation and browser translation all read <html lang>; it has to follow
+  // the language chosen in Profile. Portuguese is the European variant, as in the UI text.
+  useEffect(() => {
+    document.documentElement.lang = language === 'pt' ? 'pt-PT' : language;
+  }, [language]);
 
   const handleSetLanguage = (newLanguage: Language) => {
     setLanguage(newLanguage);

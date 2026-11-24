@@ -143,7 +143,7 @@ export const ScrollColumn = ({
           <div
             key={index}
             className={cn(
-              "flex items-center justify-center text-center cursor-pointer transition-all duration-200 snap-center",
+              "flex items-center justify-center text-center cursor-pointer transition-[background-color,border-color,color,opacity,box-shadow,transform] duration-200 snap-center",
               "hover:bg-hover/50",
               index === selectedIndex 
                 ? "text-foreground font-semibold scale-110" 

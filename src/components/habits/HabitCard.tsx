@@ -118,6 +118,17 @@ export function HabitCard({
   const BulkCheckbox = () => (
     <div 
       className={shouldAnimateCheckbox ? "animate-in zoom-in-50 duration-300" : ""}
+      role="checkbox"
+      aria-checked={isBulkSelected}
+      aria-label={t('selectItems')}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          onBulkSelect?.(habit.id);
+        }
+      }}
       onClick={(e) => {
         e.stopPropagation();
         onBulkSelect?.(habit.id);
@@ -464,6 +475,17 @@ export function ArchivedHabitCard({
   // Bulk selection checkbox component
   const BulkCheckbox = () => (
     <div 
+      role="checkbox"
+      aria-checked={isBulkSelected}
+      aria-label={t('selectItems')}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          onBulkSelect?.(habit.id);
+        }
+      }}
       onClick={(e) => {
         e.stopPropagation();
         onBulkSelect?.(habit.id);

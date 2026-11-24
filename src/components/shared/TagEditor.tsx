@@ -264,6 +264,9 @@ export function TagEditor({
         <div className="relative flex-1 bg-muted rounded-md">
           <Input
             type="text"
+            aria-label={t('tags')}
+            spellCheck={false}
+            autoCapitalize="none"
             value={tagInput}
             onChange={(e) => handleInputChange(e.target.value)}
             onKeyDown={handleKeyDown}

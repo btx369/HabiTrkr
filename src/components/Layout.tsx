@@ -84,7 +84,7 @@ export const Layout = ({
         onSearchChange={onSearchChange}
         pageTitle={pageTitle}
       />
-      <main {...swipeProps} className={cn("mx-auto min-h-[100dvh] w-full max-w-3xl pt-16 px-2", isBulkMode ? "pb-44" : "pb-28")}>
+      <main id="main-content" tabIndex={-1} {...swipeProps} className={cn("mx-auto min-h-[100dvh] w-full max-w-3xl pt-16 px-2 focus:outline-none", isBulkMode ? "pb-44" : "pb-28")}>
         {children}
       </main>
       {/* A soft fade under the floating bar, so the last card does not end in a hard cut behind it. */}

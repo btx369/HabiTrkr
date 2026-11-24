@@ -444,6 +444,8 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
               <div className="flex gap-3 mt-3">
                 <Input 
                   type="number" 
+                  inputMode="numeric"
+                  aria-label={t('repeatEvery')}
                   min="1" 
                   value={formData.recurrenceInterval} 
                   onChange={e => setFormData(prev => ({ 
@@ -472,7 +474,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
                     recurrenceType: value as EventFormData['recurrenceType']
                   }))}
                 >
-                  <SelectTrigger className="h-10 text-sm bg-muted flex-1">
+                  <SelectTrigger aria-label={t('repeatEvery')} className="h-10 text-sm bg-muted flex-1">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -509,7 +511,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
             value={formData.alertType}
             onValueChange={handleAlertChange}
           >
-            <SelectTrigger className="h-10 text-sm bg-muted">
+            <SelectTrigger aria-label={t('alert')} className="h-10 text-sm bg-muted">
               <SelectValue>
                 {getAlertDisplayValue()}
               </SelectValue>

@@ -93,7 +93,7 @@ export const Header = ({ showSearch = false, searchQuery = '', onSearchChange, p
   }, [isSearchExpanded]);
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50">
+    <header className="fixed top-0 left-0 right-0 z-50">
       {/*
         * `py-2`, not `py-4`. Measured at 390px the bar was 72px tall: 16 + a 40px button + 16.
         * Eight pixels of that either side is a lot of empty chrome on a phone, and the icons
@@ -152,6 +152,9 @@ export const Header = ({ showSearch = false, searchQuery = '', onSearchChange, p
           </div>
         )}
         
+        {/* The heading stays for screen readers while the search field replaces it on screen. */}
+        {showSearch && isSearchExpanded && pageTitle && <h1 className="sr-only">{pageTitle}</h1>}
+
         {/* Centered Page Title (fades out when search expands) */}
         {(!showSearch || !isSearchExpanded) && (
           <div className="flex-1 flex items-center justify-center">
@@ -175,6 +178,6 @@ export const Header = ({ showSearch = false, searchQuery = '', onSearchChange, p
           <UserRound size={24} />
         </Button>
       </div>
-    </div>
+    </header>
   );
 };

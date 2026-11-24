@@ -119,7 +119,7 @@ export function MoveToFolderDialog<T extends MovableFolder>({
                   key={folder.id} 
                   color={folder.color}
                   useFallback
-                  className={`transition-all ${isCurrentFolder ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+                  className={`transition-[background-color,border-color,color,opacity,box-shadow,transform] ${isCurrentFolder ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                   onClick={() => {
                     if (isCurrentFolder) return;
                     onSelectFolder(folder.id);

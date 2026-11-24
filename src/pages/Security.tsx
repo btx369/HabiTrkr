@@ -96,7 +96,7 @@ export default function Security() {
     <div className="paper min-h-screen">
       <PageHeader title={t('security')} onBack={() => navigate(-1)} />
 
-      <div className="mx-auto max-w-3xl px-2 pb-8 space-y-6">
+      <main id="main-content" tabIndex={-1} className="focus:outline-none mx-auto max-w-3xl px-2 pb-8 space-y-6">
         <SettingsSection title={t('protectedNotes')}>
           <SettingsRow
             icon={<KeyRound size={20} />}
@@ -118,7 +118,7 @@ export default function Security() {
         </SettingsSection>
 
         <p className="px-2 text-sm text-muted-foreground">{t('securityExplainer')}</p>
-      </div>
+      </main>
 
       <NotePasswordDialog
         isOpen={passwordDialogMode !== null}

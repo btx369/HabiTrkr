@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { FileText, List, Mic, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NoteType } from '@/types/note';
@@ -14,6 +15,14 @@ interface NoteTypePopupProps {
 export function NoteTypePopup({ isOpen, onTypeSelect, onClose }: NoteTypePopupProps) {
   const { theme } = useTheme();
   const { t } = useLanguage();
+  // Escape closes the menu, like any other popup. Hooks run before the early return below.
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [isOpen, onClose]);
+
   // The hook has to run before this early return, which is why the labels below can
   // resolve through `t()` even though the popup renders nothing while closed.
   if (!isOpen) return null;
@@ -36,6 +45,7 @@ export function NoteTypePopup({ isOpen, onTypeSelect, onClose }: NoteTypePopupPr
         * strength where the list recedes without the page looking switched off.
         */}
       <div 
+        aria-hidden="true"
         className="fixed inset-0 bg-black/40 z-40"
         onClick={onClose}
       />

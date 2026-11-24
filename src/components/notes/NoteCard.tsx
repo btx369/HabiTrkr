@@ -341,6 +341,17 @@ export function NoteCard({
   const BulkCheckbox = () => (
     <div 
       className={shouldAnimateCheckbox ? "animate-in zoom-in-50 duration-300" : ""}
+      role="checkbox"
+      aria-checked={isBulkSelected}
+      aria-label={t('selectItems')}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          onBulkSelect?.(note.id);
+        }
+      }}
       onClick={(e) => {
         e.stopPropagation();
         onBulkSelect?.(note.id);
@@ -371,7 +382,7 @@ export function NoteCard({
       <ColoredCard 
         color={note.color}
         className={cn(
-          "transition-all select-none relative",
+          "transition-[background-color,border-color,color,opacity,box-shadow,transform] select-none relative",
           getCardHeight(),
           isDragged && 'opacity-80 scale-105 z-50',
           isDraggedOver && 'border-primary',
@@ -464,7 +475,7 @@ export function NoteCard({
     <ColoredCard 
       color={note.color}
       className={cn(
-        "transition-all select-none relative",
+        "transition-[background-color,border-color,color,opacity,box-shadow,transform] select-none relative",
         getCardHeight(),
         isDragged && 'opacity-80 scale-105 z-50',
         isDraggedOver && 'border-primary',

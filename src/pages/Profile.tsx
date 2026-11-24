@@ -199,7 +199,7 @@ export default function Profile() {
       <PageHeader title={t('profile')} onBack={() => navigate(-1)} />
 
       {/* Content */}
-      <div className="mx-auto max-w-3xl px-2 pb-8 space-y-6">
+      <main id="main-content" tabIndex={-1} className="focus:outline-none mx-auto max-w-3xl px-2 pb-8 space-y-6">
         {/* Profile Card */}
         <div className={`${profilePanelClass} p-6`}>
           <div className="flex items-center gap-4">
@@ -477,7 +477,7 @@ export default function Profile() {
             onClick={() => setDeleteAllOpen(true)}
           />
         </SettingsSection>
-      </div>
+      </main>
 
       <FeedbackDialog isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
 

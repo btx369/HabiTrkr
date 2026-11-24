@@ -250,7 +250,7 @@ export function BulkActionBar({
             variant="ghostStatic"
             onClick={onClearSelection}
             aria-label={t('clearSelection')}
-            className="flex h-11 min-w-[44px] items-center justify-center gap-1 px-1.5 text-nav-foreground transition-all duration-300 ease-out hover:bg-foreground/10 hover:text-nav-foreground"
+            className="flex h-11 min-w-[44px] items-center justify-center gap-1 px-1.5 text-nav-foreground transition-[background-color,border-color,color,opacity,box-shadow,transform] duration-300 ease-out hover:bg-foreground/10 hover:text-nav-foreground"
           >
             <X size={15} />
             <span className="text-xs font-medium">{selectedCount}</span>

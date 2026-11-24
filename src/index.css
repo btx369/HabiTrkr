@@ -237,6 +237,54 @@ All colors MUST be HSL.
   button, [role="button"], a {
     -webkit-tap-highlight-color: transparent;
   }
+
+  /* No 300ms double-tap-to-zoom wait on anything tappable. */
+  button, [role="button"], [role="tab"], [role="switch"], [role="checkbox"], a, summary, label, select {
+    touch-action: manipulation;
+  }
+
+  /* Headings break evenly instead of leaving one word alone on the last line. */
+  h1, h2, h3 { text-wrap: balance; }
+
+  /* Dialogs, sheets and menus must not scroll the page behind them. */
+  [role="dialog"], [role="alertdialog"], [role="menu"], [data-vaul-drawer] {
+    overscroll-behavior: contain;
+  }
+
+  /* A mouse on desktop should not rubber-band the whole page; phones keep pull-to-refresh. */
+  @media (pointer: fine) {
+    html { overscroll-behavior: none; }
+  }
+
+  /*
+   * A bigger tap area without a bigger drawing: icon buttons and small controls keep their
+   * look, but the part that reacts to a finger reaches 44px. Add the class to any
+   * position-able control that is smaller than that.
+   */
+  .hit-area { position: relative; }
+  .hit-area::after {
+    content: '';
+    position: absolute;
+    inset: 50% auto auto 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+
+  /* "Skip to content": invisible until a keyboard user tabs to it. */
+  .skip-link {
+    position: fixed;
+    left: 0.5rem;
+    top: -4rem;
+    z-index: 100;
+    border-radius: 9999px;
+    padding: 0.5rem 1rem;
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    font-weight: 600;
+    transition: top 0.15s ease;
+  }
+  .skip-link:focus-visible { top: 0.5rem; }
 }
 
 /* Audio player styling */
