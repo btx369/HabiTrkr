@@ -153,7 +153,7 @@ export function EditorDialog({
           * be allowed to shrink, or a long list pushes the footer out of the dialog instead of
           * scrolling inside it.
           */}
-        <div className={`space-y-6 overflow-x-hidden overflow-y-auto flex-1 min-h-0 px-4 sm:px-6 md:px-0 ${resolvedScrollClassName}`}>
+        <div className={`space-y-6 overflow-x-hidden overflow-y-auto flex-1 min-h-0 px-4 sm:px-6 md:px-0 md:-mr-3 md:pr-3 ${resolvedScrollClassName}`}>
           {children}
         </div>
         
