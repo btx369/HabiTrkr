@@ -312,8 +312,8 @@ export function NoteCard({
                 <div
                   className={`h-4 w-4 rounded-sm border flex-shrink-0 flex items-center justify-center ${
                     item.completed 
-                      ? 'bg-primary border-primary text-primary-foreground' 
-                      : 'border-primary bg-background'
+                      ? 'bg-stamp border-stamp text-stamp-foreground' 
+                      : 'border-foreground/60 bg-transparent'
                   }`}
                 >
                   {item.completed && <Check size={8} />}

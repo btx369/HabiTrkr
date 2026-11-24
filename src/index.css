@@ -203,11 +203,6 @@ All colors MUST be HSL.
   /* Dates, counters and chart numbers line up in a column. */
   .tabular { font-variant-numeric: tabular-nums; }
 
-  :focus-visible {
-    outline: 2px solid hsl(var(--ring));
-    outline-offset: 2px;
-  }
-
   button, [role="button"], a {
     -webkit-tap-highlight-color: transparent;
   }
