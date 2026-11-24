@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
 import { parseTagsFromInput } from '@/lib/tagParser';
-import { getTopTags } from '@/lib/tagStorage';
+import { getTopTags, getAllTags } from '@/lib/tagStorage';
 import { TagSuggestions } from '@/components/shared/TagSuggestions';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { TAG_MAX_LENGTH } from '@/lib/tagLimits';
@@ -24,8 +24,27 @@ export function TagInputField({
   showSuggestions = true
 }: TagInputFieldProps) {
   const { t } = useLanguage();
-  const [tagInput, setTagInput] = useState('');
+  // Starts with "#", like the tag field on notes and events; the "#" is put back if deleted.
+  const [tagInput, setTagInput] = useState('#');
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [allTags] = useState<string[]>(() => getAllTags());
+
+  // Inline completion of the tag being typed, shown greyed after the cursor (Tab or → accepts).
+  const currentWord = tagInput.match(/#(\w*)$/)?.[1] ?? '';
+  const completion = (() => {
+    if (!currentWord) return '';
+    const match = allTags.find(tag =>
+      tag.toLowerCase().startsWith(currentWord.toLowerCase()) &&
+      tag.toLowerCase() !== currentWord.toLowerCase() &&
+      !tags.includes(tag));
+    return match ? match.slice(currentWord.length) : '';
+  })();
+
+  const handleInputChange = (value: string) => {
+    if (value === '') value = '#';
+    else if (!value.startsWith('#')) value = '#' + value;
+    setTagInput(value);
+  };
 
   useEffect(() => {
     if (showSuggestions) {
@@ -41,7 +60,7 @@ export function TagInputField({
 
     const updatedTags = [...new Set([...tags, ...newTags])];
     onTagsChange(updatedTags);
-    setTagInput('');
+    setTagInput('#');
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
@@ -54,6 +73,12 @@ export function TagInputField({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if ((e.key === 'Tab' || e.key === 'ArrowRight') && completion &&
+        e.currentTarget.selectionStart === tagInput.length) {
+      e.preventDefault();
+      setTagInput(tagInput + completion);
+      return;
+    }
     if (e.key === 'Enter') {
       e.preventDefault();
       handleAddTags();
@@ -78,18 +103,36 @@ export function TagInputField({
         </div>
       )}
 
-      <Input
-        value={tagInput}
-        onChange={(e) => setTagInput(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder={placeholder ?? t('placeholderAddTagsWork')}
-        className="h-10 text-sm"
-      />
+      <div className="relative rounded-md bg-background">
+        <Input
+          value={tagInput}
+          onChange={(e) => handleInputChange(e.target.value)}
+          onKeyDown={handleKeyDown}
+          aria-label={t('tags')}
+          spellCheck={false}
+          autoCapitalize="none"
+          className="h-10 text-sm relative z-10 bg-transparent"
+        />
+        {tagInput === '#' && (
+          <div className="absolute inset-0 pointer-events-none flex items-center overflow-hidden px-3 text-sm" aria-hidden="true">
+            <span className="invisible">#</span>
+            <span className="text-muted-foreground">{placeholder ?? t('placeholderAddTagsWork')}</span>
+          </div>
+        )}
+        {completion && (
+          <div className="absolute inset-0 pointer-events-none flex items-center overflow-hidden px-3 text-sm" aria-hidden="true">
+            <span className="whitespace-pre">
+              <span className="invisible">{tagInput}</span>
+              <span className="text-muted-foreground/40">{completion}</span>
+            </span>
+          </div>
+        )}
+      </div>
       <Button 
         type="button"
         onClick={handleAddTags} 
         className="w-full h-10 text-sm"
-        disabled={!tagInput.trim()}
+        disabled={!tagInput.trim() || tagInput.trim() === '#'}
       >
         {t('addTags')}
       </Button>

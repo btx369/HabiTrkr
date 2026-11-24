@@ -271,7 +271,7 @@ export function TagEditor({
             onChange={(e) => handleInputChange(e.target.value)}
             onKeyDown={handleKeyDown}
             className={cn(
-              "h-10 text-sm relative z-10 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0",
+              "h-10 text-sm relative z-10 bg-transparent",
               hasError && "border-destructive/50",
               hasNoteColor && `${borderClass} ${iconColorClass} placeholder:text-cocoa/50`
             )}

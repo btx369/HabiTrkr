@@ -145,6 +145,14 @@ export const NoteActionBar = ({
         <PopoverContent 
           side="top" 
           align="center" 
+          // Radix focuses the first field and selects its text, which highlighted the "#" the
+          // tag field starts with. Focus it with the cursor after the "#" instead.
+          onOpenAutoFocus={(e) => {
+            e.preventDefault();
+            const input = (e.currentTarget as HTMLElement).querySelector('input');
+            input?.focus();
+            input?.setSelectionRange(input.value.length, input.value.length);
+          }}
           // Same surface as the Add dropdown beside it: --popover, not a literal. On a
           // coloured note the tint stays, since the panel sits on that colour.
           className={`w-80 p-3 z-[60] ${hasColor ? borderClass : 'bg-popover border-border'}`}

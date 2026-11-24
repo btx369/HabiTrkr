@@ -360,7 +360,7 @@ export function DatePickerInput({ value, onChange, className, id, label, icon: I
             readOnly
             onClick={() => setIsPickerOpen(true)}
             className={cn(
-              "w-full h-10 py-2 text-sm border border-input rounded-md bg-muted cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+              "w-full h-10 py-2 text-sm border border-input rounded-md bg-muted cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0",
               iconPosition === 'left' ? "pl-10 pr-3" : "px-3"
             )}
             placeholder={t('selectDate')}
