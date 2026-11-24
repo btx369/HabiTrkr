@@ -40,7 +40,14 @@ export default {
 				15: '15',
 				16: '16'
 			},
+			fontFamily: {
+				display: ['var(--font-display)'],
+				sans: ['var(--font-body)'],
+			},
 			colors: {
+				stamp: { DEFAULT: 'hsl(var(--stamp))', foreground: 'hsl(var(--stamp-foreground))' },
+				ember: { DEFAULT: 'hsl(var(--ember))', foreground: 'hsl(var(--ember-foreground))' },
+				ink: 'hsl(var(--ink))',
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
@@ -94,6 +101,7 @@ export default {
 					DEFAULT: 'hsl(var(--nav-bg))',
 					border: 'hsl(var(--nav-border))',
 					active: 'hsl(var(--nav-active))',
+					'active-foreground': 'hsl(var(--nav-active-foreground))',
 					icon: 'hsl(var(--nav-icon))',
 					'icon-hover': 'hsl(var(--nav-icon-hover))',
 					foreground: 'hsl(var(--nav-foreground))'

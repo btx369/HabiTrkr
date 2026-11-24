@@ -1229,7 +1229,7 @@ export default function HabitTracker() {
     >
       <div>
         <Tabs value={activeTab} onValueChange={(tab) => { finishHabitPointerDrag(false); setActiveTab(tab); exitBulkMode(); setDraggedHabitId(null); setHabitDragPreviewOrder([]); habitDragPreviewRef.current = []; }}>
-          <div className="fixed top-16 left-0 right-0 z-40 px-2">
+          <div className="fixed top-16 left-0 right-0 z-40 px-2 [&>*]:mx-auto [&>*]:max-w-3xl">
             <div className="flex items-start justify-between py-2">
             <SlidingTabsList activeValue={activeTab} values={['habits', 'folders', 'archived']}>
               <TabsTrigger value="habits">{t('habits')}</TabsTrigger>
@@ -1319,7 +1319,7 @@ export default function HabitTracker() {
                     return (
                       <div key={`${day}-${index}`} className="text-xs font-medium text-muted-foreground p-1">
                         {day}
-                        <div className={`text-base font-bold mt-0.5 w-7 h-7 flex items-center justify-center mx-auto rounded-full ${isToday ? 'bg-black text-white' : 'text-foreground'}`}>
+                        <div className={`text-base font-bold mt-0.5 w-7 h-7 flex items-center justify-center mx-auto rounded-full ${isToday ? 'bg-ember text-ember-foreground' : 'text-foreground'}`}>
                           {format(weekDays[index], 'd')}
                         </div>
                       </div>
@@ -1336,7 +1336,7 @@ export default function HabitTracker() {
                 <CardContent className="text-center py-8">
                   <Button 
                     onClick={() => setIsAddDialogOpen(true)}
-                    className="h-10 px-8 text-sm font-medium rounded-full bg-black text-white hover:bg-black/90"
+                    className="h-10 px-8 text-sm font-medium rounded-full bg-stamp text-stamp-foreground hover:bg-stamp/90"
                   >
                     {t('createHabit')}
                     <Target className="ml-2" size={20} />
@@ -1392,7 +1392,7 @@ export default function HabitTracker() {
                 <CardContent className="text-center py-8">
                   <Button 
                     onClick={() => setIsFolderCreatorOpen(true)}
-                    className="h-10 px-8 text-sm font-medium rounded-full bg-black text-white hover:bg-black/90"
+                    className="h-10 px-8 text-sm font-medium rounded-full bg-stamp text-stamp-foreground hover:bg-stamp/90"
                   >
                     {t('createFolder')}
                     <Target className="ml-2" size={20} />

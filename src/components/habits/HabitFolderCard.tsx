@@ -101,7 +101,7 @@ export function HabitFolderCard({
   // Use standardized color helpers for consistent styling
   const hasColor = !isDefaultColor(folder.color);
   const iconColorClass = getColoredIconClass(hasColor);
-  const mutedTextColorClass = hasColor ? 'text-[#000000]/70' : 'text-muted-foreground';
+  const mutedTextColorClass = hasColor ? 'text-ink/70' : 'text-muted-foreground';
 
   // Bulk selection checkbox component
   const BulkCheckbox = () => (
@@ -115,10 +115,10 @@ export function HabitFolderCard({
       <div className={cn(
         "h-6 w-6 rounded-full border-2 flex items-center justify-center transition-colors cursor-pointer",
         isBulkSelected 
-          ? "bg-black border-black" 
+          ? "bg-stamp border-stamp" 
           : "border-muted-foreground bg-background/80 backdrop-blur-sm"
       )}>
-        {isBulkSelected && <Check size={20} className="text-white" />}
+        {isBulkSelected && <Check size={20} className="text-stamp-foreground" />}
       </div>
     </div>
   );

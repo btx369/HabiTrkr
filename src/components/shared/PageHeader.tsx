@@ -28,7 +28,7 @@ interface PageHeaderProps {
 export function PageHeader({ title, onBack, trailing }: PageHeaderProps) {
   const { t } = useLanguage();
   return (
-    <div className="flex items-center justify-between py-2 px-2 gap-3">
+    <div className="mx-auto flex max-w-3xl items-center justify-between py-2 px-2 gap-3">
       <Button
         variant="ghost"
         size="icon"
@@ -40,7 +40,7 @@ export function PageHeader({ title, onBack, trailing }: PageHeaderProps) {
       </Button>
 
       <div className="flex-1 flex items-center justify-center min-w-0">
-        <h1 className="text-xl font-semibold text-foreground truncate">{title}</h1>
+        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground truncate">{title}</h1>
       </div>
 
       <div className="flex items-center shrink-0">

@@ -208,7 +208,7 @@ export function CalendarDayView({
           <span className="text-sm text-muted-foreground">{dayOfWeek}</span>
           <div className={cn(
             "w-10 h-10 mx-auto rounded-full flex items-center justify-center text-lg font-bold mt-1",
-            isToday(currentDate) ? "bg-black text-white" : "text-foreground"
+            isToday(currentDate) ? "bg-ember text-ember-foreground" : "text-foreground"
           )}>
             {dayNumber}
           </div>

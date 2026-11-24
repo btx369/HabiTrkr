@@ -1,7 +1,7 @@
 import { ChevronRight } from 'lucide-react';
 
 /** The rounded panel that groups settings rows (Profile, Security, ...). */
-export const settingsPanelClass = 'bg-card border border-border shadow-[var(--surface-shadow)] rounded-[20px]';
+export const settingsPanelClass = 'bg-card border border-border shadow-[var(--surface-shadow)] rounded-[22px]';
 
 /** A titled group of settings rows. */
 export function SettingsSection({ title, children }: { title: string; children: React.ReactNode }) {

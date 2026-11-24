@@ -1210,7 +1210,7 @@ export default function Events() {
             {!isArchived ? (
               <Button 
                 onClick={() => setIsEventFolderCreatorOpen(true)}
-                className="h-10 px-8 text-sm font-medium rounded-full bg-black text-white hover:bg-black/90"
+                className="h-10 px-8 text-sm font-medium rounded-full bg-stamp text-stamp-foreground hover:bg-stamp/90"
               >
                 {t('createFolder')}
                 <FolderOpen className="ml-2" size={20} />
@@ -1333,7 +1333,7 @@ export default function Events() {
 
         {/* Events Tabs */}
         <Tabs value={activeTab} onValueChange={(tab) => { setActiveTab(tab); exitBulkMode(); }} className="w-full">
-          <div className="fixed top-16 left-0 right-0 z-40 px-2">
+          <div className="fixed top-16 left-0 right-0 z-40 px-2 [&>*]:mx-auto [&>*]:max-w-3xl">
             <div className="flex items-center justify-between py-2">
             <SlidingTabsList 
               activeValue={activeTab} 
@@ -1388,7 +1388,7 @@ export default function Events() {
                 <CardContent className="text-center py-8">
                   <Button 
                     onClick={handleAddButtonClick}
-                    className="h-10 px-8 text-sm font-medium rounded-full bg-black text-white hover:bg-black/90"
+                    className="h-10 px-8 text-sm font-medium rounded-full bg-stamp text-stamp-foreground hover:bg-stamp/90"
                   >
                     {t('createEvent')}
                     <Calendar className="ml-2" size={20} />
@@ -1406,7 +1406,7 @@ export default function Events() {
                 <CardContent className="text-center py-8">
                   <Button 
                     onClick={handleAddButtonClick}
-                    className="h-10 px-8 text-sm font-medium rounded-full bg-black text-white hover:bg-black/90"
+                    className="h-10 px-8 text-sm font-medium rounded-full bg-stamp text-stamp-foreground hover:bg-stamp/90"
                   >
                     {t('createFolder')}
                     <FolderOpen className="ml-2" size={20} />

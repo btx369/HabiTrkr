@@ -37,8 +37,7 @@ export const Layout = ({
   swipeHandlers
 }: LayoutProps) => {
   const location = useLocation();
-  const bgColor = 'hsl(var(--background))';
-
+  
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
@@ -73,11 +72,11 @@ export const Layout = ({
   };
 
   return (
-    <div className="min-h-[100dvh]" style={{ backgroundColor: bgColor }}>
+    <div className="paper min-h-[100dvh]">
       {/* Fixed shield: solid background hides scrolling content behind header/tabs */}
       <div
-        className="fixed top-0 left-0 right-0 z-40 pointer-events-none"
-        style={{ backgroundColor: bgColor, height: shieldHeight }}
+        className="paper fixed top-0 left-0 right-0 z-40 pointer-events-none"
+        style={{ height: shieldHeight }}
       />
       <Header 
         showSearch={showSearch}
@@ -85,7 +84,7 @@ export const Layout = ({
         onSearchChange={onSearchChange}
         pageTitle={pageTitle}
       />
-      <main {...swipeProps} className={cn("min-h-[100dvh] pt-16 px-2", isBulkMode ? "pb-36" : "pb-20")}>
+      <main {...swipeProps} className={cn("mx-auto min-h-[100dvh] w-full max-w-3xl pt-16 px-2", isBulkMode ? "pb-36" : "pb-20")}>
         {children}
       </main>
       <BottomNavigation hidden={hideBottomNav} />

@@ -164,7 +164,7 @@ export default function Reports() {
   return (
     <Layout pageTitle={t('reports')} showSearch={false} swipeHandlers={swipeHandlers}>
       <Tabs value={tab} onValueChange={setTab} className="w-full">
-        <div className="fixed top-16 left-0 right-0 z-40 px-2">
+        <div className="fixed top-16 left-0 right-0 z-40 px-2 [&>*]:mx-auto [&>*]:max-w-3xl">
           <div className="flex items-center justify-between py-2">
             <SlidingTabsList activeValue={tab} values={['summary', 'habits', 'events']}>
               <TabsTrigger value="summary">{t('reportsSummary')}</TabsTrigger>

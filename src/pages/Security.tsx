@@ -93,10 +93,10 @@ export default function Security() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="paper min-h-screen">
       <PageHeader title={t('security')} onBack={() => navigate(-1)} />
 
-      <div className="px-2 pb-8 space-y-6">
+      <div className="mx-auto max-w-3xl px-2 pb-8 space-y-6">
         <SettingsSection title={t('protectedNotes')}>
           <SettingsRow
             icon={<KeyRound size={20} />}

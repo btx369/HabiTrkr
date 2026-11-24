@@ -322,7 +322,7 @@ export default function Calendar() {
     >
       <div>
         {/* Tab navigation - matches Notes/Events layout */}
-        <div className="fixed top-16 left-0 right-0 z-40 px-2">
+        <div className="fixed top-16 left-0 right-0 z-40 px-2 [&>*]:mx-auto [&>*]:max-w-3xl">
           <div className="flex items-center justify-between py-2">
           <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as ViewMode)}>
             <SlidingTabsList 
@@ -494,7 +494,7 @@ export default function Calendar() {
                       >
                         <span className={cn(
                           "flex size-7 shrink-0 items-center justify-center rounded-full",
-                          isToday(day) && "bg-black text-white",
+                          isToday(day) && "bg-ember text-ember-foreground",
                           isSelected && !isToday(day) && "ring-2 ring-primary",
                         )}>{format(day, 'd')}</span>
                         {hasEvents && (

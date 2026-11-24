@@ -35,7 +35,7 @@ export function TitleInput({
 
   const getCounterColor = () => {
     if (value.length >= dangerThreshold) return 'text-destructive';
-    if (value.length >= warningThreshold) return 'text-orange-500';
+    if (value.length >= warningThreshold) return 'text-ember';
     return 'text-muted-foreground';
   };
 

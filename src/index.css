@@ -21,237 +21,150 @@ All colors MUST be HSL.
 */
 
 @layer base {
+  /*
+   * "Carimbo de tinta": HabiTrkr's identity.
+   *
+   *   Papel    page, a faint lavender-grey paper (never cream)
+   *   Folha    cards and menus
+   *   Tinta    text and the navigation capsule, a deep ink navy
+   *   Carimbo  the one loud colour: an indigo stamp-pad ink. Primary actions, a habit
+   *            marked done, chart fills.
+   *   Brasa    ember orange, used ONLY for "today", streaks and warnings
+   *   Bruma    secondary text and borders, a muted blue-grey
+   *
+   * Every colour is HSL, as the file's rule demands. Neutrals are all tinted toward the
+   * ink hue (231) so nothing in the interface is a flat grey.
+   */
   :root {
-    /*
-     * Warm neutral palette modelled on Grok's light theme.
-     *
-     * The previous values were cool blue-greys (hue 210-222). Grok's are warm neutrals
-     * with no blue cast, which is what makes the light theme read as soft rather than
-     * clinical. Reference values it was matched to:
-     *   page      rgb(249, 248, 247)
-     *   card      rgb(255, 255, 255)
-     *   text      rgb(5, 5, 5)
-     *   secondary rgb(133, 133, 133)
-     *   border    rgba(15, 13, 10, 0.04)
-     */
-    --background: 30 14% 97%;
-    --foreground: 0 0% 2%;
+    --font-display: 'Bricolage Grotesque Variable', 'Atkinson Hyperlegible Next', system-ui, sans-serif;
+    --font-body: 'Atkinson Hyperlegible Next', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 2%;
-    --item-card-surface: 0 0% 100%;
-    --surface-shadow: 0 4px 12px rgba(15, 13, 10, 0.12);
+    --background: 249 29% 95%;
+    --foreground: 231 47% 16%;
 
-    /*
-     * Card surface, opaque. The cards used to hardcode a cool blue-grey wash
-     * (`bg-[rgba(242,244,247,0.75)]`), which ignored the theme entirely — changing the
-     * palette had no visible effect on them. They now read this token instead, so the
-     * surface follows the theme like everything else.
-     */
-    --surface-card: 0 0% 100% / 0.82;
+    --card: 240 100% 99%;
+    --card-foreground: 231 47% 16%;
+    --item-card-surface: 240 100% 99%;
+    /* An ink-tinted, indigo-leaning shadow instead of neutral grey. */
+    --surface-shadow: 0 1px 0 hsl(231 47% 16% / 0.04), 0 10px 26px -14px hsl(243 55% 30% / 0.32);
 
-    /*
-     * Search-match highlight. It was `bg-yellow-200 dark:bg-yellow-800` in two separate
-     * files — a cold lemon yellow on a warm beige palette, and a saturated yellow-brown in
-     * dark that read almost as strongly as the text it was meant to sit behind. A token lets
-     * both themes be tuned together; the light value is deliberately an amber, so the
-     * highlight belongs to the same family as the rest of the palette.
-     */
-    --highlight: 45 93% 78%;
+    --surface-card: 240 100% 99% / 0.86;
 
-    /*
-     * Floating surfaces: menus, popovers, dialogs and drawers.
-     *
-     * Warm off-white, not pure white. A pure white sheet on a 97% beige page reads as a
-     * bright, cold cutout, which is exactly how the Tags popover looked next to the Add
-     * menu.
-     *
-     * Fully opaque on purpose. An alpha here makes a menu's colour depend on whatever it
-     * happens to float over: the same token composited over the note dialog came out
-     * lighter than over the page, so two menus side by side looked like different shades.
-     * The note surfaces that need the page showing through set their own translucent
-     * colour inline and keep their own blur.
-     *
-     * Every floating component reads THIS token. They previously hardcoded
-     * `bg-[hsl(0_0%_100%/0.85)]`, which ignored the palette and also beat any `bg-*` a
-     * caller passed in, so surfaces could not be themed from one place.
-     */
-    --popover: 30 14% 97%;
-    --popover-foreground: 0 0% 2%;
+    --highlight: 48 100% 70%;
 
-    /*
-     * The fill a switch paints when it is ON.
-     *
-     * Near-black, matching `--primary`, so a switch agrees with the filled buttons beside
-     * it and belongs to the app's warm palette. It was briefly a saturated blue, borrowed
-     * from the references, but the app's own filled controls are black and the blue read
-     * as an import rather than as part of the interface.
-     *
-     * This is the LIGHT value. The dark theme overrides it, because a black fill would
-     * vanish into a near-black page and take the whole switch with it — see the dark block.
-     */
-    --switch-on: 0 0% 5%;
+    /* Floating surfaces. Opaque on purpose, see the history of this token in git. */
+    --popover: 249 45% 97%;
+    --popover-foreground: 231 47% 16%;
 
-    --primary: 0 0% 5%;
-    --primary-foreground: 0 0% 99%;
+    /* The stamp: primary actions, switches, selected tabs, done habits, chart fills. */
+    --stamp: 243 66% 52%;
+    --stamp-foreground: 0 0% 100%;
+    /* Ember: today, streaks, warnings. Ink text on it, because white on orange is weak. */
+    --ember: 18 88% 56%;
+    --ember-foreground: 231 47% 16%;
+    --ink: 231 47% 16%;
 
-    --secondary: 30 9% 95%;
-    --secondary-foreground: 0 0% 5%;
+    --switch-on: 243 66% 52%;
 
-    /* Recessed surfaces: the subtle step below the page background. */
-    --muted: 30 8% 93%;
-    --muted-foreground: 0 0% 52%;
+    --primary: 243 66% 52%;
+    --primary-foreground: 0 0% 100%;
 
-    /*
-     * The hover surface — use this for every hover, never --muted or --accent.
-     *
-     * It is a translucent veil of the foreground colour, NOT a filled swatch, and that
-     * distinction is the whole point. Measured on grok.com, their hover is
-     * rgba(15, 13, 10, 0.06) over the page: a ~4% luminance shift. Because it is a
-     * low-alpha wash it composites correctly over the page, over a white card, and over
-     * a coloured note alike, whereas a solid colour needs hand-tuning for each of those
-     * and always ends up wrong against one of them.
-     *
-     * An earlier attempt used --muted here. That turned every hover into a filled beige
-     * block and made the menu dots on a default-coloured note read as white.
-     *
-     * The alpha is the tuning knob; keep 0.06 unless matching a fresh measurement.
-     * Components sitting on a card with a custom colour use --card-hover-color instead,
-     * where a black veil reads better against a saturated background.
-     */
-    --hover: 0 0% 2% / 0.06;
+    --secondary: 249 25% 93%;
+    --secondary-foreground: 231 47% 16%;
 
-    /*
-     * --accent is the "selected or raised" surface, NOT the hover colour. At 95% against
-     * a 97% page it is barely visible, and against a white card it is invisible entirely,
-     * which is what made the note menu dots appear to turn white. Use --hover above for
-     * interaction feedback.
-     */
-    --accent: 30 8% 95%;
-    --accent-foreground: 0 0% 5%;
+    --muted: 249 25% 91%;
+    --muted-foreground: 230 19% 42%;
 
-    --destructive: 0 72% 51%;
+    /* The shared hover veil: a low-alpha wash of the ink colour. */
+    --hover: 231 47% 16% / 0.06;
+
+    --accent: 249 30% 92%;
+    --accent-foreground: 231 47% 16%;
+
+    --destructive: 352 75% 48%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 30 8% 91%;
-    --input: 30 8% 89%;
-    --ring: 0 0% 2%;
+    --border: 245 22% 87%;
+    --input: 245 22% 82%;
+    --ring: 243 66% 52%;
 
     --radius: 0.75rem;
-    /*
-     * Default for the per-card hover tint. Anything sitting on a card reads this
-     * variable for its hover background; a ColoredCard with a custom colour overwrites it
-     * with a tint derived from that colour. Defining it globally means a surface that
-     * forgets to set it still gets the standard veil instead of an undefined value, which
-     * silently produced NO hover at all.
-     */
     --card-hover-color: hsl(var(--hover));
 
+    --glass-bg: 249 29% 95% / 0.78;
+    --glass-border: 0 0% 100% / 0.5;
 
-    /* Glassmorphism variables - Light theme (frosted glass) */
-    --glass-bg: 30 14% 97% / 0.75;
-    --glass-border: 0 0% 100% / 0.4;
+    /* The capsule and bulk bar stay dark ink in both themes. */
+    --nav-bg: 231 47% 13%;
+    --nav-border: 231 32% 24%;
+    --nav-active: 243 66% 52%;
+    --nav-active-foreground: 0 0% 100%;
+    --nav-icon: 231 22% 66%;
+    --nav-icon-hover: 231 40% 88%;
+    --nav-foreground: 230 66% 96%;
 
-    /*
-     * Scrim for the dark floating chrome: the bottom navigation capsule and the bulk action
-     * bar. Both are deliberately dark in BOTH themes, so they cannot read the normal surface
-     * tokens — `--primary` or `--foreground` invert with the theme and would turn them white
-     * in dark mode. Giving them their own tokens is what lets the palette be changed from one
-     * place instead of from literals buried in components. The values are the ones those
-     * components already used, so this is a move, not a redesign.
-     */
-    --nav-bg: 0 0% 0%;
-    --nav-border: 0 0% 16%;
-    --nav-active: 0 0% 13%;
-    --nav-icon: 0 0% 45%;
-    --nav-icon-hover: 0 0% 75%;
-    /*
-     * Text and icons drawn on that scrim. The bulk action bar sits on it too, and it used
-     * `--primary-foreground`, which inverts: white in the light theme, near-black in the dark
-     * one, which left its labels black on a black bar.
-     */
-    --nav-foreground: 0 0% 99%;
+    /* Dot grid on the page, echoing the five dots of the logo. */
+    --paper-dot: 231 47% 16% / 0.09;
   }
 
-  /*
-   * Dark theme, matched to Grok's.
-   *
-   * The previous dark was near-black and fully neutral (#121212 page, #1E1E1E card),
-   * which read as harsh. Grok sits noticeably higher and warmer:
-   *   page      rgb(19, 18, 17)   -> 3.7% lightness
-   *   raised    rgb(38, 36, 33)   -> 7.4% lightness, roughly double the page
-   *   text      rgb(252, 252, 252)
-   *   secondary rgb(158, 158, 158)
-   *   border    rgba(252, 252, 252, 0.10)
-   * The page/raised gap is what makes the layering visible without strong borders.
-   */
   .dark {
-    --background: 30 6% 7%;
-    --foreground: 0 0% 99%;
+    --background: 232 43% 10%;
+    --foreground: 230 66% 94%;
 
-    --card: 30 7% 14%;
-    --card-foreground: 0 0% 99%;
-    --item-card-surface: 30 7% 21%;
-    --surface-shadow: 0 6px 18px rgba(0, 0, 0, 0.42);
+    --card: 231 41% 16%;
+    --card-foreground: 230 66% 94%;
+    --item-card-surface: 231 38% 22%;
+    --surface-shadow: 0 1px 0 hsl(230 66% 94% / 0.04), 0 12px 28px -14px rgba(0, 0, 0, 0.7);
 
-    /* Same token, dark value. Matches the raised surface Grok uses. */
-    --surface-card: 30 7% 14% / 0.85;
+    --surface-card: 231 41% 16% / 0.88;
 
-    /* See the light block: the shared surface for every floating component. */
-    --popover: 30 6% 10%;
-    --popover-foreground: 0 0% 99%;
+    --popover: 232 42% 14%;
+    --popover-foreground: 230 66% 94%;
 
-    --primary: 0 0% 99%;
-    --primary-foreground: 30 6% 7%;
+    --stamp: 242 100% 76%;
+    --stamp-foreground: 232 43% 10%;
+    --ember: 18 90% 60%;
+    --ember-foreground: 232 43% 10%;
+    --ink: 231 47% 16%;
 
-    /*
-     * The switch inverts with the theme, exactly as `--primary` does.
-     *
-     * A black fill on a 7%-lightness page is invisible: the track would disappear and the
-     * knob would be the only thing left, which reads as a broken control rather than an on
-     * one. Near-white keeps the same "solidly filled = on" idea that black gives in light
-     * mode, and the knob turns dark to stay legible against it.
-     */
-    --switch-on: 0 0% 99%;
+    --switch-on: 242 100% 76%;
 
-    --secondary: 30 7% 14%;
-    --secondary-foreground: 0 0% 99%;
+    --primary: 242 100% 76%;
+    --primary-foreground: 232 43% 10%;
 
-    --muted: 30 6% 18%;
-    --muted-foreground: 0 0% 62%;
+    --secondary: 231 41% 16%;
+    --secondary-foreground: 230 66% 94%;
 
-    /*
-     * The dark counterpart of --hover, matching the measurement taken on grok.com:
-     * rgba(252, 252, 252, 0.10) over their page. The alpha is much higher than the light
-     * 0.06 on purpose. A 6% veil over a near-black page moves luminance by under one
-     * unit and is simply not visible; the same *perceived* step needs a bigger alpha in
-     * the dark. Match the measured result, never the raw number.
-     */
-    --hover: 0 0% 99% / 0.10;
+    --muted: 231 35% 19%;
+    --muted-foreground: 231 28% 69%;
 
-    /*
-     * See the light block. Kept in the same family but much darker and less saturated: a
-     * light amber behind dark text would glare on a near-black page, and the matched word
-     * still has to stay the most legible thing in the line.
-     */
-    --highlight: 38 55% 30%;
+    --hover: 230 66% 94% / 0.10;
 
-    /* --accent is the "selected or raised" surface, not the hover colour. */
-    --accent: 30 6% 16%;
-    --accent-foreground: 0 0% 99%;
+    --highlight: 42 70% 32%;
 
-    --destructive: 0 62% 50%;
-    --destructive-foreground: 0 0% 99%;
+    --accent: 231 38% 18%;
+    --accent-foreground: 230 66% 94%;
 
-    --border: 30 6% 21%;
-    --input: 30 6% 27%;
-    --ring: 0 0% 99%;
-    /* See the light block: the default hover tint for anything sitting on a card. */
+    --destructive: 352 80% 62%;
+    --destructive-foreground: 232 43% 10%;
+
+    --border: 231 30% 25%;
+    --input: 231 30% 30%;
+    --ring: 242 100% 76%;
     --card-hover-color: hsl(var(--hover));
 
-    /* Glassmorphism variables - Dark theme (warm neutral) */
-    --glass-bg: 30 6% 14% / 0.85;
-    --glass-border: 30 6% 26% / 0.3;
+    --glass-bg: 231 41% 16% / 0.86;
+    --glass-border: 231 30% 30% / 0.4;
+
+    /* Lighter than the page so the capsule no longer vanishes in the dark theme. */
+    --nav-bg: 231 40% 19%;
+    --nav-border: 231 30% 32%;
+    --nav-active: 242 100% 76%;
+    --nav-active-foreground: 232 43% 10%;
+    --nav-icon: 231 24% 68%;
+    --nav-icon-hover: 231 40% 92%;
+
+    --paper-dot: 230 66% 94% / 0.07;
   }
 }
 
@@ -269,8 +182,30 @@ All colors MUST be HSL.
     height: 0;
   }
 
+  html {
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-body);
+    font-feature-settings: 'tnum' 0;
+  }
+
+  /* Headlines carry the personality: a characterful grotesque, set tight. */
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.015em;
+  }
+
+  /* Dates, counters and chart numbers line up in a column. */
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
   }
 
   button, [role="button"], a {
@@ -365,4 +300,23 @@ body:has([data-bulk-bar]) [data-sonner-toaster][data-y-position='bottom'] {
  */
 [data-sonner-toaster] [data-sonner-toast] {
   pointer-events: auto !important;
+}
+
+/*
+ * The page: paper with a faint dot grid. Attached to the viewport so the fixed header
+ * shield and the scrolling page behind it show the SAME dots and the seam never shows.
+ */
+.paper {
+  background-color: hsl(var(--background));
+  background-image: radial-gradient(hsl(var(--paper-dot)) 1px, transparent 1.2px);
+  background-size: 22px 22px;
+  background-attachment: fixed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

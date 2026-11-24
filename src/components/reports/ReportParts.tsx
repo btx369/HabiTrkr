@@ -7,7 +7,7 @@ export function ReportCard({ title, icon, children, className }: { title?: strin
   return (
     <section className={cn(settingsPanelClass, 'p-4', className)}>
       {title && (
-        <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+        <h3 className="mb-3 flex items-center gap-2 text-base font-bold text-foreground">
           {icon}
           {title}
         </h3>
@@ -20,9 +20,9 @@ export function ReportCard({ title, icon, children, className }: { title?: strin
 /** A big number with a label, for the tiles at the top of a tab. */
 export function StatTile({ label, value, hint }: { label: string; value: ReactNode; hint?: string }) {
   return (
-    <div className="flex-1 rounded-2xl border border-border bg-muted/40 p-3">
+    <div className="flex-1 rounded-2xl border border-border bg-muted/50 p-3">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-2xl font-semibold leading-tight text-foreground">{value}</p>
+      <p className="tabular font-display text-3xl font-bold leading-tight tracking-tight text-foreground">{value}</p>
       {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
     </div>
   );
@@ -33,7 +33,7 @@ export function ProgressBar({ value, label }: { value: number; label: string }) 
   const percent = Math.round(Math.min(1, Math.max(0, value)) * 100);
   return (
     <div role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} className="h-2 w-full overflow-hidden rounded-full bg-muted">
-      <div className="h-full rounded-full bg-foreground transition-[width] duration-500" style={{ width: `${percent}%` }} />
+      <div className="h-full rounded-full bg-stamp transition-[width] duration-500" style={{ width: `${percent}%` }} />
     </div>
   );
 }
@@ -56,7 +56,7 @@ export function BarChart({ bars, height = 96 }: { bars: Bar[]; height?: number }
           <span className="text-[10px] leading-none text-muted-foreground">{bar.value === null ? '' : bar.display}</span>
           <div className="flex w-full items-end" style={{ height }}>
             <div
-              className={cn('w-full rounded-t-md', bar.highlight ? 'bg-foreground' : 'bg-foreground/35', bar.value === null && 'bg-transparent')}
+              className={cn('w-full rounded-t-md', bar.highlight ? 'bg-stamp' : 'bg-stamp/30', bar.value === null && 'bg-transparent')}
               style={{ height: bar.value === null ? 0 : Math.max(3, Math.round(bar.value * height)) }}
             />
           </div>
@@ -90,8 +90,8 @@ export function Heatmap({ weeks, rowLabels, compact = false }: {
             cell ? (
               <div
                 key={cell.key}
-                className={cn(cellHeight, compact ? 'rounded-[2px]' : 'rounded-[4px]', cell.future ? 'bg-transparent' : 'bg-foreground')}
-                style={{ opacity: cell.future ? 0 : cell.level === 0 ? 0.08 : 0.25 + cell.level * 0.75 }}
+                className={cn(cellHeight, compact ? 'rounded-[2px]' : 'rounded-[4px]', cell.future ? 'bg-transparent' : cell.level === 0 ? 'bg-stamp/10' : 'bg-stamp')}
+                style={{ opacity: cell.future ? 0 : cell.level === 0 ? 1 : 0.25 + cell.level * 0.75 }}
               />
             ) : (
               <div key={d} className={cellHeight} />
@@ -118,12 +118,12 @@ export function MonthGrid({ weeks, dayLabels }: {
       ))}
       {weeks.flat().map((cell, i) =>
         cell ? (
-          <div key={cell.key} className={cn('relative flex aspect-square items-center justify-center rounded-md text-[11px]', cell.today && 'ring-2 ring-foreground ring-offset-1 ring-offset-background')}>
+          <div key={cell.key} className={cn('relative flex aspect-square items-center justify-center rounded-md text-[11px]', cell.today && 'ring-2 ring-ember ring-offset-1 ring-offset-background')}>
             <div
-              className="absolute inset-0 rounded-md bg-foreground"
-              style={{ opacity: cell.future ? 0.03 : cell.level === 0 ? 0.08 : 0.25 + cell.level * 0.75 }}
+              className={cn('absolute inset-0 rounded-md', !cell.future && cell.level === 0 ? 'bg-stamp/10' : 'bg-stamp')}
+              style={{ opacity: cell.future ? 0.04 : cell.level === 0 ? 1 : 0.25 + cell.level * 0.75 }}
             />
-            <span className={cn('relative', !cell.future && cell.level > 0.5 ? 'text-background' : 'text-foreground')}>{cell.day}</span>
+            <span className={cn('relative', !cell.future && cell.level > 0.5 ? 'text-stamp-foreground' : 'text-foreground')}>{cell.day}</span>
           </div>
         ) : (
           <div key={`e${i}`} />
@@ -142,8 +142,8 @@ export function WeekDots({ days }: { days: Array<{ key: string; state: 'done' | 
           key={d.key}
           className={cn(
             'h-3 w-3 rounded-full border',
-            d.state === 'done' && 'border-foreground bg-foreground',
-            d.state === 'missed' && 'border-destructive/60 bg-destructive/25',
+            d.state === 'done' && 'border-stamp bg-stamp',
+            d.state === 'missed' && 'border-ember/70 bg-ember/25',
             (d.state === 'off' || d.state === 'future') && 'border-border bg-transparent'
           )}
         />

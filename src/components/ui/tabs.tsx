@@ -75,7 +75,7 @@ const SlidingTabsList = React.forwardRef<
       <div ref={containerRef} className="relative flex">
         {/* Sliding indicator */}
         <div
-          className="absolute top-1/2 -translate-y-1/2 h-8 rounded-full bg-black shadow-sm transition-all duration-300"
+          className="absolute top-1/2 -translate-y-1/2 h-8 rounded-full bg-stamp shadow-sm transition-all duration-300"
           style={{
             left: indicatorStyle.left,
             width: indicatorStyle.width,
@@ -97,7 +97,7 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      "relative z-10 inline-flex items-center justify-center whitespace-nowrap rounded-full px-2 py-1.5 text-[13px] min-[400px]:px-3 min-[400px]:text-sm font-medium ring-offset-background transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:text-white",
+      "relative z-10 inline-flex items-center justify-center whitespace-nowrap rounded-full px-2 py-1.5 text-[13px] min-[400px]:px-3 min-[400px]:text-sm font-medium ring-offset-background transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:text-stamp-foreground",
       className
     )}
     {...props}

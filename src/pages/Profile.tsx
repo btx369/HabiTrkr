@@ -191,14 +191,10 @@ export default function Profile() {
     return t('sunday');
   };
 
-  const bgColor = 'hsl(var(--background))';
   const profilePanelClass = settingsPanelClass;
 
   return (
-    <div 
-      className="min-h-screen"
-      style={{ backgroundColor: bgColor }}
-    >
+    <div className="paper min-h-screen">
       {/* Header */}
       <PageHeader title={t('profile')} onBack={() => navigate(-1)} />
 

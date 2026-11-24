@@ -1943,7 +1943,7 @@ export function NoteViewer({
       <DialogContent 
         hideCloseButton 
         className={`fixed inset-0 w-full max-w-none h-full max-h-none m-0 !rounded-none flex flex-col p-0 border-0 translate-x-0 translate-y-0 left-0 top-0 data-[state=open]:animate-hero-expand data-[state=closed]:animate-hero-collapse ${
-          hasColor ? 'text-[#000000] [&_.text-muted-foreground]:text-[#000000]/70 [&_.text-foreground]:text-[#000000]' : ''
+          hasColor ? 'text-ink [&_.text-muted-foreground]:text-ink/70 [&_.text-foreground]:text-ink' : ''
         }`}
         // `--card-hover-color` is set here for the same reason ColoredCard sets it:
         // the action menu (⋮) inside styles its hover with that variable. Without it the
@@ -2018,7 +2018,7 @@ export function NoteViewer({
                 onClick={handleSearchToggle}
                 // While searching the button is filled, like the open buttons of the action
                 // bar, so it is clear that tapping it again switches the search off.
-                className={`h-9 w-9 p-0 [&_svg]:!size-6 flex-shrink-0 rounded-full transition-colors duration-200 ${isSearching ? 'bg-black text-white hover:bg-black' : themedHoverStyles}`}
+                className={`h-9 w-9 p-0 [&_svg]:!size-6 flex-shrink-0 rounded-full transition-colors duration-200 ${isSearching ? 'bg-stamp text-stamp-foreground hover:bg-stamp' : themedHoverStyles}`}
               >
                 <Search size={20} />
               </Button>
@@ -2129,7 +2129,7 @@ export function NoteViewer({
               onMoveToFolder={onMoveToFolder ? () => onMoveToFolder(note.id) : undefined}
               size="md"
               hoverClass={themedHoverStyles}
-              iconColorClass={hasColor ? 'text-[#000000]' : 'text-foreground'}
+              iconColorClass={hasColor ? 'text-ink' : 'text-foreground'}
             />
             <Button
               variant={iconButtonStyles.variant}

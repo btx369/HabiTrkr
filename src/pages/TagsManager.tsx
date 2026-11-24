@@ -106,12 +106,12 @@ export default function TagsManager() {
      * the asset alone was 791 KB. Dark mode already ignored it, so removing it makes both
      * themes consistent with the rest of the app.
      */
-    <div className="min-h-screen bg-background">
+    <div className="paper min-h-screen">
       {/* Header */}
       <PageHeader title={t('manageTags')} onBack={() => navigate(-1)} />
 
       {/* Content */}
-      <div className="px-2 pb-8 space-y-4">
+      <div className="mx-auto max-w-3xl px-2 pb-8 space-y-4">
         {/* Search */}
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-muted-foreground" size={20} />

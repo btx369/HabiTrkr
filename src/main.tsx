@@ -1,5 +1,10 @@
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
+import '@fontsource-variable/bricolage-grotesque/index.css'
+import '@fontsource/atkinson-hyperlegible-next/latin-400.css'
+import '@fontsource/atkinson-hyperlegible-next/latin-500.css'
+import '@fontsource/atkinson-hyperlegible-next/latin-600.css'
+import '@fontsource/atkinson-hyperlegible-next/latin-700.css'
 import './index.css'
 import { migrateStorageKeys } from './lib/storageMigration'
 

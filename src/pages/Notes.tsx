@@ -1817,7 +1817,7 @@ const hasTitle = (note.name || '').trim() !== '';
           <CardContent className="text-center py-8">
             <Button 
               onClick={handleAddButtonClick}
-              className="h-10 px-8 text-sm font-medium rounded-full bg-black text-white hover:bg-black/90"
+              className="h-10 px-8 text-sm font-medium rounded-full bg-stamp text-stamp-foreground hover:bg-stamp/90"
             >
               {t('createFolder')}
               <FolderOpen className="ml-2" size={20} />
@@ -1941,7 +1941,7 @@ const hasTitle = (note.name || '').trim() !== '';
             ) : (
               <Button 
                 onClick={handleAddButtonClick}
-                className="h-10 px-8 text-sm font-medium rounded-full bg-black text-white hover:bg-black/90"
+                className="h-10 px-8 text-sm font-medium rounded-full bg-stamp text-stamp-foreground hover:bg-stamp/90"
               >
                 {t('createNote')}
                 <Notebook className="ml-2" size={20} />
@@ -2390,7 +2390,7 @@ const hasTitle = (note.name || '').trim() !== '';
         )}
 
         <Tabs value={activeTab} onValueChange={(tab) => { setActiveTab(tab); exitBulkMode(); }} className="flex-1">
-        <div className="fixed top-16 left-0 right-0 z-40 px-2">
+        <div className="fixed top-16 left-0 right-0 z-40 px-2 [&>*]:mx-auto [&>*]:max-w-3xl">
           <div className="flex items-center justify-between py-2">
           <SlidingTabsList 
             activeValue={activeTab} 

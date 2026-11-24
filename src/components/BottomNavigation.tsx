@@ -53,7 +53,7 @@ export const BottomNavigation = ({ hidden = false }: BottomNavigationProps) => {
                   className={cn(
                     "flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300 ease-out",
                     isActive 
-                      ? "bg-nav-active text-white" 
+                      ? "bg-nav-active text-nav-active-foreground" 
                       : "bg-transparent text-nav-icon group-hover:text-nav-icon-hover group-hover:bg-white/10"
                   )}
                 >

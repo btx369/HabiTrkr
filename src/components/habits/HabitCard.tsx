@@ -126,10 +126,10 @@ export function HabitCard({
       <div className={cn(
         "h-6 w-6 rounded-full border-2 flex items-center justify-center transition-colors cursor-pointer",
         isBulkSelected 
-          ? "bg-black border-black" 
+          ? "bg-stamp border-stamp" 
           : "border-muted-foreground bg-background/80 backdrop-blur-sm"
       )}>
-        {isBulkSelected && <Check size={20} className="text-white" />}
+        {isBulkSelected && <Check size={20} className="text-stamp-foreground" />}
       </div>
     </div>
   );
@@ -152,7 +152,7 @@ export function HabitCard({
   const hasColor = !isDefaultColor(habit.color);
   const iconColorClass = getColoredIconClass(hasColor);
   const badgeBorderClass = getColoredBorderClass(hasColor, 100);
-  const textColorClass = hasColor ? 'text-[#000000]' : 'text-foreground';
+  const textColorClass = hasColor ? 'text-ink' : 'text-foreground';
   // A habit filed in a folder says so on its card, on every list it appears in.
   const isFiled = useIsFiled(habit.id);
   
@@ -191,7 +191,7 @@ export function HabitCard({
               </span>
               {/* The description could be written but was never shown anywhere. */}
               {habit.description && (
-                <span className={cn('min-w-0 truncate text-xs', hasColor ? 'text-[#000000]/70' : 'text-muted-foreground')}>
+                <span className={cn('min-w-0 truncate text-xs', hasColor ? 'text-ink/70' : 'text-muted-foreground')}>
                   {highlightText(habit.description, searchQuery)}
                 </span>
               )}
@@ -206,7 +206,7 @@ export function HabitCard({
                     <Badge
                       variant="outline"
                       aria-label={t('timesToday').replace('{count}', String(todayCount))}
-                      className={cn('block max-w-full truncate whitespace-nowrap', viewType === 'x3' ? 'h-5 px-1 text-[9px]' : 'h-6 px-2 text-[10px]', badgeBorderClass, hasColor && 'text-[#000000]')}
+                      className={cn('block max-w-full truncate whitespace-nowrap', viewType === 'x3' ? 'h-5 px-1 text-[9px]' : 'h-6 px-2 text-[10px]', badgeBorderClass, hasColor && 'text-ink')}
                     >
                       {todayCount}x{viewType !== 'x3' && ` ${t('today')}`}
                     </Badge>
@@ -239,7 +239,7 @@ export function HabitCard({
                   <Badge
                     variant="outline"
                     aria-label={t('daysThisWeek').replace('{done}', String(weeklyCompletions)).replace('{total}', String(habit.numberOfDaysPerWeek || 1))}
-                    className={cn('block h-6 max-w-full truncate whitespace-nowrap px-2 text-[10px] leading-6', viewType === 'x3' && 'h-5 px-1 text-[9px]', badgeBorderClass, hasColor && 'text-[#000000]')}
+                    className={cn('block h-6 max-w-full truncate whitespace-nowrap px-2 text-[10px] leading-6', viewType === 'x3' && 'h-5 px-1 text-[9px]', badgeBorderClass, hasColor && 'text-ink')}
                   >
                     {viewType === 'x3'
                       ? `${weeklyCompletions}/${habit.numberOfDaysPerWeek || 1}`
@@ -258,7 +258,7 @@ export function HabitCard({
                     <Badge
                       variant="outline"
                       aria-label={t('timesTodayOf').replace('{done}', String(todayCount)).replace('{total}', String(timesPerDay))}
-                      className={cn('block max-w-full truncate whitespace-nowrap', viewType === 'x3' ? 'h-5 px-1 text-[9px]' : 'h-6 px-2 text-[10px]', badgeBorderClass, hasColor && 'text-[#000000]')}
+                      className={cn('block max-w-full truncate whitespace-nowrap', viewType === 'x3' ? 'h-5 px-1 text-[9px]' : 'h-6 px-2 text-[10px]', badgeBorderClass, hasColor && 'text-ink')}
                     >
                       {viewType === 'x3' ? `${todayCount}/${timesPerDay}` : (
                         <>
@@ -348,7 +348,7 @@ export function HabitCard({
                     hasColor
                       ? (!isActive ? 'cursor-not-allowed opacity-50' : 'hover:opacity-80')
                       : isCounted
-                        ? 'border-[#2f80e7] bg-[#2f80e7] text-white hover:bg-[#2875d3]'
+                        ? 'border-stamp bg-stamp text-stamp-foreground hover:bg-stamp/90'
                         : 'border-border bg-background text-foreground hover:bg-hover',
                     isDisabled && 'cursor-not-allowed opacity-50'
                   )}
@@ -472,10 +472,10 @@ export function ArchivedHabitCard({
       <div className={cn(
         "h-6 w-6 rounded-full border-2 flex items-center justify-center transition-colors cursor-pointer",
         isBulkSelected 
-          ? "bg-black border-black" 
+          ? "bg-stamp border-stamp" 
           : "border-muted-foreground bg-background/80 backdrop-blur-sm"
       )}>
-        {isBulkSelected && <Check size={20} className="text-white" />}
+        {isBulkSelected && <Check size={20} className="text-stamp-foreground" />}
       </div>
     </div>
   );

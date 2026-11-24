@@ -103,7 +103,7 @@ export const Header = ({ showSearch = false, searchQuery = '', onSearchChange, p
         *
         * The content offset in Layout (`pt-16`) is unchanged: it still clears the shorter bar.
         */}
-      <div className="flex items-center justify-between py-2 px-2 gap-3">
+      <div className="mx-auto flex max-w-3xl items-center justify-between py-2 px-2 gap-3">
         {/* Left: Search Button (always visible when showSearch is true) */}
         {showSearch && (
         <Button
@@ -154,7 +154,7 @@ export const Header = ({ showSearch = false, searchQuery = '', onSearchChange, p
         {(!showSearch || !isSearchExpanded) && (
           <div className="flex-1 flex items-center justify-center">
             {pageTitle && (
-              <h1 className="text-xl font-semibold text-foreground transition-opacity duration-200">
+              <h1 className="font-display text-2xl font-bold tracking-tight text-foreground transition-opacity duration-200">
                 {pageTitle}
               </h1>
             )}

@@ -46,8 +46,8 @@ export function CalendarEventItem({
   const hasColor = !isDefaultColor(event.color);
   const eventBorderClass = hasColor ? 'border-black/10 dark:border-black/10' : 'border-border';
   const badgeBorderClass = getColoredBorderClass(hasColor, 100);
-  const textColorClass = hasColor ? 'text-[#000000]' : 'text-foreground';
-  const mutedTextClass = hasColor ? 'text-[#000000]/70' : 'text-muted-foreground';
+  const textColorClass = hasColor ? 'text-ink' : 'text-foreground';
+  const mutedTextClass = hasColor ? 'text-ink/70' : 'text-muted-foreground';
 
   return (
     <div 
@@ -71,19 +71,19 @@ export function CalendarEventItem({
       {(isAllDay || hasTime || event.isRecurrent) && (
         <div className="flex flex-wrap gap-1">
           {isAllDay && (
-            <Badge variant="outline" className={`text-xs shrink-0 w-fit ${badgeBorderClass} ${hasColor ? 'text-[#000000]' : ''}`}>
+            <Badge variant="outline" className={`text-xs shrink-0 w-fit ${badgeBorderClass} ${hasColor ? 'text-ink' : ''}`}>
               <Clock size={12} className="mr-1" />
               {t('allDay')}
             </Badge>
           )}
           {hasTime && (
-            <Badge variant="outline" className={`text-xs shrink-0 w-fit ${badgeBorderClass} ${hasColor ? 'text-[#000000]' : ''}`}>
+            <Badge variant="outline" className={`text-xs shrink-0 w-fit ${badgeBorderClass} ${hasColor ? 'text-ink' : ''}`}>
               <Clock size={12} className="mr-1" />
               {formatTime(event.startTime!)}
             </Badge>
           )}
           {event.isRecurrent && (
-            <Badge variant="outline" className={`text-xs shrink-0 w-fit ${badgeBorderClass} ${hasColor ? 'text-[#000000]' : ''}`}>
+            <Badge variant="outline" className={`text-xs shrink-0 w-fit ${badgeBorderClass} ${hasColor ? 'text-ink' : ''}`}>
               <CalendarIcon size={12} className="mr-1" />
               {recurrenceLabel}
             </Badge>

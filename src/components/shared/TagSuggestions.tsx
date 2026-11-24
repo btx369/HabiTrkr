@@ -22,8 +22,8 @@ export function TagSuggestions({ suggestions, onSelect, noteColor }: TagSuggesti
           className={cn(
             "cursor-pointer transition-colors",
             hasNoteColor 
-              ? "bg-[#000000]/10 text-[#000000] hover:bg-[#000000]/20" 
-              : "bg-black text-white hover:bg-black/80 dark:bg-muted dark:text-foreground dark:hover:bg-hover dark:hover:text-foreground"
+              ? "bg-ink/10 text-ink hover:bg-ink/20" 
+              : "bg-stamp text-stamp-foreground hover:bg-stamp/90"
           )}
           onClick={() => onSelect(tag)}
         >

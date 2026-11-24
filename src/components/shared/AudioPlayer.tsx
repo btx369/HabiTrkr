@@ -11,7 +11,7 @@ import { getColoredOutlineButtonStyles } from '@/lib/coloredButtonStyles';
  * always light pastel tints with black text, so the controls go black-on-translucent-black
  * (like the other buttons of a coloured note) instead of the theme's primary colour.
  */
-const COLORED_PLAY_BUTTON = 'bg-black/10 text-[#000000] hover:bg-black/20';
+const COLORED_PLAY_BUTTON = 'bg-black/10 text-ink hover:bg-black/20';
 const COLORED_SLIDER = '[&_[role=slider]]:border-black [&>span:first-child]:bg-black/20 [&>span:first-child>span]:bg-black';
 
 interface AudioPlayerProps {
