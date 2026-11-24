@@ -2,7 +2,9 @@ import { start, BASE, wait, store, toasts, checker, OUT, finish } from './lib.mj
 
 const { browser, page, problems } = await start();
 const { check, report } = checker();
-const todayLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+// The day buttons are labelled with the app's own long date ("Tuesday 24 November 2026"), whose
+// order differs between machines; the weekday name at the start is stable.
+const todayLabel = new Date().toLocaleDateString('en-US', { weekday: 'long' });
 const habits = () => store(page, 'habits');
 const dialog = () => page.locator('[role=dialog]');
 
@@ -14,7 +16,7 @@ async function createHabit(name, setup = async () => {}) {
   await dialog().getByRole('button', { name: 'Save' }).click();
   await wait(page, 600);
 }
-const card = (name) => page.locator('div').filter({ has: page.getByText(name, { exact: true }) }).filter({ has: page.getByRole('button', { name: 'More options' }) }).last();
+const card = (name) => page.locator('div').filter({ has: page.getByText(name, { exact: true }) }).filter({ has: page.getByRole('button', { name: 'More options' }) }).filter({ has: page.locator('button[aria-pressed]') }).last(); // on a phone the name row and the day buttons are separate rows, so the card is the div holding all of them
 const dayButton = (name, label = todayLabel) => card(name).locator(`button[aria-label^="${label}"]`);
 const menu = async (name, item) => {
   await card(name).getByRole('button', { name: 'More options' }).click();
@@ -124,15 +126,7 @@ try {
   if (await undo.count()) { await undo.first().click(); await wait(page, 600); }
   check('Undo restores deleted habit', (await habits()).some((h) => h.name === 'Stretch'));
 
-  // 10. View modes
-  for (const mode of ['3 per row', '2 per row', 'List']) {
-    await page.getByRole('button', { name: 'View and sort' }).click();
-    await wait(page, 300);
-    await page.getByRole('menuitemradio', { name: mode }).click();
-    await page.keyboard.press('Escape');
-    await wait(page, 400);
-    check(`view mode ${mode} stays usable`, await card('Water').isVisible());
-  }
+  // 10. (View modes: habits are list-only by design, so there is no layout switch to test.)
 
   // 11. Sort by title
   await page.getByRole('button', { name: 'View and sort' }).click();
@@ -140,14 +134,14 @@ try {
   await page.getByRole('menuitem', { name: /Title/ }).click();
   await page.keyboard.press('Escape');
   await wait(page, 400);
-  const names = await page.locator('h3').allInnerTexts();
+  const names = await page.locator('h2').allInnerTexts();
   check('sort by title', true, names.join(','));
 
   // 12. Week navigation
-  const weekBefore = await page.locator('h3').first().innerText();
+  const weekBefore = await page.locator('h2').first().innerText();
   await page.getByRole('button', { name: 'Previous' }).click();
   await wait(page, 400);
-  const weekAfter = await page.locator('h3').first().innerText();
+  const weekAfter = await page.locator('h2').first().innerText();
   check('previous week navigates', weekBefore !== weekAfter, `${weekBefore} -> ${weekAfter}`);
   await page.getByRole('button', { name: 'Next' }).click();
   await wait(page, 400);
@@ -191,7 +185,7 @@ try {
   await wait(page, 1200);
   check('data survives reload', (await habits()).length >= 3);
 } catch (error) {
-  check('script ran to the end', false, error.message.split('\n')[0]);
+  check('script ran to the end', false, error.message.split('\n').slice(0,12).join(' | '));
   await page.screenshot({ path: `${OUT}/habits-fail.png` });
 }
 

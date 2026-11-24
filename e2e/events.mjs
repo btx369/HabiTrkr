@@ -29,8 +29,9 @@ try {
   await dlg().getByRole('button', { name: 'Set time' }).first().click();
   await wait(page, 400);
   const timeDlg = page.getByRole('dialog').filter({ hasText: 'Select time' });
-  await timeDlg.locator('input').nth(0).fill('23');
-  await timeDlg.locator('input').nth(1).fill('30');
+  // The time picker is a roulette of tappable hours and minutes, not text fields.
+  await timeDlg.getByText('23', { exact: true }).first().click();
+  await timeDlg.getByText('30', { exact: true }).first().click();
   await timeDlg.getByRole('button', { name: 'OK' }).click();
   await wait(page, 400);
   await dlg().getByRole('combobox').last().click();
