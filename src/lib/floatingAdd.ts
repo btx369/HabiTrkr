@@ -6,7 +6,10 @@
  * less) a centred capsule leaves too little room, and the Add button touched it. There the
  * capsule moves left just enough to keep a 72px gap (12px either side of the button).
  */
-const CAPSULE_LEFT = 'max(8px, min(calc(50% - 104px), calc(100% - 280px)))';
+const COLUMN = 'min(100%, 48rem)'; // the page content column (max-w-3xl)
+const COLUMN_START = `((100% - ${COLUMN}) / 2)`; // gap left of the column on wide windows
+const CAPSULE_IN_COLUMN = `max(8px, min(calc(${COLUMN} / 2 - 104px), calc(${COLUMN} - 280px)))`;
+const CAPSULE_LEFT = `calc(${COLUMN_START} + ${CAPSULE_IN_COLUMN})`;
 
 /** Left edge of the navigation capsule. */
 // `bottom` also clears the iPhone home indicator when the app runs full screen.
@@ -17,9 +20,10 @@ export const FLOATING_ADD_CLASS =
 
 export const FLOATING_ADD_STYLE = {
   // Centred in the gap between the capsule's right edge and the screen edge.
-  left: `calc((${CAPSULE_LEFT} + 208px + 100%) / 2 - 24px)`,
+  // On wide windows the "screen edge" is the right edge of the content column.
+  left: `calc((${CAPSULE_LEFT} + 208px + ${COLUMN_START} + ${COLUMN}) / 2 - 24px)`,
   bottom: 'calc(17px + env(safe-area-inset-bottom))',
 } as const;
 
 /** Right offset that lines popups opened by the Add button up with its right edge. */
-export const FLOATING_ADD_POPUP_RIGHT = `max(0.5rem, calc((100% - ${CAPSULE_LEFT} - 208px) / 2 - 24px))`;
+export const FLOATING_ADD_POPUP_RIGHT = `max(0.5rem, calc(${COLUMN_START} + (${COLUMN_START} + ${COLUMN} - ${CAPSULE_LEFT} - 208px) / 2 - 24px))`;
