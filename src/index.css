@@ -22,149 +22,164 @@ All colors MUST be HSL.
 
 @layer base {
   /*
-   * "Carimbo de tinta": HabiTrkr's identity.
+   * "Calma Quente": HabiTrkr's design system (see docs/DESIGN_SYSTEM.md).
    *
-   *   Papel    page, a faint lavender-grey paper (never cream)
-   *   Folha    cards and menus
-   *   Tinta    text and the navigation capsule, a deep ink navy
-   *   Carimbo  the one loud colour: an indigo stamp-pad ink. Primary actions, a habit
-   *            marked done, chart fills.
-   *   Brasa    ember orange, used ONLY for "today", streaks and warnings
-   *   Bruma    secondary text and borders, a muted blue-grey
+   *   Linho    page, a warm linen white
+   *   Creme    cards and menus
+   *   Cacau    text and the navigation capsule, a soft cocoa brown (never pure black)
+   *   Musgo    "leaf", the one brand colour: calm sage green. Primary actions, a habit
+   *            marked done, progress, chart fill. Growth, not alarm.
+   *   Sol      "sun", warm amber, used for today, streaks and gentle warnings
+   *   Barro    destructive: muted clay red, never a screaming red
+   *   Bruma    secondary text and borders, a warm taupe
    *
-   * Every colour is HSL, as the file's rule demands. Neutrals are all tinted toward the
-   * ink hue (231) so nothing in the interface is a flat grey.
+   * Every colour is HSL, as the file's rule demands. Neutrals are tinted toward the cocoa
+   * hue so nothing in the interface is a cold grey.
    */
   :root {
-    --font-display: 'Bricolage Grotesque Variable', 'Atkinson Hyperlegible Next', system-ui, sans-serif;
+    --font-display: 'Nunito Variable', 'Atkinson Hyperlegible Next', system-ui, sans-serif;
     --font-body: 'Atkinson Hyperlegible Next', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
-    --background: 249 29% 95%;
-    --foreground: 231 47% 16%;
+    --background: 37 56% 96%;
+    --foreground: 14 17% 20%;
 
-    --card: 240 100% 99%;
-    --card-foreground: 231 47% 16%;
-    --item-card-surface: 240 100% 99%;
-    /* An ink-tinted, indigo-leaning shadow instead of neutral grey. */
-    --surface-shadow: 0 1px 0 hsl(231 47% 16% / 0.04), 0 10px 26px -14px hsl(243 55% 30% / 0.32);
+    --card: 40 100% 99%;
+    --card-foreground: 14 17% 20%;
+    --item-card-surface: 40 100% 99%;
+    /* A warm, soft shadow: cocoa-tinted, wide and low. Cards float, they never stamp. */
+    --surface-shadow: 0 1px 0 hsl(14 17% 20% / 0.03), 0 10px 28px -16px hsl(24 40% 28% / 0.28);
 
-    --surface-card: 240 100% 99% / 0.86;
+    --surface-card: 40 100% 99% / 0.88;
 
     --highlight: 48 100% 70%;
 
     /* Floating surfaces. Opaque on purpose, see the history of this token in git. */
-    --popover: 249 45% 97%;
-    --popover-foreground: 231 47% 16%;
+    --popover: 38 60% 98%;
+    --popover-foreground: 14 17% 20%;
 
-    /* The stamp: primary actions, switches, selected tabs, done habits, chart fills. */
-    --stamp: 243 66% 52%;
-    --stamp-foreground: 0 0% 100%;
-    /* Ember: today, streaks, warnings. Ink text on it, because white on orange is weak. */
-    --ember: 18 88% 56%;
-    --ember-foreground: 231 47% 16%;
-    --ink: 231 47% 16%;
+    /* Leaf: primary actions, switches, selected tabs, done habits, chart fills. */
+    --leaf: 150 32% 34%;
+    --leaf-foreground: 0 0% 100%;
+    /* Sun: today, streaks, warnings. Cocoa text on it, because white on amber is weak. */
+    --sun: 34 78% 52%;
+    --sun-foreground: 14 17% 20%;
+    --cocoa: 14 17% 20%;
 
-    --switch-on: 243 66% 52%;
+    --switch-on: 150 32% 34%;
 
-    --primary: 243 66% 52%;
+    --primary: 150 32% 34%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 249 25% 93%;
-    --secondary-foreground: 231 47% 16%;
+    --secondary: 37 38% 92%;
+    --secondary-foreground: 14 17% 20%;
 
-    --muted: 249 25% 91%;
-    --muted-foreground: 230 19% 42%;
+    --muted: 37 32% 90%;
+    --muted-foreground: 24 11% 36%;
 
-    /* The shared hover veil: a low-alpha wash of the ink colour. */
-    --hover: 231 47% 16% / 0.06;
+    /* The shared hover veil: a low-alpha wash of the cocoa colour. */
+    --hover: 14 17% 20% / 0.06;
 
-    --accent: 249 30% 92%;
-    --accent-foreground: 231 47% 16%;
+    --accent: 37 40% 91%;
+    --accent-foreground: 14 17% 20%;
 
-    --destructive: 352 75% 48%;
+    --destructive: 7 52% 44%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 245 22% 87%;
-    --input: 245 22% 82%;
-    --ring: 243 66% 52%;
+    --border: 36 30% 85%;
+    --input: 35 25% 74%;
+    --ring: 150 32% 34%;
 
-    --radius: 0.75rem;
+    /* Chart palette: five calm, colour-blind-aware hues. Leaf first. */
+    --chart-1: 150 32% 34%;
+    --chart-2: 34 78% 52%;
+    --chart-3: 205 42% 44%;
+    --chart-4: 14 52% 52%;
+    --chart-5: 270 24% 52%;
+
+    --radius: 1rem;
     --card-hover-color: hsl(var(--hover));
 
-    --glass-bg: 249 29% 95% / 0.78;
+    --glass-bg: 37 56% 96% / 0.8;
     --glass-border: 0 0% 100% / 0.5;
 
-    /* The capsule and bulk bar stay dark ink in both themes. */
-    --nav-bg: 231 47% 13%;
-    --nav-border: 231 32% 24%;
-    --nav-active: 243 66% 52%;
+    /* The capsule and bulk bar stay dark cocoa in both themes. */
+    --nav-bg: 18 17% 15%;
+    --nav-border: 18 12% 25%;
+    --nav-active: 150 32% 36%;
     --nav-active-foreground: 0 0% 100%;
-    --nav-icon: 231 22% 66%;
-    --nav-icon-hover: 231 40% 88%;
-    --nav-foreground: 230 66% 96%;
+    --nav-icon: 30 15% 70%;
+    --nav-icon-hover: 36 40% 92%;
+    --nav-foreground: 36 40% 94%;
 
-    /* Dot grid on the page, echoing the five dots of the logo. */
-    --paper-dot: 231 47% 16% / 0.09;
+    /* A soft sunrise glow at the top of the page. */
+    --paper-glow: 34 85% 72% / 0.16;
   }
 
   .dark {
-    --background: 232 43% 10%;
-    --foreground: 230 66% 94%;
+    --background: 24 14% 9%;
+    --foreground: 36 38% 92%;
 
-    --card: 231 41% 16%;
-    --card-foreground: 230 66% 94%;
-    --item-card-surface: 231 38% 22%;
-    --surface-shadow: 0 1px 0 hsl(230 66% 94% / 0.04), 0 12px 28px -14px rgba(0, 0, 0, 0.7);
+    --card: 22 12% 14%;
+    --card-foreground: 36 38% 92%;
+    --item-card-surface: 22 11% 19%;
+    --surface-shadow: 0 1px 0 hsl(36 38% 92% / 0.04), 0 12px 28px -14px rgba(0, 0, 0, 0.7);
 
-    --surface-card: 231 41% 16% / 0.88;
+    --surface-card: 22 12% 14% / 0.9;
 
-    --popover: 232 42% 14%;
-    --popover-foreground: 230 66% 94%;
+    --popover: 24 13% 12%;
+    --popover-foreground: 36 38% 92%;
 
-    --stamp: 242 100% 76%;
-    --stamp-foreground: 232 43% 10%;
-    --ember: 18 90% 60%;
-    --ember-foreground: 232 43% 10%;
-    --ink: 231 47% 16%;
+    --leaf: 150 36% 58%;
+    --leaf-foreground: 24 14% 9%;
+    --sun: 36 86% 62%;
+    --sun-foreground: 24 14% 9%;
+    --cocoa: 14 17% 20%;
 
-    --switch-on: 242 100% 76%;
+    --switch-on: 150 36% 58%;
 
-    --primary: 242 100% 76%;
-    --primary-foreground: 232 43% 10%;
+    --primary: 150 36% 58%;
+    --primary-foreground: 24 14% 9%;
 
-    --secondary: 231 41% 16%;
-    --secondary-foreground: 230 66% 94%;
+    --secondary: 22 12% 14%;
+    --secondary-foreground: 36 38% 92%;
 
-    --muted: 231 35% 19%;
-    --muted-foreground: 231 28% 69%;
+    --muted: 24 10% 18%;
+    --muted-foreground: 30 13% 68%;
 
-    --hover: 230 66% 94% / 0.10;
+    --hover: 36 38% 92% / 0.10;
 
     --highlight: 42 70% 32%;
 
-    --accent: 231 38% 18%;
-    --accent-foreground: 230 66% 94%;
+    --accent: 22 11% 17%;
+    --accent-foreground: 36 38% 92%;
 
-    --destructive: 352 80% 62%;
-    --destructive-foreground: 232 43% 10%;
+    --destructive: 7 70% 66%;
+    --destructive-foreground: 24 14% 9%;
 
-    --border: 231 30% 25%;
-    --input: 231 30% 30%;
-    --ring: 242 100% 76%;
+    --border: 24 10% 23%;
+    --input: 24 10% 30%;
+    --ring: 150 36% 58%;
+
+    --chart-1: 150 36% 58%;
+    --chart-2: 36 86% 62%;
+    --chart-3: 205 52% 66%;
+    --chart-4: 14 66% 68%;
+    --chart-5: 270 40% 74%;
+
     --card-hover-color: hsl(var(--hover));
 
-    --glass-bg: 231 41% 16% / 0.86;
-    --glass-border: 231 30% 30% / 0.4;
+    --glass-bg: 22 12% 14% / 0.86;
+    --glass-border: 24 10% 30% / 0.4;
 
-    /* Lighter than the page so the capsule no longer vanishes in the dark theme. */
-    --nav-bg: 231 40% 19%;
-    --nav-border: 231 30% 32%;
-    --nav-active: 242 100% 76%;
-    --nav-active-foreground: 232 43% 10%;
-    --nav-icon: 231 24% 68%;
-    --nav-icon-hover: 231 40% 92%;
+    /* Lighter than the page so the capsule never vanishes in the dark theme. */
+    --nav-bg: 22 12% 19%;
+    --nav-border: 24 10% 31%;
+    --nav-active: 150 36% 58%;
+    --nav-active-foreground: 24 14% 9%;
+    --nav-icon: 30 14% 70%;
+    --nav-icon-hover: 36 38% 94%;
 
-    --paper-dot: 230 66% 94% / 0.07;
+    --paper-glow: 34 80% 60% / 0.07;
   }
 }
 
@@ -191,13 +206,14 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
-    font-feature-settings: 'tnum' 0;
+    /* Every figure in the app is tabular: dates, counters and stats line up. */
+    font-variant-numeric: tabular-nums;
   }
 
-  /* Headlines carry the personality: a characterful grotesque, set tight. */
+  /* Headlines are soft and rounded; numbers always stay in the body face (see design system). */
   h1, h2, h3 {
     font-family: var(--font-display);
-    letter-spacing: -0.015em;
+    letter-spacing: -0.005em;
   }
 
   /* Dates, counters and chart numbers line up in a column. */
@@ -298,13 +314,12 @@ body:has([data-bulk-bar]) [data-sonner-toaster][data-y-position='bottom'] {
 }
 
 /*
- * The page: paper with a faint dot grid. Attached to the viewport so the fixed header
- * shield and the scrolling page behind it show the SAME dots and the seam never shows.
+ * The page: warm linen with a faint sunrise glow. Attached to the viewport so the fixed
+ * header shield and the scrolling page behind it show the SAME background, no seam.
  */
 .paper {
   background-color: hsl(var(--background));
-  background-image: radial-gradient(hsl(var(--paper-dot)) 1px, transparent 1.2px);
-  background-size: 22px 22px;
+  background-image: radial-gradient(ellipse 120% 60% at 50% -10%, hsl(var(--paper-glow)), transparent 70%);
   background-attachment: fixed;
 }
 

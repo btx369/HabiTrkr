@@ -70,7 +70,7 @@ export function HabitViewer({ habit, isOpen, onClose, onEdit, onDelete }: HabitV
   const iconColorClass = getColoredIconClass(hasColor);
   const borderClass = getColoredBorderClass(hasColor, 100);
   const editCloseButtonStyles = hasColor ? iconButtonStyles.className : 'hover:bg-hover';
-  const textColorClass = hasColor ? 'text-ink' : 'text-foreground';
+  const textColorClass = hasColor ? 'text-cocoa' : 'text-foreground';
 
   return (
     <ResponsiveDialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -140,7 +140,7 @@ export function HabitViewer({ habit, isOpen, onClose, onEdit, onDelete }: HabitV
             </div>
           )}
 
-          <div className={`space-y-2 rounded-lg p-3 ${hasColor ? 'bg-ink/10' : 'bg-muted'}`}>
+          <div className={`space-y-2 rounded-lg p-3 ${hasColor ? 'bg-cocoa/10' : 'bg-muted'}`}>
             <div className={`flex items-center gap-2 ${textColorClass}`}>
               <BarChart3 size={20} className={`shrink-0 ${iconColorClass}`} />
               <span className="text-sm">{last30}</span>

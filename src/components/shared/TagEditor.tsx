@@ -216,9 +216,9 @@ export function TagEditor({
           currentTagLength >= TAG_MAX_LENGTH
             ? "text-destructive"
             : currentTagLength >= Math.floor(TAG_MAX_LENGTH * 0.85)
-              ? "text-ember"
+              ? "text-sun"
               : hasNoteColor
-                ? "text-ink/60"
+                ? "text-cocoa/60"
                 : "text-muted-foreground"
         )}>{currentTagLength}/{TAG_MAX_LENGTH}</span>
       </Label>
@@ -232,8 +232,8 @@ export function TagEditor({
               className={cn(
                 "gap-1", 
                 hasNoteColor 
-                  ? `bg-ink/20 ${iconColorClass} hover:bg-ink/30` 
-                  : "bg-stamp text-stamp-foreground hover:bg-stamp/90"
+                  ? `bg-cocoa/20 ${iconColorClass} hover:bg-cocoa/30` 
+                  : "bg-leaf text-leaf-foreground hover:bg-leaf/90"
               )}
             >
               #{tag}
@@ -251,7 +251,7 @@ export function TagEditor({
           tags.length >= TAG_LIMIT
             ? "text-destructive"
             : hasNoteColor
-              ? "text-ink/60"
+              ? "text-cocoa/60"
               : "text-muted-foreground"
         )}>{tags.length}/{TAG_LIMIT}</span>
       </div>
@@ -270,7 +270,7 @@ export function TagEditor({
             className={cn(
               "h-10 text-sm relative z-10 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0",
               hasError && "border-destructive/50",
-              hasNoteColor && `${borderClass} ${iconColorClass} placeholder:text-ink/50`
+              hasNoteColor && `${borderClass} ${iconColorClass} placeholder:text-cocoa/50`
             )}
           />
           {/* Placeholder overlay - shows when input is just '#' */}
@@ -279,7 +279,7 @@ export function TagEditor({
               className="absolute inset-0 pointer-events-none flex items-center overflow-hidden px-3 py-2 text-sm h-10"
               aria-hidden="true"
             >
-              <span className={hasNoteColor ? "text-ink/40" : "text-muted-foreground"}>{t('tagExample')}</span>
+              <span className={hasNoteColor ? "text-cocoa/40" : "text-muted-foreground"}>{t('tagExample')}</span>
             </div>
           )}
           {/* Suggestion overlay */}
@@ -290,7 +290,7 @@ export function TagEditor({
             >
               <span className="whitespace-pre">
                 <span className="invisible">{tagInput}</span>
-                <span className={hasNoteColor ? "text-ink/40" : "text-muted-foreground/40"}>{suggestion}</span>
+                <span className={hasNoteColor ? "text-cocoa/40" : "text-muted-foreground/40"}>{suggestion}</span>
               </span>
             </div>
           )}
@@ -301,8 +301,8 @@ export function TagEditor({
           className={cn(
             "h-10 px-3 text-sm",
             hasNoteColor 
-              ? `bg-ink/20 ${iconColorClass} hover:bg-ink/30` 
-              : "bg-stamp text-stamp-foreground hover:bg-stamp/90"
+              ? `bg-cocoa/20 ${iconColorClass} hover:bg-cocoa/30` 
+              : "bg-leaf text-leaf-foreground hover:bg-leaf/90"
           )}
           disabled={tagInput.trim() === '#' || tagInput.trim() === '' || tags.length >= TAG_LIMIT}
         >
@@ -313,7 +313,7 @@ export function TagEditor({
       {/* Suggestions */}
       {suggestions.length > 0 && (
         <div className="space-y-1">
-          <Label className={cn("text-xs", hasNoteColor ? "text-ink" : "text-foreground")}>{t('suggestions')}</Label>
+          <Label className={cn("text-xs", hasNoteColor ? "text-cocoa" : "text-foreground")}>{t('suggestions')}</Label>
           <TagSuggestions 
             suggestions={suggestions} 
             onSelect={handleSuggestionClick}

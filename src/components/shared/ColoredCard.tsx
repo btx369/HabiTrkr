@@ -97,7 +97,7 @@ export const ColoredCard = React.forwardRef<HTMLDivElement, ColoredCardProps>(
            * went with it. Note that a card nested in a coloured folder still composites
            * over that folder's colour — measured and deliberately kept, see NoteFolderCard.
            */
-          hasColor && "text-ink [&_.text-muted-foreground]:text-ink/70 [&_.text-foreground]:text-ink",
+          hasColor && "text-cocoa [&_.text-muted-foreground]:text-cocoa/70 [&_.text-foreground]:text-cocoa",
           className
         )}
         style={glassStyles}

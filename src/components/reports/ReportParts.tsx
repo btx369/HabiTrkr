@@ -22,7 +22,7 @@ export function StatTile({ label, value, hint }: { label: string; value: ReactNo
   return (
     <div className="flex-1 rounded-2xl border border-border bg-muted/50 p-3">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="tabular font-display text-3xl font-bold leading-tight tracking-tight text-foreground">{value}</p>
+      <p className="tabular text-3xl font-bold leading-tight tracking-tight text-foreground">{value}</p>
       {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
     </div>
   );
@@ -33,7 +33,7 @@ export function ProgressBar({ value, label }: { value: number; label: string }) 
   const percent = Math.round(Math.min(1, Math.max(0, value)) * 100);
   return (
     <div role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} className="h-2 w-full overflow-hidden rounded-full bg-muted">
-      <div className="h-full rounded-full bg-stamp transition-[width] duration-500" style={{ width: `${percent}%` }} />
+      <div className="h-full rounded-full bg-leaf transition-[width] duration-500" style={{ width: `${percent}%` }} />
     </div>
   );
 }
@@ -53,14 +53,14 @@ export function BarChart({ bars, height = 96 }: { bars: Bar[]; height?: number }
     <div className="flex items-end gap-1.5" style={{ height: height + 36 }} role="img" aria-label={bars.map((b) => `${b.label}: ${b.display}`).join(', ')}>
       {bars.map((bar) => (
         <div key={bar.label} className="flex min-w-0 flex-1 flex-col items-center justify-end gap-1">
-          <span className="text-[10px] leading-none text-muted-foreground">{bar.value === null ? '' : bar.display}</span>
+          <span className="text-[11px] leading-none text-muted-foreground">{bar.value === null ? '' : bar.display}</span>
           <div className="flex w-full items-end" style={{ height }}>
             <div
-              className={cn('w-full rounded-t-md', bar.highlight ? 'bg-stamp' : 'bg-stamp/30', bar.value === null && 'bg-transparent')}
+              className={cn('w-full rounded-t-md', bar.highlight ? 'bg-leaf' : 'bg-leaf/30', bar.value === null && 'bg-transparent')}
               style={{ height: bar.value === null ? 0 : Math.max(3, Math.round(bar.value * height)) }}
             />
           </div>
-          <span className="w-full truncate text-center text-[10px] leading-none text-muted-foreground">{bar.label}</span>
+          <span className="w-full truncate text-center text-[11px] leading-none text-muted-foreground">{bar.label}</span>
         </div>
       ))}
     </div>
@@ -78,7 +78,7 @@ export function Heatmap({ weeks, rowLabels, compact = false }: {
   return (
     <div className={compact ? 'flex gap-[2px]' : 'flex gap-1'} role="img" aria-label={rowLabels.join(', ')}>
       {rowLabels.length > 0 && (
-        <div className="flex flex-col gap-1 pr-1 text-[9px] text-muted-foreground">
+        <div className="flex flex-col gap-1 pr-1 text-[11px] text-muted-foreground">
           {rowLabels.map((label, i) => (
             <span key={i} className="flex h-4 items-center">{i % 2 === 0 ? label : ''}</span>
           ))}
@@ -90,7 +90,7 @@ export function Heatmap({ weeks, rowLabels, compact = false }: {
             cell ? (
               <div
                 key={cell.key}
-                className={cn(cellHeight, compact ? 'rounded-[2px]' : 'rounded-[4px]', cell.future ? 'bg-transparent' : cell.level === 0 ? 'bg-stamp/10' : 'bg-stamp')}
+                className={cn(cellHeight, compact ? 'rounded-[2px]' : 'rounded-[4px]', cell.future ? 'bg-transparent' : cell.level === 0 ? 'bg-leaf/10' : 'bg-leaf')}
                 style={{ opacity: cell.future ? 0 : cell.level === 0 ? 1 : 0.25 + cell.level * 0.75 }}
               />
             ) : (
@@ -114,16 +114,16 @@ export function MonthGrid({ weeks, dayLabels }: {
   return (
     <div className="mx-auto grid max-w-sm grid-cols-7 gap-1" role="img" aria-label={dayLabels.join(', ')}>
       {dayLabels.map((label, i) => (
-        <span key={`h${i}`} className="pb-1 text-center text-[10px] text-muted-foreground">{label}</span>
+        <span key={`h${i}`} className="pb-1 text-center text-[11px] text-muted-foreground">{label}</span>
       ))}
       {weeks.flat().map((cell, i) =>
         cell ? (
-          <div key={cell.key} className={cn('relative flex aspect-square items-center justify-center rounded-md text-[11px]', cell.today && 'ring-2 ring-ember ring-offset-1 ring-offset-background')}>
+          <div key={cell.key} className={cn('relative flex aspect-square items-center justify-center rounded-md text-[11px]', cell.today && 'ring-2 ring-sun ring-offset-1 ring-offset-background')}>
             <div
-              className={cn('absolute inset-0 rounded-md', !cell.future && cell.level === 0 ? 'bg-stamp/10' : 'bg-stamp')}
+              className={cn('absolute inset-0 rounded-md', !cell.future && cell.level === 0 ? 'bg-leaf/10' : 'bg-leaf')}
               style={{ opacity: cell.future ? 0.04 : cell.level === 0 ? 1 : 0.25 + cell.level * 0.75 }}
             />
-            <span className={cn('relative', !cell.future && cell.level > 0.5 ? 'text-stamp-foreground' : 'text-foreground')}>{cell.day}</span>
+            <span className={cn('relative', !cell.future && cell.level > 0.5 ? 'text-leaf-foreground' : 'text-foreground')}>{cell.day}</span>
           </div>
         ) : (
           <div key={`e${i}`} />
@@ -142,8 +142,8 @@ export function WeekDots({ days }: { days: Array<{ key: string; state: 'done' | 
           key={d.key}
           className={cn(
             'h-3 w-3 rounded-full border',
-            d.state === 'done' && 'border-stamp bg-stamp',
-            d.state === 'missed' && 'border-ember/70 bg-ember/25',
+            d.state === 'done' && 'border-leaf bg-leaf',
+            d.state === 'missed' && 'border-sun/70 bg-sun/25',
             (d.state === 'off' || d.state === 'future') && 'border-border bg-transparent'
           )}
         />

@@ -494,7 +494,7 @@ export default function Calendar() {
                       >
                         <span className={cn(
                           "flex size-7 shrink-0 items-center justify-center rounded-full",
-                          isToday(day) && "bg-ember text-ember-foreground",
+                          isToday(day) && "bg-sun text-sun-foreground",
                           isSelected && !isToday(day) && "ring-2 ring-primary",
                         )}>{format(day, 'd')}</span>
                         {hasEvents && (
@@ -514,7 +514,7 @@ export default function Calendar() {
                               );
                             })}
                             {dayEvents.length > dotsPerDay && (
-                              <span className="text-[9px] font-semibold leading-none text-muted-foreground">+{dayEvents.length - dotsPerDay + 1}</span>
+                              <span className="text-[11px] font-semibold leading-none text-muted-foreground">+{dayEvents.length - dotsPerDay + 1}</span>
                             )}
                           </div>
                         )}

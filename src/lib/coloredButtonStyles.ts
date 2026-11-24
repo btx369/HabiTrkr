@@ -78,7 +78,7 @@ export function getColoredOutlineButtonStyles(hasColor: boolean): ColoredButtonC
   if (hasColor) {
     return {
       variant: 'ghostStatic',
-      className: 'border border-ink/30 hover:bg-black/20',
+      className: 'border border-cocoa/30 hover:bg-black/20',
     };
   }
   
@@ -96,7 +96,7 @@ export function getColoredOutlineButtonStyles(hasColor: boolean): ColoredButtonC
  * @returns CSS class for text/icon color
  */
 export function getColoredIconClass(hasColor: boolean): string {
-  return hasColor ? 'text-ink' : 'text-foreground';
+  return hasColor ? 'text-cocoa' : 'text-foreground';
 }
 
 /**
@@ -110,13 +110,13 @@ export function getColoredBorderClass(hasColor: boolean, opacity: number = 30): 
   if (!hasColor) return 'border-border';
   /*
    * Literal class names only. Tailwind finds classes by scanning source text, so the old
-   * `border-ink/${opacity}` template was never generated for opacities that are not
+   * `border-cocoa/${opacity}` template was never generated for opacities that are not
    * written out somewhere else (only /30 existed): the line then fell back to the shared
    * border colour, which reads as white on a pastel note. List what callers use here.
    */
   switch (opacity) {
-    case 20: return 'border-ink/20';
-    case 30: return 'border-ink/30';
-    default: return `border-ink/${opacity}`;
+    case 20: return 'border-cocoa/20';
+    case 30: return 'border-cocoa/30';
+    default: return `border-cocoa/${opacity}`;
   }
 }

@@ -199,7 +199,7 @@ export default function Profile() {
       <PageHeader title={t('profile')} onBack={() => navigate(-1)} />
 
       {/* Content */}
-      <div className="px-2 pb-8 space-y-6">
+      <div className="mx-auto max-w-3xl px-2 pb-8 space-y-6">
         {/* Profile Card */}
         <div className={`${profilePanelClass} p-6`}>
           <div className="flex items-center gap-4">

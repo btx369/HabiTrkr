@@ -116,8 +116,8 @@ export function NoteCard({
 
   // Use standardized color helpers for consistent styling
   const hasColor = !isDefaultColor(note.color);
-  const textColorClass = hasColor ? 'text-ink' : 'text-foreground';
-  const mutedTextColorClass = hasColor ? 'text-ink/70' : 'text-muted-foreground';
+  const textColorClass = hasColor ? 'text-cocoa' : 'text-foreground';
+  const mutedTextColorClass = hasColor ? 'text-cocoa/70' : 'text-muted-foreground';
   const iconColorClass = getColoredIconClass(hasColor);
   // A note filed in a folder says so on its card, on every list it appears in.
   const isFiled = useIsFiled(note.id);
@@ -261,7 +261,7 @@ export function NoteCard({
                   className={`w-full object-cover rounded-md ${viewType === 'x3' ? 'h-20' : 'h-28'}`}
                 />
                 {images.length > 1 && (
-                  <span className="absolute bottom-1 right-1 rounded-full bg-black/60 px-1.5 text-[10px] font-medium leading-4 text-white">
+                  <span className="absolute bottom-1 right-1 rounded-full bg-black/60 px-1.5 text-[11px] font-medium leading-4 text-white">
                     +{images.length - 1}
                   </span>
                 )}
@@ -312,7 +312,7 @@ export function NoteCard({
                 <div
                   className={`h-4 w-4 rounded-sm border flex-shrink-0 flex items-center justify-center ${
                     item.completed 
-                      ? 'bg-stamp border-stamp text-stamp-foreground' 
+                      ? 'bg-leaf border-leaf text-leaf-foreground' 
                       : 'border-foreground/60 bg-transparent'
                   }`}
                 >
@@ -349,10 +349,10 @@ export function NoteCard({
       <div className={cn(
         "h-6 w-6 rounded-full border-2 flex items-center justify-center transition-colors cursor-pointer",
         isBulkSelected 
-          ? "bg-stamp border-stamp" 
+          ? "bg-leaf border-leaf" 
           : "border-muted-foreground bg-background/80 backdrop-blur-sm"
       )}>
-        {isBulkSelected && <Check size={20} className="text-stamp-foreground" />}
+        {isBulkSelected && <Check size={20} className="text-leaf-foreground" />}
       </div>
     </div>
   );

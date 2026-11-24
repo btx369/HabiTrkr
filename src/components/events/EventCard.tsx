@@ -94,14 +94,14 @@ export function EventCard({
   // Use standardized color helpers
   // Text and icon colors: black when the event has its own color, theme-aware colors otherwise
   const hasColor = !isDefaultColor(event.color);
-  const textColorClass = hasColor ? 'text-ink' : 'text-foreground';
-  const mutedTextColorClass = hasColor ? 'text-ink' : 'text-muted-foreground';
+  const textColorClass = hasColor ? 'text-cocoa' : 'text-foreground';
+  const mutedTextColorClass = hasColor ? 'text-cocoa' : 'text-muted-foreground';
   const iconColorClass = getColoredIconClass(hasColor);
   const badgeBorderClass = getColoredBorderClass(hasColor, 100);
   /*
    * The outline of the days badge.
    *
-   * `getColoredBorderClass(hasColor, 100)` asks for `border-ink/100`, and Tailwind
+   * `getColoredBorderClass(hasColor, 100)` asks for `border-cocoa/100`, and Tailwind
    * does not generate that class — its `/30` sibling exists in the built stylesheet and the
    * `/100` one does not. The badge therefore fell back to the shared border, which on a
    * coloured card is rgb(234, 232, 230): a line that reads as white on a pastel background.
@@ -184,10 +184,10 @@ export function EventCard({
       <div className={cn(
         "h-6 w-6 rounded-full border-2 flex items-center justify-center transition-colors cursor-pointer",
         isBulkSelected 
-          ? "bg-stamp border-stamp" 
+          ? "bg-leaf border-leaf" 
           : "border-muted-foreground bg-background/80 backdrop-blur-sm"
       )}>
-        {isBulkSelected && <Check size={20} className="text-stamp-foreground" />}
+        {isBulkSelected && <Check size={20} className="text-leaf-foreground" />}
       </div>
     </div>
   );
@@ -310,7 +310,7 @@ export function EventCard({
               {event.isRecurrent && event.recurrenceType && (
                 <Badge 
                   variant="outline" 
-                  className={`text-xs flex-shrink-0 hidden md:inline-flex ${badgeBorderClass} ${hasColor ? 'text-ink' : ''}`}
+                  className={`text-xs flex-shrink-0 hidden md:inline-flex ${badgeBorderClass} ${hasColor ? 'text-cocoa' : ''}`}
                   style={recurrenceBadgeStyle}
                 >
                   {recurrenceText}
@@ -326,11 +326,11 @@ export function EventCard({
                    * is the word that has to be translated and pluralised in every language:
                    * one noun per language instead of a phrase.
                    */
-                  <Badge variant="outline" className={`text-xs ${daysBadgeBorderClass} ${hasColor ? 'text-ink' : ''}`}>
+                  <Badge variant="outline" className={`text-xs ${daysBadgeBorderClass} ${hasColor ? 'text-cocoa' : ''}`}>
                     {countedSentence(t, language, 'daysCount', daysRemaining)}
                   </Badge>
                 ) : daysRemaining === 0 ? (
-                  <Badge className="text-xs bg-ember text-ember-foreground hover:bg-ember">
+                  <Badge className="text-xs bg-sun text-sun-foreground hover:bg-sun">
                     {t('todayExclaim')}
                   </Badge>
                 ) : (
@@ -346,7 +346,7 @@ export function EventCard({
             <div className="md:hidden min-w-0">
               <Badge 
                 variant="outline" 
-                className={`text-xs ${isX3 ? 'max-w-full' : ''} ${badgeBorderClass} ${hasColor ? 'text-ink' : ''}`}
+                className={`text-xs ${isX3 ? 'max-w-full' : ''} ${badgeBorderClass} ${hasColor ? 'text-cocoa' : ''}`}
                 style={recurrenceBadgeStyle}
               >
                 <span className={isX3 ? 'truncate' : ''}>{recurrenceText}</span>

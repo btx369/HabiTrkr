@@ -45,15 +45,15 @@ export function TextFormattingBar({ onFormat, onClose, editor, noteColor }: Text
   const containerClass = hasColor
     ? 'p-2'
     : 'backdrop-blur-sm bg-background/95 p-2';
-  const dividerClass = hasColor ? 'bg-ink/20' : 'bg-border';
+  const dividerClass = hasColor ? 'bg-cocoa/20' : 'bg-border';
   
   /*
    * Open/active state. On a coloured note this is a dark veil of the note's own colour; on
    * an uncoloured note it is a filled dark pill, which reads as "this control is engaged".
    */
   const activeButtonClass = hasColor
-    ? 'bg-ink/20 hover:bg-ink/30 text-ink'
-    : 'bg-stamp text-stamp-foreground hover:bg-stamp/90';
+    ? 'bg-cocoa/20 hover:bg-cocoa/30 text-cocoa'
+    : 'bg-leaf text-leaf-foreground hover:bg-leaf/90';
 
   // Get button props based on active state
   const getButtonProps = (isActive: boolean) => ({

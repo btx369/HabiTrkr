@@ -126,10 +126,10 @@ export function HabitCard({
       <div className={cn(
         "h-6 w-6 rounded-full border-2 flex items-center justify-center transition-colors cursor-pointer",
         isBulkSelected 
-          ? "bg-stamp border-stamp" 
+          ? "bg-leaf border-leaf" 
           : "border-muted-foreground bg-background/80 backdrop-blur-sm"
       )}>
-        {isBulkSelected && <Check size={20} className="text-stamp-foreground" />}
+        {isBulkSelected && <Check size={20} className="text-leaf-foreground" />}
       </div>
     </div>
   );
@@ -152,7 +152,7 @@ export function HabitCard({
   const hasColor = !isDefaultColor(habit.color);
   const iconColorClass = getColoredIconClass(hasColor);
   const badgeBorderClass = getColoredBorderClass(hasColor, 100);
-  const textColorClass = hasColor ? 'text-ink' : 'text-foreground';
+  const textColorClass = hasColor ? 'text-cocoa' : 'text-foreground';
   // A habit filed in a folder says so on its card, on every list it appears in.
   const isFiled = useIsFiled(habit.id);
   
@@ -164,7 +164,7 @@ export function HabitCard({
   } : {};
   const coloredButtonClass = hasColor ? 'border hover:opacity-80' : 'border-foreground text-foreground';
 
-  const dayButtonSize = viewType === 'x3' ? 'h-5 w-5 text-[9px]' : 'h-7 w-7 text-xs';
+  const dayButtonSize = viewType === 'x3' ? 'h-5 w-5 text-[11px]' : 'h-7 w-7 text-xs';
   const today = startOfDay(new Date());
 
   // The card's parts, laid out one way for the list view (a single row) and another for
@@ -191,7 +191,7 @@ export function HabitCard({
               </span>
               {/* The description could be written but was never shown anywhere. */}
               {habit.description && (
-                <span className={cn('min-w-0 truncate text-xs', hasColor ? 'text-ink/70' : 'text-muted-foreground')}>
+                <span className={cn('min-w-0 truncate text-xs', hasColor ? 'text-cocoa/70' : 'text-muted-foreground')}>
                   {highlightText(habit.description, searchQuery)}
                 </span>
               )}
@@ -206,7 +206,7 @@ export function HabitCard({
                     <Badge
                       variant="outline"
                       aria-label={t('timesToday').replace('{count}', String(todayCount))}
-                      className={cn('block max-w-full truncate whitespace-nowrap', viewType === 'x3' ? 'h-5 px-1 text-[9px]' : 'h-6 px-2 text-[10px]', badgeBorderClass, hasColor && 'text-ink')}
+                      className={cn('block max-w-full truncate whitespace-nowrap', viewType === 'x3' ? 'h-5 px-1 text-[11px]' : 'h-6 px-2 text-[11px]', badgeBorderClass, hasColor && 'text-cocoa')}
                     >
                       {todayCount}x{viewType !== 'x3' && ` ${t('today')}`}
                     </Badge>
@@ -226,7 +226,7 @@ export function HabitCard({
                       size="icon"
                       variant="outline"
                       aria-label="+1"
-                      className={cn('shrink-0 rounded-full text-[9px]', viewType === 'x3' ? 'h-5 w-5' : 'h-6 w-6', coloredButtonClass)}
+                      className={cn('shrink-0 rounded-full text-[11px]', viewType === 'x3' ? 'h-5 w-5' : 'h-6 w-6', coloredButtonClass)}
                       style={coloredButtonStyle}
                       onClick={(event) => handleCardAction(event, () => onMarkUnlimitedDone(habit.id))}
                     >
@@ -239,7 +239,7 @@ export function HabitCard({
                   <Badge
                     variant="outline"
                     aria-label={t('daysThisWeek').replace('{done}', String(weeklyCompletions)).replace('{total}', String(habit.numberOfDaysPerWeek || 1))}
-                    className={cn('block h-6 max-w-full truncate whitespace-nowrap px-2 text-[10px] leading-6', viewType === 'x3' && 'h-5 px-1 text-[9px]', badgeBorderClass, hasColor && 'text-ink')}
+                    className={cn('block h-6 max-w-full truncate whitespace-nowrap px-2 text-[11px] leading-6', viewType === 'x3' && 'h-5 px-1 text-[11px]', badgeBorderClass, hasColor && 'text-cocoa')}
                   >
                     {viewType === 'x3'
                       ? `${weeklyCompletions}/${habit.numberOfDaysPerWeek || 1}`
@@ -258,7 +258,7 @@ export function HabitCard({
                     <Badge
                       variant="outline"
                       aria-label={t('timesTodayOf').replace('{done}', String(todayCount)).replace('{total}', String(timesPerDay))}
-                      className={cn('block max-w-full truncate whitespace-nowrap', viewType === 'x3' ? 'h-5 px-1 text-[9px]' : 'h-6 px-2 text-[10px]', badgeBorderClass, hasColor && 'text-ink')}
+                      className={cn('block max-w-full truncate whitespace-nowrap', viewType === 'x3' ? 'h-5 px-1 text-[11px]' : 'h-6 px-2 text-[11px]', badgeBorderClass, hasColor && 'text-cocoa')}
                     >
                       {viewType === 'x3' ? `${todayCount}/${timesPerDay}` : (
                         <>
@@ -348,7 +348,7 @@ export function HabitCard({
                     hasColor
                       ? (!isActive ? 'cursor-not-allowed opacity-50' : 'hover:opacity-80')
                       : isCounted
-                        ? 'border-stamp bg-stamp text-stamp-foreground hover:bg-stamp/90'
+                        ? 'border-leaf bg-leaf text-leaf-foreground hover:bg-leaf/90'
                         : 'border-border bg-background text-foreground hover:bg-hover',
                     isDisabled && 'cursor-not-allowed opacity-50'
                   )}
@@ -472,10 +472,10 @@ export function ArchivedHabitCard({
       <div className={cn(
         "h-6 w-6 rounded-full border-2 flex items-center justify-center transition-colors cursor-pointer",
         isBulkSelected 
-          ? "bg-stamp border-stamp" 
+          ? "bg-leaf border-leaf" 
           : "border-muted-foreground bg-background/80 backdrop-blur-sm"
       )}>
-        {isBulkSelected && <Check size={20} className="text-stamp-foreground" />}
+        {isBulkSelected && <Check size={20} className="text-leaf-foreground" />}
       </div>
     </div>
   );

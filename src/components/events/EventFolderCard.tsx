@@ -105,8 +105,8 @@ export function EventFolderCard({
   // Use standardized color helpers
   const hasColor = !isDefaultColor(folder.color);
   const iconColorClass = getColoredIconClass(hasColor);
-  const mutedTextColorClass = hasColor ? 'text-ink/70' : 'text-muted-foreground';
-  const textColorClass = hasColor ? 'text-ink' : 'text-foreground';
+  const mutedTextColorClass = hasColor ? 'text-cocoa/70' : 'text-muted-foreground';
+  const textColorClass = hasColor ? 'text-cocoa' : 'text-foreground';
 
   // Bulk selection checkbox component - renders inline, replacing the menu
   const BulkCheckbox = () => (
@@ -120,10 +120,10 @@ export function EventFolderCard({
       <div className={cn(
         "h-6 w-6 rounded-full border-2 flex items-center justify-center transition-colors cursor-pointer",
         isBulkSelected 
-          ? "bg-stamp border-stamp" 
+          ? "bg-leaf border-leaf" 
           : "border-muted-foreground bg-background/80 backdrop-blur-sm"
       )}>
-        {isBulkSelected && <Check size={20} className="text-stamp-foreground" />}
+        {isBulkSelected && <Check size={20} className="text-leaf-foreground" />}
       </div>
     </div>
   );

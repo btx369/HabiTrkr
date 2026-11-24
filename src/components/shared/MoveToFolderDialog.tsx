@@ -84,7 +84,7 @@ export function MoveToFolderDialog<T extends MovableFolder>({
        */
       footer={
         <div className="flex justify-center w-full pt-3">
-          <Button onClick={onCreateNewFolder} className="bg-stamp text-stamp-foreground hover:bg-stamp/90">
+          <Button onClick={onCreateNewFolder} className="bg-leaf text-leaf-foreground hover:bg-leaf/90">
             {t('createNewFolder')}
             <FolderPlus size={20} className="ml-2" />
           </Button>

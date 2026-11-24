@@ -63,7 +63,7 @@ export const NoteActionBar = ({
   
   /*
    * Every button in this bar shares one set of states — Add, Tags, Alerts, Audio and Text
-   * Format. They used to diverge: Add baked a permanent `bg-ink/20` into its resting
+   * Format. They used to diverge: Add baked a permanent `bg-cocoa/20` into its resting
    * state, so on a coloured note it sat visibly darker than its neighbours, while Tags and
    * Text Format kept a hover tint even when open.
    *
@@ -87,7 +87,7 @@ export const NoteActionBar = ({
   const restStyles = hasColor
     // Black icons on a coloured note, as in its header. In the dark theme the buttons
     // otherwise took the theme's white and stood out against the pastel.
-    ? 'bg-transparent text-ink hover:bg-black/10'
+    ? 'bg-transparent text-cocoa hover:bg-black/10'
     : 'bg-transparent hover:bg-hover';
 
   /*
@@ -97,8 +97,8 @@ export const NoteActionBar = ({
    * black. It reports the same state through `aria-pressed` instead, which is also the
    * accessible way to express a toggle.
    */
-  const openTriggerStyles = 'data-[state=open]:bg-stamp data-[state=open]:text-stamp-foreground';
-  const activeButtonStyles = 'bg-stamp text-stamp-foreground hover:bg-stamp';
+  const openTriggerStyles = 'data-[state=open]:bg-leaf data-[state=open]:text-leaf-foreground';
+  const activeButtonStyles = 'bg-leaf text-leaf-foreground hover:bg-leaf';
 
   return (
     <div className={`flex items-center justify-center gap-2 p-3 ${hasColor ? 'bg-transparent' : 'bg-background/50 backdrop-blur-sm'}`}>

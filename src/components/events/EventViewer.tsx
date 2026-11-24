@@ -167,8 +167,8 @@ export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventV
     : 'hover:bg-hover';
 
   // Text color classes using the standard pattern
-  const textColorClass = hasColor ? 'text-ink' : 'text-foreground';
-  const mutedTextClass = hasColor ? 'text-ink' : 'text-foreground';
+  const textColorClass = hasColor ? 'text-cocoa' : 'text-foreground';
+  const mutedTextClass = hasColor ? 'text-cocoa' : 'text-foreground';
 
   return (
     <ResponsiveDialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -299,7 +299,7 @@ export function EventViewer({ event, isOpen, onClose, onEdit, onDelete }: EventV
 
           {/* Recurrence Info */}
           {event.isRecurrent && recurrenceText && (
-            <div className={`flex items-center gap-2 p-3 rounded-lg ${hasColor ? 'bg-ink/10' : 'bg-muted'}`}>
+            <div className={`flex items-center gap-2 p-3 rounded-lg ${hasColor ? 'bg-cocoa/10' : 'bg-muted'}`}>
               <RefreshCw size={20} className={iconColorClass} />
               <span className={`text-sm ${textColorClass}`}>
                 {recurrenceText}

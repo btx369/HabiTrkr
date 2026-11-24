@@ -1210,7 +1210,7 @@ export default function Events() {
             {!isArchived ? (
               <Button 
                 onClick={() => setIsEventFolderCreatorOpen(true)}
-                className="h-10 px-8 text-sm font-medium rounded-full bg-stamp text-stamp-foreground hover:bg-stamp/90"
+                className="h-10 px-8 text-sm font-medium rounded-full bg-leaf text-leaf-foreground hover:bg-leaf/90"
               >
                 {t('createFolder')}
                 <FolderOpen className="ml-2" size={20} />
@@ -1388,7 +1388,7 @@ export default function Events() {
                 <CardContent className="text-center py-8">
                   <Button 
                     onClick={handleAddButtonClick}
-                    className="h-10 px-8 text-sm font-medium rounded-full bg-stamp text-stamp-foreground hover:bg-stamp/90"
+                    className="h-10 px-8 text-sm font-medium rounded-full bg-leaf text-leaf-foreground hover:bg-leaf/90"
                   >
                     {t('createEvent')}
                     <Calendar className="ml-2" size={20} />
@@ -1406,7 +1406,7 @@ export default function Events() {
                 <CardContent className="text-center py-8">
                   <Button 
                     onClick={handleAddButtonClick}
-                    className="h-10 px-8 text-sm font-medium rounded-full bg-stamp text-stamp-foreground hover:bg-stamp/90"
+                    className="h-10 px-8 text-sm font-medium rounded-full bg-leaf text-leaf-foreground hover:bg-leaf/90"
                   >
                     {t('createFolder')}
                     <FolderOpen className="ml-2" size={20} />
