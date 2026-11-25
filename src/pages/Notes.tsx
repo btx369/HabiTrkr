@@ -644,7 +644,7 @@ export default function Notes() {
   };
 
   /**
-   * A note counts as content when it has a title OR a body.
+   * A note counts as content when it has a title, a body OR a reminder.
    *
    * The title used to be ignored here, so a note given only a title was judged empty:
    * a new one was silently dropped instead of being created, and an existing one was
@@ -653,7 +653,10 @@ export default function Notes() {
   const isNoteEmpty = (note: Note): boolean => {
     // An encrypted note's readable fields are blank on purpose; it is never empty.
     if (note.sealed) return false;
-const hasTitle = (note.name || '').trim() !== '';
+    // A reminder is content too: an empty note with "tomorrow at 8" set was dropped on the spot,
+    // closing the note while the toast still said the reminder had been set.
+    if (note.reminder) return false;
+    const hasTitle = (note.name || '').trim() !== '';
     if (hasTitle) return false;
 
     switch (note.type) {
