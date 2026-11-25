@@ -70,7 +70,7 @@ export function TimePickerDialog({ isOpen, onClose, onSave, initialTime, default
             <Button variant="outline" onClick={onClose} className="flex-1">
               {t('cancel')}
             </Button>
-            <Button onClick={handleSave} className="flex-1">
+            <Button onClick={handleSave} className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90">
               OK
             </Button>
           </div>
