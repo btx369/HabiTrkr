@@ -410,23 +410,6 @@ export function NoteViewer({
     return getCaretIndexWithin(container, range.startContainer, range.startOffset);
   };
 
-  // Auto-focus for new notes
-  useEffect(() => {
-    if (isNewNote && isOpen && note) {
-      // For new notes, start editing content instead of title
-      if (note.type === 'text') {
-        setEditedDescription(note.description || '');
-        setIsEditingContent(true);
-      } else if (note.type === 'list') {
-        setEditedItems([...note.items]);
-        setIsEditingContent(true);
-      } else if (note.type === 'audio' || note.type === 'image') {
-        setEditedDescription(note.description || '');
-        setIsEditingContent(true);
-      }
-    }
-  }, [isNewNote, isOpen, note]);
-
   // Reset all editing state when note changes to prevent content leakage.
   // Deliberately keyed on the note id, not the whole note: `note` is a fresh object on
   // every parent render, so depending on it would re-run this reset continuously and
@@ -458,6 +441,27 @@ export function NoteViewer({
       setGalleryOpen(false);
     }
   }, [note?.id]);
+  
+  // Auto-focus for new notes.
+  // Declared AFTER the reset effect above on purpose: effects run in declaration order, and the
+  // reset used to run last and switch editing straight back off, so a new note opened as a
+  // read-only page with the placeholder and nothing to type into.
+  useEffect(() => {
+    if (isNewNote && isOpen && note) {
+      // For new notes, start editing content instead of title
+      if (note.type === 'text') {
+        setEditedDescription(note.description || '');
+        setIsEditingContent(true);
+      } else if (note.type === 'list') {
+        setEditedItems([...note.items]);
+        setIsEditingContent(true);
+      } else if (note.type === 'audio' || note.type === 'image') {
+        setEditedDescription(note.description || '');
+        setIsEditingContent(true);
+      }
+    }
+  }, [isNewNote, isOpen, note]);
+
   
   // Subscribe to editor events to update formatting bar reactively
   useEffect(() => {
@@ -565,9 +569,17 @@ export function NoteViewer({
         if (skipEditFocusRef.current) {
           skipEditFocusRef.current = false; // entered edit mode from the formatting button
         } else if (richTextEditorRef.current) {
-          requestAnimationFrame(() => {
-            richTextEditorRef.current?.focus();
-          });
+          // The editor can still be starting up (or the dialog still opening) on the first
+          // frame, which left a new note open but not ready to type in. Try a few times.
+          const tryFocus = (attempt: number) => {
+            const handle = richTextEditorRef.current;
+            if (handle?.editor) {
+              handle.focus();
+              if (handle.editor.isFocused) return;
+            }
+            if (attempt < 8) setTimeout(() => tryFocus(attempt + 1), 100);
+          };
+          requestAnimationFrame(() => tryFocus(0));
         } else if (textareaRef.current) {
           const ta = textareaRef.current;
           

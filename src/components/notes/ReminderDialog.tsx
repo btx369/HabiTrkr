@@ -192,7 +192,7 @@ export function ReminderDialog({ isOpen, onClose, reminder, onSave }: ReminderDi
                 {t('cancel')}
               </Button>
             )}
-            <Button className="flex-1" disabled={!chosen || inPast} onClick={() => chosen && save(chosen)}>
+            <Button className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90" disabled={!chosen || inPast} onClick={() => chosen && save(chosen)}>
               {t('save')}
             </Button>
           </div>
