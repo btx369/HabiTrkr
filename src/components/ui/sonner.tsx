@@ -1,4 +1,5 @@
-import { Toaster as Sonner, toast } from "sonner"
+import { useEffect, useRef } from "react"
+import { Toaster as Sonner, toast, useSonner } from "sonner"
 // The app's own theme. next-themes' hook was used here, but the app never mounts its
 // provider, so toasts followed the phone's theme instead of the one picked in Profile.
 import { useTheme } from "@/contexts/ThemeContext"
@@ -10,6 +11,25 @@ type ToasterProps = React.ComponentProps<typeof Sonner>
 
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme } = useTheme()
+
+  // On a phone a toast is flicked away; with a mouse there was no way to do the same. Clicking
+  // anywhere on a toast now dismisses it, except on its own buttons (Undo, close), which keep
+  // their meaning. Sonner puts no id on the element, so the clicked toast is found through its
+  // position in the stack (`data-index`), which follows the same order as `useSonner().toasts`.
+  const { toasts } = useSonner()
+  const toastsRef = useRef(toasts)
+  toastsRef.current = toasts
+  useEffect(() => {
+    const onClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null
+      const item = target?.closest?.('[data-sonner-toast]') as HTMLElement | null
+      if (!item || target?.closest('button, a, [data-button], [data-cancel], [data-close-button]')) return
+      const id = toastsRef.current[Number(item.dataset.index)]?.id
+      if (id !== undefined) toast.dismiss(id)
+    }
+    document.addEventListener('click', onClick)
+    return () => document.removeEventListener('click', onClick)
+  }, [])
 
   return (
     <Sonner
