@@ -2218,17 +2218,20 @@ export function NoteViewer({
         <ScrollArea ref={scrollAreaRootRef} className="flex-1 h-full w-full" scrollbarClassName={hasColor ? 'bg-black/30' : 'bg-foreground/20'} style={{ overflowAnchor: 'none' }}>
           <div className="h-full w-full box-border py-3 px-3 flex flex-col items-stretch max-w-full space-y-3" style={{ overflowAnchor: 'none' }}>
             {renderNoteContent()}
-            {note.reminder && (
-              <div className="pt-1">
-                <ReminderChip
-                  reminder={note.reminder}
-                  onEdit={readOnly ? undefined : () => setShowReminderDialog(true)}
-                  onRemove={readOnly ? undefined : () => saveReminder(undefined)}
-                />
-              </div>
-            )}
           </div>
         </ScrollArea>
+
+        {/* The reminder is pinned under the text, outside the scrolling area, so it never moves
+            while the note is edited. It stays tappable to edit or remove. */}
+        {note.reminder && (
+          <div className="flex-shrink-0 px-3 pb-2 pt-1">
+            <ReminderChip
+              reminder={note.reminder}
+              onEdit={readOnly ? undefined : () => setShowReminderDialog(true)}
+              onRemove={readOnly ? undefined : () => saveReminder(undefined)}
+            />
+          </div>
+        )}
         
         {/*
           * The dock holds nothing but ways to change the note — add a photo, a recording, a
