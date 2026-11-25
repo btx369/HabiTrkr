@@ -10,9 +10,30 @@
 @font-face {
   font-family: 'Plain Digits';
   font-style: normal;
-  font-weight: 200 1000;
+  font-weight: 200 500;
   font-display: swap;
   src: url('../node_modules/@fontsource-variable/nunito/files/nunito-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0030-0039;
+}
+/*
+ * Semibold and bold digits use heavier Nunito cuts than their names say: Nunito is a rounder,
+ * lighter face than Atkinson Hyperlegible Next, so at the same weight number the digits looked
+ * thin beside the bold letters ("30" light, "dias" bold on the days-left badge).
+ */
+@font-face {
+  font-family: 'Plain Digits';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('../node_modules/@fontsource/nunito/files/nunito-latin-800-normal.woff2') format('woff2');
+  unicode-range: U+0030-0039;
+}
+@font-face {
+  font-family: 'Plain Digits';
+  font-style: normal;
+  font-weight: 700 1000;
+  font-display: swap;
+  src: url('../node_modules/@fontsource/nunito/files/nunito-latin-900-normal.woff2') format('woff2');
   unicode-range: U+0030-0039;
 }
 
