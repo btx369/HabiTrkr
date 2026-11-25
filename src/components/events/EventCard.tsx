@@ -317,14 +317,15 @@ export function EventCard({
                   return eventDateStr ? formatEventDate(eventDateStr) : t('noDateSet');
                 })()}
               </span>
-              {/* Desktop/Tablet: show recurrence inline */}
-              {event.isRecurrent && event.recurrenceType && (
+              {/* Beside the date at every width (it shrinks and truncates when space runs out);
+                  only in 3 per row, where there is no room, does it go on a line of its own below. */}
+              {event.isRecurrent && event.recurrenceType && !isX3 && (
                 <Badge 
                   variant="outline" 
-                  className={`text-xs flex-shrink-0 hidden md:inline-flex ${badgeBorderClass} ${hasColor ? 'text-cocoa' : ''}`}
+                  className={`text-xs min-w-0 ${badgeBorderClass} ${hasColor ? 'text-cocoa' : ''}`}
                   style={recurrenceBadgeStyle}
                 >
-                  {recurrenceText}
+                  <span className="truncate">{recurrenceText}</span>
                 </Badge>
               )}
             </div>
@@ -352,9 +353,9 @@ export function EventCard({
               </div>
             )}
           </div>
-          {/* Mobile: show recurrence on separate line */}
-          {event.isRecurrent && event.recurrenceType && (
-            <div className="md:hidden min-w-0">
+          {/* 3 per row: recurrence on a separate line */}
+          {event.isRecurrent && event.recurrenceType && isX3 && (
+            <div className="min-w-0">
               <Badge 
                 variant="outline" 
                 className={`text-xs ${isX3 ? 'max-w-full' : ''} ${badgeBorderClass} ${hasColor ? 'text-cocoa' : ''}`}
