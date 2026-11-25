@@ -3,6 +3,9 @@ import { Toaster as Sonner, toast } from "sonner"
 // provider, so toasts followed the phone's theme instead of the one picked in Profile.
 import { useTheme } from "@/contexts/ThemeContext"
 
+// On a wide window toasts stay inside the content column (max-w-3xl), 8px in from its right edge.
+const TOAST_RIGHT = 'max(16px, calc((100vw - 48rem) / 2 + 8px))'
+
 type ToasterProps = React.ComponentProps<typeof Sonner>
 
 const Toaster = ({ ...props }: ToasterProps) => {
@@ -16,7 +19,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       className="toaster group"
       // Above the bottom navigation bar (16px from the edge, 56px tall) and the Add button,
       // which toasts used to cover for a few seconds.
-      offset={{ bottom: 'calc(76px + env(safe-area-inset-bottom))' }}
+      offset={{ bottom: 'calc(76px + env(safe-area-inset-bottom))', right: TOAST_RIGHT }}
       mobileOffset={{ bottom: 'calc(76px + env(safe-area-inset-bottom))' }}
       /*
        * A sensible width instead of a fixed one.

@@ -13,7 +13,7 @@ import {
   Mic,
   Image as ImageIcon,
   X,
-  Save,
+  CircleCheck,
   ArrowLeft,
   Plus,
   Lock,
@@ -1518,7 +1518,7 @@ export function NoteViewer({
                   }
                 }}
               >
-                <Save size={20} />
+                <CircleCheck size={20} />
               </Button>
               <Button
                 size="sm"
