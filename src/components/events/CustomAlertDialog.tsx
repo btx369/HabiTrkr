@@ -121,7 +121,7 @@ export function CustomAlertDialog({
                   key={unitOption}
                   type="button"
                   variant={unit === unitOption ? "default" : "outline"}
-                  className={`h-12 ${unit === unitOption ? '' : 'bg-muted'}`}
+                  className={`h-12 ${unit === unitOption ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-muted'}`}
                   onClick={() => handleUnitChange(unitOption)}
                 >
                   {unitBeforeLabel(unitOption)}
@@ -137,7 +137,7 @@ export function CustomAlertDialog({
           </Button>
           <Button 
             onClick={handleSave} 
-            className="flex-1"
+            className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
             disabled={value <= 0}
           >
             {t('save')}

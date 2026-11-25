@@ -14,6 +14,9 @@ import { getColoredOutlineButtonStyles } from '@/lib/coloredButtonStyles';
 const COLORED_PLAY_BUTTON = 'bg-black/10 text-cocoa hover:bg-black/20';
 const COLORED_SLIDER = '[&_[role=slider]]:border-black [&>span:first-child]:bg-black/20 [&>span:first-child>span]:bg-black';
 
+/** Narrowest player (px) that still has room for a usable seeker beside play, clock and speed. */
+const SEEKER_MIN_WIDTH = 210;
+
 interface AudioPlayerProps {
   /** The note holding this audio has a custom colour: tint the controls to match it. */
   hasColor?: boolean;
@@ -56,6 +59,20 @@ export function AudioPlayer({
   const [duration, setDuration] = useState(initialDuration);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // The seeker needs room of its own. Cards inside folders are narrow even in the 1 and 2 per
+  // row views, and a seeker squeezed to nothing overlaps the clock with its thumb. So the
+  // player measures itself: below this width the seeker is left out, as in the 3 per row view.
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const [tooNarrow, setTooNarrow] = useState(false);
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(([entry]) => setTooNarrow(entry.contentRect.width < SEEKER_MIN_WIDTH));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  const seekerVisible = showSeeker && !tooNarrow;
 
   // `onPlay` is called from togglePlayback, which is recreated each render, so reading
   // it directly is fine; kept in a ref anyway so a caller passing an inline function
@@ -171,7 +188,7 @@ export function AudioPlayer({
      * button sit flush against the edge. gap-1 on small screens returns 8px and the row fits.
      * From `sm` up there is room and the original spacing is restored.
      */
-    <div className="flex items-center gap-1 sm:gap-2">
+    <div ref={rootRef} className="flex items-center gap-1 sm:gap-2">
       <Button
         size="sm"
         onClick={togglePlayback}
@@ -192,7 +209,7 @@ export function AudioPlayer({
         * Seeking is still available anywhere the note is opened, so nothing is lost that
         * cannot be reached another way.
         */}
-      {showSeeker && (
+      {seekerVisible && (
         <div
           className="flex-1 mx-1 sm:mx-2 min-w-0"
           onClick={(e) => e.stopPropagation()}
@@ -221,7 +238,7 @@ export function AudioPlayer({
         * nothing pushed the button across — it drifted left and looked unanchored. From `sm`
         * up the seeker takes the free space itself and this has no effect.
         */}
-      <span className={`${compact ? 'text-[11px]' : 'text-xs'} text-muted-foreground flex-shrink-0 tabular-nums ${showSeeker ? '' : 'ml-auto sm:ml-0'}`}>
+      <span className={`${compact ? 'text-[11px]' : 'text-xs'} text-muted-foreground flex-shrink-0 tabular-nums ${seekerVisible ? '' : 'ml-auto'}`}>
         {formatDuration(Math.floor(currentTime))}/{formatDuration(Math.floor(duration))}
       </span>
 

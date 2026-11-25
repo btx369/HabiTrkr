@@ -284,7 +284,7 @@ export function DateScrollPicker({
             <Button variant="outline" onClick={onCancel} className="flex-1">
               {t('cancel')}
             </Button>
-            <Button onClick={handleConfirm} className="flex-1">
+            <Button onClick={handleConfirm} className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90">
               OK
             </Button>
           </div>
