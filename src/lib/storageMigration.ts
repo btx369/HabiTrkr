@@ -21,7 +21,7 @@ const ALREADY_MIGRATED_KEY = 'habitrkr.storageKeysMigrated';
  * version of this migration rewrote the view values without keeping their JSON
  * encoding, leaving the key unreadable; bumping makes the corrected pass run again.
  */
-const MIGRATION_VERSION = 2;
+const MIGRATION_VERSION = 3;
 
 export interface StorageMigrationResult {
   /** Old key -> new key, for every value that was actually carried over. */

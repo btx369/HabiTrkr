@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { normalizeViewType } from '@/types/view';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Plus, X, FolderOpen, Notebook, FileStack } from 'lucide-react';
 import { ViewSettings, ViewType, SortType, SortDirection } from '@/components/notes/ViewSettings';
@@ -143,18 +144,18 @@ export default function Notes() {
   
   // Computed viewType based on active tab for backward compatibility
   // Folders and the archive are list-only (Bruno, 2026-11-05).
-  const viewType: ViewType = activeTab === 'archived' ? 'list' : allNotesViewType;
+  const viewType: ViewType = activeTab === 'archived' ? 'list' : normalizeViewType(allNotesViewType);
   const setViewType = activeTab === 'archived' ? setArchivedNotesViewType : setAllNotesViewType;
 
   /**
-   * `?view=list|x2|x3` forces a view for this visit without saving it, so a
+   * `?view=list|x2` forces a view for this visit without saving it, so a
    * specific layout can be opened and checked directly. Useful for verifying the grid
    * views, which are otherwise two clicks deep in the settings menu.
    */
   const forcedViewType = (() => {
     if (typeof window === 'undefined') return null;
     const raw = new URLSearchParams(window.location.search).get('view');
-    return raw === 'list' || raw === 'x2' || raw === 'x3' ? (raw as ViewType) : null;
+    return raw === 'list' || raw === 'x2' ? (raw as ViewType) : null;
   })();
   const effectiveViewType = activeTab === 'archived' ? 'list' : (forcedViewType ?? viewType);
   const [allNotesSortType, setAllNotesSortType] = useLocalStorage<SortType>('notesAllSortType', 'dateCreated');
@@ -1737,8 +1738,6 @@ const hasTitle = (note.name || '').trim() !== '';
 
   const getGridClassName = () => {
     switch (effectiveViewType) {
-      case 'x3':
-        return 'grid grid-cols-3 gap-2';
       case 'x2':
         return 'grid grid-cols-2 gap-2';
       case 'list':
@@ -1837,7 +1836,7 @@ const hasTitle = (note.name || '').trim() !== '';
        * same height and read as if they had all opened together. On a phone the grid is a
        * single column, so nothing shares a row and the problem never appeared there.
        */
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 items-start">
         {finalSortedFolders.map((folder: NoteFolder) => (
           <NoteFolderCard
             key={folder.id}
@@ -1971,16 +1970,16 @@ const hasTitle = (note.name || '').trim() !== '';
                 }
               } else {
                 // For grid views, the gap effect is more complex based on grid layout
-                const itemsPerRow = effectiveViewType === 'x3' ? 3 : 2;
+                const itemsPerRow = 2;
                 const draggedRow = Math.floor(draggedIndex / itemsPerRow);
                 const insertRow = Math.floor(dragInsertIndex / itemsPerRow);
                 const currentRow = Math.floor(index / itemsPerRow);
                 
                 if (currentRow >= insertRow && (draggedIndex === -1 || currentRow < draggedRow)) {
-                  const noteHeight = effectiveViewType === 'x3' ? 200 : 240;
+                  const noteHeight = 240;
                   gapTransform = `translateY(${noteHeight + 16}px)`; // Add gap margin
                 } else if (currentRow > insertRow && draggedIndex !== -1 && currentRow > draggedRow) {
-                  const noteHeight = effectiveViewType === 'x3' ? 200 : 240;
+                  const noteHeight = 240;
                   gapTransform = `translateY(${noteHeight + 16}px)`;
                 }
               }

@@ -124,8 +124,6 @@ export function NoteCard({
 
   const getCardHeight = () => {
     switch (viewType) {
-      case 'x3':
-        return 'h-[11.5rem]';
       case 'x2':
         return 'h-[14rem]';
       case 'list':
@@ -176,8 +174,7 @@ export function NoteCard({
       );
     }
 
-    const isX3View = viewType === 'x3';
-    const textSize = viewType === 'x3' ? 'text-xs' : 'text-sm';
+    const textSize = 'text-sm';
     const hasTitle = shouldShowTitle();
     const isListView = viewType === 'list';
     const audioSize = 'md';
@@ -185,9 +182,7 @@ export function NoteCard({
     
     // Calculate line clamps based on view type and title presence
     const getTextLineClamp = () => {
-      if (viewType === 'x3') {
-        return hasTitle ? 'line-clamp-8' : 'line-clamp-9';
-      } else if (viewType === 'x2') {
+      if (viewType === 'x2') {
         return hasTitle ? 'line-clamp-15' : 'line-clamp-16';
       } else {
         return 'line-clamp-8';
@@ -195,9 +190,7 @@ export function NoteCard({
     };
 
     const getAudioLineClamp = () => {
-      if (viewType === 'x3') {
-        return hasTitle ? 'line-clamp-5' : 'line-clamp-6';
-      } else if (viewType === 'x2') {
+      if (viewType === 'x2') {
         return hasTitle ? 'line-clamp-5' : 'line-clamp-6';
       } else {
         return 'line-clamp-4';
@@ -205,17 +198,11 @@ export function NoteCard({
     };
 
     const getImageLineClamp = () => {
-      if (viewType === 'x3') {
-        return hasTitle ? 'line-clamp-3' : 'line-clamp-4';
-      } else {
-        return 'line-clamp-3';
-      }
+      return 'line-clamp-3';
     };
 
     const getListItemsToShow = () => {
-      if (viewType === 'x3') {
-        return hasTitle ? 7 : 8;
-      } else if (viewType === 'x2') {
+      if (viewType === 'x2') {
         return hasTitle ? 15 : 16;
       } else {
         return 4;
@@ -252,13 +239,13 @@ export function NoteCard({
         const bodyClamp = !hasMedia ? getTextLineClamp() : images.length > 0 ? getImageLineClamp() : getAudioLineClamp();
 
         return (
-          <div className={`${isX3View ? 'flex-1 flex flex-col gap-2' : 'mt-1 flex-1 flex flex-col gap-2'}`}>
+          <div className="mt-1 flex-1 flex flex-col gap-2">
             {images.length > 0 && (
               <div className="relative">
                 <img
                   src={images[0]}
                   alt={note.name}
-                  className={`w-full object-cover rounded-md ${viewType === 'x3' ? 'h-20' : 'h-28'}`}
+                  className={`w-full object-cover rounded-md h-28`}
                 />
                 {images.length > 1 && (
                   <span className="absolute bottom-1 right-1 rounded-full bg-black/60 px-1.5 text-xs font-medium leading-4 text-white">
@@ -279,7 +266,7 @@ export function NoteCard({
                       audioUrl={audio.url}
                       initialDuration={audio.duration}
                       compact
-                      showSeeker={!isX3View}
+                      
                       showSpeedControl
                       size={audioSize}
                     />
@@ -306,7 +293,7 @@ export function NoteCard({
         const itemsToDisplay = uncheckedItems.slice(0, maxUncheckedToShow);
         
         return (
-          <div className={`${isX3View ? '' : 'mt-1'} ${viewType === 'x3' ? 'space-y-0.5' : 'space-y-1'} overflow-hidden`}>
+          <div className="mt-1 space-y-1 overflow-hidden">
             {itemsToDisplay.map((item) => (
               <div key={item.id} className="flex items-center gap-2 min-w-0">
                 <div
@@ -375,100 +362,6 @@ export function NoteCard({
       onClick();
     }
   };
-
-  // 3x view is the narrowest, so it uses its own layout
-  if (viewType === 'x3') {
-    return (
-      <ColoredCard 
-        color={note.color}
-        className={cn(
-          "transition-[background-color,border-color,color,opacity,box-shadow,transform] select-none relative",
-          getCardHeight(),
-          isDragged && 'opacity-80 scale-105 z-50',
-          isDraggedOver && 'border-primary',
-          isSelected && 'border-4 border-primary',
-          draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'
-        )}
-        onClick={handleCardClick}
-        data-note-id={note.id}
-        onTouchStart={draggable ? onTouchStart : undefined}
-        draggable={draggable}
-        onDragStart={draggable ? onDragStart : undefined}
-        onDragOver={draggable ? onDragOver : undefined}
-        onDrop={draggable ? onDrop : undefined}
-        onDragEnd={draggable ? onDragEnd : undefined}
-      >
-        <CardContent className="py-2 px-2 h-full flex flex-col">
-          {/* 3x: first row holds only the icons and menu; the title goes on the line below. */}
-          <div className="flex items-start gap-2 mb-1">
-            <div className="flex items-center gap-2 ml-auto flex-shrink-0">
-              <div className="flex items-center gap-1">
-                {isFiled && <FolderOpen size={20} className={iconColorClass} />}
-                {note.pinned && !isArchived && <Pin size={20} className={iconColorClass} />}
-                {note.reminder && <ReminderIcon reminder={note.reminder} className={iconColorClass} />}
-              </div>
-              {showBulkCheckbox ? (
-                <BulkCheckbox />
-              ) : (isArchived || isDeleted) ? (
-                <div className="flex gap-1">
-                  <Button aria-label={t('restore')} 
-                    size="icon" 
-                    variant="outline" 
-                  className="rounded-full h-8 w-8" 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (onUnarchive) onUnarchive(note.id);
-                    else onRestore?.(note.id);
-                  }}
-                >
-                  <RotateCcw size={20} />
-                </Button>
-                <Button aria-label={t('delete')} 
-                  size="icon" 
-                  variant="destructive" 
-                  className="rounded-full h-8 w-8" 
-                  onClick={(e) => { e.stopPropagation(); onDelete?.(note.id); }}
-                >
-                  <Trash2 size={20} />
-                </Button>
-              </div>
-            ) : (
-              <ItemActionMenu
-                isPinned={note.pinned}
-                isArchived={isArchived || note.archived}
-                isDeleted={isDeleted}
-                isLocked={note.locked}
-                onPin={onPin ? () => onPin(note.id) : undefined}
-                onUnpin={onUnpin ? () => onUnpin(note.id) : undefined}
-                onEdit={onEdit}
-                onArchive={onArchive && !note.archived ? () => onArchive(note.id) : undefined}
-                onDelete={onDelete ? () => onDelete(note.id) : undefined}
-                onRestore={isDeleted && onRestore ? () => onRestore(note.id) : (isArchived || note.archived) && (onUnarchive || onRestore) ? () => (onUnarchive ? onUnarchive(note.id) : onRestore!(note.id)) : undefined}
-                onLock={onLock ? () => onLock(note.id) : undefined}
-                onUnlock={onUnlock ? () => onUnlock(note.id) : undefined}
-                onShare={onShare && !note.locked ? () => onShare(note.id) : undefined}
-                onCopy={onCopy ? () => onCopy(note.id) : undefined}
-                onMoveToFolder={onMoveToFolder ? () => onMoveToFolder(note.id) : undefined}
-                size="sm"
-                iconColorClass={iconColorClass}
-              />
-            )}
-            </div>
-          </div>
-
-          {shouldShowTitle() && (
-            <CardTitle className={`font-bold truncate break-words mb-1 ${textColorClass} text-xs`}>
-              {highlightText(note.name, searchQuery)}
-            </CardTitle>
-          )}
-
-          <div className="flex-1 overflow-hidden">
-            {renderNoteContent()}
-          </div>
-        </CardContent>
-      </ColoredCard>
-    );
-  }
 
   // 2x and list views
   return (

@@ -40,6 +40,8 @@ export const PROFILE_AVATAR_KEY = prefixed('profileAvatar');
  * Keys whose names changed. `storageMigration.ts` copies any value found under an
  * old name to the new one, so nothing is lost on an existing install.
  *
+ * 3 per row was removed on 2026-11-25, so `x3` (and the old `medium`) now become `x2`.
+ *
  * Add to this map (never remove) whenever a key is renamed.
  */
 export const RENAMED_KEYS: ReadonlyArray<{ old: string; current: string }> = [
@@ -69,10 +71,12 @@ export const VIEW_TYPE_KEYS: readonly string[] = [
  * which describe the cards per row and match the labels in the UI. A stored `medium`
  * would otherwise match no known mode and the page would fall back to `list`.
  *
+ * 3 per row was removed on 2026-11-25, so `x3` (and the old `medium`) now become `x2`.
+ *
  * Add to this map (never remove) whenever a stored value is renamed.
  */
 export const RETIRED_VALUES: ReadonlyArray<{ key: string; values: Record<string, string> }> =
-  VIEW_TYPE_KEYS.map((key) => ({ key, values: { medium: 'x3', large: 'x2' } }));
+  VIEW_TYPE_KEYS.map((key) => ({ key, values: { medium: 'x2', large: 'x2', x3: 'x2' } }));
 
 /**
  * Every unprefixed key the app stores, so the app can tell its own data apart.

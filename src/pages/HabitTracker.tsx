@@ -119,7 +119,6 @@ export default function HabitTracker() {
   // Sort settings for habits tab
   const [, setAllHabitsViewType] = useLocalStorage<ViewType>('habitsAllViewType', 'list');
   const [, setArchivedHabitsViewType] = useLocalStorage<ViewType>('habitsArchivedViewType', 'list');
-  // Habits have no 3-per-row view: a saved `x3` is treated as `x2`.
   // Habits are list-only: a habit card needs the room for its seven day buttons
   // (Bruno, 2026-11-05). Old saved choices are ignored.
   const allHabitsViewType: ViewType = 'list';
@@ -1316,7 +1315,7 @@ export default function HabitTracker() {
               </Card>
             ) : (
               /* `items-start`: see the note about stretching in the archived-folder grid. */
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 items-start">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 items-start">
                 {filterFolders().map(folder => (
                   <HabitFolderCard
                     key={folder.id}
@@ -1407,7 +1406,7 @@ export default function HabitTracker() {
                    * made every neighbour beside it just as tall and they read as if they
                    * had all opened together.
                    */
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 items-start">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 items-start">
                     {getArchivedFolders().map(folder => (
                       <HabitFolderCard
                         key={folder.id}

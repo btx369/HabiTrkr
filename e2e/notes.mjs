@@ -176,7 +176,7 @@ try {
   check('move note to folder', home?.noteIds?.length === 1, JSON.stringify(home));
 
   // 11. View modes
-  for (const mode of ['3 per row', '2 per row', 'List']) {
+  for (const mode of ['2 per row', 'List']) {
     await page.getByRole('button', { name: 'View and sort' }).click();
     await wait(page, 300);
     await page.getByRole('menuitemradio', { name: mode }).click().catch(async () => page.getByRole('menuitem', { name: mode }).click());

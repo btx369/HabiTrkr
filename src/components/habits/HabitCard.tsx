@@ -175,7 +175,7 @@ export function HabitCard({
   } : {};
   const coloredButtonClass = hasColor ? 'border hover:opacity-80' : 'border-foreground text-foreground';
 
-  const dayButtonSize = viewType === 'x3' ? 'h-5 w-5 text-[11px]' : 'h-7 w-7 text-xs sm:h-8 sm:w-8';
+  const dayButtonSize = 'h-7 w-7 text-xs sm:h-8 sm:w-8';
   const today = startOfDay(new Date());
 
   // The card's parts, laid out one way for the list view (a single row) and another for
@@ -211,33 +211,33 @@ export function HabitCard({
   const badgesRow = (
     <>
             {(habit.useUnlimitedTimes || habit.useNumberOfDays || habit.useTimesPerDay) && (
-              <div className={cn('flex min-w-0 flex-wrap items-center', viewType === 'x3' ? 'gap-0.5' : 'gap-1.5')}>
+              <div className={cn('flex min-w-0 flex-wrap items-center', 'gap-1.5')}>
                 {habit.useUnlimitedTimes && (
                   <>
                     <Badge
                       variant="outline"
                       aria-label={t('timesToday').replace('{count}', String(todayCount))}
-                      className={cn('block max-w-full truncate whitespace-nowrap', viewType === 'x3' ? 'h-5 px-1 text-xs' : 'h-6 px-2 text-xs', badgeBorderClass, hasColor && 'text-cocoa')}
+                      className={cn('block max-w-full truncate whitespace-nowrap', 'h-6 px-2 text-xs', badgeBorderClass, hasColor && 'text-cocoa')}
                     >
-                      {todayCount}x{viewType !== 'x3' && ` ${t('today')}`}
+                      {todayCount}x {t('today')}
                     </Badge>
                     {todayCount > 0 && (
                       <Button
                         size="icon"
                         variant="outline"
                         aria-label={t('undo')}
-                        className={cn('shrink-0 rounded-full', viewType === 'x3' ? 'h-5 w-5' : 'h-6 w-6', coloredButtonClass)}
+                        className={cn('shrink-0 rounded-full', 'h-6 w-6', coloredButtonClass)}
                         style={coloredButtonStyle}
                         onClick={(event) => handleCardAction(event, () => onUndoCompletion(habit.id))}
                       >
-                        <RotateCcw size={viewType === 'x3' ? 10 : 12} />
+                        <RotateCcw size={12} />
                       </Button>
                     )}
                     <Button
                       size="icon"
                       variant="outline"
                       aria-label="+1"
-                      className={cn('shrink-0 rounded-full text-xs', viewType === 'x3' ? 'h-5 w-5' : 'h-6 w-6', coloredButtonClass)}
+                      className={cn('shrink-0 rounded-full text-xs', 'h-6 w-6', coloredButtonClass)}
                       style={coloredButtonStyle}
                       onClick={(event) => handleCardAction(event, () => onMarkUnlimitedDone(habit.id))}
                     >
@@ -250,11 +250,9 @@ export function HabitCard({
                   <Badge
                     variant="outline"
                     aria-label={t('daysThisWeek').replace('{done}', String(weeklyCompletions)).replace('{total}', String(habit.numberOfDaysPerWeek || 1))}
-                    className={cn('block h-6 max-w-full truncate whitespace-nowrap px-2 text-xs leading-6', viewType === 'x3' && 'h-5 px-1 text-xs', badgeBorderClass, hasColor && 'text-cocoa')}
+                    className={cn('block h-6 max-w-full truncate whitespace-nowrap px-2 text-xs leading-6', badgeBorderClass, hasColor && 'text-cocoa')}
                   >
-                    {viewType === 'x3'
-                      ? `${weeklyCompletions}/${habit.numberOfDaysPerWeek || 1}`
-                      : (
+                    {(
                       <>
                         {/* Short wording on phones, where the badge column is ~110px wide */}
                         <span className="sm:hidden">{t('daysThisWeekShort').replace('{done}', String(weeklyCompletions)).replace('{total}', String(habit.numberOfDaysPerWeek || 1))}</span>
@@ -269,9 +267,9 @@ export function HabitCard({
                     <Badge
                       variant="outline"
                       aria-label={t('timesTodayOf').replace('{done}', String(todayCount)).replace('{total}', String(timesPerDay))}
-                      className={cn('block max-w-full truncate whitespace-nowrap', viewType === 'x3' ? 'h-5 px-1 text-xs' : 'h-6 px-2 text-xs', badgeBorderClass, hasColor && 'text-cocoa')}
+                      className={cn('block max-w-full truncate whitespace-nowrap', 'h-6 px-2 text-xs', badgeBorderClass, hasColor && 'text-cocoa')}
                     >
-                      {viewType === 'x3' ? `${todayCount}/${timesPerDay}` : (
+                      {(
                         <>
                           <span className="sm:hidden">{t('timesTodayShort').replace('{done}', String(todayCount)).replace('{total}', String(timesPerDay))}</span>
                           <span className="hidden sm:inline">{t('timesTodayOf').replace('{done}', String(todayCount)).replace('{total}', String(timesPerDay))}</span>
@@ -283,11 +281,11 @@ export function HabitCard({
                         size="icon"
                         variant="outline"
                         aria-label={t('undo')}
-                        className={cn('shrink-0 rounded-full', viewType === 'x3' ? 'h-5 w-5' : 'h-6 w-6', coloredButtonClass)}
+                        className={cn('shrink-0 rounded-full', 'h-6 w-6', coloredButtonClass)}
                         style={coloredButtonStyle}
                         onClick={(event) => handleCardAction(event, () => onUndoCompletion(habit.id))}
                       >
-                        <RotateCcw size={viewType === 'x3' ? 10 : 12} />
+                        <RotateCcw size={12} />
                       </Button>
                     )}
                   </>
@@ -303,7 +301,7 @@ export function HabitCard({
     </>
   );
   const dayButtons = (
-          <div className={cn('flex shrink-0 items-center', viewType === 'x3' ? 'gap-0.5' : 'gap-1')}>
+          <div className={cn('flex shrink-0 items-center', 'gap-1')}>
             {weekDays.map((date, visualIndex) => {
               const dateKey = toDateKey(date);
               const isToday = startOfDay(date).getTime() === today.getTime();

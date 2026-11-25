@@ -84,8 +84,7 @@ export function HabitViewSettings({
           <>
         <DropdownMenuLabel>{t('view')}</DropdownMenuLabel>
         <DropdownMenuRadioGroup
-          // Habits have no 3-per-row view; a saved `x3` is shown as `x2`.
-          value={viewType === 'x3' ? 'x2' : viewType}
+          value={viewType}
           onValueChange={(value) => {
             if (isViewType(value)) onViewTypeChange(value);
           }}

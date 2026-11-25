@@ -9,23 +9,28 @@
  * Declared once here because Notes and Events previously each declared their own copy of
  * the same union, which would drift apart the moment one of them changed.
  */
-export type ViewType = 'list' | 'x2' | 'x3';
+/** There is no 3 per row: the cards carry a header with several buttons and badges and do not fit (Bruno, 2026-11-25). */
+export type ViewType = 'list' | 'x2';
 
 /** Cards per row for each view, used for the drag-gap calculations. */
 export const CARDS_PER_ROW: Record<ViewType, number> = {
   list: 1,
   x2: 2,
-  x3: 3,
 };
 
 /** Labels shown in the view menu. */
 export const VIEW_LABELS: Record<ViewType, string> = {
   list: 'List',
   x2: '2x',
-  x3: '3x',
 };
 
 /** True when the value is one of the supported view modes. */
 export function isViewType(value: unknown): value is ViewType {
-  return value === 'list' || value === 'x2' || value === 'x3';
+  return value === 'list' || value === 'x2';
+}
+
+/** A stored view of a removed mode (`x3`, `medium`...) becomes 2 per row; anything unknown, the list. */
+export function normalizeViewType(value: unknown): ViewType {
+  if (value === 'list' || value === 'x2') return value;
+  return value === 'x3' || value === 'medium' || value === 'large' ? 'x2' : 'list';
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { normalizeViewType } from '@/types/view';
 import { Plus, FolderOpen, Calendar, FileStack } from 'lucide-react';
 import { EventViewSettings, ViewType, EventSortType, EventSortDirection } from '@/components/events/EventViewSettings';
 import { EventFolderViewSettings, EventFolderSortType, EventFolderSortDirection } from '@/components/events/EventFolderViewSettings';
@@ -111,7 +112,7 @@ export default function Events() {
   
   // Computed viewType based on active tab for backward compatibility
   // Folders and the archive are list-only (Bruno, 2026-11-05).
-  const viewType: ViewType = activeTab === 'archived' ? 'list' : allEventsViewType;
+  const viewType: ViewType = activeTab === 'archived' ? 'list' : normalizeViewType(allEventsViewType);
   const setViewType = activeTab === 'archived' ? setArchivedEventsViewType : setAllEventsViewType;
   const [allEventsSortType, setAllEventsSortType] = useLocalStorage<EventSortType>('eventsAllSortType', 'daysRemaining');
   const [allEventsSortDirection, setAllEventsSortDirection] = useLocalStorage<EventSortDirection>('eventsAllSortDirection', 'asc');
@@ -1167,7 +1168,6 @@ export default function Events() {
     }
 
     const gridClass = viewType === 'list' ? 'grid grid-cols-1 gap-2' : 
-                     viewType === 'x3' ? 'grid grid-cols-3 gap-2' :
                      'grid grid-cols-2 gap-2'; // x2
 
     return (
@@ -1229,7 +1229,7 @@ export default function Events() {
        * tallest item in the row by default, so opening one folder made every neighbour
        * beside it just as tall, and they read as if they had all opened together.
        */
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 items-start">
         {filteredFolders.map(folder => (
           <EventFolderCard
             key={folder.id}
