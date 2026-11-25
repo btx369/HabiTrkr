@@ -1942,7 +1942,9 @@ export default function Notes() {
               <p className="text-muted-foreground">{t('noMatchingNotes')}</p>
             ) : (
               <Button 
-                onClick={handleAddButtonClick}
+                // A shortcut to the most common note: straight into a new text note, like the
+                // empty pages of Events and Habits. The + button still offers every type.
+                onClick={() => createEmptyTextNote()}
                 className="h-10 px-8 text-sm font-medium rounded-full bg-leaf text-leaf-foreground hover:bg-leaf/90"
               >
                 {t('createNote')}
