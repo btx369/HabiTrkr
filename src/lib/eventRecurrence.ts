@@ -27,6 +27,20 @@ export function getEventStart(event: Event): Date | null {
 }
 
 /** Days from an occurrence's first day to its last (0 for a one-day event). */
+/**
+ * Largest "every N" for each repeat unit. Beyond these an event is not really recurring, and
+ * the next-occurrence search only looks about 8 years ahead, so a huge interval left the event
+ * invisible. Someone who needs a rarer date makes a single event on that date.
+ */
+export const RECURRENCE_LIMITS = { daily: 365, weekly: 52, monthly: 24, yearly: 5 } as const;
+
+/** An interval kept between 1 and the limit for its unit (used on input, on save and by the engine). */
+export function clampRecurrenceInterval(type: keyof typeof RECURRENCE_LIMITS | undefined, value: unknown): number {
+  const n = Math.floor(Number(value)) || 1;
+  const max = RECURRENCE_LIMITS[type ?? 'daily'] ?? RECURRENCE_LIMITS.daily;
+  return Math.min(Math.max(n, 1), max);
+}
+
 export function getEventSpanDays(event: Event): number {
   const start = getEventStart(event);
   const end = event.endDate ? fromDateKey(event.endDate.slice(0, 10)) : null;
@@ -40,7 +54,7 @@ function startsOn(event: Event, start: Date, day: Date): boolean {
   if (offset < 0) return false;
   if (!event.isRecurrent) return offset === 0;
 
-  const interval = Math.max(1, Math.floor(event.recurrenceInterval || 1));
+  const interval = clampRecurrenceInterval(event.recurrenceType, event.recurrenceInterval);
 
   switch (event.recurrenceType) {
     case 'daily':

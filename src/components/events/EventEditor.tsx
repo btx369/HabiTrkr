@@ -1,3 +1,4 @@
+import { RECURRENCE_LIMITS, clampRecurrenceInterval } from '@/lib/eventRecurrence';
 import { useMemo, useState } from 'react';
 import { EditorDialog } from '@/components/shared/EditorDialog';
 import { ColorPicker } from '@/components/shared/ColorPicker';
@@ -92,6 +93,8 @@ const CUSTOM_ALERT_UNIT_KEYS: Record<AlertCustomUnit, string> = {
  * `t()` — the same pattern BulkActionBar uses.
  * These labels were previously the <option> text of a native select.
  */
+const RECURRENCE_UNIT_KEYS = { daily: 'unitDays', weekly: 'unitWeeks', monthly: 'unitMonths', yearly: 'unitYears' } as const;
+
 const RECURRENCE_OPTIONS: { value: EventFormData['recurrenceType']; label: string }[] = [
   { value: 'daily', label: 'repeatDays' },
   { value: 'weekly', label: 'repeatWeeks' },
@@ -211,9 +214,7 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
       location: formData.location || undefined,
       recurrenceType: formData.isRecurrent ? formData.recurrenceType : undefined,
       recurrenceInterval: formData.isRecurrent 
-        ? (typeof formData.recurrenceInterval === 'string' 
-            ? parseInt(formData.recurrenceInterval) || 1 
-            : formData.recurrenceInterval) 
+        ? clampRecurrenceInterval(formData.recurrenceType, formData.recurrenceInterval)
         : undefined,
       recurrenceDays: formData.isRecurrent && formData.recurrenceType === 'weekly' 
         ? formData.recurrenceDays 
@@ -447,14 +448,15 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
                   inputMode="numeric"
                   aria-label={t('repeatEvery')}
                   min="1" 
+                  max={RECURRENCE_LIMITS[formData.recurrenceType]}
                   value={formData.recurrenceInterval} 
                   onChange={e => setFormData(prev => ({ 
                     ...prev, 
-                    recurrenceInterval: e.target.value === '' ? '' : parseInt(e.target.value) || 1 
+                    recurrenceInterval: e.target.value === '' ? '' : clampRecurrenceInterval(prev.recurrenceType, e.target.value) 
                   }))}
                   onBlur={e => setFormData(prev => ({ 
                     ...prev, 
-                    recurrenceInterval: parseInt(e.target.value) || 1 
+                    recurrenceInterval: clampRecurrenceInterval(prev.recurrenceType, e.target.value) 
                   }))}
                   className="w-20 h-10 text-sm bg-background"
                 />
@@ -471,7 +473,9 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
                   value={formData.recurrenceType}
                   onValueChange={(value) => setFormData(prev => ({
                     ...prev,
-                    recurrenceType: value as EventFormData['recurrenceType']
+                    recurrenceType: value as EventFormData['recurrenceType'],
+                    // Changing the unit can leave the number above the new unit's maximum.
+                    recurrenceInterval: clampRecurrenceInterval(value as EventFormData['recurrenceType'], prev.recurrenceInterval),
                   }))}
                 >
                   <SelectTrigger aria-label={t('repeatEvery')} className="h-10 text-sm bg-muted flex-1">
@@ -486,6 +490,9 @@ export function EventEditor({ isOpen, onClose, onSave, initialEvent, mode = 'cre
                   </SelectContent>
                 </Select>
               </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {t('maximumValue').replace('{value}', `${RECURRENCE_LIMITS[formData.recurrenceType]} ${t(RECURRENCE_UNIT_KEYS[formData.recurrenceType])}`)}
+              </p>
             </div>
             
             {formData.recurrenceType === 'weekly' && (

@@ -8,6 +8,7 @@
 import type { Event } from '@/types/event';
 import type { Language } from '@/contexts/LanguageContext';
 import { countedSentence } from './countedMessage';
+import { clampRecurrenceInterval } from './eventRecurrence';
 
 const RULE_KEYS = { daily: 'recurDaily', weekly: 'recurWeekly', monthly: 'recurMonthly', yearly: 'recurYearly' } as const;
 
@@ -23,7 +24,7 @@ export function describeRecurrence(
   dayOrder: (jsDay: number) => number = (d) => d,
 ): string | null {
   if (!event.isRecurrent || !event.recurrenceType) return null;
-  const interval = Math.max(1, event.recurrenceInterval || 1);
+  const interval = clampRecurrenceInterval(event.recurrenceType, event.recurrenceInterval);
   const rule = countedSentence(t, language, RULE_KEYS[event.recurrenceType], interval);
   if (event.recurrenceType !== 'weekly' || !event.recurrenceDays?.length) return rule;
   const days = [...event.recurrenceDays].sort((a, b) => dayOrder(a) - dayOrder(b)).map(dayName).join(', ');

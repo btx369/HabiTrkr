@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Event } from '@/types/event';
-import { daysUntilEvent, getNextOccurrenceStart, hasEventEnded, occursOn } from './eventRecurrence';
+import { clampRecurrenceInterval, daysUntilEvent, getNextOccurrenceStart, hasEventEnded, occursOn } from './eventRecurrence';
 import { toDateKey } from './dateUtils';
 
 const day = (key: string) => {
@@ -83,5 +83,21 @@ describe('next occurrence and ending', () => {
 
   it('never ends a recurring event', () => {
     expect(hasEventEnded(event({ isRecurrent: true, recurrenceType: 'daily', startDate: '2020-01-01' }))).toBe(false);
+  });
+});
+
+describe('clampRecurrenceInterval', () => {
+  it('keeps the interval between 1 and the limit of its unit', () => {
+    expect(clampRecurrenceInterval('daily', 3000000000)).toBe(365);
+    expect(clampRecurrenceInterval('weekly', 999)).toBe(52);
+    expect(clampRecurrenceInterval('monthly', 99)).toBe(24);
+    expect(clampRecurrenceInterval('yearly', 50)).toBe(5);
+    expect(clampRecurrenceInterval('daily', 0)).toBe(1);
+    expect(clampRecurrenceInterval('daily', '')).toBe(1);
+  });
+
+  it('an old event with a huge interval still shows its next occurrence', () => {
+    const huge = event({ isRecurrent: true, recurrenceType: 'daily', recurrenceInterval: 3000000000, startDate: '2026-01-01' });
+    expect(getNextOccurrenceStart(huge)).not.toBeNull();
   });
 });
