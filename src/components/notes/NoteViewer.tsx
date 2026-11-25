@@ -471,10 +471,12 @@ export function NoteViewer({
     const updateHandler = () => forceUpdate();
     editor.on('update', updateHandler);
     editor.on('selectionUpdate', updateHandler);
+    editor.on('transaction', updateHandler);
     
     return () => {
       editor.off('update', updateHandler);
       editor.off('selectionUpdate', updateHandler);
+      editor.off('transaction', updateHandler);
     };
   }, [richTextEditorRef.current?.editor]);
 

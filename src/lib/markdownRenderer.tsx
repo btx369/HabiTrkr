@@ -1,72 +1,24 @@
 import { ReactNode } from 'react';
 import { splitBySearchTerms } from './textHighlight';
-
-interface TextPart {
-  type: 'text' | 'bold' | 'italic' | 'underline';
-  content: string;
-}
+import { parseInline, type InlineNode } from './inlineMarkdown';
 
 /**
- * Inline markdown. `leaf` renders the plain text pieces; the search highlighter passes one so
- * that matches are marked INSIDE the formatting. Highlighting first and formatting after split
- * `**leite**` around the match and left the asterisks on screen.
+ * Inline markdown, from the same parser the editor uses (see inlineMarkdown.ts), so a note
+ * looks identical in the viewer and in the editor. `leaf` renders the plain text pieces; the
+ * search highlighter passes one so matches are marked INSIDE the formatting.
  */
 const processInlineFormatting = (text: string, leaf?: (plain: string) => ReactNode[]): ReactNode[] => {
-  const result: ReactNode[] = [];
-  const pushPlain = (plain: string) => {
-    if (!plain) return;
-    if (leaf) result.push(...leaf(plain));
-    else result.push(plain);
-  };
-  const currentIndex = 0;
-  
-  // Parse inline formatting: **bold**, *italic*, __underline__
-  const regex = /(\*\*.*?\*\*|\*.*?\*|__.*?__)/g;
-  let match;
-  const lastIndex = 0;
-  
-  const matches: Array<{ index: number; text: string; type: 'bold' | 'italic' | 'underline' }> = [];
-  
-  while ((match = regex.exec(text)) !== null) {
-    const matchedText = match[0];
-    if (matchedText.startsWith('**') && matchedText.endsWith('**') && matchedText.length > 4) {
-      matches.push({ index: match.index, text: matchedText.slice(2, -2), type: 'bold' });
-    } else if (matchedText.startsWith('*') && matchedText.endsWith('*') && matchedText.length > 2 && !text[match.index - 1]?.match(/\*/)) {
-      matches.push({ index: match.index, text: matchedText.slice(1, -1), type: 'italic' });
-    } else if (matchedText.startsWith('__') && matchedText.endsWith('__') && matchedText.length > 4) {
-      matches.push({ index: match.index, text: matchedText.slice(2, -2), type: 'underline' });
-    }
-  }
-  
-  let position = 0;
-  matches.forEach((m, idx) => {
-    // Add text before this match
-    if (m.index > position) {
-      pushPlain(text.substring(position, m.index));
-    }
-    
-    // Add formatted text (recursively process inner text for nested formatting)
-    const key = `format-${idx}`;
-    if (m.type === 'bold') {
-      result.push(<strong key={key}>{processInlineFormatting(m.text, leaf)}</strong>);
-    } else if (m.type === 'italic') {
-      result.push(<em key={key}>{processInlineFormatting(m.text, leaf)}</em>);
-    } else if (m.type === 'underline') {
-      result.push(<u key={key}>{processInlineFormatting(m.text, leaf)}</u>);
-    }
-    
-    // Update position
-    const originalLength = m.type === 'bold' || m.type === 'underline' ? m.text.length + 4 : m.text.length + 2;
-    position = m.index + originalLength;
-  });
-  
-  // Add remaining text
-  if (position < text.length) {
-    pushPlain(text.substring(position));
-  }
-  
-  if (result.length > 0) return result;
-  return leaf ? leaf(text) : [text];
+  const render = (nodes: InlineNode[], prefix: string): ReactNode[] =>
+    nodes.flatMap((n, i): ReactNode[] => {
+      const key = `${prefix}-${i}`;
+      if (n.type === 'text') return leaf ? leaf(n.value) : [n.value];
+      const inner = render(n.children, key);
+      if (n.type === 'strong') return [<strong key={key}>{inner}</strong>];
+      if (n.type === 'em') return [<em key={key}>{inner}</em>];
+      return [<u key={key}>{inner}</u>];
+    });
+  const out = render(parseInline(text), 'f');
+  return out.length > 0 ? out : leaf ? leaf(text) : [text];
 };
 
 export const renderMarkdown = (text: string): ReactNode => {
@@ -81,22 +33,22 @@ export const renderMarkdown = (text: string): ReactNode => {
     if (line.startsWith('# ')) {
       const content = line.slice(2);
       return (
-        <h1 key={key} className="text-2xl font-bold mb-2 mt-1">
+        <h1 key={key} className="text-[1.5rem] leading-relaxed font-bold mb-2 last:mb-0">
           {processInlineFormatting(content)}
         </h1>
       );
     } else if (line.startsWith('## ')) {
       const content = line.slice(3);
       return (
-        <h2 key={key} className="text-xl font-semibold mb-2 mt-1">
+        <h2 key={key} className="text-[1.25rem] leading-relaxed font-bold mb-2 last:mb-0">
           {processInlineFormatting(content)}
         </h2>
       );
     } else if (line.trim() === '') {
-      return <div key={key} className="h-2" />;
+      return <div key={key} className="h-[1.625em]" />;
     } else {
       return (
-        <div key={key} className="mb-1">
+        <div key={key} className="mb-0.5 last:mb-0">
           {processInlineFormatting(line)}
         </div>
       );
@@ -135,22 +87,22 @@ export const renderMarkdownWithHighlight = (text: string, searchQuery: string): 
     if (line.startsWith('# ')) {
       const content = line.slice(2);
       return (
-        <h1 key={key} className="text-2xl font-bold mb-2 mt-1">
+        <h1 key={key} className="text-[1.5rem] leading-relaxed font-bold mb-2 last:mb-0">
           {processWithBoth(content)}
         </h1>
       );
     } else if (line.startsWith('## ')) {
       const content = line.slice(3);
       return (
-        <h2 key={key} className="text-xl font-semibold mb-2 mt-1">
+        <h2 key={key} className="text-[1.25rem] leading-relaxed font-bold mb-2 last:mb-0">
           {processWithBoth(content)}
         </h2>
       );
     } else if (line.trim() === '') {
-      return <div key={key} className="h-2" />;
+      return <div key={key} className="h-[1.625em]" />;
     } else {
       return (
-        <div key={key} className="mb-1">
+        <div key={key} className="mb-0.5 last:mb-0">
           {processWithBoth(line)}
         </div>
       );

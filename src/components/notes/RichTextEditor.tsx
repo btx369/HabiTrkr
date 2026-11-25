@@ -166,7 +166,18 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
             editor.chain().focus().toggleUnderline().run();
             break;
           case 'clear':
-            editor.chain().focus().clearNodes().unsetAllMarks().run();
+            // With no selection `unsetAllMarks` does nothing, so also drop the marks the next typed
+            // character would carry.
+            editor
+              .chain()
+              .focus()
+              .clearNodes()
+              .unsetAllMarks()
+              .command(({ tr }) => {
+                tr.setStoredMarks([]);
+                return true;
+              })
+              .run();
             break;
         }
       },

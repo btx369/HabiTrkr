@@ -1,23 +1,21 @@
+import { inlineToHtml } from './inlineMarkdown';
+
 /**
  * Converts markdown to HTML for rich text editor
  */
 export function markdownToHtml(markdown: string): string {
   if (!markdown) return '';
   
-  let html = markdown;
-  
-  // Convert headings
-  html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
-  html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-  
-  // Convert bold (must come before italic to avoid conflicts)
-  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  
-  // Convert italic
-  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-  
-  // Convert underline
-  html = html.replace(/__(.+?)__/g, '<u>$1</u>');
+  // Headings and inline formatting (bold, italic and underline nested in any order, one
+  // parser shared with the read-only view), line by line.
+  const html = markdown
+    .split('\n')
+    .map(line => {
+      const heading = line.match(/^(#{1,2}) (.+)$/);
+      if (heading) return `<h${heading[1].length}>${inlineToHtml(heading[2])}</h${heading[1].length}>`;
+      return inlineToHtml(line);
+    })
+    .join('\n');
   
   // Convert line breaks to paragraphs, preserving blank lines
   const lines = html.split('\n');

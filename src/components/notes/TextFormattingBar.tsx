@@ -57,7 +57,8 @@ export function TextFormattingBar({ onFormat, onClose, editor, noteColor }: Text
 
   // Get button props based on active state
   const getButtonProps = (isActive: boolean) => ({
-    className: `h-8 w-8 rounded-full p-0 ${isActive ? activeButtonClass : themedHoverStyles}`
+    className: `h-8 w-8 rounded-full p-0 ${isActive ? activeButtonClass : themedHoverStyles}`,
+    'aria-pressed': isActive
   });
 
   const handleClose = () => {
