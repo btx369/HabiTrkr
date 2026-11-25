@@ -14,7 +14,6 @@ import {
   Image as ImageIcon,
   X,
   CircleCheck,
-  ArrowLeft,
   Plus,
   Lock,
   Search,
@@ -1448,7 +1447,7 @@ export function NoteViewer({
                     
                     toast.success(say('toastUpdated', 'noteViewerTitle'));
                   }}
-                  className="text-destructive"
+                  destructive
                 >
                   <Trash2 size={20} className="mr-2" />
                   {t('delete')}
@@ -2075,7 +2074,7 @@ export function NoteViewer({
                   onClick={handleBackClick}
                   className={`h-9 w-9 p-0 [&_svg]:!size-6 flex-shrink-0 rounded-full transition-colors duration-200 ${themedHoverStyles}`}
                 >
-              <ArrowLeft size={20} />
+              <CircleCheck size={20} />
             </Button>
             {/* Save button for list notes when editing */}
             {isEditingContent && note.type === 'list' && (
