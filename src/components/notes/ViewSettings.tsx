@@ -103,8 +103,8 @@ export function ViewSettings({
             if (isViewType(value)) onViewTypeChange(value);
           }}
         >
-          <DropdownMenuRadioItem value="x2" onSelect={(event) => event.preventDefault()}>{t('viewX2')}</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="list" onSelect={(event) => event.preventDefault()}>{t('viewList')}</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="x2" >{t('viewX2')}</DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="list" >{t('viewList')}</DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
         
         <DropdownMenuSeparator />

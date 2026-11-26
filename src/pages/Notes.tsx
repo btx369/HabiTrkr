@@ -227,9 +227,11 @@ export default function Notes() {
   // Undo (the toast's "Anular") puts the stored notes back, but the open viewer holds its own copy
   // of the note. Keep that copy in step so a restored audio or image shows at once.
   useEffect(() => {
-    if (!isNoteViewerOpen || !noteToView || isNewNote || noteToView.locked) return;
+    if (!isNoteViewerOpen || !noteToView || isNewNote) return;
     const stored = notes.find((n) => n.id === noteToView.id);
-    if (stored && !stored.locked && JSON.stringify(stored) !== JSON.stringify(noteToView)) setNoteToView(stored);
+    // A locked note being viewed is already open in memory (PIN notes are never encrypted; password
+    // notes are decrypted while on screen), so Undo can refresh it too. Only a sealed copy is skipped.
+    if (stored && !stored.sealed && JSON.stringify(stored) !== JSON.stringify(noteToView)) setNoteToView(stored);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only a change in the stored notes matters
   }, [notes]);
   // Notes unlocked during this session (avoid re-PIN while viewing)
