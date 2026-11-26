@@ -383,7 +383,6 @@ export default function Notes() {
     
     // Add to notes array immediately
     setNotes((prev: Note[]) => [...prev, newNote]);
-    toast.success(say('toastAdded', 'notes'));
     
     // Open in viewer so user can add title/description/more media
     setNoteToView(newNote);
@@ -405,7 +404,6 @@ export default function Notes() {
     
     // Add to notes array immediately (like image notes)
     setNotes((prev: Note[]) => [...prev, newNote]);
-    toast.success(say('toastAdded', 'notes'));
     
     // Open in viewer so user can add title/description/more media
     setNoteToView(newNote);
@@ -421,7 +419,6 @@ export default function Notes() {
       pinned: false
     };
     setNotes((prev: Note[]) => [...prev, newNote]);
-    toast.success(say('toastAdded', 'notes'));
     
     // Open the new note in viewer with auto-focus
     setNoteToView(newNote);
@@ -437,7 +434,6 @@ export default function Notes() {
       pinned: false
     };
     setNotes((prev: Note[]) => [...prev, newNote]);
-    toast.success(say('toastAdded', 'notes'));
     
     // Open the new note in viewer with auto-focus
     setNoteToView(newNote);
@@ -454,7 +450,6 @@ export default function Notes() {
       pinned: false
     };
     setNotes((prev: Note[]) => [...prev, newNote]);
-    toast.success(say('toastAdded', 'notes'));
     
     // Open the new note in viewer with auto-focus
     setNoteToView(newNote);
