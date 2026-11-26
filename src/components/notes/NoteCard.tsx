@@ -239,7 +239,10 @@ export function NoteCard({
         const bodyClamp = !hasMedia ? getTextLineClamp() : images.length > 0 ? getImageLineClamp() : getAudioLineClamp();
 
         return (
-          <div className="mt-1 flex-1 flex flex-col gap-2">
+          // In the list view, without a title, the content starts at the card's own padding: the
+          // extra 4px made the player sit lower than the icons and further from the top edge
+          // than from the left.
+          <div className={cn('flex-1 flex flex-col gap-2', !(viewType === 'list' && !shouldShowTitle()) && 'mt-1')}>
             {images.length > 0 && (
               <div className="relative">
                 <img
@@ -468,7 +471,9 @@ export function NoteCard({
                 {renderNoteContent()}
               </div>
             </div>
-            <div className="flex items-center gap-2 ml-auto flex-shrink-0">
+            {/* As tall as the first row of content (a 32px audio player, or a 28px title line), so
+                the icons sit on the same centre line as the player and its speed button. */}
+            <div className={cn('flex items-center gap-2 ml-auto flex-shrink-0', !shouldShowTitle() && /\[audio:/.test(note.description || '') ? 'h-8' : 'h-7')}>
               {isFiled && <FolderOpen size={20} className={iconColorClass} />}
               {note.pinned && !isArchived && <Pin size={20} className={iconColorClass} />}
                 {note.reminder && <ReminderIcon reminder={note.reminder} className={iconColorClass} />}
