@@ -13,6 +13,7 @@
  */
 
 import { RENAMED_KEYS, RETIRED_VALUES } from './storageKeys';
+import { normalizeNoteType } from './noteNormalize';
 
 const ALREADY_MIGRATED_KEY = 'habitrkr.storageKeysMigrated';
 
@@ -21,7 +22,7 @@ const ALREADY_MIGRATED_KEY = 'habitrkr.storageKeysMigrated';
  * version of this migration rewrote the view values without keeping their JSON
  * encoding, leaving the key unreadable; bumping makes the corrected pass run again.
  */
-const MIGRATION_VERSION = 3;
+const MIGRATION_VERSION = 4;
 
 export interface StorageMigrationResult {
   /** Old key -> new key, for every value that was actually carried over. */
@@ -99,6 +100,20 @@ export function migrateStorageKeys(force = false): StorageMigrationResult {
 
       window.localStorage.setItem(key, wasJson ? JSON.stringify(replacement) : replacement);
       result.valuesRewritten.push({ key, from: decoded, to: replacement });
+    }
+
+    // Image and audio notes become plain notes that carry their media (see noteNormalize).
+    for (const key of ['notes', 'archivedNotes']) {
+      try {
+        const stored = window.localStorage.getItem(key);
+        if (!stored) continue;
+        const list = JSON.parse(stored);
+        if (!Array.isArray(list)) continue;
+        const next = list.map((n) => (n && typeof n === 'object' ? normalizeNoteType(n) : n));
+        if (next.some((n, i) => n !== list[i])) window.localStorage.setItem(key, JSON.stringify(next));
+      } catch {
+        // Unreadable notes are left exactly as they are.
+      }
     }
 
     window.localStorage.setItem(ALREADY_MIGRATED_KEY, String(MIGRATION_VERSION));

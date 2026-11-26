@@ -370,12 +370,11 @@ export default function Notes() {
 
   const handleImageSelect = (imageUrl: string) => {
     // Create and immediately save the image note (like audio notes)
-    const newNote: ImageNote = {
+    const newNote: TextNote = {
       id: crypto.randomUUID(),
       name: '',
-      type: 'image',
-      imageUrl,
-      description: '',
+      type: 'text',
+      description: `[image:${imageUrl}]`,
       color: '#FFFFFF',
       createdAt: new Date().toISOString(),
       pinned: false
