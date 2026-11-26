@@ -5,6 +5,7 @@ import { Plus, X, FolderOpen, Notebook, FileStack } from 'lucide-react';
 import { ViewSettings, ViewType, SortType, SortDirection } from '@/components/notes/ViewSettings';
 import { NoteFolderViewSettings, NoteFolderSortType, NoteFolderSortDirection } from '@/components/noteFolders/NoteFolderViewSettings';
 import { Layout } from '@/components/Layout';
+import { useMinWidth } from '@/hooks/useMinWidth';
 import { FolderMembershipProvider, collectFiledIds } from '@/contexts/FolderMembershipContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -57,6 +58,8 @@ import { entitySentence } from '@/lib/entityToast';
 const NOTE_TABS = ['all-notes', 'folders', 'archived'];
 
 export default function Notes() {
+  // Folders sit in independent columns so one that is opened does not leave a gap beside it.
+  const folderColumnCount = useMinWidth(768) ? 2 : 1;
   const { toast } = useToastSettings();
   // Password-protected notes are encrypted on their way to storage, whatever wrote them.
   const [notes, setNotes] = useLocalStorage<Note[]>('notes', [], { toStorage: (list) => sealNotesForStorage(list, 'notes') });
@@ -1846,37 +1849,41 @@ export default function Notes() {
        * same height and read as if they had all opened together. On a phone the grid is a
        * single column, so nothing shares a row and the problem never appeared there.
        */
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 items-start">
-        {finalSortedFolders.map((folder: NoteFolder) => (
-          <NoteFolderCard
-            key={folder.id}
-            folder={folder}
-            notes={notesForFolders}
-            searchQuery={searchQuery}
-            onToggleListItem={toggleListItem}
-            onArchiveNote={confirmArchiveNote}
-            onDeleteNote={deleteNote}
-            onPinNote={pinNote}
-            onUnpinNote={unpinNote}
-            onCopyNote={copyNote}
-            onShareNote={shareNote}
-            onMoveToFolder={handleMoveToFolder}
-            onOpenNote={openNoteViewer}
-            onLockNote={handleLockNote}
-            onUnlockNote={handleUnlockNote}
-            onPinFolder={() => pinFolder(folder.id)}
-            onUnpinFolder={() => unpinFolder(folder.id)}
-            onEditFolder={() => editFolder(folder.id)}
-            onArchiveFolder={!isArchived ? folderActions.requestArchive : undefined}
-            onDeleteFolder={folderActions.requestDelete}
-            onRestoreFolder={isArchived ? folderActions.requestRestore : undefined}
-            // Restoring a note from inside an archived folder. Without it the nested card's
-            // restore button was drawn but did nothing.
-            onRestoreNote={isArchived ? unarchiveNote : undefined}
-            showBulkCheckbox={isBulkMode}
-            isBulkSelected={selectedItems.has(folder.id)}
-            onBulkSelect={toggleItem}
-          />
+      <div className="flex gap-2 items-start">
+        {Array.from({ length: folderColumnCount }, (_, column) => (
+          <div key={column} className="flex min-w-0 flex-1 flex-col gap-2">
+            {finalSortedFolders.filter((_, index) => index % folderColumnCount === column).map((folder: NoteFolder) => (
+              <NoteFolderCard
+                key={folder.id}
+                folder={folder}
+                notes={notesForFolders}
+                searchQuery={searchQuery}
+                onToggleListItem={toggleListItem}
+                onArchiveNote={confirmArchiveNote}
+                onDeleteNote={deleteNote}
+                onPinNote={pinNote}
+                onUnpinNote={unpinNote}
+                onCopyNote={copyNote}
+                onShareNote={shareNote}
+                onMoveToFolder={handleMoveToFolder}
+                onOpenNote={openNoteViewer}
+                onLockNote={handleLockNote}
+                onUnlockNote={handleUnlockNote}
+                onPinFolder={() => pinFolder(folder.id)}
+                onUnpinFolder={() => unpinFolder(folder.id)}
+                onEditFolder={() => editFolder(folder.id)}
+                onArchiveFolder={!isArchived ? folderActions.requestArchive : undefined}
+                onDeleteFolder={folderActions.requestDelete}
+                onRestoreFolder={isArchived ? folderActions.requestRestore : undefined}
+                // Restoring a note from inside an archived folder. Without it the nested card's
+                // restore button was drawn but did nothing.
+                onRestoreNote={isArchived ? unarchiveNote : undefined}
+                showBulkCheckbox={isBulkMode}
+                isBulkSelected={selectedItems.has(folder.id)}
+                onBulkSelect={toggleItem}
+              />
+            ))}
+          </div>
         ))}
       </div>
     );

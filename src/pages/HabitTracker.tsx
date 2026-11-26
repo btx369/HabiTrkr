@@ -42,6 +42,7 @@ import { fileCopiesBesideOriginals } from '@/lib/copyIntoFolder';
 import { useCopyFolderQuestion, CopyFolderQuestionDialog } from '@/components/shared/CopyFolderQuestion';
 import { updateTagUsage } from '@/lib/tagStorage';
 import { parseSearchExpression, matchesSearchExpression } from '@/lib/tagParser';
+import { FolderColumns } from '@/components/shared/FolderColumns';
 
 // Tab order for swipe navigation. Module-level so its identity is stable across
 // renders: declared inside the component it was rebuilt every render, which made it
@@ -1315,8 +1316,7 @@ export default function HabitTracker() {
               </Card>
             ) : (
               /* `items-start`: see the note about stretching in the archived-folder grid. */
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 items-start">
-                {filterFolders().map(folder => (
+              <FolderColumns items={filterFolders()} render={(folder) => (
                   <HabitFolderCard
                     key={folder.id}
                     folder={folder}
@@ -1343,8 +1343,7 @@ export default function HabitTracker() {
                     isBulkSelected={selectedItems.has(folder.id)}
                     onBulkSelect={toggleItem}
                   />
-                ))}
-              </div>
+                )} />
             )}
           </TabsContent>
 
@@ -1406,8 +1405,7 @@ export default function HabitTracker() {
                    * made every neighbour beside it just as tall and they read as if they
                    * had all opened together.
                    */
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 items-start">
-                    {getArchivedFolders().map(folder => (
+                  <FolderColumns items={getArchivedFolders()} render={(folder) => (
                       <HabitFolderCard
                         key={folder.id}
                         folder={folder}
@@ -1436,8 +1434,7 @@ export default function HabitTracker() {
                         isBulkSelected={selectedItems.has(folder.id)}
                         onBulkSelect={toggleItem}
                       />
-                    ))}
-                  </div>
+                    )} />
                 )}
               </div>
             </div>

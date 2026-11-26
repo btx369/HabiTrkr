@@ -45,6 +45,7 @@ import {
   requestNotificationPermission 
 } from '@/lib/notificationService';
 import { entitySentence } from '@/lib/entityToast';
+import { FolderColumns } from '@/components/shared/FolderColumns';
 
 // Tab order for swipe navigation. Module-level so its identity is stable across
 // renders; declared inside the component it was rebuilt every render, which made it
@@ -1229,8 +1230,7 @@ export default function Events() {
        * tallest item in the row by default, so opening one folder made every neighbour
        * beside it just as tall, and they read as if they had all opened together.
        */
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 items-start">
-        {filteredFolders.map(folder => (
+      <FolderColumns items={filteredFolders} render={(folder) => (
           <EventFolderCard
             key={folder.id}
             folder={folder}
@@ -1266,8 +1266,7 @@ export default function Events() {
             isBulkSelected={selectedItems.has(folder.id)}
             onBulkSelect={toggleItem}
           />
-        ))}
-      </div>
+        )} />
     );
   };
 
