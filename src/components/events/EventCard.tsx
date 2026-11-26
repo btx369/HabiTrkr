@@ -320,7 +320,7 @@ export function EventCard({
             {event.isRecurrent && event.recurrenceType ? (
               <Badge 
                 variant="outline" 
-                className={`h-auto min-w-0 whitespace-normal text-left text-xs ${badgeBorderClass} ${hasColor ? 'text-cocoa' : ''}`}
+                className={`h-auto min-w-0 whitespace-normal rounded-lg text-left text-xs ${badgeBorderClass} ${hasColor ? 'text-cocoa' : ''}`}
                 style={recurrenceBadgeStyle}
               >
                 {recurrenceText}

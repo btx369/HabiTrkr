@@ -37,7 +37,8 @@ try {
 
   // 1. Text note
   await newNote('Text', 'Shopping', async () => {
-    await viewer().getByText('Start writing...').click();
+    // A new note opens already in the editor, where the placeholder is not a text node.
+    await viewer().locator('.ProseMirror').click();
     await wait(page, 400);
     await page.keyboard.type('Buy apples and #groceries');
   });

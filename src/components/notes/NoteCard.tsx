@@ -310,7 +310,7 @@ export function NoteCard({
                 >
                   {item.completed && <Check size={8} />}
                 </div>
-                <span className={`text-xs ${textColorClass} ${item.completed ? 'line-through opacity-70' : ''} flex-1 min-w-0 truncate`}>
+                <span className={`text-sm ${textColorClass} ${item.completed ? 'line-through opacity-70' : ''} flex-1 min-w-0 truncate`}>
                   {highlightText(item.text, searchQuery)}
                 </span>
               </div>
