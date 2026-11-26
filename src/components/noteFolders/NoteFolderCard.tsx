@@ -174,7 +174,7 @@ export function NoteFolderCard({
                 </div>
               </CollapsibleTrigger>
               {folder.description && (
-                <p className={`text-xs ${mutedTextColorClass} mb-1 ml-6`}>{highlightText(folder.description, searchQuery)}</p>
+                <p className={`text-xs ${mutedTextColorClass} mb-1 ml-6 line-clamp-2 break-words`}>{highlightText(folder.description, searchQuery)}</p>
               )}
               <p className={`text-xs ${mutedTextColorClass} ml-6`}>
                 {countedNoun(t, language, 'note', folderNotes.length)}
