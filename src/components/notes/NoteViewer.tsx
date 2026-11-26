@@ -2221,6 +2221,18 @@ export function NoteViewer({
           </div>
         </ScrollArea>
         
+        {/* The reminder sits at the bottom of the text area, just above the line over the toolbar,
+            outside the scrolling area: typing or scrolling never moves it. */}
+        {note.reminder && (
+          <div className="flex-shrink-0 px-3 pb-2 pt-1">
+            <ReminderChip
+              reminder={note.reminder}
+              onEdit={readOnly ? undefined : () => setShowReminderDialog(true)}
+              onRemove={readOnly ? undefined : () => saveReminder(undefined)}
+            />
+          </div>
+        )}
+
         {/*
           * The dock holds nothing but ways to change the note — add a photo, a recording, a
           * tick box, tags, a reminder, formatting — so an archived note does not show it at
@@ -2399,17 +2411,6 @@ export function NoteViewer({
             isTextNote={note.type !== 'list'}
           />
         </div>
-        )}
-        {/* The reminder sits at the very bottom of the note, below the toolbar, outside the
-            scrolling area: opening the formatting bar, typing or scrolling never moves it. */}
-        {note.reminder && (
-          <div className="flex-shrink-0 px-3 pb-2 pt-1">
-            <ReminderChip
-              reminder={note.reminder}
-              onEdit={readOnly ? undefined : () => setShowReminderDialog(true)}
-              onRemove={readOnly ? undefined : () => saveReminder(undefined)}
-            />
-          </div>
         )}
 
         {/* Popups inside DialogContent to prevent closing the note */}
