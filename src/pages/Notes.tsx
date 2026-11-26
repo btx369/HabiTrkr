@@ -5,6 +5,7 @@ import { Plus, X, FolderOpen, Notebook, FileStack } from 'lucide-react';
 import { ViewSettings, ViewType, SortType, SortDirection } from '@/components/notes/ViewSettings';
 import { NoteFolderViewSettings, NoteFolderSortType, NoteFolderSortDirection } from '@/components/noteFolders/NoteFolderViewSettings';
 import { Layout } from '@/components/Layout';
+import { MasonryCell } from '@/components/notes/MasonryCell';
 import { useMinWidth } from '@/hooks/useMinWidth';
 import { FolderMembershipProvider, collectFiledIds } from '@/contexts/FolderMembershipContext';
 import { Button } from '@/components/ui/button';
@@ -1752,7 +1753,8 @@ export default function Notes() {
   const getGridClassName = () => {
     switch (effectiveViewType) {
       case 'x2':
-        return 'grid grid-cols-2 gap-2';
+        // Masonry: 2px rows, each card spans its own height (see MasonryCell).
+        return 'grid grid-cols-2 gap-x-2 auto-rows-[2px]';
       case 'list':
       default:
         return 'grid grid-cols-1 gap-2';
@@ -2005,8 +2007,9 @@ export default function Notes() {
             }
           }
           
+          const Cell = effectiveViewType === 'x2' ? MasonryCell : 'div';
           return (
-            <div
+            <Cell
               key={note.id}
               data-note-card={note.id}
               style={{
@@ -2048,7 +2051,7 @@ export default function Notes() {
                 isBulkSelected={selectedItems.has(note.id)}
                 onBulkSelect={toggleItem}
               />
-            </div>
+            </Cell>
           );
         })}
       </div>

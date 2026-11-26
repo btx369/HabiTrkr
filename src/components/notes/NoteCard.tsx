@@ -125,7 +125,8 @@ export function NoteCard({
   const getCardHeight = () => {
     switch (viewType) {
       case 'x2':
-        return 'h-[14rem]';
+        // As tall as the content, up to 14rem: short notes no longer sit in a tall empty card.
+        return 'h-auto max-h-[14rem] overflow-hidden';
       case 'list':
       default:
         return 'h-auto';
