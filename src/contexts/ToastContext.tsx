@@ -52,6 +52,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 label: t('undo'),
                 onClick: () => {
                   undo();
+                  window.dispatchEvent(new Event('habitrkr:undo'));
                   lastUndoToastId.current = undefined;
                   sonnerToast.success(t('actionUndone'));
                 },

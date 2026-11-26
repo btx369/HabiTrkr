@@ -21,7 +21,7 @@ import {
   Pin,
   FolderOpen
 } from 'lucide-react';
-import { useIsFiled } from '@/contexts/FolderMembershipContext';
+import { useIsFiled, useFolderName } from '@/contexts/FolderMembershipContext';
 import { useToastSettings } from '@/contexts/ToastContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -33,6 +33,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ItemActionMenu } from '@/components/shared/ItemActionMenu';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { AudioPlayer } from '@/components/shared/AudioPlayer';
 import { Note, ListItem } from '@/types/note';
 import { NoteEditor } from './NoteEditor';
@@ -128,6 +129,7 @@ export function NoteViewer({
   const { toast } = useToastSettings();
   const { t, language } = useLanguage();
   const isFiled = useIsFiled(note?.id ?? '');
+  const folderName = useFolderName(note?.id ?? '');
   // Toast copy is a translated sentence plus a translated entity noun. Both halves are
   // resolved here so the `{entity}` substitution is written once instead of at every toast.
   const say = (key: string, entity: string) => t(key).replace('{entity}', t(entity));
@@ -408,6 +410,25 @@ export function NoteViewer({
     if (!range || !container.contains(range.startContainer)) return null;
     return getCaretIndexWithin(container, range.startContainer, range.startOffset);
   };
+
+  // After "Anular" the stored note is back, and the page hands the viewer the restored note. If
+  // the viewer was in edit mode its edit buffer still holds the text from before the undo, and
+  // leaving the note would save that over the restored media, so take the restored text again.
+  useEffect(() => {
+    const onUndo = () => {
+      window.setTimeout(() => {
+        const current = noteRef.current;
+        if (!current) return;
+        setEditedDescription(current.description || '');
+        if (current.type === 'list') {
+          setDisplayItems(current.items);
+          setEditedItems(current.items);
+        }
+      }, 50);
+    };
+    window.addEventListener('habitrkr:undo', onUndo);
+    return () => window.removeEventListener('habitrkr:undo', onUndo);
+  }, []);
 
   // Reset all editing state when note changes to prevent content leakage.
   // Deliberately keyed on the note id, not the whole note: `note` is a fresh object on
@@ -2177,7 +2198,22 @@ export function NoteViewer({
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
               {/* The same status icons as the note's card, in the same order: folder, then pin. */}
-              {isFiled && <FolderOpen size={24} className={iconColorClass} />}
+              {isFiled && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label={t('tabFolders')}
+                      className="flex h-6 w-6 items-center justify-center rounded-full"
+                    >
+                      <FolderOpen size={24} className={iconColorClass} />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="z-[70] w-auto max-w-[16rem] px-3 py-2 text-sm font-medium">
+                    {folderName || t('tabFolders')}
+                  </PopoverContent>
+                </Popover>
+              )}
               {note.pinned && !note.archived && <Pin size={24} className={iconColorClass} />}
               {note.locked && <Lock size={20} className={iconColorClass} />}
             </div>

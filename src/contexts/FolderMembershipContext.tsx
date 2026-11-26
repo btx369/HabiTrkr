@@ -14,13 +14,17 @@ import { createContext, useContext, useMemo, type ReactNode } from 'react';
  */
 const FolderMembershipContext = createContext<ReadonlySet<string>>(new Set<string>());
 
+const FolderNameContext = createContext<Readonly<Record<string, string>>>({});
+
 interface FolderMembershipProviderProps {
+  /** Folder name of each filed item id, for the pop-up the note viewer opens from its folder icon. */
+  folderNames?: Readonly<Record<string, string>>;
   /** Every id filed in a folder, across active and archived folders. */
   ids: readonly string[];
   children: ReactNode;
 }
 
-export function FolderMembershipProvider({ ids, children }: FolderMembershipProviderProps) {
+export function FolderMembershipProvider({ ids, folderNames, children }: FolderMembershipProviderProps) {
   /*
    * The set is rebuilt from a string key rather than from the array itself: the pages build
    * that array inline, so a new array arrives on every render, and a new Set would re-render
@@ -29,7 +33,19 @@ export function FolderMembershipProvider({ ids, children }: FolderMembershipProv
    */
   const key = ids.join('\u0000');
   const value = useMemo(() => new Set(key ? key.split('\u0000') : []), [key]);
-  return <FolderMembershipContext.Provider value={value}>{children}</FolderMembershipContext.Provider>;
+  return (
+    <FolderMembershipContext.Provider value={value}>
+      <FolderNameContext.Provider value={folderNames ?? EMPTY_NAMES}>{children}</FolderNameContext.Provider>
+    </FolderMembershipContext.Provider>
+  );
+}
+
+const EMPTY_NAMES: Readonly<Record<string, string>> = {};
+
+/** The name of the folder the item is filed in, when known. */
+export function useFolderName(id: string | undefined): string | undefined {
+  const names = useContext(FolderNameContext);
+  return id ? names[id] : undefined;
 }
 
 /** Whether the item with this id is filed in a folder. */

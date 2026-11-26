@@ -220,6 +220,14 @@ export default function Notes() {
     lockVault();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- re-run whenever what is on screen changes
   }, [isNoteViewerOpen, noteToView, notes, archivedNotes, passwordPrompt, lockChoiceNoteId]);
+  // Undo (the toast's "Anular") puts the stored notes back, but the open viewer holds its own copy
+  // of the note. Keep that copy in step so a restored audio or image shows at once.
+  useEffect(() => {
+    if (!isNoteViewerOpen || !noteToView || isNewNote || noteToView.locked) return;
+    const stored = notes.find((n) => n.id === noteToView.id);
+    if (stored && !stored.locked && JSON.stringify(stored) !== JSON.stringify(noteToView)) setNoteToView(stored);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only a change in the stored notes matters
+  }, [notes]);
   // Notes unlocked during this session (avoid re-PIN while viewing)
   const [unlockedNoteIds, setUnlockedNoteIds] = useState<string[]>([]);
 
@@ -2363,8 +2371,17 @@ export default function Notes() {
   const say = (key: string, entity: string) => entitySentence(t, language, key, entity);
   // Folder toasts name the items a folder contains rather than the folder itself.
 
+  const folderNamesByItem: Record<string, string> = {};
+  for (const folder of folders) {
+    for (const id of folder.noteIds) folderNamesByItem[id] = folder.name;
+  }
+  for (const archived of archivedNotes) {
+    const origin = folders.find((folder) => folder.id === (archived as { originalFolderId?: string }).originalFolderId);
+    if (origin) folderNamesByItem[archived.id] = origin.name;
+  }
+
   return (
-    <FolderMembershipProvider ids={collectFiledIds(
+    <FolderMembershipProvider folderNames={folderNamesByItem} ids={collectFiledIds(
       folders.map((folder) => ({ id: folder.id, itemIds: folder.noteIds })),
       archivedNotes,
     )}>
