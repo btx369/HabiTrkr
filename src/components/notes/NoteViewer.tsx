@@ -39,6 +39,7 @@ import { Note, ListItem } from '@/types/note';
 import { NoteEditor } from './NoteEditor';
 import { NoteActionBar } from './NoteActionBar';
 import { ReminderDialog } from './ReminderDialog';
+import { ListItemField } from './ListItemField';
 import { ReminderChip } from './ReminderChip';
 import { requestNotificationPermission } from '@/lib/notificationService';
 import { formatReminder, nextReminderTime } from '@/lib/noteReminders';
@@ -607,7 +608,7 @@ export function NoteViewer({
         const isAddingNewItem = isAddingNewItemRef.current;
         if (clickedListItemId) {
           // Focus the specific input for the clicked item
-          const inputs = document.querySelectorAll('input[data-list-item-input]') as NodeListOf<HTMLInputElement>;
+          const inputs = document.querySelectorAll('textarea[data-list-item-input]') as NodeListOf<HTMLTextAreaElement>;
           const items = isEditingContent ? editedItemsRef.current : displayItemsRef.current;
           const clickedIndex = items.findIndex(item => item.id === clickedListItemId);
           if (clickedIndex >= 0 && inputs[clickedIndex]) {
@@ -622,7 +623,7 @@ export function NoteViewer({
           setDesiredListCursorIndex(null); // Reset after focusing
         } else if (!isAddingNewItem) {
           // Only focus first input if we're not adding a new item
-          const firstInput = document.querySelector('input[data-list-item-input]') as HTMLInputElement;
+          const firstInput = document.querySelector('textarea[data-list-item-input]') as HTMLTextAreaElement;
           if (firstInput) {
             firstInput.focus();
           }
@@ -992,8 +993,8 @@ export function NoteViewer({
     // Focus the new input after it's rendered - target only UNCHECKED item inputs
     setTimeout(() => {
       const inputs = Array.from(
-        document.querySelectorAll('input[data-list-item-input]:not(.line-through)')
-      ) as HTMLInputElement[];
+        document.querySelectorAll('textarea[data-list-item-input]:not(.line-through)')
+      ) as HTMLTextAreaElement[];
       const lastInput = inputs[inputs.length - 1];
       if (lastInput) {
         lastInput.focus();
@@ -1026,7 +1027,7 @@ export function NoteViewer({
   };
 
   const handleListItemKeyDown = (e: React.KeyboardEvent, itemId: string) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter') {
       e.preventDefault();
       addListItem();
     }
@@ -1755,13 +1756,12 @@ export function NoteViewer({
                   </Button>
                   {isEditingContent ? (
                     <div className="flex items-center gap-2 flex-1 min-w-0 min-h-[1.75rem]">
-                      <Input
+                      <ListItemField
                         value={item.text}
-                        onChange={(e) => updateListItem(item.id, e.target.value)}
+                        onChange={(text) => updateListItem(item.id, text)}
                         onKeyDown={(e) => handleListItemKeyDown(e, item.id)}
                         placeholder={t('listItemPlaceholder')}
-                        data-list-item-input
-                        className="text-sm flex-1 border-none shadow-none focus-visible:ring-0 p-1 bg-transparent rounded-none h-7"
+                        className="flex-1 min-w-0 px-1 py-[7px]"
                       />
                       <Button
                         size="sm"
@@ -1774,7 +1774,7 @@ export function NoteViewer({
                     </div>
                   ) : (
                      <span 
-                       className="text-sm leading-none break-words flex-1 min-w-0 cursor-pointer hover:bg-hover p-1 min-h-[1.75rem] flex items-center"
+                       className="text-sm leading-none break-words flex-1 min-w-0 cursor-pointer hover:bg-hover py-1 pl-1 pr-8 min-h-[1.75rem] flex items-center"
                        role="button"
                        tabIndex={readOnly ? undefined : 0}
                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); startEditingContent(undefined, item.id); } }}
@@ -1829,13 +1829,12 @@ export function NoteViewer({
                           </Button>
                           {isEditingContent ? (
                             <div className="flex items-center gap-2 flex-1 min-w-0">
-                              <Input
+                              <ListItemField
                                 value={item.text}
-                                onChange={(e) => updateListItem(item.id, e.target.value)}
+                                onChange={(text) => updateListItem(item.id, text)}
                                 onKeyDown={(e) => handleListItemKeyDown(e, item.id)}
                                 placeholder={t('listItemPlaceholder')}
-                        data-list-item-input
-                                className="text-sm flex-1 border-none shadow-none focus-visible:ring-0 p-1 bg-transparent rounded-none line-through text-muted-foreground"
+                                className="flex-1 min-w-0 px-1 py-[7px] line-through text-muted-foreground"
                               />
                               <Button
                                 size="sm"
@@ -1848,7 +1847,7 @@ export function NoteViewer({
                             </div>
                           ) : (
                              <span 
-                               className="text-sm leading-none line-through text-muted-foreground break-words flex-1 min-w-0 cursor-pointer hover:bg-hover p-1 flex items-center"
+                               className="text-sm leading-none line-through text-muted-foreground break-words flex-1 min-w-0 cursor-pointer hover:bg-hover py-1 pl-1 pr-8 flex items-center"
                                role="button"
                                tabIndex={readOnly ? undefined : 0}
                                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); startEditingContent(undefined, item.id); } }}
@@ -2127,7 +2126,7 @@ export function NoteViewer({
           e.preventDefault();
           if (showFormattingBar || isSearching || galleryOpen || showAudioRecorder || showImageCapturePopup || editingAudioUrl) return;
           const active = document.activeElement;
-          if (active instanceof HTMLInputElement) return;
+          if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) return;
           handleBackClick();
         }}
       >
