@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
+import { useFolderOpen } from '@/hooks/useFolderOpen';
 import { FolderOpen, ChevronDown, ChevronRight, Pin, Check, RotateCcw, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CardContent } from '@/components/ui/card';
@@ -75,7 +76,7 @@ export function HabitFolderCard({
   onBulkSelect,
 }: HabitFolderCardProps) {
   const { t, language } = useLanguage();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useFolderOpen('habits', folder.id);
   const folderHabits = habits.filter(habit => folder.habitIds.includes(habit.id));
 
   // Track when bulk mode was enabled for animation control
