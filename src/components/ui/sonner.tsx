@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react"
-import { Toaster as Sonner, toast, useSonner } from "sonner"
+import { useEffect } from "react"
+import { Toaster as Sonner, toast } from "sonner"
 // The app's own theme. next-themes' hook was used here, but the app never mounts its
 // provider, so toasts followed the phone's theme instead of the one picked in Profile.
 import { useTheme } from "@/contexts/ThemeContext"
@@ -12,23 +12,27 @@ type ToasterProps = React.ComponentProps<typeof Sonner>
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme } = useTheme()
 
-  // On a phone a toast is flicked away; with a mouse there was no way to do the same. Clicking
-  // anywhere on a toast now dismisses it, except on its own buttons (Undo, close), which keep
-  // their meaning. Sonner puts no id on the element, so the clicked toast is found through its
-  // position in the stack (`data-index`), which follows the same order as `useSonner().toasts`.
-  const { toasts } = useSonner()
-  const toastsRef = useRef(toasts)
-  toastsRef.current = toasts
+  // A toast is dismissed by swiping it sideways, with a finger or a mouse (Sonner's own swipe).
+  // Pressing the toast body does what its Undo button does, so a tap that misses the button by
+  // a few pixels still undoes instead of silently closing the toast. Toasts without Undo ignore
+  // presses.
   useEffect(() => {
+    // A drag ends in a click on the same element; only a press that stayed put counts.
+    let down: { x: number; y: number } | null = null
+    const onDown = (event: PointerEvent) => { down = { x: event.clientX, y: event.clientY } }
     const onClick = (event: MouseEvent) => {
+      if (down && Math.hypot(event.clientX - down.x, event.clientY - down.y) > 6) return
       const target = event.target as HTMLElement | null
       const item = target?.closest?.('[data-sonner-toast]') as HTMLElement | null
       if (!item || target?.closest('button, a, [data-button], [data-cancel], [data-close-button]')) return
-      const id = toastsRef.current[Number(item.dataset.index)]?.id
-      if (id !== undefined) toast.dismiss(id)
+      item.querySelector<HTMLElement>('[data-button]:not([data-cancel])')?.click()
     }
+    document.addEventListener('pointerdown', onDown, true)
     document.addEventListener('click', onClick)
-    return () => document.removeEventListener('click', onClick)
+    return () => {
+      document.removeEventListener('pointerdown', onDown, true)
+      document.removeEventListener('click', onClick)
+    }
   }, [])
 
   return (
