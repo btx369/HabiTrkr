@@ -330,11 +330,23 @@ export function NoteViewer({
   const handleDeleteImage = (imageUrl: string) => {
     if (readOnly || !note) return;
     
-    // For image notes, prevent deletion of the main image
+    // The main image of an image note: the next image takes its place, and a note with no image
+    // left becomes a plain text note, so the image can be removed like any other.
     if (note.type === 'image' && imageUrl === note.imageUrl) {
-      toast.error(t('cannotDelete'), {
-        description: t('cannotDeleteMainImage'),
-      });
+      const rest = (isEditingContent ? editedDescription : note.description || '');
+      const others = extractImages(rest);
+      let description = rest;
+      if (others.length > 0) {
+        description = rest.replace(`[image:${others[0]}]`, '').trim();
+        if (isEditingContent) setEditedDescription(description);
+        saveIfEditable({ imageUrl: others[0], description } as Partial<Note>);
+      } else {
+        description = description.trim();
+        if (isEditingContent) setEditedDescription(description);
+        saveIfEditable({ type: 'text', imageUrl: undefined, description } as unknown as Partial<Note>);
+      }
+      setGalleryOpen(false);
+      toast.success(say('toastUpdated', 'noteViewerTitle'));
       return;
     }
     
