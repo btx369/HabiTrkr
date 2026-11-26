@@ -18,6 +18,7 @@ import { useIsFiled } from '@/contexts/FolderMembershipContext';
 import { cn } from '@/lib/utils';
 import type { ViewType } from '@/types/view';
 import { useNarrowScreen } from '@/hooks/use-narrow-screen';
+import { useElementNarrow } from '@/hooks/useElementNarrow';
 
 // Helper to convert hex to rgba for glass effect (matching ColoredCard)
 const hexToRgba = (hexColor: string, alpha: number): string => {
@@ -182,7 +183,12 @@ export function HabitCard({
   // `x2` (name and icons on a top row, progress and day buttons on a second one).
   // The list view also uses two rows on narrow phones: in one row the name wrapped, the
   // badge was cut to "3/8 h…" and icons, days and menu fought for the same space.
-  const isNarrow = useNarrowScreen();
+  // Narrow means the card's own width (a folder column on a desktop is as narrow as a phone),
+  // falling back to the screen width until the card has been measured.
+  const cardRef = useRef<HTMLDivElement>(null);
+  const screenNarrow = useNarrowScreen();
+  const cardNarrow = useElementNarrow(cardRef, 520);
+  const isNarrow = cardNarrow ?? screenNarrow;
   const twoRows = viewType === 'x2' || (viewType === 'list' && isNarrow);
   const dragGrip = (
     <>
@@ -390,6 +396,7 @@ export function HabitCard({
 
   return (
     <ColoredCard
+      ref={cardRef}
       color={habit.color}
       data-habit-id={habit.id}
       draggable={isDragEnabled && !showBulkCheckbox}

@@ -125,8 +125,9 @@ export function NoteCard({
   const getCardHeight = () => {
     switch (viewType) {
       case 'x2':
-        // As tall as the content, up to 14rem: short notes no longer sit in a tall empty card.
-        return 'h-auto max-h-[14rem] overflow-hidden';
+        // As tall as the content: short notes no longer sit in a tall empty card. Long text is
+        // cut on a whole line by the line clamp, never in the middle of one.
+        return 'h-auto';
       case 'list':
       default:
         return 'h-auto';
@@ -184,7 +185,7 @@ export function NoteCard({
     // Calculate line clamps based on view type and title presence
     const getTextLineClamp = () => {
       if (viewType === 'x2') {
-        return hasTitle ? 'line-clamp-15' : 'line-clamp-16';
+        return hasTitle ? 'line-clamp-8' : 'line-clamp-9';
       } else {
         return 'line-clamp-8';
       }
@@ -204,7 +205,7 @@ export function NoteCard({
 
     const getListItemsToShow = () => {
       if (viewType === 'x2') {
-        return hasTitle ? 15 : 16;
+        return hasTitle ? 10 : 11;
       } else {
         return 4;
       }

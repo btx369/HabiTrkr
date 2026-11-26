@@ -18,7 +18,7 @@ const CAPSULE_LEFT = `calc(${COLUMN_START} + ${CAPSULE_IN_COLUMN})`;
 export const NAV_CAPSULE_STYLE = { left: CAPSULE_LEFT, bottom: 'calc(16px + env(safe-area-inset-bottom))' } as const;
 
 export const FLOATING_ADD_CLASS =
-  'fixed h-12 w-12 rounded-full z-50 px-0 py-0 bg-leaf text-leaf-foreground border border-nav-border shadow-[0_6px_16px_-8px_hsl(var(--cocoa)/0.5)] hover:bg-leaf/90 [&_svg]:!size-6';
+  'fixed h-12 w-12 rounded-full z-50 px-0 py-0 bg-leaf text-leaf-foreground border-0 shadow-[0_6px_16px_-8px_hsl(var(--cocoa)/0.5)] hover:bg-leaf/90 [&_svg]:!size-6';
 
 export const FLOATING_ADD_STYLE = {
   // Centred in the gap between the capsule's right edge and the screen edge.
