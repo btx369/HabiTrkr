@@ -674,6 +674,8 @@ export default function Notes() {
         return !hasMedia && withoutMarkers === '';
       
       case 'list':
+        // A list that still carries a picture or a recording is not empty.
+        if (/\[image:.+?\]|\[audio:.+?:[\d.]+\]/.test(note.description || '')) return false;
         // List note is empty if it has no items or all items are empty
         return !note.items || note.items.length === 0 || 
                note.items.every(item => !item.text || item.text.trim() === '');

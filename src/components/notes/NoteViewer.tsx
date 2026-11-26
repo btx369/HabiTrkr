@@ -826,18 +826,16 @@ export function NoteViewer({
     let hasContent = false;
     const updatedNote: any = {};
     
-    if (note.type === 'text' && editedDescription.trim()) {
-      hasContent = true;
-      updatedNote.description = editedDescription;
-    } else if ((note.type === 'audio' || note.type === 'image') && editedDescription.trim()) {
-      hasContent = true;
-      updatedNote.description = editedDescription;
-    } else if (note.type === 'list' && editedItems.some(item => item.text.trim())) {
-      hasContent = true;
+    if (note.type === 'list') {
       const filteredItems = editedItems.filter(item => item.text.trim());
+      // An existing list saves what is left, even when that is nothing: otherwise the items
+      // that were just removed came back.
+      hasContent = filteredItems.length > 0;
       updatedNote.items = filteredItems;
-      // Update display items to match the saved state
       setDisplayItems(filteredItems);
+    } else {
+      hasContent = editedDescription.trim().length > 0;
+      updatedNote.description = editedDescription;
     }
     
     
@@ -2419,13 +2417,15 @@ export function NoteViewer({
               .map(line => line.replace(/^#{1,6}\s+/, '').replace(/\*\*|__|\*/g, '').trim())
               .filter(line => line.length > 0);
             
-            if (lines.length === 0) {
+            // A note with no text (only a picture or a recording) becomes a list with one empty
+            // item to type in, and keeps its media.
+            if (lines.length === 0 && mediaParts.length === 0 && !(currentContent || '').trim()) {
               toast.error(t('noTextToConvert'));
               return;
             }
             
             // Create list items
-            const listItems = lines.map(text => ({
+            const listItems = (lines.length > 0 ? lines : ['']).map(text => ({
               id: crypto.randomUUID(),
               text,
               completed: false
@@ -2439,6 +2439,11 @@ export function NoteViewer({
               } else if (part.type === 'audio') {
                 mediaDescription += `[audio:${part.content}:${part.duration}]\n`;
               }
+            });
+            
+            // The comments written on recordings live in their own markers; keep them with the clips.
+            (currentContent.match(/\[audionote:.+?\]/g) || []).forEach(marker => {
+              mediaDescription += `${marker}\n`;
             });
             
             // Convert note to list type
@@ -2462,7 +2467,7 @@ export function NoteViewer({
             setEditedDescription(mediaDescription.trim());
             if (onSave) {
               saveIfEditable(updatedNote);
-              toast.success(countedSentence(t, language, 'toastItemCount', lines.length));
+              if (lines.length > 0) toast.success(countedSentence(t, language, 'toastItemCount', lines.length));
             }
           }}
             onToggleFormatting={() => {
