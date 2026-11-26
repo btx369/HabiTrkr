@@ -88,6 +88,8 @@ const WordSelection = Extension.create({
 export interface RichTextEditorHandle {
   editor: Editor | null;
   focus: () => void;
+  /** Focus with the cursor on a markdown line (one block each), at a character of its text. */
+  focusAt: (line: number, offset: number) => void;
   applyFormat: (formatType: 'h1' | 'h2' | 'normal' | 'bold' | 'italic' | 'underline' | 'clear') => void;
 }
 
@@ -142,6 +144,17 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       editor,
       focus: () => {
         editor?.commands.focus('end');
+      },
+      focusAt: (line: number, offset: number) => {
+        if (!editor) return;
+        let pos: number | null = null;
+        let index = 0;
+        editor.state.doc.forEach((node, start) => {
+          if (index === line) pos = start + 1 + Math.max(0, Math.min(offset, node.content.size));
+          index += 1;
+        });
+        if (pos === null) editor.commands.focus('end');
+        else editor.commands.focus(pos);
       },
       applyFormat: (formatType: 'h1' | 'h2' | 'normal' | 'bold' | 'italic' | 'underline' | 'clear') => {
         if (!editor) return;

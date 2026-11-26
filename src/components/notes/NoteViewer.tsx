@@ -363,6 +363,7 @@ export function NoteViewer({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const desiredCursorIndexRef = useRef<number | null>(null);
+  const desiredEditorCaretRef = useRef<{ line: number; offset: number } | null>(null);
   const scrollPosRef = useRef<{ top: number; left: number }>({ top: 0, left: 0 });
 
   const autoResizeTextarea = () => {
@@ -393,6 +394,27 @@ export function NoteViewer({
       current = walker.nextNode();
     }
     return index;
+  };
+
+  /** The tapped line and the character in it, so the editor puts its cursor where the tap was. */
+  const getEditorCaretFromPoint = (x: number, y: number): { line: number; offset: number } | null => {
+    const anyDoc = document as any;
+    let node: Node | null = null;
+    let offset = 0;
+    if (anyDoc.caretRangeFromPoint) {
+      const range = anyDoc.caretRangeFromPoint(x, y);
+      if (range) { node = range.startContainer; offset = range.startOffset; }
+    } else if (anyDoc.caretPositionFromPoint) {
+      const pos = anyDoc.caretPositionFromPoint(x, y);
+      if (pos) { node = pos.offsetNode; offset = pos.offset; }
+    }
+    if (!node) return null;
+    let el: Node | null = node;
+    while (el && el.parentElement && !(el.parentElement as HTMLElement).hasAttribute('data-note-text')) el = el.parentElement;
+    const lineEl = el as HTMLElement | null;
+    const host = lineEl?.parentElement;
+    if (!lineEl || !host || !host.hasAttribute('data-note-text')) return null;
+    return { line: Array.prototype.indexOf.call(host.children, lineEl), offset: getCaretIndexWithin(lineEl, node, offset) };
   };
 
   const getCaretIndexFromPoint = (container: HTMLElement, x: number, y: number): number | null => {
@@ -483,22 +505,30 @@ export function NoteViewer({
   }, [isNewNote, isOpen, note]);
 
   
-  // Subscribe to editor events to update formatting bar reactively
+  // Subscribe to editor events to update formatting bar reactively. The editor is created after
+  // the viewer's first render (when a note is tapped into edit mode), so this checks after every
+  // render which editor is current instead of depending on a ref value read at render time.
+  const subscribedEditorRef = useRef<unknown>(null);
+  const unsubscribeEditorRef = useRef<(() => void) | null>(null);
   useEffect(() => {
-    const editor = richTextEditorRef.current?.editor;
+    const editor = richTextEditorRef.current?.editor ?? null;
+    if (editor === subscribedEditorRef.current) return;
+    unsubscribeEditorRef.current?.();
+    unsubscribeEditorRef.current = null;
+    subscribedEditorRef.current = editor;
     if (!editor) return;
-    
+
     const updateHandler = () => forceUpdate();
     editor.on('update', updateHandler);
     editor.on('selectionUpdate', updateHandler);
     editor.on('transaction', updateHandler);
-    
-    return () => {
+    unsubscribeEditorRef.current = () => {
       editor.off('update', updateHandler);
       editor.off('selectionUpdate', updateHandler);
       editor.off('transaction', updateHandler);
     };
-  }, [richTextEditorRef.current?.editor]);
+  });
+  useEffect(() => () => unsubscribeEditorRef.current?.(), []);
 
   // Handle Escape key to close formatting bar and other popups
   useEffect(() => {
@@ -596,10 +626,16 @@ export function NoteViewer({
           const tryFocus = (attempt: number) => {
             const handle = richTextEditorRef.current;
             if (handle?.editor) {
-              handle.focus();
-              if (handle.editor.isFocused) return;
+              const caret = desiredEditorCaretRef.current;
+              if (caret) handle.focusAt(caret.line, caret.offset);
+              else handle.focus();
+              if (handle.editor.isFocused) {
+                desiredEditorCaretRef.current = null;
+                return;
+              }
             }
             if (attempt < 8) setTimeout(() => tryFocus(attempt + 1), 100);
+            else desiredEditorCaretRef.current = null;
           };
           requestAnimationFrame(() => tryFocus(0));
         } else if (textareaRef.current) {
@@ -737,6 +773,7 @@ export function NoteViewer({
       const container = event.currentTarget as HTMLElement;
       const idx = getCaretIndexFromPoint(container, (event as React.MouseEvent).clientX, (event as React.MouseEvent).clientY);
       desiredCursorIndexRef.current = idx !== null ? idx : null;
+      desiredEditorCaretRef.current = getEditorCaretFromPoint(event.clientX, event.clientY);
     }
 
     // Preserve current scroll position of the ScrollArea viewport to avoid jumps
@@ -1642,7 +1679,7 @@ export function NoteViewer({
                 {images.length > 0 && renderImageGrid(images)}
                 {audioWithLabels.length > 0 && renderAudioList(audioWithLabels)}
                 {textContent ? (
-                  <div className="text-sm leading-relaxed">
+                  <div className="text-sm leading-relaxed" data-note-text="">
                     {renderMarkdownWithHighlight(textContent, searchQuery)}
                   </div>
                 ) : (
@@ -1896,7 +1933,7 @@ export function NoteViewer({
                 {audioImages.length > 0 && renderImageGrid(audioImages)}
                 {audioWithLabelsAudio.length > 0 && renderAudioList(audioWithLabelsAudio)}
                 {audioTextContent ? (
-                  <div className="text-sm leading-relaxed">
+                  <div className="text-sm leading-relaxed" data-note-text="">
                     {renderMarkdownWithHighlight(audioTextContent, searchQuery)}
                   </div>
                 ) : (
@@ -1977,7 +2014,7 @@ export function NoteViewer({
               >
                 {imageWithLabelsAudio.length > 0 && renderAudioList(imageWithLabelsAudio)}
                 {imageTextContent ? (
-                  <div className="text-sm leading-relaxed">
+                  <div className="text-sm leading-relaxed" data-note-text="">
                     {renderMarkdownWithHighlight(imageTextContent, searchQuery)}
                   </div>
                 ) : (
