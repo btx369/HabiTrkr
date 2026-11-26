@@ -203,7 +203,7 @@ export function HabitCard({
               className={cn('flex min-w-0 flex-col text-left', textColorClass)}
               onClick={(event) => handleCardAction(event, () => (onView ?? onEdit)(habit))}
             >
-              <span className={cn('min-w-0 text-sm font-medium', twoRows ? 'truncate' : 'line-clamp-2 break-words')}>
+              <span className={cn('min-w-0 text-sm font-medium', 'truncate')}>
                 {highlightText(habit.name, searchQuery)}
               </span>
               {/* The description could be written but was never shown anywhere. */}
@@ -527,7 +527,7 @@ export function ArchivedHabitCard({
             )}
             <div className="min-w-0">
               <h2 className="text-sm font-medium text-foreground">{highlightText(habit.name, searchQuery)}</h2>
-              {habit.description && <p className="truncate text-xs text-muted-foreground">{habit.description}</p>}
+              {habit.description && <p className="line-clamp-2 break-words text-xs text-muted-foreground">{habit.description}</p>}
             </div>
           </div>
           <div className="flex items-center gap-2">

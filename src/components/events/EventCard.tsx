@@ -220,7 +220,7 @@ export function EventCard({
       <CardHeader className="px-2 py-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <CardTitle className={`text-lg ${textColorClass} ${viewType !== 'list' ? 'truncate' : ''}`}>
+            <CardTitle className={`text-lg ${textColorClass} truncate`}>
               {highlightText(event.name, searchQuery)}
             </CardTitle>
           </div>
@@ -285,7 +285,7 @@ export function EventCard({
       <CardContent className={`px-2 pb-2 pt-0 ${viewType !== 'list' ? 'py-2' : ''}`}>
         <div className="space-y-2">
           {event.description && (
-            <p className={`${mutedTextColorClass} text-sm ${viewType !== 'list' ? 'line-clamp-2' : ''}`}>
+            <p className={`${mutedTextColorClass} text-sm line-clamp-2 break-words`}>
               {highlightText(truncateText(event.description, getDescriptionLength()), searchQuery)}
             </p>
           )}
